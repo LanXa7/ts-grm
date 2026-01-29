@@ -19,7 +19,8 @@ describe("TestView", () => {
                         : undefined,
                     recursiveDepth: f.recursiveDepth,
                     dependencies: f.dependencies,
-                    isDependent: f.isDependent ? true : undefined
+                    isDependent: f.isDependent ? true : undefined,
+                    columnIndex: f.columnIndex
                 };
             })
         }
@@ -34,14 +35,17 @@ describe("TestView", () => {
             "entity": "Book",
             "fields": [
                 {
+                    "columnIndex": 0,
                     "prop": "Book.id",
                     "paths": ["id"]
                 },
                 {
+                    "columnIndex": 1,
                     "prop": "Book.name",
                     "paths": ["name"]
                 },
                 {
+                    "columnIndex": 2,
                     "prop": "Book.edition",
                     "paths": ["edition"]
                 }
@@ -65,14 +69,17 @@ describe("TestView", () => {
             "entity": "Book",
             "fields": [
                 {
+                    "columnIndex": 0,
                     "prop": "Book.name",
                     "paths": ["name"]
                 },
                 {
+                    "columnIndex": 1,
                     "prop": "Book.edition",
                     "paths": ["edition"]
                 },
                 {
+                    "columnIndex": 2,
                     "isDependent": true,
                     "prop": "Book.storeId",
                     "paths": [] // implicit `Book.storeId` to fetch `Book.store`
@@ -86,14 +93,17 @@ describe("TestView", () => {
                         "associatedProp": "Book.store",
                         "fields": [
                             {
+                                "columnIndex": 0,
                                 "prop": "BookStore.id",
                                 "paths": ["id"]
                             },
                             {
+                                "columnIndex": 1,
                                 "prop": "BookStore.name",
                                 "paths": ["name"]
                             },
                             {
+                                "columnIndex": 2,
                                 "prop": "BookStore.version",
                                 "paths": ["version"]
                             }
@@ -101,6 +111,7 @@ describe("TestView", () => {
                     }
                 },
                 {
+                    "columnIndex": 3,
                     "isDependent": true,
                     "prop": "Book.id",
                     "paths": [] // Implicit field `Book.id` to fetch `Book.authors`
@@ -114,16 +125,19 @@ describe("TestView", () => {
                         "associatedProp": "Book.authors",
                         "fields": [
                             {
+                                "columnIndex": 0,
                                 "prop": "Author.id",
                                 "paths": ["id"]
                             },
                             {
+                                "columnIndex": 1,
                                 "prop": "Author.name.firstName",
                                 "paths": [
                                     ["name", "firstName"]
                                 ]
                             },
                             {
+                                "columnIndex": 2,
                                 "prop": "Author.name.lastName",
                                 "paths": [
                                     ["name", "lastName"]
@@ -179,11 +193,13 @@ describe("TestView", () => {
             "entity": "BookStore",
             "fields": [
                 {
+                    "columnIndex": 0,
                     "isDependent": true,
                     "prop": "BookStore.id",
                     "paths": ["id"]
                 },
                 {
+                    "columnIndex": 1,
                     "prop": "BookStore.name",
                     "paths": ["name"]
                 },
@@ -196,11 +212,13 @@ describe("TestView", () => {
                         "associatedProp": "BookStore.books",
                         "fields": [
                             {
+                                "columnIndex": 0,
                                 "isDependent": true,
                                 "prop": "Book.id",
                                 "paths": ["id"]
                             },
                             {
+                                "columnIndex": 1,
                                 "prop": "Book.name",
                                 "paths": ["name"]
                             },
@@ -213,16 +231,19 @@ describe("TestView", () => {
                                     "associatedProp": "Book.authors",
                                     "fields": [
                                         {
+                                            "columnIndex": 0,
                                             "prop": "Author.id",
                                             "paths": ["id"]
                                         },
                                         {
+                                            "columnIndex": 1,
                                             "prop": "Author.name.firstName",
                                             "paths": [
                                                 ["name", "firstName"]
                                             ]
                                         },
                                         {
+                                            "columnIndex": 2,
                                             "prop": "Author.name.lastName",
                                             "paths": [
                                                 ["name", "lastName"]
@@ -271,10 +292,12 @@ describe("TestView", () => {
             "entity": "BookStore",
             "fields": [
                 {
+                    "columnIndex": 0,
                     "prop": "BookStore.name",
                     "paths": ["name"]
                 },
                 {
+                    "columnIndex": 1,
                     "prop": "BookStore.id",
                     "paths": [], // Implicit property to fetch `BookStore.books`
                     "isDependent": true
@@ -289,12 +312,14 @@ describe("TestView", () => {
                         "associatedProp": "BookStore.books",
                         "fields": [
                             {
+                                "columnIndex": 0,
                                 "prop": "Book.name",
                                 "paths": [
                                     "name"
                                 ]
                             },
                             {
+                                "columnIndex": 1,
                                 "prop": "Book.id",
                                 "paths": [], // Implicit property to fetch `Book.authors`
                                 "isDependent": true
@@ -309,12 +334,14 @@ describe("TestView", () => {
                                     "associatedProp": "Book.authors",
                                     "fields": [
                                         {
+                                            "columnIndex": 0,
                                             "prop": "Author.name.firstName",
                                             "paths": [
                                                 ["name", "firstName"]
                                             ]
                                         },
                                         {
+                                            "columnIndex": 1,
                                             "prop": "Author.name.lastName",
                                             "paths": [
                                                 ["name", "lastName"]
@@ -368,22 +395,27 @@ describe("TestView", () => {
             "entity": "Book",
             "fields": [
                 {
+                    "columnIndex": 0,
                     "prop": "Book.id",
                     "paths": ["id"]
                 },
                 {
+                    "columnIndex": 1,
                     "prop": "Book.name",
                     "paths": ["name"]
                 },
                 {
+                    "columnIndex": 2,
                     "prop": "Book.edition",
                     "paths": ["edition"]
                 },
                 {
+                    "columnIndex": 3,
                     "prop": "Book.price",
                     "paths": ["price"]
                 },
                 {
+                    "columnIndex": 4,
                     "isDependent": true,
                     "prop": "Book.storeId",
                     "paths": [] // Implicit property `Book.storeId` to fetch `Book.store`
@@ -397,12 +429,14 @@ describe("TestView", () => {
                         "associatedProp": "Book.store",
                         "fields": [
                             {
+                                "columnIndex": 0,
                                 "prop": "BookStore.id",
                                 "paths": [
                                     ["..", "storeId"]
                                 ]
                             },
                             {
+                                "columnIndex": 1,
                                 "prop": "BookStore.name",
                                 "paths": [
                                     ["..", "storeName"]
@@ -438,14 +472,17 @@ describe("TestView", () => {
             "entity": "Author",
             "fields": [
                 {
+                    "columnIndex": 0,
                     "prop": "Author.id",
                     "paths": ["id"]
                 },
                 {
+                    "columnIndex": 1,
                     "prop": "Author.name.firstName",
                     "paths": ["flattenFirstName"]
                 },
                 {
+                    "columnIndex": 2,
                     "prop": "Author.name.lastName",
                     "paths": ["flattenLastName"]
                 }
@@ -467,16 +504,19 @@ describe("TestView", () => {
             "entity": "Book",
             "fields": [
                 {
+                    "columnIndex": 0,
                     "prop": "Book.id",
                     "paths": ["id"]
                 },
                 {
+                    "columnIndex": 1,
                     "prop": "Book.name",
                     "paths": [
                         ["key", "name"]
                     ]
                 },
                 {
+                    "columnIndex": 2,
                     "prop": "Book.edition",
                     "paths": [
                         ["key", "edition"]
@@ -506,6 +546,7 @@ describe("TestView", () => {
             "entity": "Book",
             "fields": [
                 {
+                    "columnIndex": 0,
                     "isDependent": true,
                     "prop": "Book.id",
                     "paths": ["id"]
@@ -521,16 +562,19 @@ describe("TestView", () => {
                         "associatedProp": "Book.authors",
                         "fields": [
                             {
+                                "columnIndex": 0,
                                 "prop": "Author.id",
                                 "paths": ["id"]
                             },
                             {
+                                "columnIndex": 1,
                                 "prop": "Author.name.firstName",
                                 "paths": [
                                     ["name", "firstName"]
                                 ]
                             },
                             {
+                                "columnIndex": 2,
                                 "prop": "Author.name.lastName",
                                 "paths": [
                                     ["name", "lastName"]
@@ -582,6 +626,7 @@ describe("TestView", () => {
             "entity": "Book",
             "fields": [
                 {
+                    "columnIndex": 0,
                     "isDependent": true,
                     "prop": "Book.id",
                     "paths": [
@@ -589,6 +634,7 @@ describe("TestView", () => {
                     ]
                 },
                 {
+                    "columnIndex": 1,
                     "prop": "Book.name",
                     "paths": [
                         [
@@ -598,6 +644,7 @@ describe("TestView", () => {
                     ]
                 },
                 {
+                    "columnIndex": 2,
                     "prop": "Book.edition",
                     "paths": [
                         [
@@ -620,14 +667,17 @@ describe("TestView", () => {
                         "associatedProp": "Book.authors",
                         "fields": [
                             {
+                                "columnIndex": 0,
                                 "prop": "Author.id",
                                 "paths": ["id"]
                             },
                             {
+                                "columnIndex": 1,
                                 "prop": "Author.name.firstName",
                                 "paths": ["flattenFn"]
                             },
                             {
+                                "columnIndex": 2,
                                 "prop": "Author.name.lastName",
                                 "paths": ["flattenLn"]
                             }
@@ -668,14 +718,17 @@ describe("TestView", () => {
             "entity": "TreeNode",
             "fields": [
                 {
+                    "columnIndex": 0,
                     "prop": "TreeNode.id",
                     "paths": ["id"]
                 },
                 {
+                    "columnIndex": 1,
                     "prop": "TreeNode.name",
                     "paths": ["name"]
                 },
                 {
+                    "columnIndex": 2,
                     "isDependent": true,
                     "prop": "TreeNode.parentNodeId",
                     "paths": [] // Implicit property to fetch `TreeNode.parentNode`
@@ -689,18 +742,21 @@ describe("TestView", () => {
                         "associatedProp": "TreeNode.parentNode",
                         "fields": [
                             {
+                                "columnIndex": 0,
                                 "prop": "TreeNode.id",
                                 "paths": [
                                     ["..", "parentId"]
                                 ]
                             },
                             {
+                                "columnIndex": 1,
                                 "prop": "TreeNode.name",
                                 "paths": [
                                     ["..", "parentName"]
                                 ]
                             },
                             {
+                                "columnIndex": 2,
                                 "isDependent": true,
                                 "prop": "TreeNode.parentNodeId",
                                 "paths": [] // Implicit property to fetch `TreeNode.parentNode`
@@ -714,12 +770,14 @@ describe("TestView", () => {
                                     "associatedProp": "TreeNode.parentNode",
                                     "fields": [
                                         {
+                                            "columnIndex": 0,
                                             "prop": "TreeNode.id",
                                             "paths": [
                                                 ["..", "..", "parentGrandId"]
                                             ]
                                         },
                                         {
+                                            "columnIndex": 1,
                                             "prop": "TreeNode.name",
                                             "paths": [
                                                 ["..", "..", "parentGrandName"]
@@ -761,16 +819,19 @@ describe("TestView", () => {
             "entity": "OrderItem",
             "fields": [
                 {
+                    "columnIndex": 0,
                     "isDependent": true,
                     "prop": "Order.id.x",
                     "paths": [] // Implicit foreign key to fetch `OrderItem.order`
                 },
                 {
+                    "columnIndex": 1,
                     "isDependent": true,
                     "prop": "Order.id.y.a",
                     "paths": [] // Implicit foreign key to fetch `OrderItem.order`
                 },
                 {
+                    "columnIndex": 2,
                     "isDependent": true,
                     "prop": "Order.id.y.b",
                     "paths": [] // Implicit foreign key to fetch `OrderItem.order`
@@ -786,6 +847,7 @@ describe("TestView", () => {
                         "associatedProp": "OrderItem.order",
                         "fields": [
                             {
+                                "columnIndex": 0,
                                 "prop": "Order.name",
                                 "paths": [
                                     "name"
@@ -821,6 +883,7 @@ describe("TestView", () => {
             "entity": "OrderItem",
             "fields": [
                 {
+                    "columnIndex": 0,
                     "isDependent": true,
                     "prop": "Order.id.x",
                     "paths": [
@@ -828,6 +891,7 @@ describe("TestView", () => {
                     ]
                 },
                 {
+                    "columnIndex": 1,
                     "isDependent": true,
                     "prop": "Order.id.y.a",
                     "paths": [
@@ -835,6 +899,7 @@ describe("TestView", () => {
                     ]
                 },
                 {
+                    "columnIndex": 2,
                     "isDependent": true,
                     "prop": "Order.id.y.b",
                     "paths": [
@@ -852,6 +917,7 @@ describe("TestView", () => {
                         "associatedProp": "OrderItem.order",
                         "fields": [
                             {
+                                "columnIndex": 0,
                                 "prop": "Order.name",
                                 "paths": [
                                     "name"
@@ -889,6 +955,7 @@ describe("TestView", () => {
             "entity": "OrderItem",
             "fields": [
                 {
+                    "columnIndex": 0,
                     "isDependent": true,
                     "prop": "Order.id.y.a",
                     "paths": [
@@ -896,6 +963,7 @@ describe("TestView", () => {
                     ]
                 },
                 {
+                    "columnIndex": 1,
                     "isDependent": true,
                     "prop": "Order.id.y.b",
                     "paths": [
@@ -903,6 +971,7 @@ describe("TestView", () => {
                     ]
                 },
                 {
+                    "columnIndex": 2,
                     "isDependent": true,
                     "prop": "Order.id.x",
                     "paths": [] // Implicit property to fetch `OrderItem.order`
@@ -918,6 +987,7 @@ describe("TestView", () => {
                         "associatedProp": "OrderItem.order",
                         "fields": [
                             {
+                                "columnIndex": 0,
                                 "prop": "Order.name",
                                 "paths": [
                                     "name"
@@ -956,10 +1026,12 @@ describe("TestView", () => {
             "entity": "TreeNode",
             "fields": [
                 {
+                    "columnIndex": 0,
                     "prop": "TreeNode.name",
                     "paths": ["name"]
                 },
                 {
+                    "columnIndex": 1,
                     "isDependent": true,
                     "prop": "TreeNode.parentNodeId",
                     "paths": [] // Implicit field to fetch `TreeNode.parentNode`
@@ -971,6 +1043,7 @@ describe("TestView", () => {
                     "recursiveDepth": -1 // Unlimited depth
                 },
                 {
+                    "columnIndex": 2,
                     "isDependent": true,
                     "prop": "TreeNode.id",
                     "paths": [] // Implict field to fetch `TreeNode.childNodes`

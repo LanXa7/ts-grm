@@ -21,7 +21,52 @@ describe("RowMapperTest", () => {
             .allScalars()
             .remove("price")
         );
-        expect(view.mapper.rowMapper.constructor.toString()).toEqual(
+        expect(view.mapper.rowMapper.constructor.toString()).toEqual(ALL_SCALARS_MAPPER_CODE);
+        const row = view.mapper.rowMapper.create(
+            undefined, 
+            makeReader(3, "GraphQL in Action", 2)
+        );
+        expect(row.dto).toEqual({
+            id: 3,
+            name: "GraphQL in Action",
+            edition: 2
+        });
+    });
+
+    it("wideAssociations", () => {
+
+        const view = dto.view(BOOK, $ => $
+            .allScalars()
+            .remove("id", "price")
+            .store($ => $.allScalars())
+            .authors($ => $.id.name())
+        );
+        expect(view.mapper.rowMapper.constructor.toString()).toEqual(WIDE_ASSOCIATIONS_MAPPER_CODE);
+        // expect(
+        //     view.mapper.rowMapper.create(
+        //         undefined, 
+        //         makeReader("GraphQL in Action", "")
+        //     )
+        // )
+        const storeMapper = view
+            .mapper
+            .fields
+            .find(f => f.prop.name === "store")!
+            .subMapper!
+            .rowMapper;
+        expect(storeMapper.constructor.toString()).toEqual(WIDE_ASSOCIATIONS_STORE_MAPPER_CODE);
+
+        const authorMapper = view
+            .mapper
+            .fields
+            .find(f => f.prop.name === "authors")!
+            .subMapper!
+            .rowMapper;
+        expect(authorMapper.constructor.toString()).toEqual(WIDE_ASSOCIATIONS_AUTHOR_MAPPER_CODE);
+    });
+});
+
+const ALL_SCALARS_MAPPER_CODE = 
 `class extends $baseClass {
     _template = {
         id: null, 
@@ -41,26 +86,9 @@ describe("RowMapperTest", () => {
         dto.edition = reader.get(2);
         return row;
     }
-}`);
-        const row = view.mapper.rowMapper.create(
-            undefined, 
-            makeReader(3, "GraphQL in Action", 2)
-        );
-        expect(row.dto).toEqual({
-            id: 3,
-            name: "GraphQL in Action",
-            edition: 2
-        });
-    });
+}`;
 
-    it("wideAssociations", () => {
-        const view = dto.view(BOOK, $ => $
-            .allScalars()
-            .remove("id", "price")
-            .store($ => $.allScalars())
-            .authors($ => $.id.name())
-        );
-        expect(view.mapper.rowMapper.constructor.toString()).toEqual(
+const WIDE_ASSOCIATIONS_MAPPER_CODE =
 `class extends $baseClass {
     _template = {
         name: null, 
@@ -86,6 +114,49 @@ describe("RowMapperTest", () => {
         implicit._4 = reader.get(4);
         return row;
     }
-}`);
-    });
-});
+}`;
+
+const WIDE_ASSOCIATIONS_STORE_MAPPER_CODE =
+`class extends $baseClass {
+    _template = {
+        id: null, 
+        name: null, 
+        version: null
+    };
+    create(parent, reader) {
+        const row = {
+            mapper: this, 
+            parent, 
+            dto: { ...this._template }, 
+            implicit: undefined
+        };
+        const { dto } = row;
+        dto.id = reader.get(0);
+        dto.name = reader.get(1);
+        dto.version = reader.get(2);
+        return row;
+    }
+}`;
+
+const WIDE_ASSOCIATIONS_AUTHOR_MAPPER_CODE =
+`class extends $baseClass {
+    _template = {
+        id: null, 
+        name: null
+    };
+    _template_name = {
+        firstName: null, 
+        lastName: null
+    };
+    create(parent, reader) {
+        const row = {
+            mapper: this, 
+            parent, 
+            dto: { ...this._template }, 
+            implicit: undefined
+        };
+        const { dto } = row;
+        dto.id = reader.get(0);
+        return row;
+    }
+}`;

@@ -51,6 +51,8 @@ export type DtoMapperField = {
     readonly dependencies: ReadonlyArray<number> | undefined;
 
     readonly isDependent: boolean;
+
+    readonly columnIndex: number | undefined;
 }
 
 export type Path = string | ReadonlyArray<string>;
@@ -62,6 +64,8 @@ class Mapper {
     private dependencyWriter: DepenencyWriter | undefined = undefined;
 
     private dependencyReader: DependencyReader | undefined = undefined;
+
+    private columnIndex = 0;
 
     constructor(
         readonly entity: Entity,
@@ -141,6 +145,7 @@ class Mapper {
             field = new MapperField(
                 this.nullAsUndefined,
                 this.fieldMap.size, 
+                () => this.columnIndex++,
                 dtoField.entityProp, 
                 dtoField.recursiveDepth,
                 this.dependencyReader?.indices
@@ -171,6 +176,7 @@ class MapperField {
     constructor(
         nullAsUndefined: boolean,
         readonly index: number,
+        readonly columnIndexAllocator: () => number,
         readonly prop: EntityProp,
         readonly recursiveDepth: number | undefined,
         readonly dependencies: ReadonlyArray<number> | undefined
@@ -208,7 +214,10 @@ class MapperField {
             subMapper: this.subMapper?.toDtoMapper(),
             recursiveDepth: this.recursiveDepth,
             dependencies: this.dependencies,
-            isDependent: this.isDependent
+            isDependent: this.isDependent,
+            columnIndex: this.dependencies !== undefined
+                ? undefined
+                : this.columnIndexAllocator()
         };
     }
 }
