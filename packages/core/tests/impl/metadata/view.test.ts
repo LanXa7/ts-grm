@@ -3,6 +3,7 @@ import { DtoMapper } from "@/impl/metadata/dto_mapper";
 import { dto } from "@/schema/dto";
 import { BOOK, AUTHOR, BOOK_STORE, TREE_NODE, ORDER_ITEM } from "../../model/model";
 import { buildShape } from "@/impl/metadata/shape";
+import { DataReader } from "@/impl/metadata/data_reader";
 
 describe("TestView", () => {
  
@@ -68,7 +69,18 @@ describe("TestView", () => {
             "edition": 2
         });
 
-        expect(view.mapper.rowMapper.constructor.toString()).toEqual(ALL_SCALARS_MAPPER_CODE);
+        expectCode(view.mapper.rowMapper.constructor.toString(), `
+            class extends $baseClass {
+                create(parent, reader) {
+                    const dto = {
+                        id: reader.get(0), 
+                        name: reader.get(1), 
+                        edition: reader.get(2)
+                    };
+                    return { mapper: this, parent, dto, implicit: undefined };
+                }
+            }
+        `);
         const row = view.mapper.rowMapper.create(
             undefined, 
             makeReader(3, "GraphQL in Action", 2)
@@ -172,7 +184,6 @@ describe("TestView", () => {
             ]
         });
         expect(buildShape(view.mapper)).toEqual({
-            
                 "name": 0,
                 "edition": 1,
                 "store": {
@@ -197,7 +208,23 @@ describe("TestView", () => {
                 }
         });
 
-        expect(view.mapper.rowMapper.constructor.toString()).toEqual(WIDE_ASSOCIATIONS_MAPPER_CODE);
+        expectCode(view.mapper.rowMapper.constructor.toString(), `
+            class extends $baseClass {
+                create(parent, reader) {
+                    const dto = {
+                        name: reader.get(0), 
+                        edition: reader.get(1), 
+                        store: null, 
+                        authors: null
+                    };
+                    const implicit = {
+                        _2: reader.get(2), 
+                        _4: reader.get(3)
+                    };
+                    return { mapper: this, parent, dto, implicit };
+                }
+            }
+        `);
         const row = view.mapper.rowMapper.create(
             undefined, 
             makeReader("GraphQL in Action", 3, 2, 12)
@@ -217,10 +244,20 @@ describe("TestView", () => {
             .mapper
             .fields
             .find(f => f.prop.name === "store")!
-            .subMapper!
-            .rowMapper;
-        expect(storeMapper.constructor.toString()).toEqual(WIDE_ASSOCIATIONS_STORE_MAPPER_CODE);
-        const storeRow = storeMapper.create(
+            .subMapper!;
+        expectCode(storeMapper.rowMapper.constructor.toString(), `
+            class extends $baseClass {
+                create(parent, reader) {
+                    const dto = {
+                        id: reader.get(0), 
+                        name: reader.get(1), 
+                        version: reader.get(2)
+                    };
+                    return { mapper: this, parent, dto, implicit: undefined };
+                }
+            }
+        `);
+        const storeRow = storeMapper.rowMapper.create(
             undefined,
             makeReader(2, "MANNING", 0)
         );
@@ -234,9 +271,41 @@ describe("TestView", () => {
             .mapper
             .fields
             .find(f => f.prop.name === "authors")!
-            .subMapper!
-            .rowMapper;
-        expect(authorMapper.constructor.toString()).toEqual(WIDE_ASSOCIATIONS_AUTHOR_MAPPER_CODE);
+            .subMapper!;
+        expectCode(authorMapper.rowMapper.constructor.toString(), `
+            class extends $baseClass {
+                create(parent, reader) {
+                    const dto = {
+                        id: reader.get(0), 
+                        name: null
+                    };
+                    this._name(dto).firstName= reader.get(1);
+                    this._name(dto).lastName= reader.get(2);
+                    return { mapper: this, parent, dto, implicit: undefined };
+                }
+                _name(dto) {
+                    let o = dto.name;
+                    if (o == null) {
+                        dto.name = o = {
+                            firstName: null, 
+                            lastName: null
+                        };
+                    }
+                    return o;
+                }
+            }
+        `);
+        const authorRow = authorMapper.rowMapper.create(
+            undefined, 
+            makeReader(3, "Alex", "Banks")
+        );
+        expect(authorRow.dto).toEqual({
+            id: 3,
+            name: {
+                firstName: "Alex",
+                lastName: "Banks"
+            }
+        });
     });
 
     it("deepAssocitions", () => {
@@ -338,6 +407,87 @@ describe("TestView", () => {
                         }
                     }
                 }
+            }
+        });
+
+        expectCode(view.mapper.rowMapper.constructor.toString(), `
+            class extends $baseClass {
+                create(parent, reader) {
+                    const dto = {
+                        id: reader.get(0), 
+                        name: reader.get(1), 
+                        books: null
+                    };
+                    return { mapper: this, parent, dto, implicit: undefined };
+                }
+            }
+        `);
+        const row = view.mapper.rowMapper.create(
+            undefined, 
+            makeReader(2, "MANNING")
+        );
+        expect(row.dto).toEqual({
+            id: 2,
+            name: "MANNING",
+            books: null
+        });
+        
+        const bookMapper = view.mapper.fields.find(f => f.prop.name === "books")!.subMapper!;
+        expectCode(bookMapper.rowMapper.constructor.toString(), `
+            class extends $baseClass {
+                create(parent, reader) {
+                    const dto = {
+                        id: reader.get(0), 
+                        name: reader.get(1), 
+                        authors: null
+                    };
+                    return { mapper: this, parent, dto, implicit: undefined };
+                }
+            }
+        `);
+        const bookRow = bookMapper.rowMapper.create(
+            undefined, 
+            makeReader(12, "GraphQL in Action")
+        );
+        expect(bookRow.dto).toEqual({
+            id: 12,
+            name: "GraphQL in Action",
+            authors: null
+        });
+
+        const authorMapper = bookMapper.fields.find(f => f.prop.name === "authors")!.subMapper!;
+        expectCode(authorMapper.rowMapper.constructor.toString(), `
+            class extends $baseClass {
+                create(parent, reader) {
+                    const dto = {
+                        id: reader.get(0), 
+                        name: null
+                    };
+                    this._name(dto).firstName= reader.get(1);
+                    this._name(dto).lastName= reader.get(2);
+                    return { mapper: this, parent, dto, implicit: undefined };
+                }
+                _name(dto) {
+                    let o = dto.name;
+                    if (o == null) {
+                        dto.name = o = {
+                            firstName: null, 
+                            lastName: null
+                        };
+                    }
+                    return o;
+                }
+            }
+        `);
+        const authorRow = authorMapper.rowMapper.create(
+            undefined, 
+            makeReader(3, "Alex", "Banks")
+        );
+        expect(authorRow.dto).toEqual({
+            id: 3,
+            name: {
+                firstName: "Alex",
+                lastName: "Banks"
             }
         });
     });
@@ -1140,54 +1290,35 @@ describe("TestView", () => {
     });
 });
 
-const ALL_SCALARS_MAPPER_CODE = 
-`class extends $baseClass {
-    create(parent, reader) {
-        const dto = {
-            id: reader.get(0), 
-            name: reader.get(1), 
-            edition: reader.get(2)
-        };
-        return { mapper: this, parent, dto, implicit: undefined };
-    }
-}`;
+function expectCode(actual: string, expected: string) {
+    const normalizedExpected = normalizeCode(expected);
+    expect(actual).toEqual(normalizedExpected);
+}
 
-const WIDE_ASSOCIATIONS_MAPPER_CODE =
-`class extends $baseClass {
-    create(parent, reader) {
-        const dto = {
-            name: reader.get(0), 
-            edition: reader.get(1), 
-            store: null, 
-            authors: null
-        };
-        const implicit = {
-            _2: reader.get(2), 
-            _4: reader.get(3)
-        };
-        return { mapper: this, parent, dto, implicit };
-    }
-}`;
+function normalizeCode(code: string): string {
 
-const WIDE_ASSOCIATIONS_STORE_MAPPER_CODE =
-`class extends $baseClass {
-    create(parent, reader) {
-        const dto = {
-            id: reader.get(0), 
-            name: reader.get(1), 
-            version: reader.get(2)
-        };
-        return { mapper: this, parent, dto, implicit: undefined };
+    const lines = code.split('\n');
+    let startIndex = 0;
+    let endIndex = lines.length - 1;
+    while (startIndex <= endIndex && lines[startIndex]!.trim() === '') {
+        startIndex++;
     }
-}`;
+    while (endIndex >= startIndex && lines[endIndex]!.trim() === '') {
+        endIndex--;
+    }
+    const trimmedLines = lines.slice(startIndex, endIndex + 1);
+    if (trimmedLines.length === 0) {
+        return '';
+    }
 
-const WIDE_ASSOCIATIONS_AUTHOR_MAPPER_CODE =
-`class extends $baseClass {
-    create(parent, reader) {
-        const dto = {
-            id: reader.get(0), 
-            name: null
-        };
-        return { mapper: this, parent, dto, implicit: undefined };
-    }
-}`;
+    const firstLine = trimmedLines[0]!;
+    const baseIndentMatch = firstLine.match(/^(\s*)/);
+    const baseIndent = baseIndentMatch ? baseIndentMatch[1]!.length : 0;
+    const normalizedLines = trimmedLines.map(line => {
+        if (line.trim() === '') {
+            return '';
+        }
+        return line.slice(baseIndent);
+    });
+    return normalizedLines.join('\n');
+}
