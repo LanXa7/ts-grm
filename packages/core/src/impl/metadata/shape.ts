@@ -4,11 +4,11 @@ import { EntityProp } from "./entity_prop";
 export type Shape = {
     [key: string]: ShapeMember;
 } & {
-    __implicit?: { [key: string]: true };
+    __implicit?: { [key: string]: number };
 };
 
 export type ShapeMember = 
-    true 
+    (number | undefined)
     | Shape
     | { __array: Shape }
     | { __ref: Shape };
@@ -38,14 +38,14 @@ function fillShapeNode(
     for (let i = 0; i < mapper.fields.length; i++) {
         const field = mapper.fields[i]!;
         if (field.paths.length === 0) {
-            buildShapeMember(field);
+            buildShapeMember(field, false);
             if (field.isDependent) {
-                shapeScope!.implicit[`_${i}`] = true;
+                shapeScope!.implicit[`_${i}`] = field.columnIndex!;
             }
         } else {
             for (const path of field.paths) {
                 if (typeof path === 'string') {
-                    shapeScope!.shape[path] = buildShapeMember(field);
+                    shapeScope!.shape[path] = buildShapeMember(field, false);
                 } else {
                     const oldScope = shapeScope!;
                     let scope = oldScope;
@@ -63,7 +63,10 @@ function fillShapeNode(
                     }
                     shapeScope = scope;
                     try {
-                        scope!.shape[path[max]!] = buildShapeMember(field);
+                        scope!.shape[path[max]!] = buildShapeMember(
+                            field, 
+                            oldScope.mapper !== scope.mapper
+                        );
                     } finally {
                         shapeScope = oldScope;
                     }
@@ -74,7 +77,8 @@ function fillShapeNode(
 }
 
 function buildShapeMember(
-    field: DtoMapperField
+    field: DtoMapperField,
+    ignoreColumnIndex: boolean
 ): ShapeMember {
     if (field.subMapper) {
         if (isCollection(field.prop)) {
@@ -97,7 +101,10 @@ function buildShapeMember(
         }
         return { ...recursive };
     }
-    return true;
+    if (ignoreColumnIndex) {
+        return undefined;
+    }
+    return field.columnIndex;
 }
 
 function isCollection(prop: EntityProp): boolean {
@@ -142,7 +149,7 @@ class ShapeScope {
         );
     }
 
-    get implicit(): {[key: string]: true} {
+    get implicit(): {[key: string]: number} {
         this.modelScope._reachable();
         return this.modelScope._getImplicit();   
     }
@@ -159,7 +166,7 @@ class ShapeScope {
         }
     }
 
-    private _getImplicit(): {[key: string]: true} {
+    private _getImplicit(): {[key: string]: number} {
         let i = this.shape.__implicit;
         if (i == null) {
             this.shape.__implicit = i = {};
@@ -168,4 +175,4 @@ class ShapeScope {
     }
 };
 
-const recursive: Shape = { __recursive: true };
+const recursive: Shape = { __recursive: 1 };

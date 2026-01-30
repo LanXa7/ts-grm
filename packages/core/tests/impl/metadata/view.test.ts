@@ -26,6 +26,17 @@ describe("TestView", () => {
         }
     }
 
+    function makeReader(...args: any[]): DataReader {
+        return new class implements DataReader {
+            next(): boolean {
+                throw new Error("Unsupported Operation Error");
+            }
+            get(index: number): any {
+                return args[index];
+            }
+        }
+    }
+
     it("allScalars", () => {
         const view = dto.view(BOOK, $ => $
             .allScalars()
@@ -52,10 +63,22 @@ describe("TestView", () => {
             ]
         });
         expect(buildShape(view.mapper)).toEqual({
-            "id": true,
-            "name": true,
-            "edition": true
+            "id": 0,
+            "name": 1,
+            "edition": 2
         });
+
+        expect(view.mapper.rowMapper.constructor.toString()).toEqual(ALL_SCALARS_MAPPER_CODE);
+        const row = view.mapper.rowMapper.create(
+            undefined, 
+            makeReader(3, "GraphQL in Action", 2)
+        );
+        expect(row.dto).toEqual({
+            id: 3,
+            name: "GraphQL in Action",
+            edition: 2
+        });
+        expect(row.implicit).toEqual(undefined);
     });
 
     it("wideAssociations", () => {
@@ -150,29 +173,70 @@ describe("TestView", () => {
         });
         expect(buildShape(view.mapper)).toEqual({
             
-                "name": true,
-                "edition": true,
+                "name": 0,
+                "edition": 1,
                 "store": {
                     "__ref": {
-                        "id": true,
-                        "name": true,
-                        "version": true
+                        "id": 0,
+                        "name": 1,
+                        "version": 2
                     }
                 },
                 "authors": {
                     "__array": {
-                        "id": true,
+                        "id": 0,
                         "name": {
-                            "firstName": true,
-                            "lastName": true
+                            "firstName": 1,
+                            "lastName": 2
                         }
                     }
                 },
                 "__implicit": {
-                    "_2": true,
-                    "_4": true
+                    "_2": 2,
+                    "_4": 3
                 }
         });
+
+        expect(view.mapper.rowMapper.constructor.toString()).toEqual(WIDE_ASSOCIATIONS_MAPPER_CODE);
+        const row = view.mapper.rowMapper.create(
+            undefined, 
+            makeReader("GraphQL in Action", 3, 2, 12)
+        );
+        expect(row.dto).toEqual({
+            authors: null,
+            edition: 3,
+            name: "GraphQL in Action",
+            store: null
+        });
+        expect(row.implicit).toEqual({
+            _2: 2,
+            _4: 12
+        });
+
+        const storeMapper = view
+            .mapper
+            .fields
+            .find(f => f.prop.name === "store")!
+            .subMapper!
+            .rowMapper;
+        expect(storeMapper.constructor.toString()).toEqual(WIDE_ASSOCIATIONS_STORE_MAPPER_CODE);
+        const storeRow = storeMapper.create(
+            undefined,
+            makeReader(2, "MANNING", 0)
+        );
+        expect(storeRow.dto).toEqual({
+            id: 2,
+            name: "MANNING",
+            version: 0
+        });
+
+        const authorMapper = view
+            .mapper
+            .fields
+            .find(f => f.prop.name === "authors")!
+            .subMapper!
+            .rowMapper;
+        expect(authorMapper.constructor.toString()).toEqual(WIDE_ASSOCIATIONS_AUTHOR_MAPPER_CODE);
     });
 
     it("deepAssocitions", () => {
@@ -258,18 +322,18 @@ describe("TestView", () => {
             ]
         });
         expect(buildShape(view.mapper)).toEqual({
-            "id": true,
-            "name": true,
+            "id": 0,
+            "name": 1,
             "books": {
                 "__array": {
-                    "id": true,
-                    "name": true,
+                    "id": 0,
+                    "name": 1,
                     "authors": {
                         "__array": {
-                            "id": true,
+                            "id": 0,
                             "name": {
-                                "firstName": true,
-                                "lastName": true
+                                "firstName": 1,
+                                "lastName": 2
                             }
                         }
                     }
@@ -358,21 +422,21 @@ describe("TestView", () => {
             ]
         });
         expect(buildShape(view.mapper)).toEqual({
-            "name": true,
+            "name": 0,
             "__implicit": {
-                "_1": true
+                "_1": 1
             },
             "books": {
                 "__array": {
-                    "name": true,
+                    "name": 0,
                     "__implicit": {
-                        "_1": true
+                        "_1": 1
                     },
                     "authors": {
                         "__array": {
                             "name": {
-                                "firstName": true,
-                                "lastName": true
+                                "firstName": 0,
+                                "lastName": 1
                             }
                         }
                     }
@@ -448,14 +512,14 @@ describe("TestView", () => {
             ]
         });
         expect(buildShape(view.mapper)).toEqual({
-            "id": true,
-            "name": true,
-            "edition": true,
-            "price": true,
-            "storeId": true,
-            "storeName": true,
+            "id": 0,
+            "name": 1,
+            "edition": 2,
+            "price": 3,
+            "storeId": undefined,
+            "storeName": undefined,
             "__implicit": {
-                "_4": true
+                "_4": 4
             }
         });
     });
@@ -489,9 +553,9 @@ describe("TestView", () => {
             ]
         });
         expect(buildShape(view.mapper)).toEqual({
-            "id": true,
-            "flattenFirstName": true,
-            "flattenLastName": true
+            "id": 0,
+            "flattenFirstName": 1,
+            "flattenLastName": 2
         });
     });
 
@@ -525,10 +589,10 @@ describe("TestView", () => {
             ]
         });
         expect(buildShape(view.mapper)).toEqual({
-            "id": true,
+            "id": 0,
             "key": {
-                "name": true,
-                "edition": true
+                "name": 1,
+                "edition": 2
             }
         });
     });
@@ -586,14 +650,14 @@ describe("TestView", () => {
             ]
         });
         expect(buildShape(view.mapper)).toEqual({
-            "id": true,
+            "id": 0,
             "associations": {
                 "authors": {
                     "__array": {
-                        "id": true,
+                        "id": 0,
                         "name": {
-                            "firstName": true,
-                            "lastName": true
+                            "firstName": 1,
+                            "lastName": 2
                         }
                     }
                 }
@@ -687,17 +751,17 @@ describe("TestView", () => {
             ]
         });
         expect(buildShape(view.mapper)).toEqual({
-            "bookId": true,
+            "bookId": 0,
             "key": {
-                "bookName": true,
-                "bookEdition": true
+                "bookName": 1,
+                "bookEdition": 2
             },
             "associations": {
                 "authors": {
                     "__array": {
-                        "id": true,
-                        "flattenFn": true,
-                        "flattenLn": true
+                        "id": 0,
+                        "flattenFn": 1,
+                        "flattenLn": 2
                     }
                 }
             }
@@ -793,19 +857,19 @@ describe("TestView", () => {
         });
         expect(buildShape(view.mapper)).toEqual({
             "__implicit": {
-                "_2": true
+                "_2": 2
             },
             "parentNode": {
                 "__implicit": {
-                    "_2": true
+                    "_2": 2
                 },
             },
-            "id": true,
-            "name": true,
-            "parentId": true,
-            "parentName": true,
-            "parentGrandId": true,
-            "parentGrandName": true
+            "id": 0,
+            "name": 1,
+            "parentId": undefined,
+            "parentName": undefined,
+            "parentGrandId": undefined,
+            "parentGrandName": undefined
         });
     });
 
@@ -861,13 +925,13 @@ describe("TestView", () => {
         expect(buildShape(view.mapper)).toEqual({
             "order": {
                 "__ref": {
-                    "name": true
+                    "name": 0
                 }
             },
             "__implicit": {
-                "_0": true,
-                "_1": true,
-                "_2": true
+                "_0": 0,
+                "_1": 1,
+                "_2": 2
             }
         });
     });
@@ -930,15 +994,15 @@ describe("TestView", () => {
         });
         expect(buildShape(view.mapper)).toEqual({
             "orderId": {
-                "x": true,
+                "x": 0,
                 "y": {
-                    "a": true,
-                    "b": true
+                    "a": 1,
+                    "b": 2
                 }
             },
             "order": {
                 "__ref": {
-                    "name": true
+                    "name": 0
                 }
             }
         });
@@ -1001,17 +1065,17 @@ describe("TestView", () => {
         expect(buildShape(view.mapper)).toEqual({
             "orderId": {
                 "y": {
-                    "a": true,
-                    "b": true
+                    "a": 0,
+                    "b": 1
                 }
             },
             "order": {
                 "__ref": {
-                    "name": true
+                    "name": 0
                 }
             },
             "__implicit": {
-                "_2": true
+                "_2": 2
             }
         });
     });
@@ -1057,21 +1121,73 @@ describe("TestView", () => {
             ]
         });
         expect(buildShape(view.mapper)).toEqual({
-            "name": true,
+            "name": 0,
             "parentNode": {
                 "__ref": {
-                    "__recursive": true
+                    "__recursive": 1
                 }
             },
             "childNodes": {
                 "__array": {
-                    "__recursive": true
+                    "__recursive": 1
                 }
             },
             "__implicit": {
-                "_1": true,
-                "_3": true
+                "_1": 1,
+                "_3": 2
             }
         });
     });
 });
+
+const ALL_SCALARS_MAPPER_CODE = 
+`class extends $baseClass {
+    create(parent, reader) {
+        const dto = {
+            id: reader.get(0), 
+            name: reader.get(1), 
+            edition: reader.get(2)
+        };
+        return { mapper: this, parent, dto, implicit: undefined };
+    }
+}`;
+
+const WIDE_ASSOCIATIONS_MAPPER_CODE =
+`class extends $baseClass {
+    create(parent, reader) {
+        const dto = {
+            name: reader.get(0), 
+            edition: reader.get(1), 
+            store: null, 
+            authors: null
+        };
+        const implicit = {
+            _2: reader.get(2), 
+            _4: reader.get(3)
+        };
+        return { mapper: this, parent, dto, implicit };
+    }
+}`;
+
+const WIDE_ASSOCIATIONS_STORE_MAPPER_CODE =
+`class extends $baseClass {
+    create(parent, reader) {
+        const dto = {
+            id: reader.get(0), 
+            name: reader.get(1), 
+            version: reader.get(2)
+        };
+        return { mapper: this, parent, dto, implicit: undefined };
+    }
+}`;
+
+const WIDE_ASSOCIATIONS_AUTHOR_MAPPER_CODE =
+`class extends $baseClass {
+    create(parent, reader) {
+        const dto = {
+            id: reader.get(0), 
+            name: null
+        };
+        return { mapper: this, parent, dto, implicit: undefined };
+    }
+}`;
