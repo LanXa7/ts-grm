@@ -19,7 +19,7 @@ export abstract class RowReader {
     abstract create(parent: Row | undefined, reader: DataReader): Row;
 }
 
-export function createRowMapper(mapper: DtoMapper): RowReader {
+export function createRowReader(mapper: DtoMapper): RowReader {
 
     const shape = buildShape(mapper);
 
