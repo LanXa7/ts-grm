@@ -997,6 +997,42 @@ describe("TestView", () => {
             id: 12,
             associations: null
         });
+
+        const authorMapper = view.mapper.fields.find(f => f.prop.name === "authors")!.subMapper!;
+        expectCode(authorMapper.rowReader.constructor.toString(), `
+            class extends $baseClass {
+                read(parent, reader) {
+                    const dto = {
+                        id: reader.get(0), 
+                        name: null
+                    };
+                    this._name(dto).firstName = reader.get(1);
+                    this._name(dto).lastName = reader.get(2);
+                    return { reader: this, parent, dto, implicit: undefined };
+                }
+                _name(dto) {
+                    let o = dto.name;
+                    if (o == null) {
+                        dto.name = o = {
+                            firstName: null, 
+                            lastName: null
+                        };
+                    }
+                    return o;
+                }
+            }
+        `);
+        const authorRow = authorMapper.rowReader.read(
+            undefined,
+            makeReader(3, "Alex", "Banks")
+        );
+        expect(authorRow.dto).toEqual({
+            id: 3,
+            name: {
+                firstName: "Alex",
+                lastName: "Banks"
+            }
+        });
     });
 
     it("rename", () => {
@@ -1099,6 +1135,75 @@ describe("TestView", () => {
                     }
                 }
             }
+        });
+
+        expectCode(view.mapper.rowReader.constructor.toString(), `
+            class extends $baseClass {
+                read(parent, reader) {
+                    const dto = {
+                        bookId: reader.get(0), 
+                        key: null, 
+                        associations: null
+                    };
+                    this._key(dto).bookName = reader.get(1);
+                    this._key(dto).bookEdition = reader.get(2);
+                    return { reader: this, parent, dto, implicit: undefined };
+                }
+                _key(dto) {
+                    let o = dto.key;
+                    if (o == null) {
+                        dto.key = o = {
+                            bookName: null, 
+                            bookEdition: null
+                        };
+                    }
+                    return o;
+                }
+                _associations(dto) {
+                    let o = dto.associations;
+                    if (o == null) {
+                        dto.associations = o = {
+                            authors: null
+                        };
+                    }
+                    return o;
+                }
+            }
+        `);
+        const row = view.mapper.rowReader.read(
+            undefined, 
+            makeReader(12, "GraphQL in Action", 3)
+        );
+        expect(row.dto).toEqual({
+            bookId: 12,
+            key: {
+                bookName: "GraphQL in Action",
+                bookEdition: 3
+            },
+            associations: null
+        });
+
+        const authorMapper = view.mapper.fields.find(f => f.prop.name === "authors")!.subMapper!;
+        expectCode(authorMapper.rowReader.constructor.toString(), `
+            class extends $baseClass {
+                read(parent, reader) {
+                    const dto = {
+                        id: reader.get(0), 
+                        flattenFn: reader.get(1), 
+                        flattenLn: reader.get(2)
+                    };
+                    return { reader: this, parent, dto, implicit: undefined };
+                }
+            }
+        `);
+        const authorRow = authorMapper.rowReader.read(
+            undefined,
+            makeReader(3, "Alex", "Banks")
+        );
+        expect(authorRow.dto).toEqual({
+            id: 3,
+            flattenFn: "Alex",
+            flattenLn: "Banks"
         });
     });
 
@@ -1204,6 +1309,96 @@ describe("TestView", () => {
             "parentName": undefined,
             "parentGrandId": undefined,
             "parentGrandName": undefined
+        });
+        
+        expectCode(view.mapper.rowReader.constructor.toString(), `
+            class extends $baseClass {
+                read(parent, reader) {
+                    const dto = {
+                        id: reader.get(0), 
+                        name: reader.get(1), 
+                        parentId: null, 
+                        parentName: null, 
+                        parentGrandId: null, 
+                        parentGrandName: null
+                    };
+                    const implicit = {
+                        _2: reader.get(2)
+                    };
+                    return { reader: this, parent, dto, implicit };
+                }
+            }
+        `);
+        const row = view.mapper.rowReader.read(
+            undefined,
+            makeReader(10, "Cococala", 3)
+        );
+        expect(row.dto).toEqual({
+            id: 10,
+            name: "Cococala",
+            parentId: null,
+            parentName: null,
+            parentGrandId: null,
+            parentGrandName: null
+        });
+        expect(row.implicit).toEqual({
+            "_2": 3
+        });
+
+        const pMapper = view.mapper.fields.find(f => f.prop.name === "parentNode")!.subMapper!;
+        expectCode(pMapper.rowReader.constructor.toString(), `
+            class extends $baseClass {
+                read(parent, reader) {
+                    const dto = {
+                    };
+                    parent.dto.parentId = reader.get(0);
+                    parent.dto.parentName = reader.get(1);
+                    const implicit = {
+                        _2: reader.get(2)
+                    };
+                    return { reader: this, parent, dto, implicit };
+                }
+            }
+        `);
+        const pRow = pMapper.rowReader.read(
+            row,
+            makeReader(3, "Drinks", 1)
+        );
+        expect(pRow.implicit).toEqual({
+            _2: 1
+        });
+        expect(row.dto).toEqual({
+            id: 10,
+            name: "Cococala",
+            parentId: 3,
+            parentName: "Drinks",
+            parentGrandId: null,
+            parentGrandName: null
+        });
+
+        const ppMapper = pMapper.fields.find(f => f.prop.name === "parentNode")!.subMapper!;
+        expectCode(ppMapper.rowReader.constructor.toString(), `
+            class extends $baseClass {
+                read(parent, reader) {
+                    const dto = {
+                    };
+                    parent.parent.dto.parentGrandId = reader.get(0);
+                    parent.parent.dto.parentGrandName = reader.get(1);
+                    return { reader: this, parent, dto, implicit: undefined };
+                }
+            }
+        `);
+        ppMapper.rowReader.read(
+            pRow,
+            makeReader(1, "Food", 1)
+        );
+        expect(row.dto).toEqual({
+            id: 10,
+            name: "Cococala",
+            parentId: 3,
+            parentName: "Drinks",
+            parentGrandId: 1,
+            parentGrandName: "Food"
         });
     });
 

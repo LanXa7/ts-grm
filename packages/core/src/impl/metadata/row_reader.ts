@@ -1,7 +1,7 @@
 import { CodeWriter } from "./code_writer";
 import { DataReader } from "./data_reader";
 import { DtoMapper } from "./dto_mapper";
-import { buildShape, Shape } from "./shape";
+import { buildShape, isEmptyShape, Shape } from "./shape";
 
 export type Row = {
 
@@ -75,6 +75,9 @@ function writeRootMember(
     nullAsUndefined: boolean,
     writer: CodeWriter
 ) {
+    if (typeof member === "object" && isEmptyShape(member)) {
+        return;
+    }
     writer.separator();
     if (typeof member === "number") {
         writer.code(key).code(": reader.get(").code(`${member}`).code(")");
@@ -141,6 +144,9 @@ function writeFold(
             continue;
         }
         if ((member as any).__array != null || (member as any).__ref != null) {
+            continue;
+        }
+        if (isEmptyShape(member)) {
             continue;
         }
         writer.code(contextPath).code("_").code(key).code("(dto) ");

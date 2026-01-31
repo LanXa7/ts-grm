@@ -13,6 +13,14 @@ export type ShapeMember =
     | { __array: Shape }
     | { __ref: Shape };
 
+export function isEmptyShape(shape: Shape): boolean {
+    const keys = Object.keys(shape);
+    if (keys.length === 0) {
+        return true;
+    }
+    return keys.length === 1 && keys[0] === "__implicit";
+}
+
 export function buildShape(
     mapper: DtoMapper,
 ): Shape {
@@ -43,37 +51,41 @@ function fillShapeNode(
                 shapeScope!.implicit[`_${i}`] = field.columnIndex!;
             }
         } else {
-            for (const path of field.paths) {
-                if (typeof path === 'string') {
-                    shapeScope!.shape[path] = buildShapeMember(field, false);
+            handleExplictField(field);
+        }
+    }
+}
+
+function handleExplictField(field: DtoMapperField) {
+    for (const path of field.paths) {
+        if (typeof path === 'string') {
+            shapeScope!.shape[path] = buildShapeMember(field, false)
+        } else {
+            const oldScope = shapeScope!;
+            let scope = oldScope;
+            const max = path.length - 1;
+            for (let i = 0; i < max; i++) {
+                if (path[i] === "..") {
+                    if (scope.parent == null) {
+                        return;
+                    }
+                    scope = scope.parent;
                 } else {
-                    const oldScope = shapeScope!;
-                    let scope = oldScope;
-                    const max = path.length - 1;
-                    for (let i = 0; i < max; i++) {
-                        if (path[i] === "..") {
-                            if (scope.parent == null) {
-                                return;
-                            }
-                            scope = scope.parent;
-                        } else {
-                            let foldShape = scope.shape[path[i]!] as Shape;
-                            if (foldShape == null) {
-                                scope.shape[path[i]!] = foldShape = {};
-                            }
-                            scope = scope.fold(foldShape);
-                        }
+                    let foldShape = scope.shape[path[i]!] as Shape;
+                    if (foldShape == null) {
+                        scope.shape[path[i]!] = foldShape = {};
                     }
-                    shapeScope = scope;
-                    try {
-                        scope!.shape[path[max]!] = buildShapeMember(
-                            field, 
-                            oldScope.mapper !== scope.mapper
-                        );
-                    } finally {
-                        shapeScope = oldScope;
-                    }
+                    scope = scope.fold(foldShape);
                 }
+            }
+            shapeScope = scope;
+            try {
+                scope!.shape[path[max]!] = buildShapeMember(
+                    field, 
+                    oldScope.mapper !== scope.mapper
+                );
+            } finally {
+                shapeScope = oldScope;
             }
         }
     }
@@ -82,7 +94,7 @@ function fillShapeNode(
 function buildShapeMember(
     field: DtoMapperField,
     ignoreColumnIndex: boolean
-): ShapeMember {
+): ShapeMember | undefined {
     if (field.subMapper) {
         if (isCollection(field.prop)) {
             return { 
