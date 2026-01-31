@@ -4,7 +4,7 @@ import { Dto, DtoField } from "./dto";
 import { Entity } from "./entity";
 import { EntityProp } from "./entity_prop";
 import { dtoField } from "./dto_builder";
-import { createRowMapper, RowMapper } from "./row_mapper";
+import { createRowMapper, RowReader } from "./row_reader";
 
 export function dtoMapper(dto: Dto, nullAsUndefined: boolean): DtoMapper {
     const mapper = new Mapper(
@@ -20,7 +20,7 @@ export function dtoMapper(dto: Dto, nullAsUndefined: boolean): DtoMapper {
 
 export class DtoMapper {
 
-    private _rowMapper: RowMapper | undefined = undefined;
+    private _rowReader: RowReader | undefined = undefined;
 
     constructor(
         readonly entity: Entity,
@@ -29,12 +29,12 @@ export class DtoMapper {
         readonly fields: ReadonlyArray<DtoMapperField>
     ) {}
 
-    get rowMapper(): RowMapper {
-        let rowMapper = this._rowMapper;
-        if (rowMapper == null) {
-            this._rowMapper = rowMapper = createRowMapper(this);
+    get rowReader(): RowReader {
+        let rowReader = this._rowReader;
+        if (rowReader == null) {
+            this._rowReader = rowReader = createRowMapper(this);
         }
-        return rowMapper;
+        return rowReader;
     }
 }
 

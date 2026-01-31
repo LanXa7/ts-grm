@@ -69,7 +69,7 @@ describe("TestView", () => {
             "edition": 2
         });
 
-        expectCode(view.mapper.rowMapper.constructor.toString(), `
+        expectCode(view.mapper.rowReader.constructor.toString(), `
             class extends $baseClass {
                 create(parent, reader) {
                     const dto = {
@@ -77,11 +77,11 @@ describe("TestView", () => {
                         name: reader.get(1), 
                         edition: reader.get(2)
                     };
-                    return { mapper: this, parent, dto, implicit: undefined };
+                    return { reader: this, parent, dto, implicit: undefined };
                 }
             }
         `);
-        const row = view.mapper.rowMapper.create(
+        const row = view.mapper.rowReader.create(
             undefined, 
             makeReader(3, "GraphQL in Action", 2)
         );
@@ -208,7 +208,7 @@ describe("TestView", () => {
                 }
         });
 
-        expectCode(view.mapper.rowMapper.constructor.toString(), `
+        expectCode(view.mapper.rowReader.constructor.toString(), `
             class extends $baseClass {
                 create(parent, reader) {
                     const dto = {
@@ -221,11 +221,11 @@ describe("TestView", () => {
                         _2: reader.get(2), 
                         _4: reader.get(3)
                     };
-                    return { mapper: this, parent, dto, implicit };
+                    return { reader: this, parent, dto, implicit };
                 }
             }
         `);
-        const row = view.mapper.rowMapper.create(
+        const row = view.mapper.rowReader.create(
             undefined, 
             makeReader("GraphQL in Action", 3, 2, 12)
         );
@@ -245,7 +245,7 @@ describe("TestView", () => {
             .fields
             .find(f => f.prop.name === "store")!
             .subMapper!;
-        expectCode(storeMapper.rowMapper.constructor.toString(), `
+        expectCode(storeMapper.rowReader.constructor.toString(), `
             class extends $baseClass {
                 create(parent, reader) {
                     const dto = {
@@ -253,11 +253,11 @@ describe("TestView", () => {
                         name: reader.get(1), 
                         version: reader.get(2)
                     };
-                    return { mapper: this, parent, dto, implicit: undefined };
+                    return { reader: this, parent, dto, implicit: undefined };
                 }
             }
         `);
-        const storeRow = storeMapper.rowMapper.create(
+        const storeRow = storeMapper.rowReader.create(
             undefined,
             makeReader(2, "MANNING", 0)
         );
@@ -272,16 +272,16 @@ describe("TestView", () => {
             .fields
             .find(f => f.prop.name === "authors")!
             .subMapper!;
-        expectCode(authorMapper.rowMapper.constructor.toString(), `
+        expectCode(authorMapper.rowReader.constructor.toString(), `
             class extends $baseClass {
                 create(parent, reader) {
                     const dto = {
                         id: reader.get(0), 
                         name: null
                     };
-                    this._name(dto).firstName= reader.get(1);
-                    this._name(dto).lastName= reader.get(2);
-                    return { mapper: this, parent, dto, implicit: undefined };
+                    this._name(dto).firstName = reader.get(1);
+                    this._name(dto).lastName = reader.get(2);
+                    return { reader: this, parent, dto, implicit: undefined };
                 }
                 _name(dto) {
                     let o = dto.name;
@@ -295,7 +295,7 @@ describe("TestView", () => {
                 }
             }
         `);
-        const authorRow = authorMapper.rowMapper.create(
+        const authorRow = authorMapper.rowReader.create(
             undefined, 
             makeReader(3, "Alex", "Banks")
         );
@@ -410,7 +410,7 @@ describe("TestView", () => {
             }
         });
 
-        expectCode(view.mapper.rowMapper.constructor.toString(), `
+        expectCode(view.mapper.rowReader.constructor.toString(), `
             class extends $baseClass {
                 create(parent, reader) {
                     const dto = {
@@ -418,11 +418,11 @@ describe("TestView", () => {
                         name: reader.get(1), 
                         books: null
                     };
-                    return { mapper: this, parent, dto, implicit: undefined };
+                    return { reader: this, parent, dto, implicit: undefined };
                 }
             }
         `);
-        const row = view.mapper.rowMapper.create(
+        const row = view.mapper.rowReader.create(
             undefined, 
             makeReader(2, "MANNING")
         );
@@ -433,7 +433,7 @@ describe("TestView", () => {
         });
         
         const bookMapper = view.mapper.fields.find(f => f.prop.name === "books")!.subMapper!;
-        expectCode(bookMapper.rowMapper.constructor.toString(), `
+        expectCode(bookMapper.rowReader.constructor.toString(), `
             class extends $baseClass {
                 create(parent, reader) {
                     const dto = {
@@ -441,11 +441,11 @@ describe("TestView", () => {
                         name: reader.get(1), 
                         authors: null
                     };
-                    return { mapper: this, parent, dto, implicit: undefined };
+                    return { reader: this, parent, dto, implicit: undefined };
                 }
             }
         `);
-        const bookRow = bookMapper.rowMapper.create(
+        const bookRow = bookMapper.rowReader.create(
             undefined, 
             makeReader(12, "GraphQL in Action")
         );
@@ -456,16 +456,16 @@ describe("TestView", () => {
         });
 
         const authorMapper = bookMapper.fields.find(f => f.prop.name === "authors")!.subMapper!;
-        expectCode(authorMapper.rowMapper.constructor.toString(), `
+        expectCode(authorMapper.rowReader.constructor.toString(), `
             class extends $baseClass {
                 create(parent, reader) {
                     const dto = {
                         id: reader.get(0), 
                         name: null
                     };
-                    this._name(dto).firstName= reader.get(1);
-                    this._name(dto).lastName= reader.get(2);
-                    return { mapper: this, parent, dto, implicit: undefined };
+                    this._name(dto).firstName = reader.get(1);
+                    this._name(dto).lastName = reader.get(2);
+                    return { reader: this, parent, dto, implicit: undefined };
                 }
                 _name(dto) {
                     let o = dto.name;
@@ -479,7 +479,7 @@ describe("TestView", () => {
                 }
             }
         `);
-        const authorRow = authorMapper.rowMapper.create(
+        const authorRow = authorMapper.rowReader.create(
             undefined, 
             makeReader(3, "Alex", "Banks")
         );
@@ -591,6 +591,83 @@ describe("TestView", () => {
                         }
                     }
                 }
+            }
+        });
+
+        expectCode(view.mapper.rowReader.constructor.toString(), `
+            class extends $baseClass {
+                create(parent, reader) {
+                    const dto = {
+                        name: reader.get(0), 
+                        books: null
+                    };
+                    const implicit = {
+                        _1: reader.get(1)
+                    };
+                    return { reader: this, parent, dto, implicit };
+                }
+            }
+        `);
+        const row = view.mapper.rowReader.create(
+            undefined, 
+            makeReader("MANNING", 2)
+        );
+        expect(row.dto).toEqual({name: "MANNING", books: null});
+        expect(row.implicit).toEqual({"_1": 2});
+
+        const bookMapper = view.mapper.fields.find(f => f.prop.name === "books")!.subMapper!;
+        expectCode(bookMapper.rowReader.constructor.toString(), `
+            class extends $baseClass {
+                create(parent, reader) {
+                    const dto = {
+                        name: reader.get(0), 
+                        authors: null
+                    };
+                    const implicit = {
+                        _1: reader.get(1)
+                    };
+                    return { reader: this, parent, dto, implicit };
+                }
+            }
+        `);
+        const bookRow = bookMapper.rowReader.create(
+            undefined,
+            makeReader("GraphQL in Action", 12)
+        );
+        expect(bookRow.dto).toEqual({name: "GraphQL in Action", "authors": null});
+        expect(bookRow.implicit).toEqual({"_1": 12});
+
+        const authorMapper = bookMapper.fields.find(f => f.prop.name === "authors")!.subMapper!;
+        expectCode(authorMapper.rowReader.constructor.toString(), `
+            class extends $baseClass {
+                create(parent, reader) {
+                    const dto = {
+                        name: null
+                    };
+                    this._name(dto).firstName = reader.get(0);
+                    this._name(dto).lastName = reader.get(1);
+                    return { reader: this, parent, dto, implicit: undefined };
+                }
+                _name(dto) {
+                    let o = dto.name;
+                    if (o == null) {
+                        dto.name = o = {
+                            firstName: null, 
+                            lastName: null
+                        };
+                    }
+                    return o;
+                }
+            }
+        `);
+        const authorRow = authorMapper.rowReader.create(
+            undefined, 
+            makeReader("Alex", "Banks")
+        );
+        expect(authorRow.dto).toEqual({
+            name: {
+                firstName: "Alex",
+                lastName: "Banks"
             }
         });
     });

@@ -5,7 +5,7 @@ import { buildShape, Shape } from "./shape";
 
 export type Row = {
 
-    readonly mapper: RowMapper;
+    readonly reader: RowReader;
     
     readonly parent: Row;
 
@@ -14,12 +14,12 @@ export type Row = {
     readonly implicit: object;
 }
 
-export abstract class RowMapper {
+export abstract class RowReader {
 
     abstract create(parent: Row | undefined, reader: DataReader): Row;
 }
 
-export function createRowMapper(mapper: DtoMapper): RowMapper {
+export function createRowMapper(mapper: DtoMapper): RowReader {
 
     const shape = buildShape(mapper);
 
@@ -30,7 +30,7 @@ export function createRowMapper(mapper: DtoMapper): RowMapper {
             writeCreate(shape, mapper, writer);
             writeFold("", shape, mapper.nullAsUndefined, writer);
         });
-    const cls = new Function("$baseClass", writer.toString())(RowMapper);
+    const cls = new Function("$baseClass", writer.toString())(RowReader);
     return new cls();
 }
 
@@ -54,7 +54,7 @@ function writeCreate(
             .newLine(";");
         writeDepthAssignments(mapper, writer);
         if (implicit == null) {
-            writer.code("return { mapper: this, parent, dto, implicit: undefined };");
+            writer.code("return { reader: this, parent, dto, implicit: undefined };");
             return;
         }
         writer
@@ -65,7 +65,7 @@ function writeCreate(
                 }
             })
             .newLine(";")
-            .code("return { mapper: this, parent, dto, implicit };");
+            .code("return { reader: this, parent, dto, implicit };");
     }).newLine();
 }
 
@@ -105,7 +105,7 @@ function writeDepthAssignments(
                 .code(path.slice(0, path.length - 1).join("_"))
                 .code("(dto).") 
                 .code(path[path.length - 1]!)
-                .code("= reader.get(")
+                .code(" = reader.get(")
                 .code(`${field.columnIndex}`)
                 .code(")")
                 .newLine(";");
