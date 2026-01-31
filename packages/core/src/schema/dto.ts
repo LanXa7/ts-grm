@@ -959,10 +959,8 @@ export type EmbeddedDataType<T, TViewNullType extends ViewNullType> =
 
 export class View<TModel extends AnyModel, T> {
 
-    readonly $type: {
-        view: [TModel, T] | undefined
-    } = {
-        view: undefined
+    __type(): { view: [TModel, T] | undefined } {
+        return { view: undefined };
     };
 
     constructor(readonly mapper: DtoMapper) {}

@@ -9,7 +9,7 @@ import { Criteria } from "./criteria";
 
 export interface SqlClient {
 
-    $type(): { sqlClient: undefined };
+    __type(): { sqlClient: undefined };
 
     findNonNull<V extends View<any, any>>(
         view: V,

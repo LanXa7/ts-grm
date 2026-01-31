@@ -16,7 +16,7 @@ export type Row = {
 
 export abstract class RowReader {
 
-    abstract create(parent: Row | undefined, reader: DataReader): Row;
+    abstract read(parent: Row | undefined, reader: DataReader): Row;
 }
 
 export function createRowReader(mapper: DtoMapper): RowReader {
@@ -27,20 +27,20 @@ export function createRowReader(mapper: DtoMapper): RowReader {
     writer
         .code("return class extends $baseClass ")
         .scope("CURLY_BRACKETS", () => {
-            writeCreate(shape, mapper, writer);
+            writeRead(shape, mapper, writer);
             writeFold("", shape, mapper.nullAsUndefined, writer);
         });
     const cls = new Function("$baseClass", writer.toString())(RowReader);
     return new cls();
 }
 
-function writeCreate(
+function writeRead(
     shape: Shape,
     mapper: DtoMapper,
     writer: CodeWriter
 ) {
     const implicit = shape.__implicit;
-    writer.code("create(parent, reader) ");
+    writer.code("read(parent, reader) ");
     writer.scope("CURLY_BRACKETS", () => {
         writer
             .code("const dto = ")
@@ -100,10 +100,23 @@ function writeDepthAssignments(
             if (path.length === 1) {
                 continue;
             }
+            const parents: Array<string> = [];
+            for (const part of path) {
+                if (part !== "..") {
+                    break;
+                }
+                parents.push("parent");
+            }
+            const dto = parents.length === 0
+                ? "dto" 
+                : `${parents.join(".")}.dto`;
+            const foldKeys = path.slice(parents.length, path.length - 1);
+            const target = foldKeys.length === 0
+                ? dto
+                : `this._${foldKeys.join("_")}(${dto})`;
             writer
-                .code("this._")
-                .code(path.slice(0, path.length - 1).join("_"))
-                .code("(dto).") 
+                .code(target)
+                .code(".")
                 .code(path[path.length - 1]!)
                 .code(" = reader.get(")
                 .code(`${field.columnIndex}`)
@@ -158,10 +171,6 @@ function writeFoldBody(
 ) {
     for (const deepKey in member) {
         if (deepKey === "__implicit") {
-            continue;
-        }
-        const deepMember = member[deepKey];
-        if ((deepMember as any).__array != null || (deepMember as any).__ref != null) {
             continue;
         }
         writer.separator().code(deepKey).code(": ");

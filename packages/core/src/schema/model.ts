@@ -115,10 +115,8 @@ export type AnyModel = Model<any, any, any, any, any>;
 
 export class ModelContext<TCtor extends Ctor> {
     
-    readonly $type: {
-        modelContext: TCtor | undefined
-    } = {
-        modelContext: undefined
+    __type(): { modelContext: TCtor | undefined } {
+        return { modelContext: undefined };
     };
 
     unique(...paths : UniqueKeys<CtorMembers<TCtor>>[]) {

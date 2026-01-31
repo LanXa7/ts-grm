@@ -52,11 +52,14 @@ function fillShapeNode(
                     const max = path.length - 1;
                     for (let i = 0; i < max; i++) {
                         if (path[i] === "..") {
-                            scope = scope.parent!;
+                            if (scope.parent == null) {
+                                return;
+                            }
+                            scope = scope.parent;
                         } else {
-                            let foldShape = scope!.shape[path[i]!] as Shape;
+                            let foldShape = scope.shape[path[i]!] as Shape;
                             if (foldShape == null) {
-                                scope!.shape[path[i]!] = foldShape = {};
+                                scope.shape[path[i]!] = foldShape = {};
                             }
                             scope = scope.fold(foldShape);
                         }
