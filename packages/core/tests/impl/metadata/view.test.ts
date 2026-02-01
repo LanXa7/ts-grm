@@ -1463,6 +1463,50 @@ describe("TestView", () => {
                 "_2": 2
             }
         });
+
+        expectCode(view.mapper.rowReader.constructor.toString(), `
+            class extends $baseClass {
+                read(parent, reader) {
+                    const dto = {
+                        order: null
+                    };
+                    const implicit = {
+                        _0: reader.get(0), 
+                        _1: reader.get(1), 
+                        _2: reader.get(2)
+                    };
+                    return { reader: this, parent, dto, implicit };
+                }
+            }
+        `);
+        const row = view.mapper.rowReader.read(
+            undefined,
+            makeReader(32, 16, 16)
+        );
+        expect(row.implicit).toEqual({
+            _0: 32,
+            _1: 16,
+            _2: 16
+        });
+
+        const orderMapper = view.mapper.fields.find(f => f.prop.name === "order")!.subMapper!;
+        expectCode(orderMapper.rowReader.constructor.toString(), `
+            class extends $baseClass {
+                read(parent, reader) {
+                    const dto = {
+                        name: reader.get(0)
+                    };
+                    return { reader: this, parent, dto, implicit: undefined };
+                }
+            }
+        `);
+        const orderRow = orderMapper.rowReader.read(
+            undefined,
+            makeReader("my-order")
+        );
+        expect(orderRow.dto).toEqual({
+            name: "my-order"
+        });
     });
 
     it("explicitEmbeddedReferenceKey", () => {
@@ -1534,6 +1578,74 @@ describe("TestView", () => {
                     "name": 0
                 }
             }
+        });
+
+        expectCode(view.mapper.rowReader.constructor.toString(), `
+            class extends $baseClass {
+                read(parent, reader) {
+                    const dto = {
+                        orderId: null, 
+                        order: null
+                    };
+                    this._orderId(dto).x = reader.get(0);
+                    this._orderId_y(dto).a = reader.get(1);
+                    this._orderId_y(dto).b = reader.get(2);
+                    return { reader: this, parent, dto, implicit: undefined };
+                }
+                _orderId(dto) {
+                    let o = dto.orderId;
+                    if (o == null) {
+                        dto.orderId = o = {
+                            x: null, 
+                            y: null
+                        };
+                    }
+                    return o;
+                }
+                _orderId_y(dto) {
+                    let o = this._orderId(dto).y;
+                    if (o == null) {
+                        this._orderId(dto).y = o = {
+                            a: null, 
+                            b: null
+                        };
+                    }
+                    return o;
+                }
+            }
+        `);
+        const row = view.mapper.rowReader.read(
+            undefined,
+            makeReader(32, 16, 16)
+        );
+        expect(row.dto).toEqual({
+            orderId: {
+                x: 32,
+                y: {
+                    a: 16,
+                    b: 16
+                }
+            },
+            order: null
+        });
+
+        const orderMapper = view.mapper.fields.find(f => f.prop.name === "order")!.subMapper!;
+        expectCode(orderMapper.rowReader.constructor.toString(), `
+            class extends $baseClass {
+                read(parent, reader) {
+                    const dto = {
+                        name: reader.get(0)
+                    };
+                    return { reader: this, parent, dto, implicit: undefined };
+                }
+            }
+        `);
+        const orderRow = orderMapper.rowReader.read(
+            undefined,
+            makeReader("my-order")
+        );
+        expect(orderRow.dto).toEqual({
+            name: "my-order"
         });
     });
 
@@ -1607,6 +1719,77 @@ describe("TestView", () => {
                 "_2": 2
             }
         });
+
+        expectCode(view.mapper.rowReader.constructor.toString(), `
+            class extends $baseClass {
+                read(parent, reader) {
+                    const dto = {
+                        orderId: null, 
+                        order: null
+                    };
+                    this._orderId_y(dto).a = reader.get(0);
+                    this._orderId_y(dto).b = reader.get(1);
+                    const implicit = {
+                        _2: reader.get(2)
+                    };
+                    return { reader: this, parent, dto, implicit };
+                }
+                _orderId(dto) {
+                    let o = dto.orderId;
+                    if (o == null) {
+                        dto.orderId = o = {
+                            y: null
+                        };
+                    }
+                    return o;
+                }
+                _orderId_y(dto) {
+                    let o = this._orderId(dto).y;
+                    if (o == null) {
+                        this._orderId(dto).y = o = {
+                            a: null, 
+                            b: null
+                        };
+                    }
+                    return o;
+                }
+            }
+        `);
+        const row = view.mapper.rowReader.read(
+            undefined,
+            makeReader(16, 16, 32)
+        );
+        expect(row.dto).toEqual({
+            orderId: {
+                y: {
+                    a: 16,
+                    b: 16
+                }
+            },
+            order: null
+        });
+        expect(row.implicit).toEqual({
+            _2: 32
+        });
+
+        const orderMapper = view.mapper.fields.find(f => f.prop.name === "order")!.subMapper!;
+        expectCode(orderMapper.rowReader.constructor.toString(), `
+            class extends $baseClass {
+                read(parent, reader) {
+                    const dto = {
+                        name: reader.get(0)
+                    };
+                    return { reader: this, parent, dto, implicit: undefined };
+                }
+            }
+        `);
+        const orderRow = orderMapper.rowReader.read(
+            undefined,
+            makeReader("my-order")
+        );
+        expect(orderRow.dto).toEqual({
+            name: "my-order"
+        });
     });
 
     it("recursive", () => {
@@ -1666,6 +1849,39 @@ describe("TestView", () => {
                 "_3": 2
             }
         });
+
+        expectCode(view.mapper.rowReader.constructor.toString(), `
+            class extends $baseClass {
+                read(parent, reader) {
+                    const dto = {
+                        name: reader.get(0), 
+                        parentNode: null, 
+                        childNodes: null
+                    };
+                    const implicit = {
+                        _1: reader.get(1), 
+                        _3: reader.get(2)
+                    };
+                    return { reader: this, parent, dto, implicit };
+                }
+            }
+        `);
+        const row = view.mapper.rowReader.read(
+            undefined, 
+            makeReader("Drinks", 1, 3)
+        );
+        expect(row.dto).toEqual({
+            name: "Drinks",
+            parentNode: null,
+            childNodes: null
+        });
+        expect(row.implicit).toEqual({
+            _1: 1,
+            _3: 3
+        });
+
+        // const parentMapper = view.mapper.fields.find(f => f.prop.name === "parentNode")!.subMapper!;
+        // console.log(parentMapper.rowReader.constructor.toString());
     });
 });
 

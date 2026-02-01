@@ -151,7 +151,7 @@ function writeFold(
         }
         writer.code(contextPath).code("_").code(key).code("(dto) ");
         writer.scope("CURLY_BRACKETS", () => {
-            const parent = contextPath !== "" ? `${contextPath}()` : "dto";
+            const parent = contextPath !== "" ? `this.${contextPath}(dto)` : "dto";
             writer.code(`let o = ${parent}.${key}`).newLine(";");
             writer.code("if (o == null) ").scope("CURLY_BRACKETS", () => {
                 writer.code(`${parent}.${key} = o = `);
