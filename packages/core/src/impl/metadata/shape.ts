@@ -97,24 +97,24 @@ function buildShapeMember(
 ): ShapeMember | undefined {
     if (field.subMapper) {
         if (isCollection(field.prop)) {
-            return { 
-                __array: buildShapeNodeImpl(field.subMapper)
-            };
+            return field.recursiveDepth != null 
+                ? { 
+                    __array: buildShapeNodeImpl(field.subMapper),
+                    ...recursive
+                } : { 
+                    __array: buildShapeNodeImpl(field.subMapper)
+                };
         } 
         if (isReference(field.prop)) {
-            return {
-                __ref: buildShapeNodeImpl(field.subMapper)
-            };
+            return field.recursiveDepth != null 
+                ? {
+                    __ref: buildShapeNodeImpl(field.subMapper),
+                    ...recursive
+                } : {
+                    __ref: buildShapeNodeImpl(field.subMapper)
+                };
         }
         return buildShapeNodeImpl(field.subMapper);
-    } else if (field.recursiveDepth !== undefined) {
-        if (isCollection(field.prop)) {
-            return { __array: {...recursive} };
-        }
-        if (isReference(field.prop)) {
-            return { __ref: {...recursive} };
-        }
-        return { ...recursive };
     }
     if (ignoreColumnIndex) {
         return undefined;

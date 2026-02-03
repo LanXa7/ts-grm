@@ -1816,7 +1816,29 @@ describe("TestView", () => {
                     "dependencies": [1],
                     "prop": "TreeNode.parentNode",
                     "paths": ["parentNode"],
-                    "recursiveDepth": -1 // Unlimited depth
+                    "recursiveDepth": -1, // Unlimited depth
+                    "subMapper": {
+                        "entity": "TreeNode",
+                        "associatedProp": "TreeNode.parentNode",
+                        "fields": [
+                            {
+                                "columnIndex": 0,
+                                "prop": "TreeNode.name",
+                                "paths": ["name"]
+                            },
+                            {
+                                "columnIndex": 1,
+                                "isDependent": true,
+                                "prop": "TreeNode.parentNodeId",
+                                "paths": [] // Implicit field to fetch `TreeNode.parentNode`
+                            },
+                            {
+                                "dependencies": [1],
+                                "prop": "TreeNode.parentNode",
+                                "paths": ["parentNode"]
+                            }
+                        ]
+                    }
                 },
                 {
                     "columnIndex": 2,
@@ -1828,20 +1850,52 @@ describe("TestView", () => {
                     "dependencies": [3],
                     "prop": "TreeNode.childNodes",
                     "paths": ["childNodes"],
-                    "recursiveDepth": -1 // Unlimited depth
+                    "recursiveDepth": -1, // Unlimited depth
+                    "subMapper": {
+                        "entity": "TreeNode",
+                        "associatedProp": "TreeNode.childNodes",
+                        "fields": [
+                            {
+                                "columnIndex": 0,
+                                "prop": "TreeNode.name",
+                                "paths": ["name"]
+                            },
+                            {
+                                "columnIndex": 1,
+                                "isDependent": true,
+                                "prop": "TreeNode.id",
+                                "paths": [] // Implict field to fetch `TreeNode.childNodes`
+                            },
+                            {
+                                "dependencies": [1],
+                                "prop": "TreeNode.childNodes",
+                                "paths": ["childNodes"]
+                            }
+                        ]
+                    }
                 }
             ]
         });
         expect(buildShape(view.mapper)).toEqual({
             "name": 0,
             "parentNode": {
+                "__recursive": 1,
                 "__ref": {
-                    "__recursive": 1
+                    "name": 0,
+                    "__implicit": {
+                        "_1": 1
+                    },
+                    "parentNode": undefined
                 }
             },
             "childNodes": {
+                "__recursive": 1,
                 "__array": {
-                    "__recursive": 1
+                    "name": 0,
+                    "__implicit": {
+                        "_1": 1
+                    },
+                    "childNodes": undefined
                 }
             },
             "__implicit": {
@@ -1880,8 +1934,59 @@ describe("TestView", () => {
             _3: 3
         });
 
-        // const parentMapper = view.mapper.fields.find(f => f.prop.name === "parentNode")!.subMapper!;
-        // console.log(parentMapper.rowReader.constructor.toString());
+        const parentMapper = view.mapper.fields.find(f => f.prop.name === "parentNode")!.subMapper!;
+        expectCode(parentMapper.rowReader.constructor.toString(), `
+            class extends $baseClass {
+                read(parent, reader) {
+                    const dto = {
+                        name: reader.get(0), 
+                        parentNode: null
+                    };
+                    const implicit = {
+                        _1: reader.get(1)
+                    };
+                    return { reader: this, parent, dto, implicit };
+                }
+            }
+        `);
+        const parentRow = parentMapper.rowReader.read(
+            undefined,
+            makeReader("Food", 1)
+        );
+        expect(parentRow.dto).toEqual({
+            name: "Food",
+            parentNode: null
+        });
+        expect(parentRow.implicit).toEqual({
+            _1: 1
+        });
+
+        const childMapper = view.mapper.fields.find(f => f.prop.name === "childNodes")!.subMapper!;
+        expectCode(childMapper.rowReader.constructor.toString(), `
+            class extends $baseClass {
+                read(parent, reader) {
+                    const dto = {
+                        name: reader.get(0), 
+                        childNodes: null
+                    };
+                    const implicit = {
+                        _1: reader.get(1)
+                    };
+                    return { reader: this, parent, dto, implicit };
+                }
+            }
+        `);
+        const childRow = childMapper.rowReader.read(
+            undefined,
+            makeReader("Cococala", 10)
+        );
+        expect(childRow.dto).toEqual({
+            name: "Cococala",
+            childNodes: null
+        });
+        expect(childRow.implicit).toEqual({
+            _1: 10
+        });
     });
 });
 

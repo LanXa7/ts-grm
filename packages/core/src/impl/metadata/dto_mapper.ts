@@ -156,12 +156,89 @@ class Mapper {
     }
 
     toDtoMapper(): DtoMapper {
+        const fields = Array.from(this.fieldMap.values()).map(f => f.toDtoMapperField());
+        this._handleRecursiveFields(fields);
         return new DtoMapper(
             this.entity,
             this.nullAsUndefined,
             this.associatedProp,
-            Array.from(this.fieldMap.values()).map(f => f.toDtoMapperField())
+            fields
         );
+    }
+
+    private _handleRecursiveFields(
+        fields: Array<DtoMapperField>
+    ) {
+        for (let i = 0; i < fields.length; i++) {
+            const field = fields[i]!;
+            if (field.recursiveDepth == null) {
+                continue;
+            }
+            fields[i] = {
+                ...field,
+                subMapper: this._makeRecursiveSubMapper(field, fields)
+            }
+        }
+    }
+
+    private _makeRecursiveSubMapper(
+        recursiveField: DtoMapperField,
+        fields: ReadonlyArray<DtoMapperField>
+    ): DtoMapper {
+        const usedArr: boolean[] = new Array(fields.length).fill(false);
+        for (let i = 0; i < fields.length; i++) {
+            const field = fields[i]!;
+            if (field === recursiveField) {
+                Mapper.useField(i, fields, usedArr);
+            } else if (field.recursiveDepth == null && field.paths.length != 0) {
+                Mapper.useField(i, fields, usedArr);
+            }
+        }
+        const newFields: Array<DtoMapperField> = [];
+        let indexDelta = 0;
+        let columnIndexDelta = 0;
+        for (let i = 0; i < fields.length; i++) {
+            const field = fields[i]!;
+            if (!usedArr[i]) {
+                indexDelta--;
+                if (field.columnIndex != null) {
+                    columnIndexDelta--;
+                }
+                continue;
+            }
+            const newField: DtoMapperField = {
+                ...field,
+                recursiveDepth: undefined,
+                columnIndex: field.columnIndex != null 
+                    ? field.columnIndex + columnIndexDelta 
+                    : undefined,
+                dependencies: field.dependencies?.map(i => i + indexDelta)
+            };
+            newFields.push(newField);
+        }
+        return new DtoMapper(
+            this.entity,
+            this.nullAsUndefined,
+            recursiveField.prop,
+            newFields
+        );
+    }
+
+    private static useField(
+        index: number, 
+        fields: ReadonlyArray<DtoMapperField>, 
+        usedArr: Array<boolean>
+    ) {
+        if (usedArr[index]) {
+            return true;
+        }
+        usedArr[index] = true;
+        const dependencies = fields[index]!.dependencies;
+        if (dependencies != null) {
+            for (const dependency of dependencies) {
+                Mapper.useField(dependency, fields, usedArr)
+            }
+        }
     }
 };
 
