@@ -99,8 +99,8 @@ function buildShapeMember(
         if (isCollection(field.prop)) {
             return field.recursiveDepth != null 
                 ? { 
-                    __array: buildShapeNodeImpl(field.subMapper),
-                    ...recursive
+                    ...recursive,
+                    __array: buildShapeNodeImpl(field.subMapper)
                 } : { 
                     __array: buildShapeNodeImpl(field.subMapper)
                 };
@@ -108,8 +108,8 @@ function buildShapeMember(
         if (isReference(field.prop)) {
             return field.recursiveDepth != null 
                 ? {
-                    __ref: buildShapeNodeImpl(field.subMapper),
-                    ...recursive
+                    ...recursive,
+                    __ref: buildShapeNodeImpl(field.subMapper)
                 } : {
                     __ref: buildShapeNodeImpl(field.subMapper)
                 };
