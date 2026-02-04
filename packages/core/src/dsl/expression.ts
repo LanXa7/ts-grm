@@ -1,5 +1,5 @@
 import { NullityType } from "@/schema/prop";
-import { CompilationError } from "@/utils"
+import { CompilationError, supressUnused } from "@/utils"
 import { ExpressionSubQuery } from "./sub-query";
 import { ExpressionOrder } from "./utils";
 
@@ -296,18 +296,21 @@ export type MakeType<T, TNullity extends NullityType> =
 export function and(
     ...predicates: ReadonlyArray<Nullable<Predicate>>
 ): Predicate | undefined {
+    supressUnused(predicates);
     throw new Error();
 }
 
 export function or(
     ...predicates: ReadonlyArray<Nullable<Predicate>>
 ): Predicate | undefined {
+    supressUnused(predicates);
     throw new Error();
 }
 
 export function not(
     ...predicates: ReadonlyArray<Nullable<Predicate>>
 ): Predicate | undefined {
+    supressUnused(predicates);
     throw new Error();
 }
 
@@ -332,5 +335,6 @@ type HasSubqueryInArray<Arr extends any[]> =
 export function constant(
     value: number
 ): Expression<number> {
+    supressUnused(value);
     throw new Error();
 }

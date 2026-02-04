@@ -9,7 +9,7 @@
   "scripts": {
     "sync-versions": "node ./scripts/sync-versions.js",
     "version-update": "yarn version && yarn sync-versions",
-    "build": "yarn workspaces foreach -t run build",
+    "build": "yarn workspaces foreach -A run build",
     "dev": "yarn workspaces foreach -p -i run dev",
     "test": "yarn workspaces foreach -A run test",
     "lint": "yarn workspaces foreach -A run lint",

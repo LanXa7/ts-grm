@@ -1,5 +1,5 @@
 import { AssociatedProp, ManyToManyProp, ManyToOneProp, OneToOneProp, ScalarProp } from "@/schema/prop";
-import { FlattenMembers } from "@/utils";
+import { FlattenMembers, supressUnused } from "@/utils";
 import { ModelImpl } from "@/impl/metadata/model_impl";
 
 export const model: ModelCreator = modelImpl();
@@ -16,6 +16,7 @@ function modelImpl(): ModelCreator {
         ctor: TCtor,
         configurer?: (ctx: ModelContext<TCtor>) => void
     ): Model<TName, TIdKey, TCtor, CtorMembers<TCtor>, never> {
+        supressUnused(configurer);
         return new ModelImpl(name, idKey, ctor);
     }
 
@@ -37,18 +38,21 @@ function modelImpl(): ModelCreator {
             TCtor, 
             MakeAllModelMembers<TCtor, TSuperModel>,
             ModelName<TSuperModel> | ModelSuperNames<TSuperModel>
-        > => new ModelImpl<
-            TName, 
-            SuperIdKey<TSuperModel>, 
-            TCtor, 
-            MakeAllModelMembers<TCtor, TSuperModel>,
-            ModelName<TSuperModel> | ModelSuperNames<TSuperModel>
-        >(
-            name, 
-            undefined, 
-            ctor, 
-            superModel
-        );
+        > => {
+            supressUnused(configurer);
+            return new ModelImpl<
+                TName, 
+                SuperIdKey<TSuperModel>, 
+                TCtor, 
+                MakeAllModelMembers<TCtor, TSuperModel>,
+                ModelName<TSuperModel> | ModelSuperNames<TSuperModel>
+            >(
+                name, 
+                undefined, 
+                ctor, 
+                superModel
+            );
+        }
     }
     create.extends = ext;
     return create as any as ModelCreator;
@@ -120,7 +124,7 @@ export class ModelContext<TCtor extends Ctor> {
     };
 
     unique(...paths : UniqueKeys<CtorMembers<TCtor>>[]) {
-
+        supressUnused(paths);
     }
 }
 

@@ -2,16 +2,19 @@ import { AnyModel } from "@/schema/model";
 import { ExpressionLike, Predicate } from "./expression";
 import { BaseTable, EntityTable, TableLike } from "./table";
 import { AtLeastOne, ExpressionOrder } from "./utils";
+import { supressUnused } from "@/utils";
 
 export function derivedModel<TQuery extends BaseQuery<any>>(
     query: TQuery,
 ) : BaseModel<BaseQueryMapOf<TQuery>> {
+    supressUnused(query);
     throw new Error();
 }
 
 export function cteModel<TQuery extends BaseQuery<any>>(
     query: TQuery,
 ) : BaseModel<BaseQueryMapOf<TQuery>> {
+    supressUnused(query);
     throw new Error();
 }
 
@@ -29,6 +32,7 @@ export function baseQuery<
         ) => TProjection
     ]
 ): BaseQuery<TProjection> {
+    supressUnused(args);
     throw new Error();
 }
 

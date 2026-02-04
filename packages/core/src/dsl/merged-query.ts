@@ -2,6 +2,7 @@ import { RootQuery } from "./root-query";
 import { ExpressionSubQuery, TupleSubQuery } from "./sub-query";
 import { BaseQuery } from "./base-query";
 import { AtLeastOne } from "./utils";
+import { supressUnused } from "@/utils";
 
 export function unionAll<
     TQuery extends RootQuery<any>,
@@ -30,6 +31,7 @@ export function unionAll<
 export function unionAll(
     ...queries: any[]
 ): any {
+    supressUnused(queries);
     throw new Error();
 }
 
@@ -60,6 +62,7 @@ export function union<
 export function union(
     ...queries: any[]
 ): any {
+    supressUnused(queries);
     throw new Error();
 }
 
@@ -90,6 +93,7 @@ export function minus<
 export function minus(
     ...queries: any[]
 ): any {
+    supressUnused(queries);
     throw new Error();
 }
 
@@ -120,6 +124,7 @@ export function intersect<
 export function intersect(
     ...queries: any[]
 ): any {
+    supressUnused(queries);
     throw new Error();
 }
 

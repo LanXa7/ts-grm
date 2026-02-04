@@ -272,7 +272,7 @@ class UnconfiguredOneToOneProp<
         return new UnconfiguredOneToOneProp({...this.__data, nullity: "NULLABLE"});
     }
 
-    mappedBy(mappedBy: OneToOneMappedByKeys<TModel>): OneToOneProp<TModel, "NULLABLE", "INVERSE", "VIRTUAL"> {
+    mappedBy(mappedBy: OneToOneMappedByKeys<TModel>): OneToOneProp<TModel, "NULLABLE", "INVERSE", undefined> {
         return new OneToOneProp({...this.__data, mappedBy, nullity: "NULLABLE"});
     }
 

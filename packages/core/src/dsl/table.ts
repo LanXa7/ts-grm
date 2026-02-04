@@ -1,4 +1,4 @@
-import { AllModelMembers, AnyModel, CtorMembers, ModelCtor, ModelName } from "@/schema/model";
+import { AllModelMembers, AnyModel, CtorMembers, ModelCtor } from "@/schema/model";
 import { CollectionProp, EmbeddedProp, I64Prop, NullityType, ReferenceProp, DirectTypeOf, ScalarProp, CombinedNullity } from "@/schema/prop";
 import { Expression, MakeType, Predicate } from "./expression";
 import { FilterNever } from "@/utils";

@@ -1,3 +1,4 @@
+import { supressUnused } from "@/utils";
 import { Expression, ExpressionLike, Predicate } from "./expression"
 import { TupleSubQuery } from "./sub-query";
 import { AtLeastTwo } from "./utils";
@@ -7,6 +8,7 @@ export function tuple<
 >(
     ...expressions: TExpressions
 ): ExprTuple<TExpressions> {
+    supressUnused(expressions);
     throw new Error();
 }
 

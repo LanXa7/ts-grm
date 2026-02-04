@@ -2,6 +2,7 @@ import { AnyModel } from "@/schema/model";
 import { Expression, ExpressionLike, Predicate } from "./expression";
 import { EntityTable } from "./table";
 import { AtLeastOne, AtLeastTwo, ExpressionOrder } from "./utils";
+import { supressUnused } from "@/utils";
 
 export function subQuery<
     const TModels extends AtLeastOne<AnyModel>,
@@ -23,30 +24,35 @@ export function subQuery<
     : TProjection extends void
         ? ExpressionSubQuery<Expression<number>>
     : never {
+    supressUnused(args);
     throw new Error();
 }
 
 export function all<TExpression extends ExpressionLike>(
     subQuery: ExpressionSubQuery<TExpression>
 ): TExpression {
+    supressUnused(subQuery);
     throw new Error();
 }
 
 export function any<TExpression extends ExpressionLike>(
     subQuery: ExpressionSubQuery<TExpression>
 ): TExpression {
+    supressUnused(subQuery);
     throw new Error();
 }
 
 export function exists(
     subQuery: SubQueryLike
 ): Predicate {
+    supressUnused(subQuery);
     throw new Error();
 }
 
 export function notExists(
     subQuery: SubQueryLike
 ): Predicate {
+    supressUnused(subQuery);
     throw new Error();
 }
         
@@ -116,5 +122,3 @@ export type SubQueryProjection<T, TKind = "EXPRSSION" | "TUPLE"> = {
 };
 
 type SubQuerySelectArrArgs = AtLeastTwo<ExpressionLike>;
-
-

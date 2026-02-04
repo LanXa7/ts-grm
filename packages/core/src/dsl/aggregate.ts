@@ -1,8 +1,10 @@
+import { supressUnused } from "@/utils";
 import { Expression, ExpressionLike } from "./expression";
 
 export function count(
     expr?: ExpressionLike
 ): Expression<number> {
+    supressUnused(expr);
     throw new Error();
 }
 
@@ -17,6 +19,7 @@ export function sum(
 export function sum(
     expr: Expression<number> | Expression<string, "AS_NUMBER">
 ): any {
+    supressUnused(expr);
     throw new Error();
 }
 
@@ -31,6 +34,7 @@ export function max(
 export function max(
     expr: Expression<number> | Expression<string, "AS_NUMBER">
 ): any {
+    supressUnused(expr);
     throw new Error();
 }
 
@@ -45,6 +49,7 @@ export function min(
 export function min(
     expr: Expression<number> | Expression<string, "AS_NUMBER">
 ): any {
+    supressUnused(expr);
     throw new Error();
 }
 
@@ -59,5 +64,6 @@ export function avg(
 export function avg(
     expr: Expression<number> | Expression<string, "AS_NUMBER">
 ): any {
+    supressUnused(expr);
     throw new Error();
 }
