@@ -42,63 +42,63 @@ type AnyExpression<T> = {
 
     eq(
         value: NonNull<T> | AnyExpression<NonNull<T>>
-    ): Predicate;
+    ): AnyExpression<boolean>;
     
     ne(
         value: NonNull<T> | AnyExpression<NonNull<T>>
-    ): Predicate;
+    ): AnyExpression<boolean>;
 
     in<Values extends (NonNull<T> | Expression<NonNull<T>>)[]>(
         ...values: HasSubqueryInArray<Values> extends true 
             ? [SubqueryError]
             : Values
-    ): Predicate;
+    ): AnyExpression<boolean>;
 
     in<Values extends (NonNull<T> | Expression<NonNull<T>>)[]>(
         values: HasSubqueryInArray<Values> extends true 
             ? [SubqueryError]
             : Values
-    ): Predicate;
+    ): AnyExpression<boolean>;
 
     inSubQuery(
         subQuery: ExpressionSubQuery<Expression<NonNull<T>>>
-    ): Predicate;
+    ): AnyExpression<boolean>;
 
     notIn<Values extends (NonNull<T> | Expression<NonNull<T>>)[]>(
         ...values: HasSubqueryInArray<Values> extends true 
             ? [SubqueryError]
             : Values
-    ): Predicate;
+    ): AnyExpression<boolean>;
 
     notIn<Values extends (NonNull<T> | Expression<NonNull<T>>)[]>(
         values: HasSubqueryInArray<Values> extends true 
             ? [SubqueryError]
             : Values
-    ): Predicate;
+    ): AnyExpression<boolean>;
 
     notInSubQuery(
         subQuery: ExpressionSubQuery<Expression<NonNull<T>>>
-    ): Predicate;
+    ): AnyExpression<boolean>;
     
     eqIf(
         value: Nullable<T>
-    ): Predicate | undefined;
+    ): AnyExpression<boolean> | undefined;
     
     neIf(
         value: Nullable<T>
-    ): Predicate | undefined;
+    ): AnyExpression<boolean> | undefined;
 
     inIf(
         values: (NonNull<T> | Expression<NonNull<T>>)[] | null | never
-    ): Predicate | undefined;
+    ): AnyExpression<boolean> | undefined;
 
     notInIf(
         values: (NonNull<T> | Expression<NonNull<T>>)[] | null | never
-    ): Predicate | undefined;
+    ): AnyExpression<boolean> | undefined;
 } & (
     IsNull<T> extends true
         ? { 
-            isNull(): Predicate;
+            isNull(): AnyExpression<boolean>;
 
             coalesce<TArgs extends CoalesceArgs<T>>(
                 ...exprs: TArgs
@@ -138,35 +138,35 @@ type CmpExpression<T> = AnyExpression<T> & {
     
     lt(
         value: NonNull<T> | CmpExpression<T>
-    ): Predicate;
+    ): AnyExpression<boolean>;
     
     le(
         value: NonNull<T> | CmpExpression<T>
-    ): Predicate;
+    ): AnyExpression<boolean>;
     
     gt(
         value: NonNull<T> | CmpExpression<T>
-    ): Predicate;
+    ): AnyExpression<boolean>;
     
     ge(
         value: NonNull<T> | CmpExpression<T>
-    ): Predicate;
+    ): AnyExpression<boolean>;
     
     ltIf(
         value: Nullable<T>
-    ): Predicate | undefined;
+    ): AnyExpression<boolean> | undefined;
     
     leIf(
         value: Nullable<T>
-    ): Predicate | undefined;
+    ): AnyExpression<boolean> | undefined;
     
     gtIf(
         value: Nullable<T>
-    ): Predicate | undefined;
+    ): AnyExpression<boolean> | undefined;
     
     geIf(
         value: Nullable<T>
-    ): Predicate | undefined;
+    ): AnyExpression<boolean> | undefined;
 }
 
 type MergeNumType<
@@ -224,22 +224,22 @@ type StrExpression<T extends Nullable<string>> = CmpExpression<T> & {
     like(
         value: string | StrExpression<string>, 
         mode?: LikeMode
-    ): Predicate | undefined;
+    ): AnyExpression<boolean> | undefined;
 
     ilike(
         value: string | StrExpression<string>, 
         mode?: LikeMode
-    ): Predicate | undefined;
+    ): AnyExpression<boolean> | undefined;
 
     likeIf(
         value: Nullable<string>, 
         mode?: LikeMode
-    ): Predicate | undefined;
+    ): AnyExpression<boolean> | undefined;
 
     ilikeIf(
         value: Nullable<string>, 
         mode?: LikeMode
-    ): Predicate | undefined;
+    ): AnyExpression<boolean> | undefined;
 
     lower(): StrExpression<T>;
 
@@ -294,22 +294,22 @@ export type MakeType<T, TNullity extends NullityType> =
         : T | null | undefined;
 
 export function and(
-    ...predicates: ReadonlyArray<Nullable<Predicate>>
-): Predicate | undefined {
+    ...predicates: ReadonlyArray<Nullable<AnyExpression<boolean>>>
+): AnyExpression<boolean> | undefined {
     supressUnused(predicates);
     throw new Error();
 }
 
 export function or(
-    ...predicates: ReadonlyArray<Nullable<Predicate>>
-): Predicate | undefined {
+    ...predicates: ReadonlyArray<Nullable<AnyExpression<boolean>>>
+): AnyExpression<boolean> | undefined {
     supressUnused(predicates);
     throw new Error();
 }
 
 export function not(
-    ...predicates: ReadonlyArray<Nullable<Predicate>>
-): Predicate | undefined {
+    ...predicates: ReadonlyArray<Nullable<AnyExpression<boolean>>>
+): AnyExpression<boolean> | undefined {
     supressUnused(predicates);
     throw new Error();
 }

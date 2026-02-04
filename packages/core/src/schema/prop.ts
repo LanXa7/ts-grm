@@ -200,7 +200,7 @@ export interface ReferenceProp<
     TModel extends AnyModel, 
     TNullity extends NullityType,
     TDirection extends DirectionType,
-    TReferenceKey extends ReferenceKey<TModel> | undefined
+    TReferenceKey extends ReferenceKey<TModel> | ""
 > extends AssociatedProp<TModel, TNullity, TDirection> {
     __type(): {
         prop: [TModel, TNullity]  | undefined,
@@ -209,12 +209,12 @@ export interface ReferenceProp<
     };
 }
 
-export type ForeignKeyProp<TProp extends ReferenceProp<any, any, "OWNING", any>> =
-    TProp extends ReferenceProp<any, any, "OWNING", infer TReferenceKey>
-        ? TReferenceKey extends undefined 
-            ? never 
-            : TProp
-        : never;
+export type ForeignKeyProp<T> = 
+  T extends ReferenceProp<infer TModel, any, "OWNING", infer TReferenceKey>
+    ? TReferenceKey extends Exclude<ReferenceKey<TModel>, "">
+      ? T
+      : never
+    : never;
 
 export interface CollectionProp<
     TModel extends AnyModel
@@ -228,7 +228,7 @@ export class OneToOneProp<
     TModel extends AnyModel,
     TNullity extends NullityType,
     TDirection extends DirectionType,
-    TReferenceKey extends ReferenceKey<TModel> | undefined
+    TReferenceKey extends ReferenceKey<TModel> | ""
 > extends AssociatedProp<TModel, TNullity, TDirection> 
 implements ReferenceProp<TModel, TNullity, TDirection, TReferenceKey> {
 
@@ -261,7 +261,7 @@ class UnconfiguredOneToOneProp<
     TModel extends AnyModel,
     TNullity extends NullityType = "NONNULL",
     TDirection extends DirectionType = "OWNING",
-    TReferenceKey extends ReferenceKey<TModel> | undefined = undefined
+    TReferenceKey extends ReferenceKey<TModel> | "" = ""
 > extends OneToOneProp<TModel, TNullity, TDirection, TReferenceKey> {
 
     constructor(data: PropData) {
@@ -272,7 +272,7 @@ class UnconfiguredOneToOneProp<
         return new UnconfiguredOneToOneProp({...this.__data, nullity: "NULLABLE"});
     }
 
-    mappedBy(mappedBy: OneToOneMappedByKeys<TModel>): OneToOneProp<TModel, "NULLABLE", "INVERSE", undefined> {
+    mappedBy(mappedBy: OneToOneMappedByKeys<TModel>): OneToOneProp<TModel, "NULLABLE", "INVERSE", ""> {
         return new OneToOneProp({...this.__data, mappedBy, nullity: "NULLABLE"});
     }
 
@@ -309,7 +309,7 @@ class UnconfiguredOneToOneProp<
         TTargetReferencedProp extends keyof AllModelMembers<TModel> = ModelIdKey<TModel>
     >(
         options: JoinTable<TModel, TTargetReferencedProp>
-    ): OneToOneProp<TModel, TNullity, "OWNING", undefined> {
+    ): OneToOneProp<TModel, TNullity, "OWNING", ""> {
         return new OneToOneProp({
             ...this.__data,
             joinTable: joinTableDataOf(options, this.targetModel)
@@ -321,7 +321,7 @@ export class ManyToOneProp<
     TModel extends AnyModel,
     TNullity extends NullityType,
     TDirection extends DirectionType,
-    TReferenceKey extends ReferenceKey<TModel> | undefined
+    TReferenceKey extends ReferenceKey<TModel> | ""
 > extends AssociatedProp<TModel, TNullity, TDirection> 
 implements ReferenceProp<TModel, TNullity, TDirection, TReferenceKey> {
 
@@ -354,7 +354,7 @@ class UnconfiguredManyToOneProp<
     TModel extends AnyModel,
     TNullity extends NullityType = "NONNULL",
     TDirection extends DirectionType = "OWNING",
-    TReferenceKey extends ReferenceKey<TModel> | undefined = undefined
+    TReferenceKey extends ReferenceKey<TModel> | "" = ""
 > extends ManyToOneProp<TModel, TNullity, TDirection, TReferenceKey> {
 
     constructor(data: PropData) {
@@ -396,7 +396,7 @@ class UnconfiguredManyToOneProp<
 
     joinTable<TTargetReferencedProp extends keyof AllModelMembers<TModel>>(
         options: JoinTable<TModel, TTargetReferencedProp>
-    ): ManyToOneProp<TModel, TNullity, "OWNING", undefined> {
+    ): ManyToOneProp<TModel, TNullity, "OWNING", ""> {
         return new ManyToOneProp({
             ...this.__data,
             joinColumns: foreignKeyDataOf(options, this.__data.targetModel)

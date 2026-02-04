@@ -1,4 +1,4 @@
-import { model, prop } from "@ts-grm/core";
+import {model, prop} from "@ts-grm/core";
 
 export const BOOK_STORE = model("BookStore", "id", class {
     id = prop.i64().asString()

@@ -12,8 +12,8 @@
     }
   },
   "scripts": {
-    "build": "tsup --dts",
-    "dev": "tsup --watch --dts",
+    "build": "tsup",
+    "dev": "tsup --watch",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:ui": "vitest --ui --coverage",
@@ -27,8 +27,5 @@
   },
   "files": [
     "dist"
-  ],
-  "dependencies": {
-    "@ts-grm/core": "workspace:*"
-  }
+  ]
 }
