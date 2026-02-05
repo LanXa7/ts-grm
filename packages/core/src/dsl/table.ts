@@ -57,7 +57,7 @@ type DslMembers<
                 >
             : TMembers[K] extends ScalarProp<infer R, infer Nullity>
                 ? Expression<MakeType<R, CombinedNullity<TNullity, Nullity>>>
-            : TMembers[K] extends EmbeddedProp<infer R, infer Nullity>
+            : TMembers[K] extends EmbeddedProp<infer R, infer Nullity, any>
                 ? () => DslMembers<TModel, R, CombinedNullity<TNullity, Nullity>, TRiskAccepted>
             : TMembers[K] extends ReferenceProp<infer TTargetModel, infer Nullity, any, any>
                 ? Nullity extends "NONNULL" 

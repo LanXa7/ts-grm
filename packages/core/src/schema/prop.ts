@@ -1,6 +1,7 @@
 import { ModelOrder, OrderNullsType } from "@/schema/order";
 import { AllModelMembers, AnyModel, ManyToManyMappedByKeys, ModelIdKey, OneToManyMappedByKeys, OneToOneMappedByKeys, ReferenceKey } from "@/schema/model";
 import { CascaseType, JoinColumn, JoinColumns, JoinTable } from "./join";
+import { UnionToIntersection } from "@/utils";
 
 export const prop = {
 
@@ -42,7 +43,7 @@ export const prop = {
 
     embedded<TProps extends Record<string, EmbeddedMember>>(
         props: TProps
-    ): EmbeddedProp<TProps> {
+    ): EmbeddedProp<TProps, "NONNULL", MakeFlattenProps<TProps>> {
         return new EmbeddedProp({...EMPTY_PROP_DEFINTION_DATA, props});
     },
 
@@ -149,12 +150,13 @@ export class I64Prop<
 
 export class EmbeddedProp<
     TProps extends Record<string, EmbeddedMember>,
-    TNullity extends NullityType = "NONNULL"
+    TNullity extends NullityType,
+    TFlattenProps extends Record<string, any>
 > extends Prop<TProps, TNullity> {
 
     override __type(): {
         prop: [TProps, TNullity] | undefined,
-        embeddedProp: [TProps, TNullity] | undefined
+        embeddedProp: [TProps, TNullity, TFlattenProps] | undefined
     } {
         return { 
             prop: undefined, 
@@ -170,6 +172,33 @@ export class EmbeddedProp<
         return this.__data.props as TProps;
     }
 } 
+
+type MakeFlattenProps<
+    TProps
+> =
+    {
+        [K in keyof TProps as 
+            TProps[K] extends ScalarProp<any, any>
+                ? K
+                : never
+        ]: TProps[K]
+    } & UnionToIntersection<{
+        [K in keyof TProps]: TProps[K] extends EmbeddedProp<any, infer Nullity, infer FlattenProps>
+            ? { 
+                [DK in keyof FlattenProps as
+                    FollowPrefix<DK & string, K & string>
+                ]: FollowNullity<FlattenProps[DK], Nullity>
+            }
+            : never
+    }[keyof TProps]>;
+
+export type FollowPrefix<TKey extends string, TParentKey extends string> =
+    `${TParentKey}.${TKey}`;
+
+export type FollowNullity<TProp, TParentNullity extends NullityType> =
+    TProp extends ScalarProp<infer T, infer Nullity>
+        ? ScalarProp<T, CombinedNullity<TParentNullity, Nullity>>
+        : never;
 
 export abstract class AssociatedProp<
     TModel extends AnyModel,
@@ -521,7 +550,9 @@ class UnconfiguredManyToManyProp<
         super(data);
     }
 
-    mappedBy(mappedBy: ManyToManyMappedByKeys<TModel>): ManyToManyProp<TModel, TNullity, "INVERSE"> {
+    mappedBy(
+        mappedBy: ManyToManyMappedByKeys<TModel>
+    ): ManyToManyProp<TModel, TNullity, "INVERSE"> {
         return new ManyToManyProp({...this.__data, mappedBy});
     }
 
@@ -562,7 +593,7 @@ export type EmbeddedMember =
     ScalarProp<any, any> 
     | ForeignKeyProp<OneToOneProp<any, any, "OWNING", any>>
     | ForeignKeyProp<ManyToOneProp<any, any, "OWNING", any>>
-    | EmbeddedProp<any, any>;
+    | EmbeddedProp<any, any, any>;
 
 export type PropData = {
     readonly nullity: NullityType;

@@ -4,8 +4,7 @@ export const BOOK_STORE = model("BookStore", "id", class {
     id = prop.i64().asString()
     name = prop.str()
     version = prop.i32()
-    books = prop.o2m(BOOK)
-        .mappedBy("store")
+    books = prop.o2m(BOOK).mappedBy("store")
         .orderBy("name", { path: "edition", desc: true })
 });
 
@@ -55,13 +54,13 @@ export const AUTHOR = model("Author", "id", class {
         lastName: prop.str()
     })
     books = prop.m2m(BOOK).mappedBy("authors");
-}, ctx => ctx.unique("name.firstName", "name.lastName"));
+});
 
 export const TREE_NODE = model("TreeNode", "id", class {
     id = prop.i64()
     name = prop.str()
     parentNode = prop.m2o(() => TREE_NODE).nullable()
-    childNodes = prop.o2m(() => TREE_NODE).mappedBy("parentNode");
+    childNodes = prop.o2m(() => TREE_NODE).mappedBy("parentNode")
 });
 
 export const ORDER = model("Order", "id", class {
@@ -93,15 +92,16 @@ export const ORDER = model("Order", "id", class {
 });
 
 export const ORDER_ITEM = model("OrderItem", "id", class {
-    id = prop.i64();
-    order = prop.m2o(ORDER).joinColumns({
+    id = prop.i64()
+    order = prop.m2o(ORDER)
+    .joinColumns({
         joinColumns: [
             { columnName: "order_x", referencedSubPath: "x" },
             { columnName: "order_y_a", referencedSubPath: "y.a" },
             { columnName: "order_y_b", referencedSubPath: "y.b" }
         ],
         cascade: "DELETE"
-    });
+    })
 });
 
 export const TAG = model("Tag", "id", class {

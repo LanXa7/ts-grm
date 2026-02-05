@@ -5,20 +5,20 @@ export class ModelImpl<
     TName extends string, 
     TIdKey extends string,
     TCtor extends Ctor,
-    TAllMemembers extends object,
+    TAllMembers extends object,
     TSuperNames extends string | never
 > implements Model<
     TName,
     TIdKey,
     TCtor,
-    TAllMemembers,
+    TAllMembers,
     TSuperNames
 > {
 
     private _entity: Entity | undefined;
 
     __type(): {
-        model: [TName, TIdKey, TCtor, TAllMemembers, TSuperNames] | undefined 
+        model: [TName, TIdKey, TCtor, TAllMembers, TSuperNames] | undefined 
     } {
         return { model: undefined };
     }

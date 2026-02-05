@@ -1,4 +1,4 @@
-import { EmbeddedProp } from "./schema/prop";
+import { EmbeddedProp, FollowNullity, FollowPrefix } from "./schema/prop";
 
 export type Prettify<T> = 
     T extends Array<infer U>
@@ -17,30 +17,23 @@ export type FilterNever<T> =
         : never;
 
 export type FlattenMembers<
-    TMembers extends object, 
-    TExcludeEmbedded extends boolean = false
-> = 
-    TExcludeEmbedded extends true
-        ? UnionToIntersection<DeepMembers<TMembers, TExcludeEmbedded, "">>
-        : { [K in keyof TMembers]: TMembers[K] } 
-            & UnionToIntersection<DeepMembers<TMembers, TExcludeEmbedded, "">>;
-
-type DeepMembers<
-    TMembers extends object, 
-    TExcludeEmbedded extends boolean, 
-    TPrefix extends string
-> = 
-    {
-        [K in keyof TMembers]: 
-            K extends string
-                ? TMembers[K] extends EmbeddedProp<infer E, any> 
-                    ? TExcludeEmbedded extends true
-                        ? DeepMembers<E, TExcludeEmbedded, `${TPrefix}${K}.`>
-                        : DeepMembers<E, TExcludeEmbedded, `${TPrefix}${K}.`> 
-                            & { [Key in `${TPrefix}${K}`]: TMembers[K] }
-                    : { [Key in `${TPrefix}${K}`]: TMembers[K] }
-                : never
-    }[keyof TMembers];
+    TMembers extends object
+> = {
+    [K in keyof TMembers
+        as TMembers[K] extends EmbeddedProp<any, any, any>
+            ? never
+            : K
+    ]: TMembers[K]
+} & UnionToIntersection<{
+    [K in keyof TMembers]: 
+        TMembers[K] extends EmbeddedProp<any, infer Nullity, infer FlattenProps>
+            ? {
+                [DK in keyof FlattenProps as 
+                    FollowPrefix<DK & string, K & string>
+                ]: FollowNullity<FlattenProps[DK], Nullity>
+            }
+            : never
+}[keyof TMembers]>;
 
 export type UnionToIntersection<U> = 
     (U extends any ? (k: U) => void : never) extends (k: infer I) => void 

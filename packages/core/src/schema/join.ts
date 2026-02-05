@@ -1,5 +1,4 @@
-import { FlattenMembers } from "@/utils";
-import { EmbeddedProp, Prop, DirectTypeOf } from "./prop";
+import { EmbeddedProp, Prop } from "./prop";
 import { AllModelMembers, AnyModel, ModelIdKey } from "./model";
 
 export type JoinColumns<
@@ -12,13 +11,10 @@ export type JoinColumns<
 export type JoinColumn<
     TTargetKeyProp extends Prop<any, any>
 > = 
-    TTargetKeyProp extends EmbeddedProp<any, any>
+    TTargetKeyProp extends EmbeddedProp<any, any, infer FlattenProps>
         ? {
             columnName: string,
-            referencedSubPath: keyof FlattenMembers<
-                DirectTypeOf<TTargetKeyProp>, 
-                true
-            >
+            referencedSubPath: keyof FlattenProps
         }
         : string | { columnName: string, referencedSubPath?: "" };
 

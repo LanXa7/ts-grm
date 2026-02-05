@@ -135,7 +135,7 @@ type ViewBuilder<
                 TMembers[K],
                 K & string
             >
-        : TMembers[K] extends EmbeddedProp<infer R, infer Nullity>
+        : TMembers[K] extends EmbeddedProp<infer R, infer Nullity, any>
             ? EmbeddedMethods<TModel, TMembers, TViewNullType, TCurrent, TRecursiveKindMap, K, R, Nullity>
         : never
 }
@@ -389,7 +389,7 @@ type FlatReferenceKeys<TMembers> =
 type FlatEmbeddedKeys<TMembers> = 
     keyof {
         [K in keyof TMembers
-            as TMembers[K] extends EmbeddedProp<any, any>
+            as TMembers[K] extends EmbeddedProp<any, any, any>
                 ? K
                 : never
         ]: number
@@ -426,7 +426,7 @@ type ReferenceKeyMembers<
             any,
             infer Key
         >
-            ? AllModelMembers<TargetModel>[Key & string] extends EmbeddedProp<infer R, infer Nullity>
+            ? AllModelMembers<TargetModel>[Key & string] extends EmbeddedProp<infer R, infer Nullity, any>
                 ? <X = SimpleDataTypeOf<AllModelMembers<TargetModel>[Key & string], TViewNullType>>(
                     fn?: (builder: ViewBuilder<
                         never,
@@ -533,7 +533,7 @@ type AllScalarsType<TMembers, TViewNullType extends ViewNullType> = {
 type IsPartOfAllScalars<TProp, TNullity extends NullityType> =
     TProp extends ScalarProp<any, TNullity>
             ? true
-        : TProp extends EmbeddedProp<any, TNullity>
+        : TProp extends EmbeddedProp<any, TNullity, any>
             ? true
         : false;
 
@@ -900,7 +900,7 @@ interface EmbeddedMethods<
 export type SimpleDataTypeOf<TProp, TViewNullType extends ViewNullType> =
     TProp extends ScalarProp<infer R, any>
         ? R
-    : TProp extends EmbeddedProp<infer R, any>
+    : TProp extends EmbeddedProp<infer R, any, any>
         ? EmbeddedDataType<R, TViewNullType>
     : TProp extends ReferenceProp<infer TargetModel, any, "OWNING", infer Key>
         ? {

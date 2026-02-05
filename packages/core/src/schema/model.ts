@@ -105,14 +105,12 @@ type OtherString<T extends string, X extends string> =
 
 export interface Model<
     TName extends string, 
-    TIdKey extends string,
-    TCtor extends Ctor,
-    TAllMemembers extends object,
-    TSuperNames extends string | never
+    _TIdKey extends string = string,
+    _TCtor extends Ctor = Ctor,
+    _TAllMembers extends object = object,
+    _TSuperNames extends string | never = never
 > {
-    __type(): {
-        model: [TName, TIdKey, TCtor, TAllMemembers, TSuperNames] | undefined 
-    };
+    readonly name: TName;
 }
 
 export type AnyModel = Model<any, any, any, any, any>;
@@ -166,8 +164,8 @@ export type DeclaredModelMembers<TModel extends AnyModel> =
         : never;
 
 export type AllModelMembers<TModel extends AnyModel> =
-    TModel extends Model<any, any, any, infer TAllMemembers, any>
-        ? TAllMemembers
+    TModel extends Model<any, any, any, infer TAllMembers, any>
+        ? TAllMembers
         : never;
 
 type MakeAllModelMembers<TCtor extends Ctor, TSuperModel extends AnyModel | undefined> =
