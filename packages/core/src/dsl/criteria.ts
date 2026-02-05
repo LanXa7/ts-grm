@@ -24,7 +24,7 @@ type CriteriaMember<TProp, TNullity extends NullityType> =
 type NonNullCriteiraMember<TProp, TNullity extends NullityType> =
     TProp extends ScalarProp<any, any>
         ? ScalarType<TProp>
-    : TProp extends EmbeddedProp<infer R, infer Nullity>
+    : TProp extends EmbeddedProp<infer R, infer Nullity, any>
         ? { [K in keyof R]?: CriteriaMember<R[K], CombinedNullity<TNullity, Nullity>> } & LogicOperators<R, TNullity>
     : TProp extends ReferenceProp<any, any, any, any>
         ? ReferenceType<TProp>

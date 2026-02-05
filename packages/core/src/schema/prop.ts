@@ -1,7 +1,7 @@
 import { ModelOrder, OrderNullsType } from "@/schema/order";
 import { AllModelMembers, AnyModel, ManyToManyMappedByKeys, ModelIdKey, OneToManyMappedByKeys, OneToOneMappedByKeys, ReferenceKey } from "@/schema/model";
 import { CascaseType, JoinColumn, JoinColumns, JoinTable } from "./join";
-import { UnionToIntersection } from "@/utils";
+import { FlattenMembers } from "@/utils";
 
 export const prop = {
 
@@ -43,7 +43,7 @@ export const prop = {
 
     embedded<TProps extends Record<string, EmbeddedMember>>(
         props: TProps
-    ): EmbeddedProp<TProps, "NONNULL", MakeFlattenProps<TProps>> {
+    ): EmbeddedProp<TProps, "NONNULL", FlattenMembers<TProps>> {
         return new EmbeddedProp({...EMPTY_PROP_DEFINTION_DATA, props});
     },
 
@@ -171,26 +171,7 @@ export class EmbeddedProp<
     get props(): TProps {
         return this.__data.props as TProps;
     }
-} 
-
-type MakeFlattenProps<
-    TProps
-> =
-    {
-        [K in keyof TProps as 
-            TProps[K] extends ScalarProp<any, any>
-                ? K
-                : never
-        ]: TProps[K]
-    } & UnionToIntersection<{
-        [K in keyof TProps]: TProps[K] extends EmbeddedProp<any, infer Nullity, infer FlattenProps>
-            ? { 
-                [DK in keyof FlattenProps as
-                    FollowPrefix<DK & string, K & string>
-                ]: FollowNullity<FlattenProps[DK], Nullity>
-            }
-            : never
-    }[keyof TProps]>;
+}
 
 export type FollowPrefix<TKey extends string, TParentKey extends string> =
     `${TParentKey}.${TKey}`;
