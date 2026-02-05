@@ -90,8 +90,10 @@ export const prop = {
 
 export class Prop<T, TNullity extends NullityType> {
 
+    __phantom?: T;
+
     __type(): {
-        prop: [T, TNullity] | undefined
+        prop: TNullity | undefined
     } {
         return {prop: undefined };
     };
@@ -104,8 +106,8 @@ export class ScalarProp<
 > extends Prop<T, TNullity> {
 
     override __type(): {
-        prop: [T, TNullity] | undefined,
-        scalarProp: [T, TNullity] | undefined
+        prop: TNullity | undefined,
+        scalarProp: TNullity | undefined
     } {
         return { 
             prop: undefined, 
@@ -128,9 +130,9 @@ export class I64Prop<
 > extends ScalarProp<T, TNullity> {
 
     override __type(): {
-        prop: [T, TNullity] | undefined,
-        scalarProp: [T, TNullity] | undefined,
-        i64Prop: [T, TNullity] | undefined
+        prop: TNullity | undefined,
+        scalarProp: TNullity | undefined,
+        i64Prop: TNullity | undefined
     } {
         return { 
             prop: undefined, 
@@ -155,8 +157,8 @@ export class EmbeddedProp<
 > extends Prop<TProps, TNullity> {
 
     override __type(): {
-        prop: [TProps, TNullity] | undefined,
-        embeddedProp: [TProps, TNullity, TFlattenProps] | undefined
+        prop: TNullity | undefined,
+        embeddedProp: [TNullity, TFlattenProps] | undefined
     } {
         return { 
             prop: undefined, 
@@ -188,8 +190,8 @@ export abstract class AssociatedProp<
 > extends Prop<TModel, TNullity> {
 
     override __type(): {
-        prop: [TModel, TNullity]  | undefined,
-        associatedProp: [TModel, TNullity, TDirection] | undefined
+        prop: TNullity  | undefined,
+        associatedProp: [TNullity, TDirection] | undefined
     } {
         return { 
             prop: undefined, 
@@ -213,9 +215,9 @@ export interface ReferenceProp<
     TReferenceKey extends ReferenceKey<TModel> | ""
 > extends AssociatedProp<TModel, TNullity, TDirection> {
     __type(): {
-        prop: [TModel, TNullity]  | undefined,
-        associatedProp: [TModel, TNullity, TDirection] | undefined
-        referenceProp: [TModel, TNullity, TDirection, TReferenceKey] | undefined
+        prop: TNullity | undefined,
+        associatedProp: [TNullity, TDirection] | undefined
+        referenceProp: [TNullity, TDirection, TReferenceKey] | undefined
     };
 }
 
@@ -229,8 +231,10 @@ export type ForeignKeyProp<T> =
 export interface CollectionProp<
     TModel extends AnyModel
 > {
+    __phantom?: TModel;
+
     __type(): {
-        collectionProp: TModel | undefined
+        collectionProp: undefined
     };
 }
 
@@ -243,10 +247,10 @@ export class OneToOneProp<
 implements ReferenceProp<TModel, TNullity, TDirection, TReferenceKey> {
 
     override __type(): {
-        prop: [TModel, TNullity] | undefined,
-        associatedProp: [TModel, TNullity, TDirection] | undefined,
-        referenceProp: [TModel, TNullity, TDirection, TReferenceKey] | undefined,
-        oneToOneProp: [TModel, TNullity, TDirection, TReferenceKey] | undefined
+        prop: TNullity | undefined,
+        associatedProp: [TNullity, TDirection] | undefined,
+        referenceProp: [TNullity, TDirection, TReferenceKey] | undefined,
+        oneToOneProp: [TNullity, TDirection, TReferenceKey] | undefined
     } {
         return { 
             prop: undefined, 
@@ -336,10 +340,10 @@ export class ManyToOneProp<
 implements ReferenceProp<TModel, TNullity, TDirection, TReferenceKey> {
 
     override __type(): {
-        prop: [TModel, TNullity]  | undefined,
-        associatedProp: [TModel, TNullity, TDirection] | undefined,
-        referenceProp: [TModel, TNullity, TDirection, TReferenceKey] | undefined,
-        manyToOneProp: [TModel, TNullity, TDirection, TReferenceKey] | undefined
+        prop: TNullity | undefined,
+        associatedProp: [TNullity, TDirection] | undefined,
+        referenceProp: [TNullity, TDirection, TReferenceKey] | undefined,
+        manyToOneProp: [TNullity, TDirection, TReferenceKey] | undefined
     } {
         return { 
             prop: undefined, 
@@ -422,10 +426,10 @@ export class OneToManyProp<
 implements CollectionProp<TModel> {
 
     override __type(): {
-        prop: [TModel, TNullity]  | undefined,
-        associatedProp: [TModel, TNullity, TDirection] | undefined,
-        collectionProp: TModel | undefined,
-        oneToManyProp: [TModel, TNullity, TDirection] | undefined
+        prop: TNullity  | undefined,
+        associatedProp: [TNullity, TDirection] | undefined,
+        collectionProp: undefined,
+        oneToManyProp: [TNullity, TDirection] | undefined
     } {
         return { 
             prop: undefined, 
@@ -495,10 +499,10 @@ export class ManyToManyProp<
 implements CollectionProp<TModel> {
 
     override __type(): {
-        prop: [TModel, TNullity]  | undefined,
-        associatedProp: [TModel, TNullity, TDirection] | undefined,
-        collectionProp: TModel | undefined,
-        manyToManyProp: [TModel, TNullity, TDirection] | undefined
+        prop: TNullity  | undefined,
+        associatedProp: [TNullity, TDirection] | undefined,
+        collectionProp: undefined,
+        manyToManyProp: [TNullity, TDirection] | undefined
     } {
         return { 
             prop: undefined, 
