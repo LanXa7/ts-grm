@@ -1,5 +1,5 @@
-import { Entity } from "@/impl/metadata/entity";
-import { PAPER_BOOK, ORDER_ITEM } from "../../model/model";
+import { Entity } from "@/impl/entity";
+import { PAPER_BOOK, ORDER_ITEM } from "../model/model";
 import { expect, it } from "vitest";
 import { makeErr } from "@/impl/util";
 import { describe } from "node:test";

@@ -1,9 +1,9 @@
 import { ModelError, PropError } from "@/error/metadata_error";
 import { AnyModel, Ctor } from "@/schema/model";
 import { EntityProp } from "./entity_prop";
-import { ModelImpl } from "@/impl/metadata/model_impl";
+import { ModelImpl } from "@/impl/model_impl";
 import { dedent } from "@/error/util";
-import { capitalize, makeErr } from "../util";
+import { capitalize, makeErr } from "./util";
 
 export class Entity {
 

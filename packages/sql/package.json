@@ -12,8 +12,8 @@
     }
   },
   "scripts": {
-    "build": "tsup",
-    "dev": "tsup --watch",
+    "build": "tsup --dts",
+    "dev": "tsup --watch --dts",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:ui": "vitest --ui --coverage",

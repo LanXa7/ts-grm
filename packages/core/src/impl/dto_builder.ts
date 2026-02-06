@@ -2,7 +2,7 @@ import { ArgumentError, StateError } from "@/error/common";
 import { Entity } from "./entity";
 import { EntityProp } from "./entity_prop";
 import { Dto, DtoField } from "./dto";
-import { capitalize, makeErr } from "../util";
+import { capitalize, makeErr } from "./util";
 
 export function createTypedDtoBuilder(entity: Entity): TypedDtoBuilder {
     const builder = new DtoBuilder(entity);

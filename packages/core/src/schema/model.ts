@@ -1,6 +1,6 @@
 import { AssociatedProp, ManyToManyProp, ManyToOneProp, OneToOneProp, ScalarProp } from "@/schema/prop";
 import { FlattenMembers, supressUnused } from "@/utils";
-import { ModelImpl } from "@/impl/metadata/model_impl";
+import { ModelImpl } from "@/impl/model_impl";
 
 export const model: ModelCreator = modelImpl();
 
@@ -105,12 +105,14 @@ type OtherString<T extends string, X extends string> =
 
 export interface Model<
     TName extends string, 
-    _TIdKey extends string = string,
-    _TCtor extends Ctor = Ctor,
-    _TAllMembers extends object = object,
-    _TSuperNames extends string | never = never
+    TIdKey extends string = string,
+    TCtor extends Ctor = Ctor,
+    TAllMembers extends object = object,
+    TSuperNames extends string | never = never
 > {
-    readonly name: TName;
+    __type(): {
+        model: [TName, TIdKey, TCtor, TAllMembers, TSuperNames] | undefined
+    }
 }
 
 export type AnyModel = Model<any, any, any, any, any>;

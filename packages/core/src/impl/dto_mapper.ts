@@ -1,5 +1,5 @@
 import { ArgumentError } from "@/error/common";
-import { makeErr } from "../util";
+import { makeErr } from "./util";
 import { Dto, DtoField } from "./dto";
 import { Entity } from "./entity";
 import { EntityProp } from "./entity_prop";

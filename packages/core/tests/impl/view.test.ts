@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { DtoMapper } from "@/impl/metadata/dto_mapper";
+import { DtoMapper } from "@/impl/dto_mapper";
 import { dto } from "@/schema/dto";
-import { BOOK, AUTHOR, BOOK_STORE, TREE_NODE, ORDER_ITEM } from "../../model/model";
-import { buildShape } from "@/impl/metadata/shape";
-import { DataReader } from "@/impl/metadata/data_reader";
+import { BOOK, AUTHOR, BOOK_STORE, TREE_NODE, ORDER_ITEM } from "../model/model";
+import { buildShape } from "@/impl/shape";
+import { DataReader } from "@/impl/data_reader";
 
 describe("TestView", () => {
  

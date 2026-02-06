@@ -4,7 +4,7 @@ import { PropError } from "@/error/metadata_error";
 import { ModelImpl } from "./model_impl";
 import { dedent } from "@/error/util";
 import { EntityPropOrder } from "./entity_prop_order";
-import { makeErr } from "../util";
+import { makeErr } from "./util";
 import { StateError } from "@/error/common";
 
 export class EntityProp {

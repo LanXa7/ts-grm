@@ -1,4 +1,4 @@
-import { Entity } from "@/impl/metadata/entity";
+import { Entity } from "@/impl/entity";
 import { AnyModel, Ctor, Model } from "@/schema/model";
 
 export class ModelImpl<

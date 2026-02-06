@@ -5,9 +5,9 @@ import { Prettify, UnionToIntersection } from "@/utils";
 import { ModelOrder } from "./order";
 import { EntityTable } from "@/dsl/table";
 import { Predicate } from "@/dsl/expression";
-import { createTypedDtoBuilder } from "@/impl/metadata/dto_builder";
-import { Entity } from "@/impl/metadata/entity";
-import { dtoMapper, DtoMapper } from "@/impl/metadata/dto_mapper";
+import { createTypedDtoBuilder } from "@/impl/dto_builder";
+import { Entity } from "@/impl/entity";
+import { dtoMapper, DtoMapper } from "@/impl/dto_mapper";
 
 export const dto = { view: viewCreator() };
 

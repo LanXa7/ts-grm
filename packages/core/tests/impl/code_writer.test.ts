@@ -1,4 +1,4 @@
-import { CodeWriter } from "@/impl/metadata/code_writer";
+import { CodeWriter } from "@/impl/code_writer";
 import { expect, test } from "vitest";
 
 test("testCodeWriter", () => {
