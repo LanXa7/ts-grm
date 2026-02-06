@@ -89,16 +89,18 @@ type AnyExpression<T> = {
     ): AnyExpression<boolean> | undefined;
 
     inIf(
-        values: (NonNull<T> | Expression<NonNull<T>>)[] | null | never
+        values: NonNull<T>[] | null | undefined
     ): AnyExpression<boolean> | undefined;
 
     notInIf(
-        values: (NonNull<T> | Expression<NonNull<T>>)[] | null | never
+        values: NonNull<T>[] | null | undefined
     ): AnyExpression<boolean> | undefined;
 } & (
     IsNull<T> extends true
         ? { 
             isNull(): AnyExpression<boolean>;
+
+            isNotNull(): AnyExpression<boolean>;
 
             coalesce<TArgs extends CoalesceArgs<T>>(
                 ...exprs: TArgs

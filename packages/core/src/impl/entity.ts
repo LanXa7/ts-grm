@@ -4,6 +4,7 @@ import { EntityProp } from "./entity_prop";
 import { ModelImpl } from "@/impl/model_impl";
 import { dedent } from "@/error/util";
 import { capitalize, makeErr } from "./util";
+import { AbstractEntityTable, createEntityTable } from "./entity_table";
 
 export class Entity {
 
@@ -18,6 +19,8 @@ export class Entity {
     private _allPropMap: ReadonlyMap<string, EntityProp> | undefined = undefined;
 
     private _expanedPropMap: ReadonlyMap<string, EntityProp> | undefined = undefined;
+
+    private _table: AbstractEntityTable | undefined;
 
     static of(model: AnyModel): Entity {
         return (model as ModelImpl<any, any, any, any, any>).toEntity()
@@ -243,6 +246,14 @@ export class Entity {
                 }
             }
         }
+    }
+
+    get table(): AbstractEntityTable {
+        let table = this._table;
+        if (table == null) {
+            this._table = table = createEntityTable(this);
+        }
+        return table;
     }
 
     toJSON(): any {
