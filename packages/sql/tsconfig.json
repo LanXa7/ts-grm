@@ -2,8 +2,7 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"],
-      "@ts-grm/core": ["../core"]
+      "@/*": ["src/*"]
     },
     "target": "ES2022",
     "lib": ["ES2022"],

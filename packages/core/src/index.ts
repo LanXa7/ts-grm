@@ -19,3 +19,6 @@ export type  {
     BaseModel,
     Table
 } from "./dsl";
+export { Entity } from "./impl/entity";
+export { EntityProp } from "./impl/entity_prop";
+export { CodeWriter } from "./impl/code_writer"; 

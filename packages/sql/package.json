@@ -11,6 +11,9 @@
       "import": "./dist/index.js"
     }
   },
+  "dependencies": {
+    "@ts-grm/core": "workspace:*"
+  },
   "scripts": {
     "build": "tsup --dts",
     "dev": "tsup --watch --dts",
