@@ -1,9 +1,20 @@
-import { ExpressionSubQuery } from "@/dsl";
-import { ExpressionOrder } from "@/dsl/utils";
-import { supressUnused } from "@/utils";
+import { ExpressionOrder, ExpressionSubQuery } from "@/dsl";
 import { AbstractPred, CmpPred, InCollectionPred, NullityPred } from "./pred";
+import { supressUnused } from "@/utils";
 
 export class AbstractExpr<T> {
+
+    __type(): {
+        selectionLike: true;
+        expressionLike: true;
+        expression: T | undefined;
+    } {
+        return {
+            selectionLike: true,
+            expressionLike: true,
+            expression: undefined
+        };
+    }
 
     asc(): ExpressionOrder {
         throw new Error();
@@ -152,6 +163,20 @@ export class AbstractExpr<T> {
 }
 
 export class AbstractCmpExpr<T> extends AbstractExpr<T> {
+
+    __type(): { 
+        selectionLike: true;
+        expressionLike: true;
+        expression: T | undefined;
+        cmpExpression: T | undefined;
+    } {
+        return {
+            selectionLike: true,
+            expressionLike: true,
+            expression: undefined,
+            cmpExpression: undefined
+        };
+    }
 
     lt(
         value: T | AbstractCmpExpr<T>

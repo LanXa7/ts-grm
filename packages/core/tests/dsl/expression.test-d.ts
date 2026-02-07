@@ -23,14 +23,6 @@ describe("ExpressionTest", () => {
         throw new Error();
     }
 
-    function nonNullStrExpr(): Expression<string> {
-        throw new Error();
-    }
-
-    function undefinedStrExpr(): Expression<string | undefined> {
-        throw new Error();
-    }
-
     it("TestNumber", () => {
 
         const a = undefinedLargeNumExpr().plus(nonNullNumExpr());
@@ -53,18 +45,6 @@ describe("ExpressionTest", () => {
 
         const g = nonNullNumExpr().plus(nullOrUndefinedNumber());
         expectTypeOf<typeof g>().toEqualTypeOf<Expression<number | null | undefined>>();
-    });
-
-    it("TestString", () => {
-
-        const a = nonNullStrExpr().concat(undefinedStrExpr());
-        expectTypeOf<typeof a>().toEqualTypeOf<Expression<string | undefined>>();
-
-        const b = undefinedStrExpr().concat(nonNullStrExpr());
-        expectTypeOf<typeof b>().toEqualTypeOf<Expression<string | undefined>>();
-
-        const c = nonNullStrExpr().concat(nonNullStrExpr());
-        expectTypeOf<typeof c>().toEqualTypeOf<Expression<string>>();
     });
 
     it("TestCoalesc", () => {

@@ -1,17 +1,18 @@
 import { count } from "./aggregate";
 import { and, constant, not, or } from "./expression";
-import { all, any, exists, notExists, subQuery } from "./sub-query";
-import { unionAll, union, minus, intersect } from "./merged-query";
+import { all, any, exists, notExists, subQuery } from "./sub_query";
+import { unionAll, union, minus, intersect } from "./merged_query";
 import { num } from "./native";
 import { baseQuery, cteModel, derivedModel } from "./base-query";
 import { tuple } from "./tuple";
-export type { SqlClient } from "./sql-client";
-export type { AtLeastOne } from "./utils";
+export type { SqlClient } from "./sql_client";
+export type { AtLeastOne, ExpressionOrder } from "./utils";
 export type { Criteria } from "./criteria";
-export type { RootQuery, MutableRootQuery, RootQueryProjection } from "./root-query";
-export type { SubQueryLike, ExpressionSubQuery, TupleSubQuery, MutableSubQuery } from "./sub-query";
+export type { RootQuery, MutableRootQuery, RootQueryProjection } from "./root_query";
+export type { SubQueryLike, ExpressionSubQuery, TupleSubQuery, MutableSubQuery } from "./sub_query";
 export type { BaseQuery, MutableBaseQuery, BaseModel } from "./base-query";
 export type { Table } from "./table";
+export type { LikeMode } from "./expression";
 
 export const dsl = {
     subQuery,

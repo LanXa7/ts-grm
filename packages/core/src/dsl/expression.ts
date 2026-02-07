@@ -1,7 +1,7 @@
 import { NullityType } from "@/schema/prop";
 import { CompilationError, supressUnused } from "@/utils"
-import { ExpressionSubQuery } from "./sub-query";
-import { ExpressionOrder } from "./utils";
+import { ExpressionSubQuery } from "./sub_query";
+import { AtLeastOne, ExpressionOrder } from "./utils";
 
 export type Expression<
     T, 
@@ -134,6 +134,7 @@ type CmpExpression<T> = AnyExpression<T> & {
     
     __type(): { 
         selectionLike: true;
+        expressionLike: true;
         expression: T | undefined;
         cmpExpression: T | undefined;
     }
@@ -183,6 +184,7 @@ type NumExpression<T extends Nullable<string | number>> = CmpExpression<T> & {
 
     __type(): { 
         selectionLike: true;
+        expressionLike: true;
         expression: T | undefined;
         cmpExpression: T | undefined;
         numExpression: T | undefined;
@@ -217,6 +219,7 @@ type StrExpression<T extends Nullable<string>> = CmpExpression<T> & {
 
     __type(): { 
         selectionLike: true;
+        expressionLike: true;
         expression: T | undefined;
         cmpExpression: T | undefined;
         numExpression: T | undefined;
@@ -224,12 +227,12 @@ type StrExpression<T extends Nullable<string>> = CmpExpression<T> & {
     }
 
     like(
-        value: string | StrExpression<string>, 
+        value: string, 
         mode?: LikeMode
     ): AnyExpression<boolean> | undefined;
 
     ilike(
-        value: string | StrExpression<string>, 
+        value: string, 
         mode?: LikeMode
     ): AnyExpression<boolean> | undefined;
 
@@ -284,10 +287,6 @@ type StrExpression<T extends Nullable<string>> = CmpExpression<T> & {
         start: number | NumExpression<number>,
         length?: number | NumExpression<number>
     ): StrExpression<T>;
-
-    concat<X extends Nullable<string>>(
-        ...values: ReadonlyArray<string | StrExpression<X>>
-    ): StrExpression<T | X>;
 }
 
 export type MakeType<T, TNullity extends NullityType> =
@@ -322,6 +321,20 @@ export type ExpressionLike = {
     }
 };
 
+export function constant(
+    value: number
+): Expression<number> {
+    supressUnused(value);
+    throw new Error();
+}
+
+export function concat(
+    ...values: AtLeastOne<string | StrExpression<string>>
+): StrExpression<string> {
+    supressUnused(values);
+    throw new Error();
+}
+
 type SubqueryError = 
     CompilationError<`Cannot directly use subqueries in 'IN' expressions.
 Either use the 'inSubQuery()' function for collection operations;
@@ -333,10 +346,3 @@ type HasSubqueryInArray<Arr extends any[]> =
             ? true 
             : HasSubqueryInArray<Rest>
         : false;
-
-export function constant(
-    value: number
-): Expression<number> {
-    supressUnused(value);
-    throw new Error();
-}

@@ -30,6 +30,6 @@
     "skipLibCheck": true,
     "resolveJsonModule": true
   },
-  "include": ["src/**/*", "tests/**/*"],
+  "include": ["src/**/*", "tests/**/*", "src/impl/ast", "src/dsl"],
   "exclude": ["node_modules", "dist"]
 }

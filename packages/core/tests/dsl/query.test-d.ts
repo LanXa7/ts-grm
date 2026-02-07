@@ -1,8 +1,8 @@
 import { dsl } from "@/dsl";
 import { Expression } from "@/dsl/expression";
-import { SqlClient } from "@/dsl/sql-client";
-import { TupleSubQuery } from "@/dsl/sub-query";
-import { tuple } from "@/dsl/tuple";
+import { SqlClient } from "@/dsl/sql_client";
+import { TupleSubQuery } from "../../src/dsl/sub_query";
+import { tuple } from "../../src/dsl/tuple";
 import { dto } from "@/schema/dto";
 import { AUTHOR, BOOK, TREE_NODE } from "tests/model/model";
 import { expectTypeOf, describe, it } from "vitest";

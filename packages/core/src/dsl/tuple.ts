@@ -1,6 +1,6 @@
 import { supressUnused } from "@/utils";
 import { Expression, ExpressionLike, Predicate } from "./expression"
-import { TupleSubQuery } from "./sub-query";
+import { TupleSubQuery } from "./sub_query";
 import { AtLeastTwo } from "./utils";
 
 export function tuple<

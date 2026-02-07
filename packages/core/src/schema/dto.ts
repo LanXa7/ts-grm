@@ -1,9 +1,9 @@
-import { AtLeastOne } from "@/dsl/utils";
+import { AtLeastOne } from "../dsl/utils";
 import { AllModelMembers, AnyModel, Extends, IsDerivedModelOf, ModelName, ModelSuperNames } from "@/schema/model";
 import { CollectionProp, EmbeddedProp, NullityOf, ReferenceProp, DirectTypeOf, ScalarProp, NullityType, AssociatedProp, Prop } from "@/schema/prop";
 import { Prettify, UnionToIntersection } from "@/utils";
 import { ModelOrder } from "./order";
-import { EntityTable } from "@/dsl/table";
+import { EntityTable } from "../dsl/table";
 import { Predicate } from "@/dsl/expression";
 import { createTypedDtoBuilder } from "@/impl/dto_builder";
 import { Entity } from "@/impl/entity";

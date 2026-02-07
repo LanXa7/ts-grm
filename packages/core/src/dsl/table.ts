@@ -3,7 +3,7 @@ import { CollectionProp, EmbeddedProp, I64Prop, NullityType, ReferenceProp, Dire
 import { Expression, MakeType, Predicate } from "./expression";
 import { FilterNever } from "@/utils";
 import { View } from "@/schema/dto";
-import { FetchedView } from "./root-query";
+import { FetchedView } from "./root_query";
 import { BaseQuerySelectMapArgs, BaseModel } from "./base-query";
 
 export type TableLike = {

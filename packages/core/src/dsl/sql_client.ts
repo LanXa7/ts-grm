@@ -1,11 +1,10 @@
-import { AnyModel } from "@/schema/model";
-import { Table } from "./table";
-import { RootQueryProjection } from "./root-query";
-import { MutableRootQuery, RootQuery } from "./root-query";
+import { ModelOf, TypeOf, View } from "@/schema/dto";
 import { AtLeastOne } from "./utils";
 import { BaseModel } from "./base-query";
-import { ModelOf, TypeOf, View } from "@/schema/dto";
+import { MutableRootQuery, RootQuery, RootQueryProjection } from "./root_query";
+import { Table } from "./table";
 import { Criteria } from "./criteria";
+import { AnyModel } from "@/schema/model";
 
 export interface SqlClient {
 

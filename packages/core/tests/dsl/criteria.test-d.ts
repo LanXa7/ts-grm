@@ -1,6 +1,6 @@
-import { SqlClient } from "@/dsl/sql-client";
+import { SqlClient } from "@/dsl/sql_client";
 import { dto } from "@/schema/dto";
-import test from "node:test";
+import { test } from "vitest";
 import { BOOK } from "tests/model/model";
 import { expectTypeOf } from "vitest";
 

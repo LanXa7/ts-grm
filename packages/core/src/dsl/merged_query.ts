@@ -1,5 +1,5 @@
-import { RootQuery } from "./root-query";
-import { ExpressionSubQuery, TupleSubQuery } from "./sub-query";
+import { RootQuery } from "./root_query";
+import { ExpressionSubQuery, TupleSubQuery } from "./sub_query";
 import { BaseQuery } from "./base-query";
 import { AtLeastOne } from "./utils";
 import { supressUnused } from "@/utils";

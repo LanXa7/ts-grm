@@ -1,4 +1,4 @@
-import { LikeMode } from "@/dsl/expression";
+import { LikeMode } from "@/dsl";
 import { AbstractExpr } from "./expr";
 import { ArgumentError } from "@/error/common";
 
@@ -49,6 +49,7 @@ export class LikePred extends AbstractPred {
 
     constructor(
         readonly expr: AbstractExpr<string>,
+        readonly value: string,
         readonly mode: LikeMode,
         readonly sensitive: boolean,
         readonly neg: boolean = false
@@ -59,6 +60,7 @@ export class LikePred extends AbstractPred {
     negative(): LikePred {
         return new LikePred(
             this.expr,
+            this.value,
             this.mode,
             this.sensitive,
             !this.neg

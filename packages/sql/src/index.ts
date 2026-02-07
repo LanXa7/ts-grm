@@ -1,1 +1,1 @@
-export { newSqlClient, type SqlClientOptions} from "./sql-client";
+export { newSqlClient, type SqlClientOptions} from "@/sql-client";
