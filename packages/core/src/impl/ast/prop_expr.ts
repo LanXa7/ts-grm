@@ -1,17 +1,16 @@
-import { AbstractExpr } from "./expr";
 import { EntityProp } from "../entity_prop";
 import { AbstractNumExpr } from "./num_expr";
 import { AbstractStrExpr } from "./string_expr";
 import { AbstractDtExpr } from "./dt_expr";
-import { EntityTable } from "@/dsl/table";
 import { ArgumentError } from "@/error/common";
+import { AbstractEntityTable } from "../entity_table";
 
 export interface TableProp {
-    readonly table: EntityTable<any>,
+    readonly table: AbstractEntityTable,
     readonly prop: EntityProp
 }
 
-export function createTableProp(table: EntityTable<any>, prop: EntityProp) {
+export function createTableProp(table: AbstractEntityTable, prop: EntityProp) {
     if (prop.scalarType == null) {
         throw new ArgumentError(
             `Cannot create table prop for "${
@@ -54,7 +53,7 @@ export function createTableProp(table: EntityTable<any>, prop: EntityProp) {
 class PropNumExpr<T extends string | number> extends AbstractNumExpr<T> implements TableProp {
 
     constructor(
-        readonly table: EntityTable<any>,
+        readonly table: AbstractEntityTable,
         readonly prop: EntityProp
     ) {
         super();
@@ -64,7 +63,7 @@ class PropNumExpr<T extends string | number> extends AbstractNumExpr<T> implemen
 class PropStrExpr extends AbstractStrExpr implements TableProp {
 
     constructor(
-        readonly table: EntityTable<any>,
+        readonly table: AbstractEntityTable,
         readonly prop: EntityProp
     ) {
         super();
@@ -74,7 +73,7 @@ class PropStrExpr extends AbstractStrExpr implements TableProp {
 class PropDtExpr extends AbstractDtExpr implements TableProp {
     
     constructor(
-        readonly table: EntityTable<any>,
+        readonly table: AbstractEntityTable,
         readonly prop: EntityProp
     ) {
         super();

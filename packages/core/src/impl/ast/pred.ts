@@ -1,6 +1,5 @@
 import { LikeMode } from "@/dsl";
 import { AbstractExpr } from "./expr";
-import { ArgumentError } from "@/error/common";
 
 export abstract class AbstractPred extends AbstractExpr<boolean> {
 

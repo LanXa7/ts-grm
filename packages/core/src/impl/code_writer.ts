@@ -44,6 +44,13 @@ export class CodeWriter {
         return this;
     }
 
+    codeIf(value: string, cond: boolean): this {
+        if (!cond) {
+            return this;
+        }
+        return this.code(value);
+    }
+
     code(value: string): this {
         const parts = value.split('\n');
         const size = parts.length;
