@@ -4,7 +4,7 @@ import { EntityProp } from "./entity_prop";
 import { ModelImpl } from "@/impl/model_impl";
 import { dedent } from "@/error/util";
 import { capitalize, makeErr } from "./util";
-import { AbstractEntityTable, createEntityTable } from "./entity_table";
+import { AbstractEntityTable, createEntityTableClass, EntityTableCtor, JoinOperation } from "./entity_table";
 
 export class Entity {
 
@@ -20,7 +20,7 @@ export class Entity {
 
     private _expanedPropMap: ReadonlyMap<string, EntityProp> | undefined = undefined;
 
-    private _table: AbstractEntityTable | undefined;
+    private _tableCtor: EntityTableCtor | undefined;
 
     static of(model: AnyModel): Entity {
         return (model as ModelImpl<any, any, any, any, any>).toEntity()
@@ -248,12 +248,16 @@ export class Entity {
         }
     }
 
-    get table(): AbstractEntityTable {
-        let table = this._table;
-        if (table == null) {
-            this._table = table = createEntityTable(this);
+    table(joinOperation: JoinOperation | undefined): AbstractEntityTable {
+        return new (this._tableClass())(this, joinOperation);
+    }
+
+    private _tableClass(): EntityTableCtor {
+        let ctor = this._tableCtor;
+        if (ctor == null) {
+            this._tableCtor = ctor = createEntityTableClass(this);
         }
-        return table;
+        return ctor;
     }
 
     toJSON(): any {

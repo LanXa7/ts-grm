@@ -2,16 +2,9 @@ import { ArgumentError } from "@/error/common";
 import { AbstractExpr } from "./expr";
 import { AbstractNumExpr } from "./num_expr";
 import { AbstractStrExpr } from "./string_expr";
+import { AbstractDtExpr } from "./dt_expr";
 
-export function literal(value: boolean): AbstractExpr<boolean>;
-
-export function literal(value: number): AbstractNumExpr<number>;
-
-export function literal(value: string, asNumber: boolean): AbstractNumExpr<string>;
-
-export function literal(value: string): AbstractStrExpr;
-
-export function literal(
+export function createLiteral(
     value: any,
     asNumber?: boolean
 ): AbstractExpr<any> {
@@ -21,11 +14,14 @@ export function literal(
     switch (typeof value) {
         case "string":
             return asNumber == true 
-                ? new NumLiteralExpr(value)
-                : new StrLiteralExpr(value);
+                ? new LiteralNumExpr(value)
+                : new LiteralStrExpr(value);
         case "number":
-            return new NumLiteralExpr(value);
+            return new LiteralNumExpr(value);
         default:
+            if (value instanceof Date) {
+                return new LiteralDtExpr(value);
+            }
             return new LiteralExpr(value);
     }   
 }
@@ -37,16 +33,23 @@ class LiteralExpr<T> extends AbstractExpr<T> {
     }
 }
 
-class NumLiteralExpr<T extends number | string> extends AbstractNumExpr<T> {
+class LiteralNumExpr<T extends number | string> extends AbstractNumExpr<T> {
 
     constructor(readonly value: T) {
         super();
     }
 }
 
-export class StrLiteralExpr extends AbstractStrExpr {
+export class LiteralStrExpr extends AbstractStrExpr {
 
     constructor(readonly value: string) {
+        super();
+    }
+}
+
+export class LiteralDtExpr extends AbstractDtExpr {
+
+    constructor(readonly value: Date) {
         super();
     }
 }

@@ -1,8 +1,11 @@
 import { ExpressionOrder, ExpressionSubQuery } from "@/dsl";
-import { AbstractPred, CmpPred, InCollectionPred, NullityPred } from "./pred";
 import { supressUnused } from "@/utils";
+import { ArgumentError } from "@/error/common";
+import type { AbstractPred, CmpPred, NullityPred } from "./pred";
+import type { CoalesceCmpExpr, CoalesceExpr } from "./coalesce_expr";
+import { getInternalFactory, validateInValues } from "./internal_factory";
 
-export class AbstractExpr<T> {
+export abstract class AbstractExpr<T> {
 
     __type(): {
         selectionLike: true;
@@ -27,35 +30,38 @@ export class AbstractExpr<T> {
     eq(
         value: T | AbstractExpr<T>
     ): CmpPred {
-        return new CmpPred(
+        const factory = getInternalFactory();
+        return factory.createCmpPred(
             "=", 
             this, 
-            value instanceof AbstractExpr ? value :  new LiteralExpr(value)
+            value instanceof AbstractExpr ? value :  factory.createLiteral(value)
         );
     }
     
     ne(
         value: T | AbstractExpr<T>
     ): CmpPred {
-        return new CmpPred(
+        const factory = getInternalFactory();
+        return factory.createCmpPred(
             "<>", 
             this, 
-            value instanceof AbstractExpr ? value :  new LiteralExpr(value)
+            value instanceof AbstractExpr ? value :  factory.createLiteral(value)
         );
     }
 
     in(
         values: ReadonlyArray<T | AbstractExpr<T>>
     ): AbstractPred {
-        InCollectionPred.validateValues(values);
+        validateInValues(values);
+        const factory = getInternalFactory();
         if (values.length === 1) {
-            return new CmpPred(
+            return factory.createCmpPred(
                 "=", 
                 this, 
-                values[0] instanceof AbstractExpr ? values[0] : new LiteralExpr(values[0])
+                values[0] instanceof AbstractExpr ? values[0] : factory.createLiteral(values[0])
             );
         }
-        return new InCollectionPred(this, values);
+        return factory.createInValuesPred(this, values, false);
     }
 
     inSubQuery(
@@ -68,15 +74,16 @@ export class AbstractExpr<T> {
     notIn(
         values: ReadonlyArray<T | AbstractExpr<T>>
     ): AbstractPred {
-        InCollectionPred.validateValues(values);
+        validateInValues(values);
+        const factory = getInternalFactory();
         if (values.length === 1) {
-            return new CmpPred(
+            return factory.createCmpPred(
                 "<>", 
                 this, 
-                values[0] instanceof AbstractExpr ? values[0] : new LiteralExpr(values[0])
+                values[0] instanceof AbstractExpr ? values[0] : factory.createLiteral(values[0])
             );
         }
-        return new InCollectionPred(this, values, true);
+        return factory.createInValuesPred(this, values, true);
     }
 
     notInSubQuery(
@@ -92,10 +99,11 @@ export class AbstractExpr<T> {
         if (value == null) {
             return undefined;
         }
-        return new CmpPred(
+        const factory = getInternalFactory();
+        return factory.createCmpPred(
             "=", 
             this, 
-            new LiteralExpr(value)
+            factory.createLiteral(value)
         );
     }
     
@@ -105,10 +113,11 @@ export class AbstractExpr<T> {
         if (value == null) {
             return undefined;
         }
-        return new CmpPred(
+        const factory = getInternalFactory();
+        return factory.createCmpPred(
             "<>", 
             this, 
-            new LiteralExpr(value)
+            factory.createLiteral(value)
         );
     }
 
@@ -118,15 +127,16 @@ export class AbstractExpr<T> {
         if (values == null) {
             return undefined;
         }
-        InCollectionPred.validateValues(values);
+        validateInValues(values);
+        const factory = getInternalFactory();
         if (values.length === 1) {
-            return new CmpPred(
+            return factory.createCmpPred(
                 "=", 
                 this, 
-                new LiteralExpr(values[0])
+                factory.createLiteral(values[0])
             );
         }
-        return new InCollectionPred(this, values);
+        return factory.createInValuesPred(this, values, false);
     }
 
     notInIf(
@@ -135,34 +145,44 @@ export class AbstractExpr<T> {
         if (values == null) {
             return undefined;
         }
-        InCollectionPred.validateValues(values);
+        validateInValues(values);
+        const factory = getInternalFactory();
         if (values.length === 1) {
-            return new CmpPred(
+            return factory.createCmpPred(
                 "<>", 
                 this, 
-                new LiteralExpr(values[0])
+                factory.createLiteral(values[0])
             );
         }
-        return new InCollectionPred(this, values, true);
+        return factory.createInValuesPred(this, values, true);
     }
 
-    isNull(): AbstractExpr<boolean> {
-        return new NullityPred(this);
+    isNull(): NullityPred {
+        return getInternalFactory().createNullityPred(this, false);
     }
 
-    isNotNull(): AbstractExpr<boolean> {
-        return new NullityPred(this, true);
+    isNotNull(): NullityPred {
+        return getInternalFactory().createNullityPred(this, true);
     }
     
     coalesce(
-        values: T | AbstractExpr<T>
-    ): AbstractExpr<T> {
-        supressUnused(values);
-        throw new Error();
+        values: ReadonlyArray<T | AbstractExpr<T>>
+    ): CoalesceExpr<T> {
+        const factory = getInternalFactory();
+        const arr = values.map(value => {
+            if (value == null) {
+                throw new ArgumentError("coalesce does not accept null/undefined value");
+            }
+            if (value instanceof AbstractExpr) {
+                return value;
+            }
+            return factory.createLiteral(value);
+        });
+        return factory.createCoalesceExpr(this, arr);
     }
 }
 
-export class AbstractCmpExpr<T> extends AbstractExpr<T> {
+export abstract class AbstractCmpExpr<T> extends AbstractExpr<T> {
 
     __type(): { 
         selectionLike: true;
@@ -181,40 +201,44 @@ export class AbstractCmpExpr<T> extends AbstractExpr<T> {
     lt(
         value: T | AbstractCmpExpr<T>
     ): CmpPred {
-        return new CmpPred(
+        const factory = getInternalFactory();
+        return factory.createCmpPred(
             "<", 
             this, 
-            value instanceof AbstractExpr ? value :  new LiteralExpr(value)
+            value instanceof AbstractExpr ? value :  factory.createLiteral(value)
         );
     }
     
     le(
         value: T | AbstractCmpExpr<T>
     ): CmpPred {
-        return new CmpPred(
+        const factory = getInternalFactory();
+        return factory.createCmpPred(
             "<=", 
             this, 
-            value instanceof AbstractExpr ? value :  new LiteralExpr(value)
+            value instanceof AbstractExpr ? value :  factory.createLiteral(value)
         );
     }
     
     gt(
         value: T | AbstractCmpExpr<T>
     ): CmpPred {
-        return new CmpPred(
+        const factory = getInternalFactory();
+        return factory.createCmpPred(
             ">", 
             this, 
-            value instanceof AbstractExpr ? value :  new LiteralExpr(value)
+            value instanceof AbstractExpr ? value :  factory.createLiteral(value)
         );
     }
     
     ge(
         value: T | AbstractCmpExpr<T>
     ): CmpPred {
-        return new CmpPred(
+        const factory = getInternalFactory();
+        return factory.createCmpPred(
             ">=", 
             this, 
-            value instanceof AbstractExpr ? value :  new LiteralExpr(value)
+            value instanceof AbstractExpr ? value : factory.createLiteral(value)
         );
     }
     
@@ -224,10 +248,11 @@ export class AbstractCmpExpr<T> extends AbstractExpr<T> {
         if (value == null) {
             return undefined;
         }
-        return new CmpPred(
+        const factory = getInternalFactory();
+        return factory.createCmpPred(
             "<", 
             this, 
-            new LiteralExpr(value)
+            factory.createLiteral(value)
         );
     }
     
@@ -237,10 +262,11 @@ export class AbstractCmpExpr<T> extends AbstractExpr<T> {
         if (value == null) {
             return undefined;
         }
-        return new CmpPred(
+        const factory = getInternalFactory();
+        return factory.createCmpPred(
             "<=", 
             this, 
-            new LiteralExpr(value)
+            factory.createLiteral(value)
         );
     }
     
@@ -250,10 +276,11 @@ export class AbstractCmpExpr<T> extends AbstractExpr<T> {
         if (value == null) {
             return undefined;
         }
-        return new CmpPred(
+        const factory = getInternalFactory();
+        return factory.createCmpPred(
             ">", 
             this, 
-            new LiteralExpr(value)
+            factory.createLiteral(value)
         );
     }
     
@@ -263,17 +290,27 @@ export class AbstractCmpExpr<T> extends AbstractExpr<T> {
         if (value == null) {
             return undefined;
         }
-        return new CmpPred(
+        const factory = getInternalFactory();
+        return factory.createCmpPred(
             ">=", 
             this, 
-            new LiteralExpr(value)
+            factory.createLiteral(value)
         );
     }
-}
 
-export class LiteralExpr<T> extends AbstractExpr<T> {
-
-    constructor(readonly value: T) {
-        super();
+    override coalesce(
+        values: ReadonlyArray<T | AbstractCmpExpr<T>>
+    ): CoalesceCmpExpr<T> {
+        const factory = getInternalFactory();
+        const arr = values.map(value => {
+            if (value == null) {
+                throw new ArgumentError("coalesce does not accept null/undefined value");
+            }
+            if (value instanceof AbstractCmpExpr) {
+                return value;
+            }
+            return factory.createLiteral(value) as AbstractCmpExpr<T>;
+        });
+        return factory.createCoalesceCmpExpr(this, arr);
     }
 }

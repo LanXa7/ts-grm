@@ -38,7 +38,7 @@ type EntityTableMembers<
     } & {
         __type(): {
             tableLike: true;
-            entityTable: TModel;
+            entityTable: TModel | true;
         }
     };
 

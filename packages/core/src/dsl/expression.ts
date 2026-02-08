@@ -2,6 +2,9 @@ import { NullityType } from "@/schema/prop";
 import { CompilationError, supressUnused } from "@/utils"
 import { ExpressionSubQuery } from "./sub_query";
 import { AtLeastOne, ExpressionOrder } from "./utils";
+import { AbstractStrExpr, ConcatExpr } from "@/impl/ast/string_expr";
+import { ArgumentError } from "@/error/common";
+import { getInternalFactory } from "@/impl/ast/internal_factory";
 
 export type Expression<
     T, 
@@ -11,6 +14,8 @@ export type Expression<
         ? TAsNumber extends "AS_NUMBER"
             ? NumExpression<T & Nullable<string>>
             : StrExpression<T & Nullable<string>>
+    : NonNull<T> extends Date
+        ? DateExpression<T & Nullable<Date>>
     : NonNull<T> extends number
         ? NumExpression<T & Nullable<number>>
     : AnyExpression<T>;
@@ -172,7 +177,7 @@ type CmpExpression<T> = AnyExpression<T> & {
     ): AnyExpression<boolean> | undefined;
 }
 
-type MergeNumType<
+type MergeNullableType<
     T1 extends Nullable<string | number>, 
     T2 extends Nullable<string | number>
 > =
@@ -194,23 +199,23 @@ type NumExpression<T extends Nullable<string | number>> = CmpExpression<T> & {
 
     plus<X extends Nullable<string | number>>(
         value: NonNull<X> | NumExpression<X>
-    ): NumExpression<MergeNumType<T, X>>;
+    ): NumExpression<MergeNullableType<T, X>>;
 
     minus<X extends Nullable<string | number>>(
         value: NonNull<X> | NumExpression<X>
-    ): NumExpression<MergeNumType<T, X>>;
+    ): NumExpression<MergeNullableType<T, X>>;
 
     times<X extends Nullable<string | number>>(
         value: NonNull<X> | NumExpression<X>
-    ): NumExpression<MergeNumType<T, X>>;
+    ): NumExpression<MergeNullableType<T, X>>;
 
     div<X extends Nullable<string | number>>(
         value: NonNull<X> | NumExpression<X>
-    ): NumExpression<MergeNumType<T, X>>;
+    ): NumExpression<MergeNullableType<T, X>>;
 
     rem<X extends Nullable<string | number>>(
         value: NonNull<X> | NumExpression<X>
-    ): NumExpression<MergeNumType<T, X>>;
+    ): NumExpression<MergeNullableType<T, X>>;
 }
 
 export type LikeMode = "CONTAINS" | "STARTS_WITH" | "ENDS_WITH" | "EXACT";
@@ -289,6 +294,39 @@ type StrExpression<T extends Nullable<string>> = CmpExpression<T> & {
     ): StrExpression<T>;
 }
 
+type DateExpression<T extends Nullable<Date>> = CmpExpression<T> & {
+    
+    plus(
+        value: number | Expression<number>, 
+        timeUnit: TimeUnit
+    ): DateExpression<T>;
+
+    minus(
+        value: number | Expression<number>, 
+        timeUnit: TimeUnit
+    ): DateExpression<T>;
+
+    diff(
+        value: Date | DateExpression<any>, 
+        timeUnit: TimeUnit
+    ): NumExpression<number>;
+};
+
+export type TimeUnit = 
+    "NANOSECONDS" 
+    | "MICROSECONDS"
+    | "MILLISECONDS"
+    | "SECONDS"
+    | "MINUTES"
+    | "HOURS"
+    | "DAYS"
+    | "WEEKS"
+    | "MONTHS"
+    | "QUARTERS"
+    | "YEARS"
+    | "DECADES"
+    | "CENTURIES";
+
 export type MakeType<T, TNullity extends NullityType> =
     TNullity extends "NONNULL"
         ? T
@@ -331,8 +369,16 @@ export function constant(
 export function concat(
     ...values: AtLeastOne<string | StrExpression<string>>
 ): StrExpression<string> {
-    supressUnused(values);
-    throw new Error();
+    const arr = values.map(value => {
+        if (value == null) {
+            throw new ArgumentError("concat does not accept null/undefined value");
+        }
+        if (typeof value === "string") {
+            return getInternalFactory().createLiteral(value);
+        }
+        return (value as any) as AbstractStrExpr;
+    });
+    throw new ConcatExpr(arr);
 }
 
 type SubqueryError = 

@@ -99,20 +99,4 @@ export class InCollectionPred<T> extends AbstractPred {
             !this.neg
         );
     }
-
-    static validateValues(values: ReadonlyArray<any>) {
-        for (const value of values) {
-            const typeFn = value.__type;
-            if (typeof typeFn === "function") {
-                const type = typeFn();
-                if (type != null && type.subQueryLike) {
-                    throw new ArgumentError(
-                        `Cannot directly use subqueries in 'IN' expressions.
-Either use the 'inSubQuery()' function for collection operations;
-or use 'asValue()' to convert the subquery into a single value before using it.`
-                    );
-                }
-            }
-        }
-    }
 }

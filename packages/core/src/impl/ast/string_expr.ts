@@ -1,8 +1,10 @@
 import { AbstractCmpExpr } from "./expr";
 import { LikePred } from "./pred";
 import { AbstractNumExpr } from "./num_expr";
-import { literal } from "./literal";
 import { LikeMode } from "@/dsl";
+import { ArgumentError } from "@/error/common";
+import { getInternalFactory } from "./internal_factory";
+import type { CoalesceStrExpr } from "./coalesce_expr";
 
 export class AbstractStrExpr extends AbstractCmpExpr<string> {
 
@@ -101,17 +103,19 @@ export class AbstractStrExpr extends AbstractCmpExpr<string> {
     }
 
     replace(oldStr: string, newStr: string): ReplaceExpr {
-        return new ReplaceExpr(this, literal(oldStr), literal(newStr));
+        const factory = getInternalFactory();
+        return new ReplaceExpr(this, factory.createLiteral(oldStr), factory.createLiteral(newStr));
     }
 
     lpad(
         length: number | AbstractNumExpr<number>, 
         pad?: string
     ): PadExpr {
+        const factory = getInternalFactory();
         return new PadExpr(
             this, 
-            typeof length === "number" ? literal(length) : length, 
-            pad != null ? literal(pad) : undefined, 
+            typeof length === "number" ? factory.createLiteral(length) : length, 
+            pad != null ? factory.createLiteral(pad) : undefined, 
             "LEFT"
         );
     }
@@ -120,10 +124,11 @@ export class AbstractStrExpr extends AbstractCmpExpr<string> {
         length: number | AbstractNumExpr<number>, 
         pad?: string
     ): PadExpr {
+        const factory = getInternalFactory();
         return new PadExpr(
             this, 
-            typeof length === "number" ? literal(length) : length, 
-            pad != null ? literal(pad) : undefined, 
+            typeof length === "number" ? factory.createLiteral(length) : length, 
+            pad != null ? factory.createLiteral(pad) : undefined, 
             "RIGHT"
         );
     }
@@ -133,7 +138,7 @@ export class AbstractStrExpr extends AbstractCmpExpr<string> {
     ): LeftExpr {
         return new LeftExpr(
             this, 
-            typeof length === "number" ? literal(length) : length
+            typeof length === "number" ? getInternalFactory().createLiteral(length) : length
         );
     }
 
@@ -142,7 +147,7 @@ export class AbstractStrExpr extends AbstractCmpExpr<string> {
     ): RightExpr {
         return new RightExpr(
             this, 
-            typeof length === "number" ? literal(length) : length
+            typeof length === "number" ? getInternalFactory().createLiteral(length) : length
         );
     }
 
@@ -150,11 +155,12 @@ export class AbstractStrExpr extends AbstractCmpExpr<string> {
         substr: string, 
         start?: number | AbstractNumExpr<number>
     ): PositionExpr {
+        const factory = getInternalFactory();
         return new PositionExpr(
             this,
-            literal(substr),
+            factory.createLiteral(substr),
             start != null 
-                ? typeof start === "number" ? literal(start) : start
+                ? typeof start === "number" ? factory.createLiteral(start) : start
                 : undefined
         );
     }
@@ -163,13 +169,30 @@ export class AbstractStrExpr extends AbstractCmpExpr<string> {
         start: number | AbstractNumExpr<number>,
         length?: number |AbstractNumExpr<number>
     ): SubstringExpr {
+        const factory = getInternalFactory();
         return new SubstringExpr(
             this,
-            typeof start === "number" ? literal(start) : start,
+            typeof start === "number" ? factory.createLiteral(start) : start,
             length != null
-                ? typeof length === "number" ? literal(length) : length
+                ? typeof length === "number" ? factory.createLiteral(length) : length
                 : undefined
         );
+    }
+
+    override coalesce(
+        values: ReadonlyArray<string | AbstractStrExpr>
+    ): CoalesceStrExpr {
+        const factory = getInternalFactory();
+        const arr = values.map(value => {
+            if (value == null) {
+                throw new ArgumentError("coalesce does not accept null/undefined value");
+            }
+            if (value instanceof AbstractStrExpr) {
+                return value;
+            }
+            return factory.createLiteral(value);
+        });
+        return factory.createCoalesceStrExpr(this, arr);
     }
 }
 
@@ -271,6 +294,15 @@ class SubstringExpr extends AbstractStrExpr {
         readonly expr: AbstractStrExpr,
         readonly start: AbstractNumExpr<number>,
         readonly lenExpr: AbstractNumExpr<number> | undefined
+    ) {
+        super();
+    }
+}
+
+export class ConcatExpr extends AbstractStrExpr {
+
+    constructor(
+        readonly values: ReadonlyArray<AbstractStrExpr>
     ) {
         super();
     }

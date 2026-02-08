@@ -1,5 +1,7 @@
+import { ArgumentError } from "@/error/common";
 import { AbstractCmpExpr } from "./expr";
-import { literal } from "./literal";
+import { getInternalFactory } from "./internal_factory";
+import type { CoalesceNumExpr } from "./coalesce_expr";
 
 export class AbstractNumExpr<T extends string | number> extends AbstractCmpExpr<T> {
 
@@ -31,8 +33,8 @@ export class AbstractNumExpr<T extends string | number> extends AbstractCmpExpr<
             this, 
             value instanceof AbstractNumExpr ? value : 
                 typeof value === "string"
-                    ? literal(value, true)
-                    : literal(value)
+                    ? getInternalFactory().createLiteral(value, true)
+                    : getInternalFactory().createLiteral(value)
         );
     }
 
@@ -44,8 +46,8 @@ export class AbstractNumExpr<T extends string | number> extends AbstractCmpExpr<
             this, 
             value instanceof AbstractNumExpr ? value : 
                 typeof value === "string"
-                    ? literal(value, true)
-                    : literal(value)
+                    ? getInternalFactory().createLiteral(value, true)
+                    : getInternalFactory().createLiteral(value)
         );
     }
 
@@ -57,8 +59,8 @@ export class AbstractNumExpr<T extends string | number> extends AbstractCmpExpr<
             this, 
             value instanceof AbstractNumExpr ? value : 
                 typeof value === "string"
-                    ? literal(value, true)
-                    : literal(value)
+                    ? getInternalFactory().createLiteral(value, true)
+                    : getInternalFactory().createLiteral(value)
         );
     }
 
@@ -70,8 +72,8 @@ export class AbstractNumExpr<T extends string | number> extends AbstractCmpExpr<
             this, 
             value instanceof AbstractNumExpr ? value : 
                 typeof value === "string"
-                    ? literal(value, true)
-                    : literal(value)
+                    ? getInternalFactory().createLiteral(value, true)
+                    : getInternalFactory().createLiteral(value)
         );
     }
 
@@ -83,9 +85,27 @@ export class AbstractNumExpr<T extends string | number> extends AbstractCmpExpr<
             this, 
             value instanceof AbstractNumExpr ? value : 
                 typeof value === "string"
-                    ? literal(value, true)
-                    : literal(value)
+                    ? getInternalFactory().createLiteral(value, true)
+                    : getInternalFactory().createLiteral(value)
         );
+    }
+
+    override coalesce(
+        values: ReadonlyArray<T | AbstractNumExpr<T>>
+    ): CoalesceNumExpr<T> {
+        const arr = values.map(value => {
+            if (value == null) {
+                throw new ArgumentError("coalesce does not accept null/undefined value");
+            }
+            if (value instanceof AbstractNumExpr) {
+                return value;
+            }
+            if (typeof value === "string") {
+                return getInternalFactory().createLiteral(value, true) as AbstractNumExpr<T>;
+            }
+            return getInternalFactory().createLiteral(value) as AbstractNumExpr<T>;
+        });
+        return getInternalFactory().createCoalesceNumExpr(this, arr);
     }
 }
 
