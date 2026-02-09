@@ -28,7 +28,7 @@ export interface MutableRootQuery {
         ...selections: TSelections
     ): RootQueryProjection<{
         [K in keyof TSelections]: 
-            TSelections[K] extends Selection<infer U> ? Selection<U> : never
+            TSelections[K] extends RootQuerySelection<infer U> ? RootQuerySelection<U> : never
     }, "ARRAY">;
 
     select<
@@ -37,10 +37,10 @@ export interface MutableRootQuery {
         selections: TSelections
     ): RootQueryProjection<{
         [K in keyof TSelections]: 
-            TSelections[K] extends Selection<infer U> ? Selection<U> : never
+            TSelections[K] extends RootQuerySelection<infer U> ? RootQuerySelection<U> : never
     }, "MAP">;
 
-    select<TSelection extends Selection<any>>(
+    select<TSelection extends RootQuerySelection<any>>(
         selection: TSelection
     ) : RootQueryProjection<TSelection, "ONE">;
 }
@@ -86,7 +86,7 @@ export type FetchedView<TModel extends AnyModel, X> = {
     };
 } & SelectionLike;
 
-type Selection<T> =
+export type RootQuerySelection<T> =
     Expression<T, any> |
     FetchedView<any, T>;
 

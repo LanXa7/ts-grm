@@ -1,4 +1,5 @@
 import { SqlClient, supressUnused } from "@ts-grm/core";
+import { SqlClientOptions } from "./cfg/sql_client_options";
 
 export function newSqlClient(
     options: SqlClientOptions
@@ -7,6 +8,3 @@ export function newSqlClient(
     throw new Error();
 }
 
-export type SqlClientOptions = {
-    
-};

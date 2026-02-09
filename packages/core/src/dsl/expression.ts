@@ -5,6 +5,7 @@ import { AtLeastOne, ExpressionOrder } from "./utils";
 import { AbstractStrExpr, ConcatExpr } from "@/impl/ast/string_expr";
 import { ArgumentError } from "@/error/common";
 import { getInternalFactory } from "@/impl/ast/internal_factory";
+import { OrderNullsType } from "@/schema/order";
 
 export type Expression<
     T, 
@@ -41,9 +42,9 @@ type AnyExpression<T> = {
         expression: T | undefined;
     };
 
-    asc(): ExpressionOrder;
+    asc(nulls?: OrderNullsType): ExpressionOrder;
 
-    desc(): ExpressionOrder;
+    desc(nulls?: OrderNullsType): ExpressionOrder;
 
     eq(
         value: NonNull<T> | AnyExpression<NonNull<T>>
