@@ -1,3 +1,3 @@
-# GRM (ORM+) for TypeScript
+# GRM (ORM+) for TypeScript7.0
 
-A TypeScript port of Jimmer, stay tuned
+A TypeScript7.0 port of Jimmer, stay tuned
