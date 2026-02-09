@@ -4,6 +4,7 @@ import { dto } from "@/schema/dto";
 import { BOOK, AUTHOR, BOOK_STORE, TREE_NODE, ORDER_ITEM } from "../model/model";
 import { buildShape } from "@/impl/shape";
 import { DataReader } from "@/impl/data_reader";
+import { expectCode } from "../utils";
 
 describe("TestView", () => {
  
@@ -1414,19 +1415,19 @@ describe("TestView", () => {
                 {
                     "columnIndex": 0,
                     "isDependent": true,
-                    "prop": "Order.id.x",
+                    "prop": "OrderItem.orderId.x",
                     "paths": [] // Implicit foreign key to fetch `OrderItem.order`
                 },
                 {
                     "columnIndex": 1,
                     "isDependent": true,
-                    "prop": "Order.id.y.a",
+                    "prop": "OrderItem.orderId.y.a",
                     "paths": [] // Implicit foreign key to fetch `OrderItem.order`
                 },
                 {
                     "columnIndex": 2,
                     "isDependent": true,
-                    "prop": "Order.id.y.b",
+                    "prop": "OrderItem.orderId.y.b",
                     "paths": [] // Implicit foreign key to fetch `OrderItem.order`
                 },
                 {
@@ -1522,7 +1523,7 @@ describe("TestView", () => {
                 {
                     "columnIndex": 0,
                     "isDependent": true,
-                    "prop": "Order.id.x",
+                    "prop": "OrderItem.orderId.x",
                     "paths": [
                         ["orderId", "x"]
                     ]
@@ -1530,7 +1531,7 @@ describe("TestView", () => {
                 {
                     "columnIndex": 1,
                     "isDependent": true,
-                    "prop": "Order.id.y.a",
+                    "prop": "OrderItem.orderId.y.a",
                     "paths": [
                         ["orderId", "y", "a"]
                     ]
@@ -1538,7 +1539,7 @@ describe("TestView", () => {
                 {
                     "columnIndex": 2,
                     "isDependent": true,
-                    "prop": "Order.id.y.b",
+                    "prop": "OrderItem.orderId.y.b",
                     "paths": [
                         ["orderId", "y", "b"]
                     ]
@@ -1662,7 +1663,7 @@ describe("TestView", () => {
                 {
                     "columnIndex": 0,
                     "isDependent": true,
-                    "prop": "Order.id.y.a",
+                    "prop": "OrderItem.orderId.y.a",
                     "paths": [
                         ["orderId", "y", "a"]
                     ]
@@ -1670,7 +1671,7 @@ describe("TestView", () => {
                 {
                     "columnIndex": 1,
                     "isDependent": true,
-                    "prop": "Order.id.y.b",
+                    "prop": "OrderItem.orderId.y.b",
                     "paths": [
                         ["orderId", "y", "b"]
                     ]
@@ -1678,7 +1679,7 @@ describe("TestView", () => {
                 {
                     "columnIndex": 2,
                     "isDependent": true,
-                    "prop": "Order.id.x",
+                    "prop": "OrderItem.orderId.x",
                     "paths": [] // Implicit property to fetch `OrderItem.order`
                 },
                 {
@@ -1990,35 +1991,3 @@ describe("TestView", () => {
     });
 });
 
-function expectCode(actual: string, expected: string) {
-    const normalizedExpected = normalizeCode(expected);
-    expect(actual).toEqual(normalizedExpected);
-}
-
-function normalizeCode(code: string): string {
-
-    const lines = code.split('\n');
-    let startIndex = 0;
-    let endIndex = lines.length - 1;
-    while (startIndex <= endIndex && lines[startIndex]!.trim() === '') {
-        startIndex++;
-    }
-    while (endIndex >= startIndex && lines[endIndex]!.trim() === '') {
-        endIndex--;
-    }
-    const trimmedLines = lines.slice(startIndex, endIndex + 1);
-    if (trimmedLines.length === 0) {
-        return '';
-    }
-
-    const firstLine = trimmedLines[0]!;
-    const baseIndentMatch = firstLine.match(/^(\s*)/);
-    const baseIndent = baseIndentMatch ? baseIndentMatch[1]!.length : 0;
-    const normalizedLines = trimmedLines.map(line => {
-        if (line.trim() === '') {
-            return '';
-        }
-        return line.slice(baseIndent);
-    });
-    return normalizedLines.join('\n');
-}

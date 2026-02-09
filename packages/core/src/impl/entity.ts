@@ -230,7 +230,7 @@ export class Entity {
             }
             prop.collectDeeperProps(expendedPropMap!);
         }
-        return expendedPropMap !== undefined ? expendedPropMap : this.allPropMap;
+        return expendedPropMap !== undefined ? expendedPropMap : new Map(this.allPropMap);
     }
 
     private _addExpandedReferencedTargetKeyProps() {

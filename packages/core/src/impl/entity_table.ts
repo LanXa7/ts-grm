@@ -4,6 +4,7 @@ import { EntityProp } from "./entity_prop";
 import { Predicate } from "@/dsl/expression";
 import { createTableProp } from "./ast/prop_expr";
 import { JoinType } from "@/dsl/table";
+import { makeErr } from "./util";
 
 export abstract class AbstractEntityTable {
 
@@ -70,9 +71,9 @@ export function createEntityTableClass(
             }
         });
     return new Function(
-        "$baseClass", "$entity", "$createTableProp", writer.toString()
+        "$baseClass", "$entity", "$createTableProp", "$makeErr", writer.toString()
     )(
-        superClass, entity, createTableProp
+        superClass, entity, createTableProp, makeErr
     );
 }
 
@@ -96,24 +97,25 @@ function writeField(prop: EntityProp, writer: CodeWriter) {
 
 function writeProp(prop: EntityProp, writer: CodeWriter) {
     if (prop.scalarType != null) {
-        writeScalarProp(prop, writer)
+        writeScalarProp(prop, writer);
     } else if (prop.associationType != null) {
         writeAssociationProp(prop, writer);
+    } else if (prop.props != null) {
+        writeEmbeddedProp(prop, writer);
     }
 }
 
 function writeScalarProp(prop: EntityProp, writer: CodeWriter) {
     writer.code("get ").code(prop.name).code("() ");
     writer.scope("CURLY_BRACKETS", () => {
-        writer.code("const expr = this._").code(prop.name).newLine(";");
+        writer.code("let expr = this._").code(prop.name).newLine(";");
         writer.code("if (expr == null) ").scope("CURLY_BRACKETS", () => {
             writer
                 .code("this._")
                 .code(prop.name)
-                .code(" = expr = $createTableProp(ThisClass.__")
-                .code(prop.name)
-                .code(")")
-                .newLine(";");
+                .code(" = expr = $createTableProp(this, ThisClass.__");
+            writePropPath(prop, "_", writer);
+            writer.code(")").newLine(";");
         }).newLine();
         writer.code("return expr").newLine(";");
     }).newLine();
@@ -145,7 +147,7 @@ function writeNoFilterJoin(
     writer: CodeWriter
 ) {
     writer
-        .code("const join = this._")
+        .code("let join = this._")
         .code(prop.name)
         .codeIf("_LEFT", left)
         .newLine(";");
@@ -155,8 +157,6 @@ function writeNoFilterJoin(
             .code(prop.name)
             .codeIf("_LEFT", left)
             .code(" = join = ")
-            .code(prop.name)
-            .code(".targetEntity.table");
         writeJoinTable(prop, false, writer);
         writer.newLine(";");
     }).newLine();
@@ -189,6 +189,24 @@ function writeJoinTable(
     });
 }
 
+function writeEmbeddedProp(prop: EntityProp, writer: CodeWriter) {
+    writer.code(prop.name).code("() ").scope("CURLY_BRACKETS", () => {
+        writer.code("let embedded = this._").code(prop.name).newLine(";");
+        writer.code("if (embedded == null) ").scope("CURLY_BRACKETS", () => {
+            writer.code("this._").code(prop.name).code(" = embedded = new class ");
+            writer.scope("CURLY_BRACKETS", () => {
+                for (const subProp of prop.props!.values()) {
+                    writer.code("_").code(subProp.name).code(" = undefined").newLine(";");
+                }
+                for (const subProp of prop.props!.values()) {
+                    writeProp(subProp, writer);
+                }
+            });
+        }).newLine();
+        writer.code("return embedded").newLine(";");
+    }).newLine();
+}
+
 function writePropMeta(prop: EntityProp, writer: CodeWriter) {
     if (prop.props != null) {
         for (const subProp of prop.props.values()) {
@@ -203,7 +221,8 @@ function writePropMeta(prop: EntityProp, writer: CodeWriter) {
     writePropPath(prop, "_", writer);
     writer.code(" = $entity.expanedPropMap.get(\"");
     writePropPath(prop, ".", writer);
-    writer.code("\")").newLine(";");
+    writer.code(`")`
+    ).newLine(";");
 }
 
 function writePropPath(prop: EntityProp, separator: string, writer: CodeWriter) {

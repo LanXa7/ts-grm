@@ -80,6 +80,11 @@ describe("EntityTest", () => {
         expect(Array.from(orderItemEntity.allPropMap.keys())).toEqual([
             "id",
             "order",
+            "orderId"
+        ]);
+        expect(Array.from(orderItemEntity.expanedPropMap.keys())).toEqual([
+            "id",
+            "order",
             "orderId",
             "orderId.x",
             "orderId.y",

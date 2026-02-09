@@ -281,7 +281,7 @@ export class EntityProp {
             .get(referenceProp._referencedTargetKeyPropName()!)!;
         this._referencedTargetKeyProp = keyProp;
         this._scalarType = keyProp._scalarType;
-        this._props = keyProp._props;
+        this._props = EntityProp._redirectSubPropMap(this, keyProp._props);
     }
 
     collectDeeperProps(map: Map<string, EntityProp>) {
@@ -356,5 +356,27 @@ export class EntityProp {
         return this.parentProp != null
             ? `${this.parentProp.toString()}.${this.name}`
             : `${this.declaringEntity.name}.${this.name}`;
+    }
+
+    private _clone(): EntityProp {
+        return Object.assign(Object.create(Object.getPrototypeOf(this)), this);
+    }
+    
+    private static _redirectSubPropMap(
+        prop: EntityProp,
+        propMap: ReadonlyMap<string, EntityProp> | undefined
+    ) : ReadonlyMap<string, EntityProp> | undefined {
+        if (propMap == null) {
+            return undefined;
+        }
+        const newMap = new Map<string, EntityProp>();
+        for (const [key, value] of propMap.entries()) {
+            const newValue = value._clone();
+            (newValue as any).declaringEntity = prop.declaringEntity;
+            (newValue as any).parentProp = prop;
+            newValue._props = EntityProp._redirectSubPropMap(newValue, newValue._props);
+            newMap.set(key, newValue);
+        }
+        return newMap;
     }
 }

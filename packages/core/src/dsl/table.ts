@@ -66,10 +66,10 @@ type DslMembers<
             : TMembers[K] extends CollectionProp<infer TTargetModel>
                 ? CollectionJoinAction<TModel, TTargetModel, CtorMembers<ModelCtor<TTargetModel>>, TRiskAccepted>
             : never
-        } & ReferenceKeyMembers<TMembers,TNullity>
+        } & ReferenceKeyMembers<TModel, TMembers,TNullity>
     >;
 
-type ReferenceKeyMembers<TMembers, TNullity extends NullityType> = {
+type ReferenceKeyMembers<TModel extends AnyModel, TMembers, TNullity extends NullityType> = {
     [
         K in keyof TMembers as
             TMembers[K] extends ReferenceProp<infer _, any, "OWNING", infer TKey>
@@ -79,7 +79,9 @@ type ReferenceKeyMembers<TMembers, TNullity extends NullityType> = {
                 : never
     ]: TMembers[K] extends ReferenceProp<infer TTargetModel, infer Nullity, "OWNING", infer TKey>
         ? TKey extends string
-            ? AllModelMembers<TTargetModel>[TKey] extends I64Prop<infer R, any>
+            ? AllModelMembers<TTargetModel>[TKey] extends EmbeddedProp<infer R, any, any>
+                ? () => DslMembers<TModel, R, CombinedNullity<TNullity, Nullity>, false>
+            : AllModelMembers<TTargetModel>[TKey] extends I64Prop<infer R, any>
                 ? Expression<
                     MakeType<R, CombinedNullity<TNullity, Nullity>>, 
                     R extends string ? "AS_NUMBER" : undefined
