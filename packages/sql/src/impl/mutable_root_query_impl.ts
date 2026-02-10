@@ -1,4 +1,6 @@
 import { err, ExpressionLike, ExpressionOrder, MutableRootQuery, Predicate, RootQueryProjection, RootQuerySelectArrArgs, RootQuerySelection, RootQuerySelectMapArgs, supressUnused } from "@ts-grm/core";
+import { SqlClientImplementor } from "@/sql_client";
+import { AbstractRootQueryProjection } from "./root_query_projection";
 
 export class MutableRootQueryImpl implements MutableRootQuery {
 
@@ -13,6 +15,8 @@ export class MutableRootQueryImpl implements MutableRootQuery {
     __type(): { mutableRootQuery: true; } {
         return { mutableRootQuery: true };
     }
+
+    constructor(readonly sqlClient: SqlClientImplementor) {}
     
     where(
         ...predicates: ReadonlyArray<Predicate | null | undefined>
@@ -91,8 +95,7 @@ export class MutableRootQueryImpl implements MutableRootQuery {
         selection: TSelection
     ) : RootQueryProjection<TSelection, "ONE">;
 
-    select(selections: any): any {
-        supressUnused(selections);
-        throw new Error();
+    select(arg: any): any {
+        return AbstractRootQueryProjection.of(arg);
     }
 }

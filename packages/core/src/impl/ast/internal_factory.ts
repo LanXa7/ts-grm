@@ -5,6 +5,7 @@ import type { CoalesceCmpExpr, CoalesceDtExpr, CoalesceExpr, CoalesceNumExpr, Co
 import type { AbstractNumExpr } from "./num_expr";
 import type { AbstractStrExpr } from "./string_expr";
 import type { AbstractDtExpr } from "./dt_expr";
+import { ExpressionOrder } from "@/dsl";
 
 let _internalFactory: InternalFactory | undefined = undefined;
 
@@ -21,6 +22,11 @@ export function setInteralFactory(factory: InternalFactory) {
 }
 
 export interface InternalFactory {
+
+    createExprOrder(
+        expr: AbstractExpr<any>, 
+        desc: boolean
+    ): ExpressionOrder;
     
     createCmpPred<T>(
         op: CmpOp,

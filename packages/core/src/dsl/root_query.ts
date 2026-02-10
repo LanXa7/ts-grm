@@ -47,7 +47,9 @@ export interface MutableRootQuery {
 
 export type RootQuery<TProjection extends RootQueryProjection<any>> = {
 
-    __type(): { rootQuery: TProjection | undefined; };
+    __type(): { rootQuery: TProjection | true; };
+
+    distinct(): RootQuery<TProjection>;
 
     limit(limit: number): RootQuery<TProjection>;
 
@@ -90,7 +92,7 @@ export type RootQuerySelection<T> =
     Expression<T, any> |
     FetchedView<any, T>;
 
-type RowTypeOf<TPojection extends RootQueryProjection<any>> =
+export type RowTypeOf<TPojection extends RootQueryProjection<any>> =
     TPojection extends RootQueryProjection<infer TSelections, infer TKind>
         ? TKind extends "ONE"
             ? SelectedTypeOf<TSelections>

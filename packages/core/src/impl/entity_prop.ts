@@ -112,6 +112,22 @@ export class EntityProp {
         return false;
     }
 
+    get thisKey(): string | undefined {
+        return this._data.joinTable?.joinThis?.referencedProp;
+    }
+
+    get targetKey(): string | undefined {
+        const joinColumns = this._data.joinColumns;
+        if (joinColumns != null) {
+            return joinColumns.referencedProp;
+        }
+        const joinTable = this._data.joinTable;
+        if (joinTable != null) {
+            return joinTable.joinTarget?.referencedProp;        
+        }
+        return undefined;
+    }
+
     private validateData() {
         if (this._data!.associationType == null) {
             this.validateSimpleData();

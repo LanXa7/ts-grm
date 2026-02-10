@@ -9,7 +9,15 @@ export { ExpressionOrder } from "./utils";
 export type { SqlClient } from "./sql_client";
 export type { AtLeastOne } from "./utils";
 export type { Criteria } from "./criteria";
-export type { RootQuery, MutableRootQuery, RootQueryProjection, RootQuerySelectArrArgs, RootQuerySelectMapArgs, RootQuerySelection } from "./root_query";
+export type { 
+    RootQuery, 
+    MutableRootQuery, 
+    RootQueryProjection, 
+    RootQuerySelectArrArgs, 
+    RootQuerySelectMapArgs, 
+    RootQuerySelection, 
+    RowTypeOf 
+} from "./root_query";
 export type { SubQueryLike, ExpressionSubQuery, TupleSubQuery, MutableSubQuery } from "./sub_query";
 export type { BaseQuery, MutableBaseQuery, BaseModel } from "./base-query";
 export type { Table } from "./table";

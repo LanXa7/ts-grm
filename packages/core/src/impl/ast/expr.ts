@@ -4,8 +4,9 @@ import { ArgumentError } from "@/error/common";
 import type { AbstractPred, CmpPred, NullityPred } from "./pred";
 import type { CoalesceCmpExpr, CoalesceExpr } from "./coalesce_expr";
 import { getInternalFactory, validateInValues } from "./internal_factory";
+import { AbstractSelection } from "./selection";
 
-export abstract class AbstractExpr<T> {
+export abstract class AbstractExpr<T> extends AbstractSelection {
 
     __type(): {
         selectionLike: true;
@@ -20,11 +21,11 @@ export abstract class AbstractExpr<T> {
     }
 
     asc(): ExpressionOrder {
-        throw new Error();
+        return getInternalFactory().createExprOrder(this, false);
     }
     
     desc(): ExpressionOrder {
-        throw new Error();
+        return getInternalFactory().createExprOrder(this, true);
     }
 
     eq(
