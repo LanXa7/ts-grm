@@ -6,6 +6,7 @@ import { AbstractStrExpr, ConcatExpr } from "@/impl/ast/string_expr";
 import { ArgumentError } from "@/error/common";
 import { getInternalFactory } from "@/impl/ast/internal_factory";
 import { OrderNullsType } from "@/schema/order";
+import { CompoundPred } from "@/impl/ast/pred";
 
 export type Expression<
     T, 
@@ -336,22 +337,19 @@ export type MakeType<T, TNullity extends NullityType> =
 export function and(
     ...predicates: ReadonlyArray<Nullable<AnyExpression<boolean>>>
 ): AnyExpression<boolean> | undefined {
-    supressUnused(predicates);
-    throw new Error();
+    return CompoundPred.of("AND", predicates);
 }
 
 export function or(
     ...predicates: ReadonlyArray<Nullable<AnyExpression<boolean>>>
 ): AnyExpression<boolean> | undefined {
-    supressUnused(predicates);
-    throw new Error();
+    return CompoundPred.of("OR", predicates);
 }
 
 export function not(
     ...predicates: ReadonlyArray<Nullable<AnyExpression<boolean>>>
 ): AnyExpression<boolean> | undefined {
-    supressUnused(predicates);
-    throw new Error();
+    return CompoundPred.of("AND", predicates)?.negative();
 }
 
 export type ExpressionLike = {

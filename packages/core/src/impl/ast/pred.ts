@@ -1,4 +1,4 @@
-import { LikeMode } from "@/dsl";
+import { Expression, LikeMode } from "@/dsl";
 import { AbstractExpr } from "./expr";
 
 export abstract class AbstractPred extends AbstractExpr<boolean> {
@@ -99,3 +99,49 @@ export class InCollectionPred<T> extends AbstractPred {
         );
     }
 }
+
+export class CompoundPred extends AbstractPred {
+
+    constructor(
+        readonly op: CompoundOp,
+        readonly preds: ReadonlyArray<AbstractPred>
+    ) {
+        super();
+    }
+
+    negative(): AbstractPred {
+        const newOp = this.op === "AND" ? "OR" : "AND";
+        const newPreds = this.preds.map(pred => pred.negative());
+        return new CompoundPred(newOp, newPreds);
+    }
+
+    static of(op: CompoundOp, exprs: ReadonlyArray<Expression<boolean> | null | undefined>): AbstractPred | undefined {
+        if (exprs == null) {
+            return undefined;
+        }
+        const preds: Array<AbstractPred> = [];
+        for (const expr of exprs) {
+            if (expr instanceof CompoundPred) {
+                if (expr.op === op) {
+                    preds.push(...expr.preds);
+                } else {
+                    preds.push(expr);
+                }
+            } else if (expr instanceof AbstractPred) {
+                preds.push(expr);
+            } else if (expr instanceof AbstractExpr) {
+                preds.push(expr.eq(true));
+            }
+        }
+        switch (preds.length) {
+            case 0:
+                return undefined;
+            case 1:
+                return preds[0];
+            default:
+                return new CompoundPred(op, preds);
+        }
+    }
+}
+
+export type CompoundOp = "AND" | "OR";

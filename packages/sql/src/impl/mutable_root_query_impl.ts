@@ -1,16 +1,16 @@
-import { err, ExpressionLike, ExpressionOrder, MutableRootQuery, Predicate, RootQueryProjection, RootQuerySelectArrArgs, RootQuerySelection, RootQuerySelectMapArgs, supressUnused } from "@ts-grm/core";
+import { dsl, err, ExpressionLike, ExpressionOrder, MutableRootQuery, Predicate, RootQueryProjection, RootQuerySelectArrArgs, RootQuerySelection, RootQuerySelectMapArgs, supressUnused } from "@ts-grm/core";
 import { SqlClientImplementor } from "@/sql_client";
 import { AbstractRootQueryProjection } from "./root_query_projection";
 
 export class MutableRootQueryImpl implements MutableRootQuery {
 
-    private readonly _predicates: Array<Predicate> = [];
+    private _predicate: Predicate | undefined = undefined;
 
     private readonly _orders: Array<ExpressionOrder> = [];
 
     private _groupByExprs: ReadonlyArray<ExpressionLike> | undefined = undefined;
 
-    private readonly _havingPreidicates: Array<Predicate> = [];
+    private _havingPreidicate: Predicate | undefined = undefined;
 
     __type(): { mutableRootQuery: true; } {
         return { mutableRootQuery: true };
@@ -21,11 +21,7 @@ export class MutableRootQueryImpl implements MutableRootQuery {
     where(
         ...predicates: ReadonlyArray<Predicate | null | undefined>
     ): this {
-        for (const predicate of predicates) {
-            if (predicate != null) {
-                this._predicates.push(predicate);
-            }
-        }
+        this._predicate = dsl.and(this._predicate, ...predicates);
         return this;
     }
 
@@ -65,11 +61,7 @@ export class MutableRootQueryImpl implements MutableRootQuery {
         if (this._groupByExprs == null) {
             throw new err.StateError(`"having" cannot be invoked before "groupBy"`);
         }
-        for (const predicate of predicates) {
-            if (predicate != null) {
-                this._havingPreidicates.push(predicate);
-            }
-        }
+        this._havingPreidicate = dsl.and(this._havingPreidicate, ...predicates);
         return this;
     }
 
@@ -95,7 +87,7 @@ export class MutableRootQueryImpl implements MutableRootQuery {
         selection: TSelection
     ) : RootQueryProjection<TSelection, "ONE">;
 
-    select(arg: any): any {
-        return AbstractRootQueryProjection.of(arg);
+    select(...arr: any[]): any {
+        return AbstractRootQueryProjection.of(arr);
     }
 }

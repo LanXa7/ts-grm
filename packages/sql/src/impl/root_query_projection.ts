@@ -7,10 +7,11 @@ implements RootQueryProjection<T, TKind> {
         return { selectedProjection: true };
     }
 
-    static of(arg: any): AbstractRootQueryProjection<any, any> {
-        if (Array.isArray(arg)) {
-            return new ArrRootQueryProjection(arg as ReadonlyArray<RootQuerySelection<any>>);
+    static of(arr: any): AbstractRootQueryProjection<any, any> {
+        if (arr.length > 1) {
+            return new ArrRootQueryProjection(arr as ReadonlyArray<RootQuerySelection<any>>);
         }
+        const arg = arr[0];
         if (arg instanceof AbstractSelection) {
             return new ValRootQueryProjection(arg as RootQuerySelection<any>);
         }

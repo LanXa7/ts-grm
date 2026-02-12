@@ -22,6 +22,10 @@ export interface MutableRootQuery {
         ...predicates: ReadonlyArray<Predicate | null | undefined>
     ): this;
 
+    select<TSelection extends SelectionLike>(
+        selection: TSelection
+    ) : RootQueryProjection<TSelection, "ONE">;
+
     select<
         const TSelections extends RootQuerySelectArrArgs
     >(
@@ -39,10 +43,6 @@ export interface MutableRootQuery {
         [K in keyof TSelections]: 
             TSelections[K] extends RootQuerySelection<infer U> ? RootQuerySelection<U> : never
     }, "MAP">;
-
-    select<TSelection extends RootQuerySelection<any>>(
-        selection: TSelection
-    ) : RootQueryProjection<TSelection, "ONE">;
 }
 
 export type RootQuery<TProjection extends RootQueryProjection<any>> = {
