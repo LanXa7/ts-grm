@@ -5,8 +5,9 @@ import { LikeMode } from "@/dsl";
 import { ArgumentError } from "@/error/common";
 import { getInternalFactory } from "./internal_factory";
 import type { CoalesceStrExpr } from "./coalesce_expr";
+import { Visitor } from "./visitor";
 
-export class AbstractStrExpr extends AbstractCmpExpr<string> {
+export abstract class AbstractStrExpr extends AbstractCmpExpr<string> {
 
     __type(): { 
         selectionLike: true;
@@ -196,28 +197,40 @@ export class AbstractStrExpr extends AbstractCmpExpr<string> {
     }
 }
 
-class LowerExpr extends AbstractStrExpr {
+export class LowerExpr extends AbstractStrExpr {
 
     constructor(readonly expr: AbstractStrExpr) {
         super();
     }
+
+    accept(visitor: Visitor): void {
+        visitor.visitLowerExpr(this);
+    }
 }
 
-class UpperExpr extends AbstractStrExpr {
+export class UpperExpr extends AbstractStrExpr {
 
     constructor(readonly expr: AbstractStrExpr) {
         super();
     }
+
+    accept(visitor: Visitor): void {
+        visitor.visitUpperExpr(this);
+    }
 }
 
-class ReverseExpr extends AbstractStrExpr {
+export class ReverseExpr extends AbstractStrExpr {
 
     constructor(readonly expr: AbstractStrExpr) {
         super();
     }
+
+    accept(visitor: Visitor): void {
+        visitor.visitReverseExpr(this);
+    }
 }
 
-class TrimExpr extends AbstractStrExpr {
+export class TrimExpr extends AbstractStrExpr {
 
     constructor(
         readonly expr: AbstractStrExpr,
@@ -225,16 +238,24 @@ class TrimExpr extends AbstractStrExpr {
     ) {
         super();
     }
+
+    accept(visitor: Visitor): void {
+        visitor.visitTrimExpr(this);
+    }
 }
 
-class LengthExpr extends AbstractNumExpr<number> {
+export class LengthExpr extends AbstractNumExpr<number> {
 
     constructor(readonly expr: AbstractStrExpr) {
         super();
     }
+
+    accept(visitor: Visitor): void {
+        visitor.visitLengthExpr(this);
+    }
 }
 
-class ReplaceExpr extends AbstractStrExpr {
+export class ReplaceExpr extends AbstractStrExpr {
 
     constructor(
         readonly expr: AbstractStrExpr,
@@ -243,9 +264,13 @@ class ReplaceExpr extends AbstractStrExpr {
     ) {
         super();
     }
+
+    accept(visitor: Visitor): void {
+        visitor.visitReplaceExpr(this);
+    }
 }
 
-class PadExpr extends AbstractStrExpr {
+export class PadExpr extends AbstractStrExpr {
 
     constructor(
         readonly expr: AbstractStrExpr,
@@ -255,9 +280,13 @@ class PadExpr extends AbstractStrExpr {
     ) {
         super();
     }
+
+    accept(visitor: Visitor): void {
+        visitor.visitPadExpr(this);
+    }
 }
 
-class LeftExpr extends AbstractStrExpr {
+export class LeftExpr extends AbstractStrExpr {
 
     constructor(
         readonly expr: AbstractStrExpr,
@@ -265,9 +294,13 @@ class LeftExpr extends AbstractStrExpr {
     ) {
         super();
     }
+
+    accept(visitor: Visitor): void {
+        visitor.visitLeftExpr(this);
+    }
 }
 
-class RightExpr extends AbstractStrExpr {
+export class RightExpr extends AbstractStrExpr {
 
     constructor(
         readonly expr: AbstractStrExpr,
@@ -275,9 +308,13 @@ class RightExpr extends AbstractStrExpr {
     ) {
         super();
     }
+
+    accept(visitor: Visitor): void {
+        visitor.visitRightExpr(this);
+    }
 }
 
-class PositionExpr extends AbstractStrExpr {
+export class PositionExpr extends AbstractStrExpr {
 
     constructor(
         readonly expr: AbstractStrExpr,
@@ -286,9 +323,13 @@ class PositionExpr extends AbstractStrExpr {
     ) {
         super();
     }
+
+    accept(visitor: Visitor): void {
+        visitor.visitPositionExpr(this);
+    }
 }
 
-class SubstringExpr extends AbstractStrExpr {
+export class SubstringExpr extends AbstractStrExpr {
 
     constructor(
         readonly expr: AbstractStrExpr,
@@ -296,6 +337,10 @@ class SubstringExpr extends AbstractStrExpr {
         readonly lenExpr: AbstractNumExpr<number> | undefined
     ) {
         super();
+    }
+
+    accept(visitor: Visitor): void {
+        visitor.visitSubstringExpr(this);
     }
 }
 
@@ -305,5 +350,9 @@ export class ConcatExpr extends AbstractStrExpr {
         readonly values: ReadonlyArray<AbstractStrExpr>
     ) {
         super();
+    }
+
+    accept(visitor: Visitor): void {
+        visitor.visitConcatExpr(this);
     }
 }

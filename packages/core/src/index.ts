@@ -8,7 +8,8 @@ export { EntityProp } from "./impl/entity_prop";
 export { CodeWriter } from "./impl/code_writer"; 
 export { supressUnused } from "./utils";
 export { ExpressionOrder } from "./dsl";
-export { AbstractSelection, AbstractExpr, AbstractPred } from "./impl/ast";
+export * as ast from "./impl/ast";
+export type { AbstractEntityTable, JoinOperation, JoinFilter } from "./impl/entity_table";
 export type { OrderNullsType } from "./schema/order";
 export type { Model, AnyModel } from "./schema/model";
 export type { PropData } from "./schema/prop";
@@ -31,11 +32,10 @@ export type  {
     MutableBaseQuery,
     BaseModel,
     Table,
+    JoinType,
     LikeMode,
     Expression,
     ExpressionLike,
     Predicate,
     RowTypeOf
 } from "./dsl";
-
-

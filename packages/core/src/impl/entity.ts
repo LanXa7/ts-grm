@@ -5,6 +5,7 @@ import { ModelImpl } from "@/impl/model_impl";
 import { dedent } from "@/error/util";
 import { capitalize, makeErr } from "./util";
 import { AbstractEntityTable, createEntityTableClass, EntityTableCtor, JoinOperation } from "./entity_table";
+import { StateError } from "@/error/common";
 
 export class Entity {
 
@@ -22,6 +23,10 @@ export class Entity {
 
     private _tableCtor: EntityTableCtor | undefined;
 
+    private static _nextIdentity = 0;
+
+    private _identity : number;
+
     static of(model: AnyModel): Entity {
         return (model as ModelImpl<any, any, any, any, any>).toEntity()
     }
@@ -32,6 +37,9 @@ export class Entity {
         private _ctor: Ctor, 
         superModel?: AnyModel
     ) {
+        if (Entity._nextIdentity >= Number.MAX_SAFE_INTEGER) {
+            throw new StateError(`The applicaion ha`);
+        }
         if (!isValidModelName(name)) {
             throw new ModelError(
                 name,
@@ -42,6 +50,7 @@ export class Entity {
         this.superEntity = superModel !== undefined
             ? Entity.of(superModel)
             : undefined;
+        this._identity = Entity._nextIdentity++;
     }
 
     get idKey(): string {
@@ -70,6 +79,10 @@ export class Entity {
         this.resolve(1);
         return this._expanedPropMap ?? 
             makeErr(`The expandedPropMap of ${this.name} is not initialized`);
+    }
+
+    get identity(): number {
+        return this._identity;
     }
 
     prop(name: string): EntityProp {

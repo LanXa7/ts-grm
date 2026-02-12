@@ -2,8 +2,9 @@ import { ArgumentError } from "@/error/common";
 import { AbstractCmpExpr } from "./expr";
 import { getInternalFactory } from "./internal_factory";
 import type { CoalesceNumExpr } from "./coalesce_expr";
+import { Visitor } from "./visitor";
 
-export class AbstractNumExpr<T extends string | number> extends AbstractCmpExpr<T> {
+export abstract class AbstractNumExpr<T extends string | number> extends AbstractCmpExpr<T> {
 
     __type(): { 
         selectionLike: true;
@@ -109,7 +110,7 @@ export class AbstractNumExpr<T extends string | number> extends AbstractCmpExpr<
     }
 }
 
-class UnaryMinusExpr<T extends number | string> extends AbstractNumExpr<T> {
+export class UnaryMinusExpr<T extends number | string> extends AbstractNumExpr<T> {
 
     constructor(
         readonly expr: AbstractNumExpr<T>
@@ -120,9 +121,13 @@ class UnaryMinusExpr<T extends number | string> extends AbstractNumExpr<T> {
     override unaryMinus(): AbstractNumExpr<T> {
         return this.expr;
     }
+
+    accept(visitor: Visitor): void {
+        visitor.visitUnaryMinusExpr(this);
+    }
 }
 
-class BinaryNumExpr<T extends number | string> extends AbstractNumExpr<T> {
+export class BinaryNumExpr<T extends number | string> extends AbstractNumExpr<T> {
 
     constructor(
         readonly op: BinaryNumOp,
@@ -131,9 +136,13 @@ class BinaryNumExpr<T extends number | string> extends AbstractNumExpr<T> {
     ) {
         super();
     }
+
+    accept(visitor: Visitor): void {
+        visitor.visitBinaryNumExpr(this);
+    }
 }
 
-type BinaryNumOp = "+" | "-" | "*" | "/" | "%";
+export type BinaryNumOp = "+" | "-" | "*" | "/" | "%";
 
 type MergeNumType<
     T1 extends string | number | null | undefined, 

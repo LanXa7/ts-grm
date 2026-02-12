@@ -20,7 +20,7 @@ export type {
 } from "./root_query";
 export type { SubQueryLike, ExpressionSubQuery, TupleSubQuery, MutableSubQuery } from "./sub_query";
 export type { BaseQuery, MutableBaseQuery, BaseModel } from "./base-query";
-export type { Table } from "./table";
+export type { Table, JoinType } from "./table";
 export type { LikeMode, Expression, ExpressionLike, Predicate } from "./expression";
 
 export const dsl = {

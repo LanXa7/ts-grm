@@ -1,6 +1,25 @@
-export { AbstractSelection } from "./selection";
-export { AbstractExpr } from "./expr";
-export { AbstractPred } from "./pred";
+export type { AbstractSelection } from "./selection";
+export type { AbstractExpr } from "./expr";
+export type { AbstractPred } from "./pred";
+export type { DtDiffExpr, DtMinusExpr, DtPlusExpr } from "./dt_expr";
+export type { BinaryNumExpr, UnaryMinusExpr } from "./num_expr";
+export type { CmpPred, CompoundPred, InCollectionPred, LikePred, NullityPred } from "./pred";
+export type { PropExprContract as TablePropExpr } from "./prop_expr";
+export type { 
+    ConcatExpr, 
+    LeftExpr, 
+    LengthExpr, 
+    LowerExpr, 
+    PadExpr, 
+    PositionExpr, 
+    ReplaceExpr, 
+    ReverseExpr, 
+    RightExpr, 
+    SubstringExpr, 
+    TrimExpr, 
+    UpperExpr 
+} from "./string_expr";
+export type { Visitor } from "./visitor";
 
 import { InternalFactory, setInteralFactory } from "@/impl/ast/internal_factory";
 import { CmpOp, CmpPred, InCollectionPred, NullityPred } from "@/impl/ast/pred";

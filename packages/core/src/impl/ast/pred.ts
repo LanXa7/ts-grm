@@ -1,5 +1,6 @@
 import { Expression, LikeMode } from "@/dsl";
 import { AbstractExpr } from "./expr";
+import { Visitor } from "./visitor";
 
 export abstract class AbstractPred extends AbstractExpr<boolean> {
 
@@ -22,6 +23,10 @@ export class CmpPred extends AbstractPred {
             this.left, 
             this.right
         );
+    }
+
+    accept(visitor: Visitor): void {
+        visitor.visitCmpPred(this);
     }
 }
 
@@ -65,6 +70,10 @@ export class LikePred extends AbstractPred {
             !this.neg
         );
     }
+
+    accept(visitor: Visitor): void {
+        visitor.visitLikePred(this);
+    }
 }
 
 export class NullityPred extends AbstractPred {
@@ -78,6 +87,10 @@ export class NullityPred extends AbstractPred {
 
     negative(): NullityPred {
         return new NullityPred(this.expr, !this.neg);
+    }
+
+    accept(visitor: Visitor): void {
+        visitor.visitNullityPred(this);
     }
 }
 
@@ -97,6 +110,10 @@ export class InCollectionPred<T> extends AbstractPred {
             this.values,
             !this.neg
         );
+    }
+
+    accept(visitor: Visitor): void {
+        visitor.visitInCollectionPred(this);
     }
 }
 
@@ -141,6 +158,10 @@ export class CompoundPred extends AbstractPred {
             default:
                 return new CompoundPred(op, preds);
         }
+    }
+
+    accept(visitor: Visitor): void {
+        visitor.visitCompoundPred(this);
     }
 }
 

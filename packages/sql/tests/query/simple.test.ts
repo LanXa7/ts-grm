@@ -1,10 +1,7 @@
 import { SqliteDriver } from "@/driver/sqlite_driver";
 import { newSqlClient } from "@/sql_client";
-import { AUTHOR, BOOK } from "../model/model";
+import { BOOK } from "../model/model";
 import { describe, it } from "vitest";
-import { dsl, dto } from "@ts-grm/core";
-import { exists } from "../../../core/src/dsl/sub_query";
-import { baseQuery } from "../../../core/src/dsl/base-query";
 
 describe("SimpleQueryTest", () => {
 

@@ -4,8 +4,9 @@ import { AbstractStrExpr } from "./string_expr";
 import { AbstractDtExpr } from "./dt_expr";
 import { ArgumentError } from "@/error/common";
 import { AbstractEntityTable } from "../entity_table";
+import { Visitor } from "./visitor";
 
-export interface TableProp {
+export interface PropExprContract {
     readonly table: AbstractEntityTable,
     readonly prop: EntityProp
 }
@@ -50,7 +51,7 @@ export function createTableProp(table: AbstractEntityTable, prop: EntityProp) {
 //     }
 // }
 
-class PropNumExpr<T extends string | number> extends AbstractNumExpr<T> implements TableProp {
+class PropNumExpr<T extends string | number> extends AbstractNumExpr<T> implements PropExprContract {
 
     constructor(
         readonly table: AbstractEntityTable,
@@ -58,9 +59,13 @@ class PropNumExpr<T extends string | number> extends AbstractNumExpr<T> implemen
     ) {
         super();
     }
+
+    accept(visitor: Visitor): void {
+        visitor.visitTablePropExpr(this);
+    }
 }
 
-class PropStrExpr extends AbstractStrExpr implements TableProp {
+class PropStrExpr extends AbstractStrExpr implements PropExprContract {
 
     constructor(
         readonly table: AbstractEntityTable,
@@ -68,14 +73,22 @@ class PropStrExpr extends AbstractStrExpr implements TableProp {
     ) {
         super();
     }
+
+    accept(visitor: Visitor): void {
+        visitor.visitTablePropExpr(this);
+    }
 }
 
-class PropDtExpr extends AbstractDtExpr implements TableProp {
+class PropDtExpr extends AbstractDtExpr implements PropExprContract {
     
     constructor(
         readonly table: AbstractEntityTable,
         readonly prop: EntityProp
     ) {
         super();
+    }
+
+    accept(visitor: Visitor): void {
+        visitor.visitTablePropExpr(this);
     }
 }

@@ -4,14 +4,15 @@ import { AbstractNumExpr } from "./num_expr";
 import { TimeUnit } from "@/dsl/expression";
 import { getInternalFactory } from "./internal_factory";
 import type { CoalesceDtExpr } from "./coalesce_expr";
+import { Visitor } from "./visitor";
 
-export class AbstractDtExpr extends AbstractCmpExpr<Date> {
+export abstract class AbstractDtExpr extends AbstractCmpExpr<Date> {
 
     plus(
         value: number | AbstractNumExpr<number>, 
         timeUnit: TimeUnit
     ): AbstractDtExpr {
-        return new PlusExpr(
+        return new DtPlusExpr(
             this, 
             typeof value === "number" ? getInternalFactory().createLiteral(value) : value,
             timeUnit
@@ -22,7 +23,7 @@ export class AbstractDtExpr extends AbstractCmpExpr<Date> {
         value: number | AbstractNumExpr<number>, 
         timeUnit: TimeUnit
     ): AbstractDtExpr {
-        return new MinusExpr(
+        return new DtMinusExpr(
             this,
             typeof value === "number" ? getInternalFactory().createLiteral(value) : value,
             timeUnit
@@ -33,7 +34,7 @@ export class AbstractDtExpr extends AbstractCmpExpr<Date> {
         value: Date | AbstractDtExpr, 
         timeUnit: TimeUnit
     ): AbstractNumExpr<number> {
-        return new DiffExpr(
+        return new DtDiffExpr(
             this,
             value instanceof Date ? getInternalFactory().createLiteral(value) : value,
             timeUnit
@@ -57,7 +58,7 @@ export class AbstractDtExpr extends AbstractCmpExpr<Date> {
     }
 }
 
-class PlusExpr extends AbstractDtExpr {
+export class DtPlusExpr extends AbstractDtExpr {
 
     constructor(
         readonly expr: AbstractDtExpr,
@@ -66,9 +67,13 @@ class PlusExpr extends AbstractDtExpr {
     ) {
         super();
     }
+
+    accept(visitor: Visitor): void {
+        visitor.visitDtPlusExpr(this);
+    }
 }
 
-class MinusExpr extends AbstractDtExpr {
+export class DtMinusExpr extends AbstractDtExpr {
 
     constructor(
         readonly expr: AbstractDtExpr,
@@ -77,9 +82,13 @@ class MinusExpr extends AbstractDtExpr {
     ) {
         super();
     }
+
+    accept(visitor: Visitor): void {
+        visitor.visitDtMinusExpr(this);
+    }
 }
 
-class DiffExpr extends AbstractNumExpr<number> {
+export class DtDiffExpr extends AbstractNumExpr<number> {
 
     constructor(
         readonly expr: AbstractDtExpr,
@@ -87,5 +96,9 @@ class DiffExpr extends AbstractNumExpr<number> {
         readonly unit: TimeUnit
     ) {
         super();
+    }
+
+    accept(visitor: Visitor): void {
+        visitor.visitDtDiffExpr(this);
     }
 }

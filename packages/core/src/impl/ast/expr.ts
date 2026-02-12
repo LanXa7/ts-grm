@@ -5,8 +5,10 @@ import type { AbstractPred, CmpPred, NullityPred } from "./pred";
 import type { CoalesceCmpExpr, CoalesceExpr } from "./coalesce_expr";
 import { getInternalFactory, validateInValues } from "./internal_factory";
 import { AbstractSelection } from "./selection";
+import { Node } from "./node";
+import { Visitor } from "./visitor";
 
-export abstract class AbstractExpr<T> extends AbstractSelection {
+export abstract class AbstractExpr<T> extends AbstractSelection implements Node {
 
     __type(): {
         selectionLike: true;
@@ -181,6 +183,8 @@ export abstract class AbstractExpr<T> extends AbstractSelection {
         });
         return factory.createCoalesceExpr(this, arr);
     }
+
+    abstract accept(visitor: Visitor): void;
 }
 
 export abstract class AbstractCmpExpr<T> extends AbstractExpr<T> {
