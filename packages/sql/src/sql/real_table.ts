@@ -3,7 +3,9 @@ import { JoinMergeScope } from "./join_merge_scope";
 
 export class RealTable {
 
-    private _childMap: Map<string, RealTable> | undefined = undefined;
+    private _restrictChildMap: Map<string, RealTable> | undefined = undefined;
+
+    private _laxChildMap: Map<string, RealTable> | undefined = undefined;
 
     private _joinType: JoinType | undefined;
 
@@ -37,40 +39,69 @@ export class RealTable {
     ): RealTable {
         const joinOperation = symbol.joinOperation;
         if (joinOperation == null) {
-            throw new err.ArgumentError(`symbol.joinOperation cannot`);
+            throw new err.ArgumentError(`symbol.joinOperation cannot be null`);
         }
-        const key = RealTable.keyOf(symbol, scope);
-        let childMap = this._childMap;
-        let child = childMap?.get(key);
+        const restrictKey = RealTable._restrictKeyOf(symbol, undefined);
+        let restrictChildMap = this._restrictChildMap;
+        let restrictChild = restrictChildMap?.get(restrictKey);
+        if (restrictChild != null) {
+            restrictChild._mergeFilter(joinOperation.filter);
+            return restrictChild;
+        }
+        if (restrictChildMap == null) {
+            this._restrictChildMap = restrictChildMap = new Map();
+        }
+        const laxKey = RealTable._laxKeyOf(symbol, scope);
+        let laxChildMap = this._laxChildMap;
+        let child = laxChildMap?.get(laxKey);
         if (child != null) {
-            if (child._joinType !== joinOperation!.joinType) {
+            child._mergeFilter(joinOperation.filter);
+            if (child._joinType != "INNER") {
                 child._joinType = "INNER";
-            }
-            if (joinOperation?.filter != null) {
-                let filters = this._filters;
-                if (filters == null) {
-                    this._filters = filters = [];
-                }
-                filters.push(joinOperation.filter);
+                restrictChildMap.set(RealTable._restrictKeyOf(symbol, "INNER"), child);
             }
         } else {
-            if (childMap == null) {
-                this._childMap = childMap = new Map();
+            if (laxChildMap == null) {
+                this._laxChildMap = laxChildMap = new Map();
             }
             child = new RealTable(symbol);
-            childMap.set(key, child);
+            restrictChildMap.set(restrictKey, child);
+            laxChildMap.set(laxKey, child);
         }
         return child;
     }
 
-    private static keyOf(
+    private _mergeFilter(filter: JoinFilter | undefined) {
+        if (filter != null) {
+            let filters = this._filters;
+            if (filters == null) {
+                this._filters = filters = [];
+            }
+            filters.push(filter);
+        }
+    }
+
+    private static _restrictKeyOf(
+        symbol: AbstractEntityTable,
+        joinType: JoinType | undefined
+    ): string {
+        return `${
+            symbol.entity.identity
+        }\x1F${
+            symbol.joinOperation!.joinProp?.name ?? ""
+        }\x1F${
+            joinType ?? symbol.joinOperation!.joinType
+        }`;
+    }
+
+    private static _laxKeyOf(
         symbol: AbstractEntityTable,
         scope: JoinMergeScope | undefined
     ): string {
         return `${
-            symbol.entity.idKey
+            symbol.entity.identity
         }\x1F${
-            symbol.joinOperation?.joinProp?.name ?? ""
+            symbol.joinOperation!.joinProp?.name ?? ""
         }\x1F${
             scope?.identity ?? 0
         }`;
