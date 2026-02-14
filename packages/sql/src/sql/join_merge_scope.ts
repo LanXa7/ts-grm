@@ -5,7 +5,7 @@ export class JoinMergeScope {
     private _identity: number;
 
     constructor(readonly parent: JoinMergeScope | undefined) {
-        this._identity = JoinMergeScope._nextIdentity++;
+        this._identity = ++JoinMergeScope._nextIdentity;
     }
 
     get identity() {

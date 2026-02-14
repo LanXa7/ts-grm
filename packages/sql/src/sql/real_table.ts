@@ -1,5 +1,6 @@
-import { AbstractEntityTable, ast, EntityProp, err, JoinFilter, JoinType } from "@ts-grm/core";
+import { AbstractEntityTable, EntityProp, err, JoinFilter, JoinType } from "@ts-grm/core";
 import { JoinMergeScope } from "./join_merge_scope";
+import { SqlBuilder } from "./sql_builder";
 
 export class RealTable {
 
@@ -12,6 +13,8 @@ export class RealTable {
     private _joinProp: EntityProp | undefined = undefined;
 
     private _filters: Array<JoinFilter> | undefined = undefined;
+
+    private _alias: string | undefined = undefined;
 
     constructor(readonly symbol: AbstractEntityTable) {
         this._joinType = symbol.joinOperation?.joinType;
@@ -105,5 +108,37 @@ export class RealTable {
         }\x1F${
             scope?.identity ?? 0
         }`;
+    }
+
+    collectTables(builder: SqlBuilder, tables: Set<RealTable>) {
+        this._alias = builder.allocateTableAlias();
+        tables.add(this);
+        if (this._restrictChildMap != null) {
+            for (const child of this._restrictChildMap.values()) {
+                child.collectTables(builder, tables);
+            }
+        }
+    }
+
+    render(builder: SqlBuilder) {
+        if (this._joinType == null) {
+            builder.sql("\nfrom ").sql(this._alias!);
+            return;
+        }
+        builder.sql("\n");
+        if (this._joinType === "LEFT") {
+            builder.sql("left join ");
+        } else {
+            builder.sql("inner join ");
+        }
+        builder.sql(this._alias!);
+    }
+
+    get alias(): string {
+        const alias = this._alias;
+        if (alias == null) {
+            throw new err.StateError("The table alias has not been allocated");
+        }
+        return alias;
     }
 }

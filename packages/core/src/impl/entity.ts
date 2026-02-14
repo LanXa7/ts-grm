@@ -50,7 +50,7 @@ export class Entity {
         this.superEntity = superModel !== undefined
             ? Entity.of(superModel)
             : undefined;
-        this._identity = Entity._nextIdentity++;
+        this._identity = ++Entity._nextIdentity;
     }
 
     get idKey(): string {
