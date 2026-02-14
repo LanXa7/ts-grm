@@ -5,13 +5,30 @@ import { Predicate } from "@/dsl/expression";
 import { createTableProp } from "./ast/prop_expr";
 import { JoinType } from "@/dsl/table";
 import { makeErr } from "./util";
+import { err } from "@/error";
 
 export abstract class AbstractEntityTable {
 
+    readonly joinOperation: JoinOperation | undefined;
+
+    readonly isShadow: boolean;
+
+    private _shadow: AbstractEntityTable | undefined = undefined;
+
     constructor(
         readonly entity: Entity,
-        readonly joinOperation: JoinOperation | undefined
+        options: JoinOperation | boolean | undefined
     ) {
+        if (options == null) {
+            this.joinOperation = undefined;
+            this.isShadow = false;
+        } else if (typeof options === "boolean") {
+            this.joinOperation = undefined;
+            this.isShadow = options;
+        } else {
+            this.joinOperation = options;
+            this.isShadow = false;
+        }
     }
 
     __type(): {
@@ -24,8 +41,22 @@ export abstract class AbstractEntityTable {
         }
     }
 
+    __setShadow(shadow: AbstractEntityTable) {
+        if (!shadow.isShadow) {
+            throw new err.ArgumentError("The argument is not shadow table");
+        }
+        if (this._shadow != null && this._shadow != shadow) {
+            throw new err.StateError("The current table can be exported at most once by the base query");
+        }
+        this._shadow = shadow;
+    }
+
     $acceptRisk(): this {
         return this;
+    }
+
+    get shadow(): AbstractEntityTable | undefined {
+        return this._shadow;
     }
 }
 
@@ -43,7 +74,7 @@ export type JoinFilter = (
 
 export type EntityTableCtor = new(
     entity: Entity,
-    joinOperation: JoinOperation | undefined
+    joinOperation: JoinOperation | boolean | undefined
 ) => AbstractEntityTable;
 
 export function createEntityTableClass(
@@ -79,9 +110,9 @@ export function createEntityTableClass(
 
 function writeConstructor(writer: CodeWriter) {
     writer
-        .code("constructor(entity, joinOperation) ")
+        .code("constructor(entity, options) ")
         .scope("CURLY_BRACKETS", () => {
-            writer.code("super(entity, joinOperation)").newLine(";");
+            writer.code("super(entity, options)").newLine(";");
         })
         .newLine();
 }

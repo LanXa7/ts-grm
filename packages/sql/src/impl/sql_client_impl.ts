@@ -14,7 +14,7 @@ import type {
     MutableRootQuery,
     Table
 } from "@ts-grm/core";
-import { Entity, supressUnused } from "@ts-grm/core";
+import { supressUnused, metadata } from "@ts-grm/core";
 import { MutableRootQueryImpl } from "./mutable_root_query_impl";
 import { RootQueryImpl } from "./root_query_impl";
 import { AbstractRootQueryProjection } from "./root_query_projection";
@@ -56,7 +56,7 @@ export class SqlClientImpl implements SqlClientImplementor {
         const mutableQuery = new MutableRootQueryImpl(this);
         const fnArgs: Array<any> = [ mutableQuery ];
         for (let i = 0; i < args.length - 1; i++) {
-            fnArgs[i + 1] = Entity.of(args[i] as AnyModel).table(undefined);
+            fnArgs[i + 1] = metadata.Entity.of(args[i] as AnyModel).table(undefined);
         }
         const fn = args[args.length - 1] as Function;
         const projection = fn.apply(undefined, fnArgs) as AbstractRootQueryProjection<any>;

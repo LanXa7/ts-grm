@@ -1,12 +1,12 @@
 import { UPPER_SNAKE_CASE_DATABASE_NAMING_STRATEGY, LOWER_SNAKE_CASE_DATABASE_NAMING_STRATEGY } from "@/cfg/database_naming_strategy";
-import { Entity } from "@ts-grm/core";
+import { metadata } from "@ts-grm/core";
 import { BOOK } from "../model/model";
 import { describe, expect, it } from "vitest";
 
 describe("DatabaseNamingStrategyTest", () => {
 
     it("upper", () => {
-        const book = Entity.of(BOOK);
+        const book = metadata.Entity.of(BOOK);
         const storeProp = book.allPropMap.get("store")!;
         const store = storeProp.targetEntity!;
         const authorsProp = book.allPropMap.get("authors")!;
@@ -73,7 +73,7 @@ describe("DatabaseNamingStrategyTest", () => {
     });
 
     it("lower", () => {
-        const book = Entity.of(BOOK);
+        const book = metadata.Entity.of(BOOK);
         const storeProp = book.allPropMap.get("store")!;
         const store = storeProp.targetEntity!;
         const authorsProp = book.allPropMap.get("authors")!;

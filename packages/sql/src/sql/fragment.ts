@@ -85,6 +85,18 @@ export class Scope extends Composite {
                 case "OR":
                     this.add(Separator.OR);
                     break;
+                case "UNION":
+                    this.add(Separator.UNION);
+                    break;
+                case "UNION_ALL":
+                    this.add(Separator.UNION_ALL);
+                    break;
+                case "MINUS":
+                    this.add(Separator.MINUS);
+                    break;
+                case "INTERSECT":
+                    this.add(Separator.INTERSECT);
+                    break;
                 case "COMMA":
                 case "VALUES":
                     this.add(Separator.COMMA);
@@ -147,29 +159,32 @@ export class Scope extends Composite {
     }
 }
 
-export type ScopeKind = "INDENT" | "COMMA" | "VALUES" | "AND" | "OR";
+export type ScopeKind = "INDENT" | "COMMA" | "VALUES" | "AND" | "OR" | "UNION" | "UNION_ALL" | "MINUS" | "INTERSECT";
 
 export class Separator extends Fragment {
 
-    static COMMA = new Separator(", ", ",\n");
+    static COMMA = new Separator(",\n");
 
-    static AND = new Separator(" and ", "\nand\n");
+    static AND = new Separator("\nand\n");
 
-    static OR = new Separator(" or ", "\nor\n");
+    static OR = new Separator("\nor\n");
+
+    static UNION = new Separator("\nunion\n");
+
+    static UNION_ALL = new Separator("\nunion all\n");
+
+    static MINUS = new Separator("\nminus\n");
+
+    static INTERSECT = new Separator("\nintersect\n");
 
     private constructor(
-        readonly text: string,
-        readonly prettyText: string
+        readonly text: string
     ) {
         super();
     }
 
     into(builder: SqlBuilder): void {
-        if (builder.pretty) {
-            builder.sql(this.prettyText);
-        } else {
-            builder.sql(this.text);
-        }
+        builder.sql(this.text);
     }
 }
 
@@ -184,6 +199,19 @@ export class Column extends Fragment {
 
     into(builder: SqlBuilder): void {
         builder.sql(this.table.alias).sql(".").sql(this.name);
+    }
+}
+
+export class ExportedTable extends Fragment {
+    
+    constructor(
+        readonly table: RealTable
+    ) {
+        super();
+    }
+
+    into(builder: SqlBuilder): void {
+        
     }
 }
 

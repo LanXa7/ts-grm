@@ -261,8 +261,8 @@ export class Entity {
         }
     }
 
-    table(joinOperation: JoinOperation | undefined): AbstractEntityTable {
-        return new (this._tableClass())(this, joinOperation);
+    table(options: JoinOperation | boolean | undefined): AbstractEntityTable {
+        return new (this._tableClass())(this, options);
     }
 
     private _tableClass(): EntityTableCtor {

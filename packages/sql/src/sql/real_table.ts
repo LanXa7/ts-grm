@@ -1,6 +1,7 @@
-import { AbstractEntityTable, EntityProp, err, JoinFilter, JoinType } from "@ts-grm/core";
+import { err, JoinType, metadata } from "@ts-grm/core";
 import { JoinMergeScope } from "./join_merge_scope";
 import { SqlBuilder } from "./sql_builder";
+import { Query, Scope } from "./fragment";
 
 export class RealTable {
 
@@ -10,34 +11,43 @@ export class RealTable {
 
     private _joinType: JoinType | undefined;
 
-    private _joinProp: EntityProp | undefined = undefined;
+    private _joinProp: metadata.EntityProp | undefined = undefined;
 
-    private _filters: Array<JoinFilter> | undefined = undefined;
+    private _filters: Array<metadata.JoinFilter> | undefined = undefined;
 
     private _alias: string | undefined = undefined;
 
-    constructor(readonly symbol: AbstractEntityTable) {
-        this._joinType = symbol.joinOperation?.joinType;
-        this._joinProp = symbol.joinOperation?.joinProp;
-        this._filters = symbol.joinOperation?.filter != null ?
-            [symbol.joinOperation.filter] :
-            undefined;
+    // TODO:
+    _baseQuery: Scope | undefined;
+
+    constructor(readonly symbol: metadata.AbstractEntityTable | metadata.BaseTableTarget) {
+        if (symbol instanceof metadata.AbstractEntityTable) {
+            this._joinType = symbol.joinOperation?.joinType;
+            this._joinProp = symbol.joinOperation?.joinProp;
+            this._filters = symbol.joinOperation?.filter != null ?
+                [symbol.joinOperation.filter] :
+                undefined;
+        } else {
+            this._joinType = undefined;
+            this._joinProp = undefined;
+            this._filters = undefined;
+        }
     }
 
     get joinType(): JoinType | undefined {
         return this._joinType;
     }
 
-    get joinProp(): EntityProp | undefined {
+    get joinProp(): metadata.EntityProp | undefined {
         return this._joinProp;
     }
 
-    get filters(): ReadonlyArray<JoinFilter> | undefined {
+    get filters(): ReadonlyArray<metadata.JoinFilter> | undefined {
         return this._filters;
     }
 
     child(
-        symbol: AbstractEntityTable, 
+        symbol: metadata.AbstractEntityTable, 
         scope: JoinMergeScope | undefined
     ): RealTable {
         const joinOperation = symbol.joinOperation;
@@ -74,7 +84,7 @@ export class RealTable {
         return child;
     }
 
-    private _mergeFilter(filter: JoinFilter | undefined) {
+    private _mergeFilter(filter: metadata.JoinFilter | undefined) {
         if (filter != null) {
             let filters = this._filters;
             if (filters == null) {
@@ -85,7 +95,7 @@ export class RealTable {
     }
 
     private static _restrictKeyOf(
-        symbol: AbstractEntityTable,
+        symbol: metadata.AbstractEntityTable,
         joinType: JoinType | undefined
     ): string {
         return `${
@@ -98,7 +108,7 @@ export class RealTable {
     }
 
     private static _laxKeyOf(
-        symbol: AbstractEntityTable,
+        symbol: metadata.AbstractEntityTable,
         scope: JoinMergeScope | undefined
     ): string {
         return `${
@@ -136,9 +146,9 @@ export class RealTable {
 
     get alias(): string {
         const alias = this._alias;
-        if (alias == null) {
-            throw new err.StateError("The table alias has not been allocated");
-        }
-        return alias;
+        // if (alias == null) {
+        //     throw new err.StateError("The table alias has not been allocated");
+        // }
+        return alias ?? "<unkonwn>";
     }
 }

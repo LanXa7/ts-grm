@@ -1,4 +1,4 @@
-import { Entity } from "@/index";
+import { Entity } from "@/impl";
 import { AUTHOR, BOOK, BOOK_STORE, ORDER_ITEM } from "../model/model";
 import { describe, expect, it } from "vitest";
 import { EntityTable } from "@/dsl/table";
@@ -13,8 +13,8 @@ describe("RuntimeTableTest", () => {
         const table = Entity.of(BOOK_STORE).table(undefined) as any as EntityTable<typeof BOOK_STORE>;
         expectCode(table.constructor.toString(), `
             class ThisClass extends $baseClass {
-                constructor(entity, joinOperation) {
-                    super(entity, joinOperation);
+                constructor(entity, options) {
+                    super(entity, options);
                 }
                 _id = undefined;
                 _name = undefined;
@@ -94,8 +94,8 @@ describe("RuntimeTableTest", () => {
         const table = Entity.of(BOOK).table(undefined) as any as EntityTable<typeof BOOK>;
         expectCode(table.constructor.toString(), `
             class ThisClass extends $baseClass {
-                constructor(entity, joinOperation) {
-                    super(entity, joinOperation);
+                constructor(entity, options) {
+                    super(entity, options);
                 }
                 _id = undefined;
                 _name = undefined;
@@ -235,8 +235,8 @@ describe("RuntimeTableTest", () => {
         const table = Entity.of(AUTHOR).table(undefined) as any as EntityTable<typeof AUTHOR>;
         expectCode(table.constructor.toString(), `
             class ThisClass extends $baseClass {
-                constructor(entity, joinOperation) {
-                    super(entity, joinOperation);
+                constructor(entity, options) {
+                    super(entity, options);
                 }
                 _id = undefined;
                 _name = undefined;
@@ -325,8 +325,8 @@ describe("RuntimeTableTest", () => {
         const table = Entity.of(ORDER_ITEM).table(undefined) as any as EntityTable<typeof ORDER_ITEM>;
         expectCode(table.constructor.toString(), `
             class ThisClass extends $baseClass {
-                constructor(entity, joinOperation) {
-                    super(entity, joinOperation);
+                constructor(entity, options) {
+                    super(entity, options);
                 }
                 _id = undefined;
                 _order = undefined;
