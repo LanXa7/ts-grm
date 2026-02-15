@@ -198,6 +198,14 @@ export class Column extends Fragment {
     }
 
     into(builder: SqlBuilder): void {
+        if (this.table.isShadow) {
+            const baseTable = this.table._baseTable!;
+            builder
+                .sql(baseTable.alias)
+                .sql(".")
+                .sql(this.table.shadowAlias(this.name));
+            return;
+        }
         builder.sql(this.table.alias).sql(".").sql(this.name);
     }
 }
@@ -211,7 +219,25 @@ export class ExportedTable extends Fragment {
     }
 
     into(builder: SqlBuilder): void {
-        
+        const shadowAliasMap = this.table._shadow?.shadowAliasMap;
+        if (shadowAliasMap === undefined) {
+            builder.sql("1");
+        } else {
+            let addComma = false;
+            for (const [columnName, alias] of shadowAliasMap.entries()) {
+                if (addComma) {
+                    builder.sql(",\n");
+                } else {
+                    addComma = true;
+                }
+                builder
+                    .sql(this.table.alias)
+                    .sql(".")
+                    .sql(columnName)
+                    .sql(" ")
+                    .sql(alias);
+            }
+        }
     }
 }
 

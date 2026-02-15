@@ -1,9 +1,13 @@
 import { err, JoinType, metadata } from "@ts-grm/core";
 import { JoinMergeScope } from "./join_merge_scope";
 import { SqlBuilder } from "./sql_builder";
-import { Query, Scope } from "./fragment";
+import { Scope } from "./fragment";
 
 export class RealTable {
+
+    private static _nextIdentity = 0;
+
+    readonly identity = ++RealTable._nextIdentity;
 
     private _restrictChildMap: Map<string, RealTable> | undefined = undefined;
 
@@ -20,6 +24,16 @@ export class RealTable {
     // TODO:
     _baseQuery: Scope | undefined;
 
+    _baseTable: RealTable | undefined;
+
+    readonly isShadow: boolean;
+
+    _shadow: RealTable | undefined;
+
+    private _shadowAliasMap: Map<string, string> | undefined = undefined;
+
+    private _nextShadowAliasId = 0;
+
     constructor(readonly symbol: metadata.AbstractEntityTable | metadata.BaseTableTarget) {
         if (symbol instanceof metadata.AbstractEntityTable) {
             this._joinType = symbol.joinOperation?.joinType;
@@ -27,10 +41,12 @@ export class RealTable {
             this._filters = symbol.joinOperation?.filter != null ?
                 [symbol.joinOperation.filter] :
                 undefined;
+            this.isShadow = symbol.isShadow;
         } else {
             this._joinType = undefined;
             this._joinProp = undefined;
             this._filters = undefined;
+            this.isShadow = false;
         }
     }
 
@@ -132,7 +148,9 @@ export class RealTable {
 
     render(builder: SqlBuilder) {
         if (this._joinType == null) {
-            builder.sql("\nfrom ").sql(this._alias!);
+            builder.sql("\nfrom ");
+            this._renderDefinition(builder);
+            builder.sql(" ").sql(this._alias!);
             return;
         }
         builder.sql("\n");
@@ -141,14 +159,41 @@ export class RealTable {
         } else {
             builder.sql("inner join ");
         }
-        builder.sql(this._alias!);
+        this._renderDefinition(builder);
+        builder.sql(" ").sql(this._alias!);
+    }
+
+    private _renderDefinition(builder: SqlBuilder) {
+        if (this._baseQuery != null) {
+            builder.sql("(");
+            this._baseQuery?.into(builder);
+            builder.sql(")");
+        }
     }
 
     get alias(): string {
         const alias = this._alias;
-        // if (alias == null) {
-        //     throw new err.StateError("The table alias has not been allocated");
-        // }
-        return alias ?? "<unkonwn>";
+        if (alias == null) {
+            throw new err.StateError("The table alias has not been allocated");
+        }
+        return alias;
+    }
+
+    shadowAlias(columnName: string): string {
+        let shadowAliasMap = this._shadowAliasMap;
+        let alias = shadowAliasMap?.get(columnName);
+        if (alias != null) {
+            return alias;
+        }
+        if (shadowAliasMap == null) {
+            this._shadowAliasMap = shadowAliasMap = new Map();
+        }
+        alias = `c${++this._baseTable!._nextShadowAliasId}`;
+        shadowAliasMap.set(columnName, alias);
+        return alias;
+    }
+
+    get shadowAliasMap(): ReadonlyMap<string, string> | undefined {
+        return this._shadowAliasMap;
     }
 }

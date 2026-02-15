@@ -76,8 +76,8 @@ describe("FragmentTest", () => {
                 tb_1_.NAME,
                 tb_2_.ID,
                 tb_2_.NAME
-            from tb_1_
-            inner join tb_2_
+            from  tb_1_
+            inner join  tb_2_
             where
                     tb_1_.EDITION = @p1
                 and
@@ -85,7 +85,7 @@ describe("FragmentTest", () => {
         );
         expect(sql(query, false)).toEqual(
             "select tb_1_.ID, tb_1_.NAME, tb_2_.ID, tb_2_.NAME " + 
-            "from tb_1_ inner join tb_2_ " + 
+            "from  tb_1_ inner join  tb_2_ " + 
             "where tb_1_.EDITION = @p1 and tb_2_.NAME = @p2"
         );
     });
@@ -96,6 +96,8 @@ describe("FragmentTest", () => {
         const exportedAuthorTable = metadata.Entity.of(AUTHOR).table(true);
         const bookTable = metadata.Entity.of(BOOK).table(undefined);
         const authorTable = metadata.Entity.of(AUTHOR).table(undefined);
+        shadow(bookTable, exportedBookTable);
+        shadow(authorTable, exportedAuthorTable);
         const bq1 = new Query(
             [ctx.toRealTable(bookTable)],
             composite(
@@ -109,15 +111,11 @@ describe("FragmentTest", () => {
             undefined,
             composite(
                 new Scope("COMMA"),
-                new ExportedTable(
-                    ctx.toRealTable(
-                        shadow(bookTable, exportedBookTable)
-                    )
-                ),
+                new ExportedTable(ctx.toRealTable(bookTable)),
                 Separator.COMMA,
                 new ExportedTable(
                     ctx.toRealTable(
-                        shadow((bookTable as any).store(), exportedAuthorTable)
+                        shadow((bookTable as any).authors(), exportedAuthorTable)
                     )
                 ),
                 Separator.COMMA,
@@ -127,7 +125,7 @@ describe("FragmentTest", () => {
                     new Column(ctx.toRealTable(bookTable), "STORE_ID"),
                     " order by ",
                     new Column(ctx.toRealTable(bookTable), "PRICE"),
-                    " desc"
+                    " desc)"
                 )
             )
         );
@@ -151,9 +149,7 @@ describe("FragmentTest", () => {
                 ),
                 Separator.COMMA,
                 new ExportedTable(
-                    ctx.toRealTable(
-                        shadow(authorTable, exportedAuthorTable)
-                    )
+                    ctx.toRealTable(authorTable)
                 ),
                 Separator.COMMA,
                 composite(
@@ -162,7 +158,7 @@ describe("FragmentTest", () => {
                     new Column(ctx.toRealTable((authorTable as any).books()), "STORE_ID"),
                     " order by ",
                     new Column(ctx.toRealTable((authorTable as any).books()), "PRICE"),
-                    " desc"
+                    " desc)"
                 )
             )
         );
@@ -172,6 +168,8 @@ describe("FragmentTest", () => {
             bq1,
             bq2
         );
+        ctx.toRealTable(exportedBookTable)._baseTable = realBaseTable;
+        ctx.toRealTable(exportedAuthorTable)._baseTable = realBaseTable;
         const q = new Query(
             [realBaseTable],
             undefined,
@@ -188,7 +186,35 @@ describe("FragmentTest", () => {
                 Separator.COMMA,
                 new Column(ctx.toRealTable(exportedAuthorTable), "NAME")
             )
-        )
-        console.log(sql(q, true));
+        );
+        expectCode(sql(q, true), `
+            select 
+                tb_1_.c1,
+                tb_1_.c2,
+                tb_1_.c3,
+                tb_1_.c4
+            from (
+                select 
+                    tb_2_.ID c1,
+                    tb_2_.NAME c2,
+                    tb_3_.ID c3,
+                    tb_3_.NAME c4,
+                    row_number() over(partition by tb_2_.STORE_ID order by tb_2_.PRICE desc)
+                from  tb_2_
+                inner join  tb_3_
+                where
+                    tb_2_.EDITION = @p1
+                select 
+                    tb_5_.ID c1,
+                    tb_5_.NAME c2,
+                    tb_4_.ID c3,
+                    tb_4_.NAME c4,
+                    row_number() over(partition by tb_5_.STORE_ID order by tb_5_.PRICE desc)
+                from  tb_4_
+                inner join  tb_5_
+                where
+                    tb_4_.NAME ilike @p2
+            ) tb_1_
+        `);
     });
 });

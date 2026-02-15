@@ -20,6 +20,12 @@ export class AstContext {
                 const parentRealTable = this.toRealTable(joinOperation.parent);
                 realTable = parentRealTable.child(table as metadata.AbstractEntityTable, this._joinMergeScope);
             }
+            if (table instanceof metadata.AbstractEntityTable) {
+                const shadow = table.shadow;
+                if (shadow != null) {
+                    realTable._shadow = this.toRealTable(shadow);
+                }
+            }
             this._tableMap.set(table, realTable);
         }
         return realTable;
@@ -34,3 +40,4 @@ export class AstContext {
         }
     }
 }
+
