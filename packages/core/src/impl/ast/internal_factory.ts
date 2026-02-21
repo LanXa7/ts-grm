@@ -1,6 +1,6 @@
 import { ArgumentError, StateError } from "@/error/common";
 import type { AbstractCmpExpr, AbstractExpr } from "./expr";
-import type { CmpOp, CmpPred, InCollectionPred, NullityPred } from "./pred";
+import type { BetweenPred, CmpOp, CmpPred, InCollectionPred, NullityPred } from "./pred";
 import type { CoalesceCmpExpr, CoalesceDtExpr, CoalesceExpr, CoalesceNumExpr, CoalesceStrExpr } from "./coalesce_expr";
 import type { AbstractNumExpr } from "./num_expr";
 import type { AbstractStrExpr } from "./string_expr";
@@ -33,6 +33,12 @@ export interface InternalFactory {
         left: AbstractExpr<T>,
         right: AbstractExpr<T>
     ): CmpPred;
+
+    createBetweenPred<T>(
+        expr: AbstractCmpExpr<T>,
+        min: AbstractExpr<T>,
+        max: AbstractExpr<T>
+    ): BetweenPred;
 
     createInValuesPred<T>(
         expr: AbstractExpr<T>,

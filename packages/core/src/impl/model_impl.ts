@@ -18,9 +18,9 @@ export class ModelImpl<
     private _entity: Entity | undefined;
 
     __type(): {
-        model: [TName, TIdKey, TCtor, TAllMembers, TSuperNames] | undefined 
+        model: [TName, TIdKey, TCtor, TAllMembers, TSuperNames] | true
     } {
-        return { model: undefined };
+        return { model: true };
     }
 
     constructor(

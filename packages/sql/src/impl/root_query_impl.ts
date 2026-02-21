@@ -1,18 +1,19 @@
 import type { RootQuery, RootQueryProjection, RowTypeOf } from "@ts-grm/core";
 import { MutableRootQueryImpl } from "./mutable_root_query_impl";
-import { AbstractRootQueryProjection } from "./root_query_projection";
+import { AbstractRootQueryProjection } from "./query_projection";
+import { defaultQueryOptions, QueryOptions } from "./query_options";
 
 export class RootQueryImpl<TProjection extends RootQueryProjection<any>> 
 implements RootQuery<TProjection> {
 
-    private readonly options: RootQueryOptions;
+    private readonly options: QueryOptions;
 
     constructor(
         private readonly mutableQuery: MutableRootQueryImpl,
         private readonly projection: AbstractRootQueryProjection<any>,
-        options: RootQueryOptions | undefined
+        options: QueryOptions | undefined
     ) {
-        this.options = options ?? defaultRootQueryOptions;
+        this.options = options ?? defaultQueryOptions;
     }
 
     __type(): { rootQuery: TProjection | true; } {
@@ -47,15 +48,3 @@ implements RootQuery<TProjection> {
         throw new Error();
     }
 }
-
-type RootQueryOptions = {
-    distinct: boolean;
-    limit: number;
-    offset: number;
-}
-
-const defaultRootQueryOptions: RootQueryOptions = {
-    distinct: false,
-    limit: -1,
-    offset: 0
-};

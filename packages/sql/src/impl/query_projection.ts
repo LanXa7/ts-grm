@@ -1,4 +1,6 @@
-import { ast, RootQueryProjection, RootQuerySelection } from "@ts-grm/core";
+import { ast, BaseQuerySelectMapArgs, RootQueryProjection, RootQuerySelection } from "@ts-grm/core";
+
+export abstract class AbstractQueryProjection {}
 
 export abstract class AbstractRootQueryProjection<T, TKind = "ONE" | "ARRAY" | "MAP"> 
 implements RootQueryProjection<T, TKind> {
@@ -42,6 +44,17 @@ export class MapRootQueryProjection<T> extends AbstractRootQueryProjection<T, "M
     constructor(
         readonly selections: { readonly [key: string]: RootQuerySelection<any> }
     ) {
+        super();
+    }
+}
+
+export class MapBaseQueryProjection<T extends BaseQuerySelectMapArgs> extends AbstractQueryProjection {
+
+    __type(): { baseQueryProjection: T | true } {
+    return { baseQueryProjection: true };
+    }
+
+    constructor(readonly args: T) {
         super();
     }
 }

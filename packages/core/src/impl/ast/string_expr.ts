@@ -333,7 +333,7 @@ export class SubstringExpr extends AbstractStrExpr {
 
     constructor(
         readonly expr: AbstractStrExpr,
-        readonly start: AbstractNumExpr<number>,
+        readonly startExpr: AbstractNumExpr<number>,
         readonly lenExpr: AbstractNumExpr<number> | undefined
     ) {
         super();
@@ -347,7 +347,7 @@ export class SubstringExpr extends AbstractStrExpr {
 export class ConcatExpr extends AbstractStrExpr {
 
     constructor(
-        readonly values: ReadonlyArray<AbstractStrExpr>
+        readonly valueExprs: ReadonlyArray<AbstractStrExpr>
     ) {
         super();
     }

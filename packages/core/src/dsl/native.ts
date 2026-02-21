@@ -1,7 +1,6 @@
-import { supressUnused } from "@/utils";
-import { Expression } from "./expression";
+import { NativeNumExpr } from "@/impl/ast/native_expr";
+import { Expression } from ".";
 
 export function num(sql: string): Expression<number> {
-    supressUnused(sql);
-    throw new Error();
+    return new NativeNumExpr<number>(sql) as any as Expression<number>;
 }

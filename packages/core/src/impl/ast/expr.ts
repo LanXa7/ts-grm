@@ -246,6 +246,18 @@ export abstract class AbstractCmpExpr<T> extends AbstractExpr<T> {
             value instanceof AbstractExpr ? value : factory.createLiteral(value)
         );
     }
+
+    between(
+        min: T | AbstractCmpExpr<T>,
+        max: T | AbstractCmpExpr<T>
+    ): AbstractPred {
+        const factory = getInternalFactory();
+        return factory.createBetweenPred(
+            this,
+            min instanceof AbstractCmpExpr ? min : factory.createLiteral(min),
+            max instanceof AbstractCmpExpr ? max : factory.createLiteral(max)
+        ); 
+    }
     
     ltIf(
         value: T | null | undefined
@@ -300,6 +312,27 @@ export abstract class AbstractCmpExpr<T> extends AbstractExpr<T> {
             ">=", 
             this, 
             factory.createLiteral(value)
+        );
+    }
+
+    betweenIf(
+        min: T | null | undefined,
+        max: T | null | undefined
+    ): AbstractPred | undefined {
+        if (min == null || max == null) {
+            return undefined;
+        }
+        if (min == null) {
+            return this.le(max);
+        }
+        if (max == null) {
+            return this.ge(min);
+        }
+        const factory = getInternalFactory();
+        return factory.createBetweenPred(
+            this,
+            factory.createLiteral(min),
+            factory.createLiteral(max)
         );
     }
 

@@ -3,6 +3,7 @@ import { Expression, ExpressionLike, Predicate } from "./expression";
 import { EntityTable } from "./table";
 import { AtLeastOne, AtLeastTwo, ExpressionOrder } from "./utils";
 import { supressUnused } from "@/utils";
+import { getQueryFactory } from "@/impl/ast/query_factory";
 
 export function subQuery<
     const TModels extends AtLeastOne<AnyModel>,
@@ -24,8 +25,7 @@ export function subQuery<
     : TProjection extends void
         ? ExpressionSubQuery<Expression<number>>
     : never {
-    supressUnused(args);
-    throw new Error();
+    return getQueryFactory().createSubQuery(...args);
 }
 
 export function all<TExpression extends ExpressionLike>(

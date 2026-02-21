@@ -11,8 +11,8 @@ export class CmpPred extends AbstractPred {
 
     constructor(
         readonly op: CmpOp,
-        readonly left: AbstractExpr<any>,
-        readonly right: AbstractExpr<any>
+        readonly leftExpr: AbstractExpr<any>,
+        readonly rightExpr: AbstractExpr<any>
     ) {
         super();
     }
@@ -20,8 +20,8 @@ export class CmpPred extends AbstractPred {
     negative(): CmpPred {
         return new CmpPred(
             negativeCmpOp(this.op), 
-            this.left, 
-            this.right
+            this.leftExpr, 
+            this.rightExpr
         );
     }
 
@@ -46,6 +46,31 @@ function negativeCmpOp(op: CmpOp): CmpOp {
             return "<=";
         case ">=":
             return "<";
+    }
+}
+
+export class BetweenPred extends AbstractPred {
+
+    constructor(
+        readonly expr: AbstractExpr<any>,
+        readonly minExpr: AbstractExpr<any>,
+        readonly maxExpr: AbstractExpr<any>,
+        readonly neg: boolean = false
+    ) {
+        super();
+    }
+
+    negative(): AbstractPred {
+        return new BetweenPred(
+            this.expr,
+            this.minExpr,
+            this.maxExpr,
+            !this.neg
+        )
+    }
+
+    accept(visitor: Visitor): void {
+        visitor.visitBetweenPred(this);
     }
 }
 

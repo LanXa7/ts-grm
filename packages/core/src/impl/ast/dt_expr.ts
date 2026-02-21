@@ -62,7 +62,7 @@ export class DtPlusExpr extends AbstractDtExpr {
 
     constructor(
         readonly expr: AbstractDtExpr,
-        readonly value: AbstractNumExpr<number>,
+        readonly valueExpr: AbstractNumExpr<number>,
         readonly unit: TimeUnit
     ) {
         super();
@@ -77,7 +77,7 @@ export class DtMinusExpr extends AbstractDtExpr {
 
     constructor(
         readonly expr: AbstractDtExpr,
-        readonly value: AbstractNumExpr<number>,
+        readonly valueExpr: AbstractNumExpr<number>,
         readonly unit: TimeUnit
     ) {
         super();
@@ -92,7 +92,7 @@ export class DtDiffExpr extends AbstractNumExpr<number> {
 
     constructor(
         readonly expr: AbstractDtExpr,
-        readonly value: AbstractDtExpr,
+        readonly valueExpr: AbstractDtExpr,
         readonly unit: TimeUnit
     ) {
         super();

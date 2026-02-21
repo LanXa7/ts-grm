@@ -1,8 +1,9 @@
-export type { AbstractSelection } from "./selection";
-export type { AbstractExpr } from "./expr";
-export type { AbstractPred } from "./pred";
+export { AbstractSelection } from "./selection";
+export { AbstractExpr } from "./expr";
+export { AbstractPred } from "./pred";
 export type { DtDiffExpr, DtMinusExpr, DtPlusExpr } from "./dt_expr";
 export type { BinaryNumExpr, UnaryMinusExpr } from "./num_expr";
+export type { NativeExprContract } from "./native_expr";
 export type { CmpPred, CompoundPred, InCollectionPred, LikePred, NullityPred } from "./pred";
 export type { PropExprContract as TablePropExpr } from "./prop_expr";
 export type { 
@@ -19,10 +20,13 @@ export type {
     TrimExpr, 
     UpperExpr 
 } from "./string_expr";
-export type { Visitor } from "./visitor";
+export type { QueryContract, ProjectionContract } from "./query";
+export type { Visitor, AbstractVisitor } from "./visitor";
+export type { QueryFactory } from "./query_factory";
+export { setQueryFactory } from "./query_factory";
 
 import { InternalFactory, setInteralFactory } from "@/impl/ast/internal_factory";
-import { CmpOp, CmpPred, InCollectionPred, NullityPred } from "@/impl/ast/pred";
+import { BetweenPred, CmpOp, CmpPred, InCollectionPred, NullityPred } from "@/impl/ast/pred";
 import { AbstractExpr } from "@/impl/ast";
 import { CoalesceCmpExpr, CoalesceDtExpr, CoalesceExpr, CoalesceNumExpr, CoalesceStrExpr } from "@/impl/ast/coalesce_expr";
 import { AbstractCmpExpr } from "@/impl/ast/expr";
@@ -47,6 +51,14 @@ class InternalFactoryImpl implements InternalFactory {
         right: AbstractExpr<T>
     ): CmpPred {
         return new CmpPred(op, left, right);
+    }
+
+    createBetweenPred<T>(
+        expr: AbstractCmpExpr<T>, 
+        min: AbstractExpr<T>, 
+        max: AbstractExpr<T>
+    ): BetweenPred {
+        return new BetweenPred(expr, min, max);    
     }
 
     createInValuesPred<T>(

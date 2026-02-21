@@ -161,6 +161,11 @@ type CmpExpression<T> = AnyExpression<T> & {
     ge(
         value: NonNull<T> | CmpExpression<T>
     ): AnyExpression<boolean>;
+
+    between(
+        min: NonNull<T> | CmpExpression<T>,
+        max: NonNull<T> | CmpExpression<T>
+    ): AnyExpression<boolean>;
     
     ltIf(
         value: Nullable<T>
@@ -176,6 +181,11 @@ type CmpExpression<T> = AnyExpression<T> & {
     
     geIf(
         value: Nullable<T>
+    ): AnyExpression<boolean> | undefined;
+
+    betweenIf(
+        min: Nullable<T>,
+        max: Nullable<T>
     ): AnyExpression<boolean> | undefined;
 }
 

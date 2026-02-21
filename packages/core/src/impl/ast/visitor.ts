@@ -1,13 +1,20 @@
 import { CoalesceExprContract } from "./coalesce_expr";
 import type { DtDiffExpr, DtMinusExpr, DtPlusExpr } from "./dt_expr";
+import { AbstractExpr } from "./expr";
+import { NativeExprContract } from "./native_expr";
 import type { BinaryNumExpr, UnaryMinusExpr } from "./num_expr";
-import type { CmpPred, CompoundPred, InCollectionPred, LikePred, NullityPred } from "./pred";
+import type { BetweenPred, CmpPred, CompoundPred, InCollectionPred, LikePred, NullityPred } from "./pred";
 import type { PropExprContract } from "./prop_expr";
+import { ProjectionContract, QueryContract } from "./query";
 import type { ConcatExpr, LeftExpr, LengthExpr, LowerExpr, PadExpr, PositionExpr, ReplaceExpr, ReverseExpr, RightExpr, SubstringExpr, TrimExpr, UpperExpr } from "./string_expr";
 
 export interface Visitor {
 
+    visitQuery(query: QueryContract): void;
+
     visitCmpPred(pred: CmpPred): void;
+
+    visitBetweenPred(pred: BetweenPred): void;
 
     visitLikePred(pred: LikePred): void;
 
@@ -18,6 +25,8 @@ export interface Visitor {
     visitCompoundPred(pred: CompoundPred): void;
 
     visitTablePropExpr(expr: PropExprContract): void;
+
+    visitNativeExpr(expr: NativeExprContract): void;
 
     visitCoalesceExpr(expr: CoalesceExprContract): void;
 
@@ -56,4 +65,149 @@ export interface Visitor {
     visitDtDiffExpr(expr: DtDiffExpr): void;
 
     visitLiteral(value: any): void;
+}
+
+export abstract class AbstractVisitor implements Visitor {
+
+    visitQuery(query: QueryContract): void {
+        this.visitProjection(query.projection);
+        query.wherePred?.accept(this);
+        for (const order of query.orders) {
+            (order.expression as AbstractExpr<any>).accept(this);
+        }
+        if (query.groupByExprs != null) {
+            for (const expr of query.groupByExprs) {
+                expr.accept(this);
+            }
+        }
+        query.havingPred?.accept(this);
+    }
+
+    visitCmpPred(pred: CmpPred): void {
+        pred.leftExpr.accept(this);
+        pred.rightExpr.accept(this);
+    }
+
+    visitBetweenPred(pred: BetweenPred): void {
+        pred.expr.accept(this);
+        pred.minExpr.accept(this);
+        pred.maxExpr.accept(this);
+    }
+
+    visitLikePred(pred: LikePred): void {
+        pred.expr.accept(this);
+    }
+
+    visitNullityPred(pred: NullityPred): void {
+        pred.expr.accept(this);
+    }
+
+    visitInCollectionPred(pred: InCollectionPred<any>): void {
+        pred.expr.accept(this);
+    }
+
+    visitCompoundPred(pred: CompoundPred): void {
+        for (const p of pred.preds) {
+            p.accept(this);
+        }
+    }
+
+    abstract visitTablePropExpr(expr: PropExprContract): void;
+
+    visitCoalesceExpr(expr: CoalesceExprContract): void {
+        expr.expr.accept(this);
+        for (const defaultExpr of expr.defaultExprs) {
+            defaultExpr.accept(this);
+        }
+    }
+
+    abstract visitNativeExpr(expr: NativeExprContract): void;
+
+    visitLowerExpr(expr: LowerExpr): void {
+        expr.expr.accept(this);
+    }
+
+    visitUpperExpr(expr: UpperExpr): void {
+        expr.expr.accept(this);
+    }
+
+    visitReverseExpr(expr: ReverseExpr): void {
+        expr.expr.accept(this);
+    }
+
+    visitTrimExpr(expr: TrimExpr): void {
+        expr.expr.accept(this);
+    }
+
+    visitLengthExpr(expr: LengthExpr): void {
+        expr.expr.accept(this);
+    }
+
+    visitReplaceExpr(expr: ReplaceExpr): void {
+        expr.expr.accept(this);
+        expr.oldStrExpr.accept(this);
+        expr.newStrExpr.accept(this);
+    }
+
+    visitPadExpr(expr: PadExpr): void {
+        expr.expr.accept(this);
+        expr.lenExpr.accept(this);
+        expr.padExpr?.accept(this);
+    }
+
+    visitLeftExpr(expr: LeftExpr): void {
+        expr.expr.accept(this);
+        expr.lenExpr.accept(this);
+    }
+
+    visitRightExpr(expr: RightExpr): void {
+        expr.expr.accept(this);
+        expr.lenExpr.accept(this);
+    }
+
+    visitPositionExpr(expr: PositionExpr): void {
+        expr.expr.accept(this);
+        expr.substrExpr.accept(this);
+        expr.startExpr?.accept(this);
+    }
+
+    visitSubstringExpr(expr: SubstringExpr): void {
+        expr.expr.accept(this);
+        expr.startExpr.accept(this);
+        expr.lenExpr?.accept(this);
+    }
+
+    visitConcatExpr(expr: ConcatExpr): void {
+        for (const valueExpr of expr.valueExprs) {
+            valueExpr.accept(this);
+        }
+    }
+
+    visitUnaryMinusExpr(expr: UnaryMinusExpr<any>): void {
+        expr.expr.accept(this);
+    }
+
+    visitBinaryNumExpr(expr: BinaryNumExpr<any>): void {
+        expr.leftExpr.accept(this);
+        expr.rightExpr.accept(this);
+    }
+
+    visitDtPlusExpr(expr: DtPlusExpr): void {
+        expr.expr.accept(this);
+        expr.valueExpr.accept(this);
+    }
+
+    visitDtMinusExpr(expr: DtMinusExpr): void {
+        expr.expr.accept(this);
+        expr.valueExpr.accept(this);
+    }
+
+    visitDtDiffExpr(expr: DtDiffExpr): void {
+        expr.expr.accept(this);
+        expr.valueExpr.accept(this);
+    }
+
+    abstract visitLiteral(value: any): void;
+
+    protected abstract visitProjection(projection: ProjectionContract): void;
 }

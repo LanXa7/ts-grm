@@ -111,7 +111,7 @@ export interface Model<
     TSuperNames extends string | never = never
 > {
     __type(): {
-        model: [TName, TIdKey, TCtor, TAllMembers, TSuperNames] | undefined
+        model: [TName, TIdKey, TCtor, TAllMembers, TSuperNames] | true
     }
 }
 

@@ -131,8 +131,8 @@ export class BinaryNumExpr<T extends number | string> extends AbstractNumExpr<T>
 
     constructor(
         readonly op: BinaryNumOp,
-        readonly left: AbstractNumExpr<any>,
-        readonly right: AbstractNumExpr<any>
+        readonly leftExpr: AbstractNumExpr<any>,
+        readonly rightExpr: AbstractNumExpr<any>
     ) {
         super();
     }
