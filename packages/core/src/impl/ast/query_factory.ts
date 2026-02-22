@@ -1,12 +1,28 @@
 import { StateError } from "@/error/common";
 import { makeErr } from "../util";
-import { AtLeastOne, BaseModel, BaseQuery, BaseQueryProjection, Expression, ExpressionSubQuery, MutableBaseQuery, MutableSubQuery, RootQuery, RootQueryProjection, Table, TupleSubQuery } from "@/dsl";
+import { 
+    AtLeastOne, 
+    BaseModel, 
+    BaseQuery,
+    AtomBaseQuery,
+    BaseQueryProjection, 
+    Expression, 
+    ExpressionSubQuery,
+    TupleSubQuery,
+    AtomTupleSubQuery,
+    AtomExpressionSubQuery, 
+    MutableBaseQuery, 
+    MutableSubQuery, 
+    RootQuery, 
+    RootQueryProjection, 
+    Table
+} from "@/dsl";
 import { AnyModel } from "@/schema/model";
 import { SubQueryProjection } from "@/dsl/sub_query";
 
 export interface QueryFactory {
 
-    createSubQuery<
+    createAtomSubQuery<
         const TModels extends AtLeastOne<AnyModel | BaseModel<any>>,
         TProjection extends SubQueryProjection<any, any> | void
     >(
@@ -21,13 +37,13 @@ export interface QueryFactory {
         ]
     ): TProjection extends SubQueryProjection<infer T, infer Kind>
         ? Kind extends "EXPRESSION"
-            ? ExpressionSubQuery<T>
-            : TupleSubQuery<T>
+            ? AtomExpressionSubQuery<T>
+            : AtomTupleSubQuery<T>
         : TProjection extends void
-            ? ExpressionSubQuery<Expression<number>>
+            ? AtomExpressionSubQuery<Expression<number>>
         : never;
         
-    createBaseQuery<
+    createAtomBaseQuery<
         const TModels extends AtLeastOne<AnyModel | BaseModel<any>>,
         TProjection extends BaseQueryProjection<any>
     >(
@@ -40,7 +56,7 @@ export interface QueryFactory {
                 } extends infer T ? T extends any[] ? T : never : never
             ) => TProjection
         ]
-    ): BaseQuery<TProjection>;
+    ): AtomBaseQuery<TProjection>;
 
     createMergedRootQuery<TProjection extends RootQueryProjection<any>>(
         kind: MergedQueryKind,

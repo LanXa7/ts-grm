@@ -1,5 +1,5 @@
 import { BaseModel, BaseQuery } from "@/dsl";
-import { BaseQueryMapOf, BaseQueryProjection, BaseQuerySelectMapArgs } from "@/dsl/base-query";
+import { BaseQueryMapOf, BaseQueryProjection, BaseQuerySelectMapArgs } from "@/dsl/base_query";
 
 export interface BaseQueryImplementor<TProjction> extends BaseQuery<TProjction> {
 

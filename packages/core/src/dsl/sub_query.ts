@@ -20,12 +20,12 @@ export function subQuery<
     ]
 ): TProjection extends SubQueryProjection<infer T, infer Kind>
     ? Kind extends "EXPRESSION"
-        ? ExpressionSubQuery<T>
-        : TupleSubQuery<T>
+        ? AtomExpressionSubQuery<T>
+        : AtomTupleSubQuery<T>
     : TProjection extends void
-        ? ExpressionSubQuery<Expression<number>>
+        ? AtomExpressionSubQuery<Expression<number>>
     : never {
-    return getQueryFactory().createSubQuery(...args);
+    return getQueryFactory().createAtomSubQuery(...args);
 }
 
 export function all<TExpression extends ExpressionLike>(
@@ -99,11 +99,15 @@ export type ExpressionSubQuery<T> = {
         expressionSubQuery: T | undefined; 
     };
 
-    limit(limit: number): ExpressionSubQuery<T>;
-    offset(offset: number): ExpressionSubQuery<T>;
-
     asValue(): T;
 } & T;
+
+export type AtomExpressionSubQuery<T> = ExpressionSubQuery<T> & {
+
+    distinct(): AtomExpressionSubQuery<T>;
+    limit(limit: number): AtomExpressionSubQuery<T>;
+    offset(offset: number): AtomExpressionSubQuery<T>;
+};
 
 export type TupleSubQuery<TProjection> = {
 
@@ -111,10 +115,14 @@ export type TupleSubQuery<TProjection> = {
         subQueryLike: true;
         tupleSubQuery: TProjection | undefined; 
     };
-
-    limit(limit: number): TupleSubQuery<TProjection>;
-    offset(offset: number): TupleSubQuery<TProjection>;
 }
+
+export type AtomTupleSubQuery<TProjection> = TupleSubQuery<TProjection> & {
+
+    distinct(): AtomTupleSubQuery<TProjection>;
+    limit(limit: number): AtomTupleSubQuery<TProjection>;
+    offset(offset: number): AtomTupleSubQuery<TProjection>;
+};
 
 export type SubQueryProjection<T, TKind = "EXPRSSION" | "TUPLE"> = {
 

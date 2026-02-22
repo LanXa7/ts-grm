@@ -1,7 +1,7 @@
 import { ModelOf, TypeOf, View } from "@/schema/dto";
 import { AtLeastOne } from "./utils";
-import { BaseModel } from "./base-query";
-import { MutableRootQuery, RootQuery, RootQueryProjection } from "./root_query";
+import { BaseModel } from "./base_query";
+import { AtomRootQuery, MutableRootQuery, RootQueryProjection } from "./root_query";
 import { Table } from "./table";
 import { Criteria } from "./criteria";
 import { AnyModel } from "@/schema/model";
@@ -28,5 +28,5 @@ export interface SqlClient {
                 } extends infer T ? T extends any[] ? T : never : never
             ) => TProjection
         ]
-    ): RootQuery<TProjection>;
+    ): AtomRootQuery<TProjection>;
 }

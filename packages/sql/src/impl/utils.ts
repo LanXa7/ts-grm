@@ -1,5 +1,5 @@
 import { AnyModel, metadata } from "@ts-grm/core";
-import { BaseModelImpl } from "./base_query_impl";
+import { BaseModelImpl } from "./atom_base_query_impl";
 
 export function toTables(
     args: ReadonlyArray<any>

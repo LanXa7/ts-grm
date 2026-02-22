@@ -21,15 +21,20 @@ import type {
     Expression,
     BaseQueryProjection,
     SubQueryProjection,
-    BaseQueryMapOf
+    BaseQueryMapOf,
+    AtomRootQuery,
+    AtomExpressionSubQuery,
+    AtomTupleSubQuery,
+    AtomBaseQuery
 } from "@ts-grm/core";
-import { supressUnused, metadata, ast } from "@ts-grm/core";
+import { supressUnused, ast } from "@ts-grm/core";
 import { MutableRootQueryImpl } from "./mutable_root_query_impl";
-import { RootQueryImpl } from "./root_query_impl";
+import { AtomRootQueryImpl } from "./atom_root_query_impl";
 import { AbstractRootQueryProjection, MapBaseQueryProjection } from "./query_projection";
-import { BaseModelImpl, BaseQueryImpl } from "./base_query_impl";
+import { AtomBaseQueryImpl } from "./atom_base_query_impl";
 import { MutableBaseQueryImpl } from "./mutable_base_query_impl";
 import { toTables } from "./utils";
+import { MergedBaseQueryImpl, MergedRootQueryImpl } from "./merged_query";
 
 export class SqlClientImpl implements SqlClientImplementor {
 
@@ -64,19 +69,19 @@ export class SqlClientImpl implements SqlClientImplementor {
                 } extends infer T ? T extends any[] ? T : never : never
             ) => TProjection
         ]
-    ): RootQuery<TProjection> {
+    ): AtomRootQuery<TProjection> {
         const tables = toTables(args);
         const mutableQuery = new MutableRootQueryImpl(this, tables);
         const fnArgs: Array<any> = [ mutableQuery, ...tables ];
         const fn = args[args.length - 1] as Function;
         const projection = fn.apply(undefined, fnArgs) as AbstractRootQueryProjection<any>;
-        return new RootQueryImpl<TProjection>(mutableQuery, projection, undefined);
+        return new AtomRootQueryImpl<TProjection>(mutableQuery, projection, undefined);
     }
 }
 
 class QueryFactoryImpl implements ast.QueryFactory {
     
-    createSubQuery<
+    createAtomSubQuery<
         const TModels extends AtLeastOne<AnyModel | BaseModel<any>>,
         TProjection extends SubQueryProjection<any, any> | void
     >(
@@ -91,16 +96,16 @@ class QueryFactoryImpl implements ast.QueryFactory {
         ]
     ): TProjection extends SubQueryProjection<infer T, infer Kind>
         ? Kind extends "EXPRESSION"
-            ? ExpressionSubQuery<T>
-            : TupleSubQuery<T>
+            ? AtomExpressionSubQuery<T>
+            : AtomTupleSubQuery<T>
         : TProjection extends void
-            ? ExpressionSubQuery<Expression<number>>
+            ? AtomExpressionSubQuery<Expression<number>>
         : never {
         supressUnused(args);
         throw new Error();
     }
         
-    createBaseQuery<
+    createAtomBaseQuery<
         const TModels extends AtLeastOne<AnyModel | BaseModel<any>>,
         TProjection extends BaseQueryProjection<any>
     >(
@@ -113,26 +118,28 @@ class QueryFactoryImpl implements ast.QueryFactory {
                 } extends infer T ? T extends any[] ? T : never : never
             ) => TProjection
         ]
-    ): BaseQuery<TProjection> {
+    ): AtomBaseQuery<TProjection> {
         const tables = toTables(args);
         const mutableQuery = new MutableBaseQueryImpl(tables);
         const fnArgs: Array<any> = [ mutableQuery, ...tables ];
         const fn = args[args.length - 1] as Function;
         const projection = fn.apply(undefined, fnArgs) as MapBaseQueryProjection<BaseQueryMapOf<TProjection>>;
-        return new BaseQueryImpl(mutableQuery, projection.args, undefined);
+        return new AtomBaseQueryImpl(mutableQuery, projection, undefined);
     }
 
     createMergedRootQuery<TProjection extends RootQueryProjection<any>>(
         kind: ast.MergedQueryKind, 
         queries: ReadonlyArray<RootQuery<TProjection>>
     ): RootQuery<TProjection> {
-        throw new Error();    
+        return new MergedRootQueryImpl(kind, queries as any);
     }
 
     createMergedExpressionSubQuery<TProjection>(
         kind: ast.MergedQueryKind, 
         queries: ReadonlyArray<ExpressionSubQuery<TProjection>>
     ): ExpressionSubQuery<TProjection> {
+        supressUnused(kind);
+        supressUnused(queries);
         throw new Error(); 
     }
 
@@ -140,6 +147,8 @@ class QueryFactoryImpl implements ast.QueryFactory {
         kind: ast.MergedQueryKind, 
         queries: ReadonlyArray<TupleSubQuery<TProjection>>
     ): TupleSubQuery<TProjection> {
+        supressUnused(kind);
+        supressUnused(queries);
         throw new Error(); 
     }
 
@@ -147,7 +156,7 @@ class QueryFactoryImpl implements ast.QueryFactory {
         kind: ast.MergedQueryKind, 
         queries: ReadonlyArray<BaseQuery<TProjection>>
     ): BaseQuery<TProjection> {
-        throw new Error(); 
+        return new MergedBaseQueryImpl(kind, queries as any);
     }
 }
 

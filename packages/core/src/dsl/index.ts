@@ -3,7 +3,7 @@ import { and, constant, not, or } from "./expression";
 import { all, any, exists, notExists, subQuery } from "./sub_query";
 import { unionAll, union, minus, intersect } from "./merged_query";
 import { num } from "./native";
-import { baseQuery, cteModel, derivedModel } from "./base-query";
+import { baseQuery, cteModel, derivedModel } from "./base_query";
 import { tuple } from "./tuple";
 export { ExpressionOrder } from "./utils";
 export type { SqlClient } from "./sql_client";
@@ -11,6 +11,7 @@ export type { AtLeastOne } from "./utils";
 export type { Criteria } from "./criteria";
 export type { 
     RootQuery, 
+    AtomRootQuery,
     MutableRootQuery, 
     RootQueryProjection, 
     RootQuerySelectArrArgs, 
@@ -21,19 +22,22 @@ export type {
 export type { 
     SubQueryLike, 
     ExpressionSubQuery, 
+    AtomExpressionSubQuery,
     TupleSubQuery, 
+    AtomTupleSubQuery,
     MutableSubQuery,
     SubQueryProjection
 } from "./sub_query";
 export type { 
     BaseQuery, 
+    AtomBaseQuery,
     MutableBaseQuery,
     RecursiveMutableBaseQuery, 
     BaseModel,
     BaseQuerySelectMapArgs,
     BaseQueryProjection,
     BaseQueryMapOf
-} from "./base-query";
+} from "./base_query";
 export type { Table, JoinType, EntityTable, BaseTable } from "./table";
 export type { LikeMode, Expression, ExpressionLike, Predicate } from "./expression";
 

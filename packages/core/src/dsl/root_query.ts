@@ -45,17 +45,26 @@ export interface MutableRootQuery {
     }, "MAP">;
 }
 
-export type RootQuery<TProjection extends RootQueryProjection<any>> = {
+export interface RootQuery<TProjection extends RootQueryProjection<any>> {
 
     __type(): { rootQuery: TProjection | true; };
 
-    distinct(): RootQuery<TProjection>;
-
-    limit(limit: number): RootQuery<TProjection>;
-
-    offset(offset: number): RootQuery<TProjection>;
-
     fetchList(): Promise<Array<RowTypeOf<TProjection>>>;
+}
+
+export interface AtomRootQuery<TProjection extends RootQueryProjection<any>>
+extends RootQuery<TProjection> {
+
+    __type(): { 
+        rootQuery: TProjection | true; 
+        atomRootQuery: TProjection | true;
+    };
+
+    distinct(): AtomRootQuery<TProjection>;
+
+    limit(limit: number): AtomRootQuery<TProjection>;
+
+    offset(offset: number): AtomRootQuery<TProjection>;
 }
 
 export type RootQuerySelectArrArgs = [

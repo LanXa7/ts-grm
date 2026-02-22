@@ -32,8 +32,8 @@ export function baseQuery<
             } extends infer T ? T extends any[] ? T : never : never
         ) => TProjection
     ]
-): BaseQuery<TProjection> {
-    return getQueryFactory().createBaseQuery(...args);
+): AtomBaseQuery<TProjection> {
+    return getQueryFactory().createAtomBaseQuery(...args);
 }
 
 export interface MutableBaseQuery {
@@ -78,10 +78,6 @@ export interface BaseQuery<TProjection> {
 
     __type(): { baseQuery: TProjection | true; };
 
-    limit(limit: number): BaseQuery<TProjection>;
-
-    offset(offset: number): BaseQuery<TProjection>;
-
     unionAllRecursively<
         const TModels extends AtLeastOne<AnyModel | BaseModel<any>>
     >(
@@ -95,6 +91,18 @@ export interface BaseQuery<TProjection> {
             ) => TProjection
         ]
     ): BaseQuery<TProjection>;
+}
+
+export interface AtomBaseQuery<TProjection> extends BaseQuery<TProjection> {
+
+    __type(): { 
+        baseQuery: TProjection | true; 
+        atomBaseQuery: TProjection | true;
+    };
+
+    limit(limit: number): AtomBaseQuery<TProjection>;
+
+    offset(offset: number): AtomBaseQuery<TProjection>;
 }
 
 export type BaseQueryProjection<TSelections extends BaseQuerySelectMapArgs> = {

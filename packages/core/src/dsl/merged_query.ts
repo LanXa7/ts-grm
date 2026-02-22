@@ -1,6 +1,6 @@
 import { RootQuery, RootQueryProjection } from "./root_query";
 import { ExpressionSubQuery, TupleSubQuery } from "./sub_query";
-import { BaseQuery } from "./base-query";
+import { BaseQuery } from "./base_query";
 import { AtLeastOne } from "./utils";
 import { getQueryFactory } from "@/impl/ast/query_factory";
 import { StateError } from "@/error/common";

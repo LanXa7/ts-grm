@@ -1,9 +1,9 @@
-import { ast, ExpressionOrder, metadata, RootQuery, RootQueryProjection, RowTypeOf } from "@ts-grm/core";
+import { ast, ExpressionOrder, metadata, AtomRootQuery, RootQueryProjection, RowTypeOf } from "@ts-grm/core";
 import { MutableRootQueryImpl } from "./mutable_root_query_impl";
 import { AbstractRootQueryProjection } from "./query_projection";
 
-export class RootQueryImpl<TProjection extends RootQueryProjection<any>> 
-implements RootQuery<TProjection>, ast.AtomQueryContract {
+export class AtomRootQueryImpl<TProjection extends RootQueryProjection<any>> 
+implements AtomRootQuery<TProjection>, ast.AtomQueryContract {
 
     readonly options: ast.AtomQueryOptions;
 
@@ -15,28 +15,31 @@ implements RootQuery<TProjection>, ast.AtomQueryContract {
         this.options = options ?? ast.defaultAtomQueryOptions;
     }
 
-    __type(): { rootQuery: TProjection | true; } {
-        return { rootQuery: true };
+    __type(): { 
+        rootQuery: TProjection | true; 
+        atomRootQuery: TProjection | true;
+    } {
+        return { rootQuery: true, atomRootQuery: true };
     }
 
-    distinct(): RootQuery<TProjection> {
-        return new RootQueryImpl(
+    distinct(): AtomRootQuery<TProjection> {
+        return new AtomRootQueryImpl(
             this.mutableQuery,
             this._projection,
             {...this.options, distinct: true }
         );
     }
 
-    limit(limit: number): RootQuery<TProjection> {
-        return new RootQueryImpl(
+    limit(limit: number): AtomRootQuery<TProjection> {
+        return new AtomRootQueryImpl(
             this.mutableQuery,
             this._projection,
             {...this.options, limit }
         );
     }
 
-    offset(offset: number): RootQuery<TProjection> {
-        return new RootQueryImpl(
+    offset(offset: number): AtomRootQuery<TProjection> {
+        return new AtomRootQueryImpl(
             this.mutableQuery,
             this._projection,
             {...this.options, offset }
