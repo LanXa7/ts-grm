@@ -1,4 +1,4 @@
-import { dsl, err, ExpressionLike, ExpressionOrder, Predicate } from "@ts-grm/core";
+import { dsl, err, ExpressionLike, ExpressionOrder, metadata, Predicate } from "@ts-grm/core";
 
 export class AbstractMutableQuery {
 
@@ -9,6 +9,10 @@ export class AbstractMutableQuery {
     private _groupByExprs: ReadonlyArray<ExpressionLike> | undefined = undefined;
 
     private _havingPreidicate: Predicate | undefined = undefined;
+
+    constructor(
+        readonly tables: ReadonlyArray<metadata.AbstractTable>
+    ) {}
 
     where(
         ...predicates: ReadonlyArray<Predicate | null | undefined>

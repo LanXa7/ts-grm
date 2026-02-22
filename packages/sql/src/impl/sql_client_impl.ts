@@ -64,15 +64,11 @@ export class SqlClientImpl implements SqlClientImplementor {
             ) => TProjection
         ]
     ): RootQuery<TProjection> {
-        const mutableQuery = new MutableRootQueryImpl(this);
+        const tables = toTables(args);
+        const mutableQuery = new MutableRootQueryImpl(this, tables);
         const fnArgs: Array<any> = [ mutableQuery ];
-        for (let i = 0; i < args.length - 1; i++) {
-            const model = args[i];
-            if (model instanceof BaseModelImpl) {
-                fnArgs[i + 1] = metadata.createTypedBaseTable(model.args);
-            } else {
-                fnArgs[i + 1] = metadata.Entity.of(args[i] as AnyModel).table(undefined);
-            }
+        for (let i = 0; i < tables.length; i++) {
+            fnArgs[i + 1] = tables[i];
         }
         const fn = args[args.length - 1] as Function;
         const projection = fn.apply(undefined, fnArgs) as AbstractRootQueryProjection<any>;
@@ -120,20 +116,30 @@ class QueryFactoryImpl implements ast.QueryFactory {
             ) => TProjection
         ]
     ): BaseQuery<TProjection> {
-        const mutableQuery = new MutableBaseQueryImpl();
+        const tables = toTables(args);
+        const mutableQuery = new MutableBaseQueryImpl(tables);
         const fnArgs: Array<any> = [ mutableQuery ];
-        for (let i = 0; i < args.length - 1; i++) {
-            const model = args[i];
-            if (model instanceof BaseModelImpl) {
-                fnArgs[i + 1] = metadata.createTypedBaseTable(model.args);
-            } else {
-                fnArgs[i + 1] = metadata.Entity.of(args[i] as AnyModel).table(undefined);
-            }
+        for (let i = 0; i < tables.length; i++) {
+            fnArgs[i + 1] = tables[i];
         }
         const fn = args[args.length - 1] as Function;
         const projection = fn.apply(undefined, fnArgs) as MapBaseQueryProjection<BaseQueryMapOf<TProjection>>;
         return new BaseQueryImpl(mutableQuery, projection.args, undefined);
     }
+}
+
+function toTables(
+    args: ReadonlyArray<any>
+): ReadonlyArray<metadata.AbstractTable> {
+    const tables: Array<metadata.AbstractTable> = [];
+    for (let i = 0; i < args.length - 1; i++) {
+        const model = args[i];
+        const table = model instanceof BaseModelImpl
+            ? metadata.createTypedBaseTable(model)
+            : metadata.Entity.of(model as AnyModel).table(undefined);
+        tables.push(table);
+    }
+    return tables;
 }
 
 const queryFactory = new QueryFactoryImpl();

@@ -1,25 +1,21 @@
-import { AbstractExpr } from "./ast";
-import { AbstractEntityTable } from "./entity_table";
+import { AbstractTable } from "./abstrat_table";
+import { BaseModelImplementor } from "./base_query_implementor";
 
 export class BaseTableTarget {
 
     constructor(
-        readonly projection: {
-            readonly [key: string]: AbstractEntityTable | AbstractExpr<any> 
-        }
+        readonly baseModel: BaseModelImplementor<any>
     ) {} 
 }
 
-interface TypedBaseTable {
+export interface TypedBaseTable extends AbstractTable {
     __unwrap(): BaseTableTarget
 }
 
 export function createTypedBaseTable(
-    projection: {
-        readonly [key: string]: AbstractEntityTable | AbstractExpr<any> 
-    }
+    baseModel: BaseModelImplementor<any>
 ): TypedBaseTable {
-    const baseTable = new BaseTableTarget({...projection});
+    const baseTable = new BaseTableTarget(baseModel);
     return new Proxy(baseTable, typedBaseTableHandler) as any as TypedBaseTable;
 }
 
@@ -28,9 +24,15 @@ const typedBaseTableHandler: ProxyHandler<BaseTableTarget> = {
         if (typeof prop === 'symbol') {
             return Reflect.get(target, prop);
         }
-        if (prop === "__unwrap") {
-            return target;
+        switch (prop) {
+            case "__unwrap":
+                return target;
+            case "entity":
+                return undefined;
+            case "baseModel":
+                return target.baseModel;
+            default:
+                return target.baseModel.__args[prop] ?? Reflect.get(target, prop);
         }
-        return target.projection[prop] ?? Reflect.get(target, prop);
     }
 };

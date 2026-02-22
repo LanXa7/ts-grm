@@ -1,4 +1,4 @@
-import { AnyModel, AtLeastOne, BaseModel, BaseQuery, BaseQueryMapOf, BaseQuerySelectMapArgs, ExpressionLike, metadata, RecursiveMutableBaseQuery, Table } from "@ts-grm/core";
+import { AnyModel, AtLeastOne, BaseModel, BaseQuery, BaseQueryMapOf, BaseQueryProjection, BaseQuerySelectMapArgs, metadata, RecursiveMutableBaseQuery, Table } from "@ts-grm/core";
 import { MutableBaseQueryImpl } from "./mutable_base_query_impl";
 import { defaultQueryOptions, QueryOptions } from "./query_options";
 
@@ -8,7 +8,7 @@ export class BaseQueryImpl<TProjection> implements metadata.BaseQueryImplementor
 
     constructor(
         private readonly mutableQuery: MutableBaseQueryImpl,
-        private readonly args: BaseQueryMapOf<TProjection>,
+        readonly args: BaseQueryMapOf<TProjection>,
         options: QueryOptions | undefined
     ) {
         this.options = options ?? defaultQueryOptions;
@@ -60,22 +60,29 @@ export class BaseQueryImpl<TProjection> implements metadata.BaseQueryImplementor
 
     toModel(
         isCte: boolean
-    ): BaseModel<BaseQueryMapOf<TProjection>> {
-        return new BaseModelImpl(this.args, isCte);
+    ): metadata.BaseModelImplementor<BaseQueryMapOf<TProjection>> {
+        return new BaseModelImpl(this as any, isCte);
     }
 }
 
-export class BaseModelImpl<T extends BaseQuerySelectMapArgs> implements BaseModel<T> {
+export class BaseModelImpl<T extends BaseQuerySelectMapArgs> implements metadata.BaseModelImplementor<T> {
 
     __type(): {
-        tableLike: true;
-        baseTable: T | true;
+        baseModel: T | true;
     } {
-        return {tableLike: true, baseTable: true };
+        return { baseModel: true };
     }
 
     constructor(
-        readonly args: T,
-        readonly isCte: boolean
+        private readonly _query: BaseQueryImpl<BaseQueryProjection<T>>,
+        readonly __isCte: boolean,
     ) {}
+
+    get __args(): T {
+        return this._query.args;
+    }
+
+    toQuery(): metadata.BaseQueryImplementor<BaseQueryProjection<T>> {
+        return this._query;
+    }
 }

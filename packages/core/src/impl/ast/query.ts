@@ -2,8 +2,11 @@ import { ExpressionLike, ExpressionOrder, RootQuerySelection } from "@/dsl";
 import { TableLike } from "@/dsl/table";
 import { AbstractPred } from "./pred";
 import { AbstractExpr } from "./expr";
+import { AbstractTable } from "../abstrat_table";
 
 export interface QueryContract {
+
+    readonly tables: ReadonlyArray<AbstractTable>;
 
     readonly wherePred: AbstractPred | undefined;
 

@@ -1,4 +1,4 @@
-import { BaseQueryProjection, BaseQuerySelectMapArgs, MutableBaseQuery } from "@ts-grm/core";
+import { BaseQueryProjection, BaseQuerySelectMapArgs, metadata, MutableBaseQuery } from "@ts-grm/core";
 import { AbstractMutableQuery } from "./abstract_mutable_query";
 import { MapBaseQueryProjection } from "./query_projection";
 
@@ -6,6 +6,12 @@ export class MutableBaseQueryImpl extends AbstractMutableQuery implements Mutabl
 
     __type(): { mutableBaseQuery: true } {
         return { mutableBaseQuery: true }
+    }
+
+    constructor(
+        tables: ReadonlyArray<metadata.AbstractTable>
+    ) {
+        super(tables);
     }
 
     select<

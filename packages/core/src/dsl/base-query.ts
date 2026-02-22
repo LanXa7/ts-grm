@@ -118,7 +118,6 @@ export interface BaseModel<
 > {
 
     __type(): {
-        tableLike: true;
-        baseTable: T | true;
+        baseModel: T | true
     };
 };

@@ -6,8 +6,10 @@ import { createTableProp } from "./ast/prop_expr";
 import { JoinType } from "@/dsl/table";
 import { makeErr } from "./util";
 import { err } from "@/error";
+import { AbstractTable } from "./abstrat_table";
+import { BaseModel } from "@/dsl";
 
-export abstract class AbstractEntityTable {
+export abstract class AbstractEntityTable implements AbstractTable {
 
     readonly joinOperation: JoinOperation | undefined;
 
@@ -57,6 +59,10 @@ export abstract class AbstractEntityTable {
 
     get shadow(): AbstractEntityTable | undefined {
         return this._shadow;
+    }
+
+    get baseModel(): BaseModel<any> | undefined {
+        return undefined;
     }
 }
 
