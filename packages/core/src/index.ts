@@ -35,6 +35,8 @@ export type  {
     BaseQueryProjection,
     BaseQueryMapOf,
     Table,
+    EntityTable,
+    BaseTable,
     JoinType,
     LikeMode,
     Expression,

@@ -1,4 +1,4 @@
-import { dsl, err, ExpressionLike, ExpressionOrder, metadata, Predicate } from "@ts-grm/core";
+import { ast, dsl, err, ExpressionLike, ExpressionOrder, metadata, Predicate } from "@ts-grm/core";
 
 export class AbstractMutableQuery {
 
@@ -59,5 +59,21 @@ export class AbstractMutableQuery {
         }
         this._havingPreidicate = dsl.and(this._havingPreidicate, ...predicates);
         return this;
+    }
+
+    get wherePred(): ast.AbstractPred | undefined {
+        return this._predicate as ast.AbstractPred | undefined;
+    }
+    
+    get orders(): ReadonlyArray<ExpressionOrder> {
+        return this._orders;
+    }
+    
+    get groupByExprs(): ReadonlyArray<ast.AbstractExpr<any>> | undefined {
+        return this._groupByExprs as ReadonlyArray<ast.AbstractExpr<any>> | undefined;
+    }
+    
+    get havingPred(): ast.AbstractPred | undefined {
+        return this._havingPreidicate as ast.AbstractPred | undefined;
     }
 }

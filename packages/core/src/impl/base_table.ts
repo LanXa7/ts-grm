@@ -9,6 +9,10 @@ export class BaseTableTarget {
 }
 
 export interface TypedBaseTable extends AbstractTable {
+    __type(): {
+        tableLike: true,
+        baseTable: true
+    }
     __unwrap(): BaseTableTarget
 }
 
@@ -25,6 +29,10 @@ const typedBaseTableHandler: ProxyHandler<BaseTableTarget> = {
             return Reflect.get(target, prop);
         }
         switch (prop) {
+            case "__type":
+                return () => {
+                    return { tableLike: true, baseTable: true };
+                };
             case "__unwrap":
                 return target;
             case "entity":

@@ -1,19 +1,18 @@
-import type { RootQuery, RootQueryProjection, RowTypeOf } from "@ts-grm/core";
+import { ast, ExpressionOrder, metadata, RootQuery, RootQueryProjection, RowTypeOf } from "@ts-grm/core";
 import { MutableRootQueryImpl } from "./mutable_root_query_impl";
 import { AbstractRootQueryProjection } from "./query_projection";
-import { defaultQueryOptions, QueryOptions } from "./query_options";
 
 export class RootQueryImpl<TProjection extends RootQueryProjection<any>> 
-implements RootQuery<TProjection> {
+implements RootQuery<TProjection>, ast.AtomQueryContract {
 
-    private readonly options: QueryOptions;
+    readonly options: ast.AtomQueryOptions;
 
     constructor(
         private readonly mutableQuery: MutableRootQueryImpl,
-        private readonly projection: AbstractRootQueryProjection<any>,
-        options: QueryOptions | undefined
+        private _projection: AbstractRootQueryProjection<any>,
+        options: ast.AtomQueryOptions | undefined
     ) {
-        this.options = options ?? defaultQueryOptions;
+        this.options = options ?? ast.defaultAtomQueryOptions;
     }
 
     __type(): { rootQuery: TProjection | true; } {
@@ -23,7 +22,7 @@ implements RootQuery<TProjection> {
     distinct(): RootQuery<TProjection> {
         return new RootQueryImpl(
             this.mutableQuery,
-            this.projection,
+            this._projection,
             {...this.options, distinct: true }
         );
     }
@@ -31,7 +30,7 @@ implements RootQuery<TProjection> {
     limit(limit: number): RootQuery<TProjection> {
         return new RootQueryImpl(
             this.mutableQuery,
-            this.projection,
+            this._projection,
             {...this.options, limit }
         );
     }
@@ -39,12 +38,44 @@ implements RootQuery<TProjection> {
     offset(offset: number): RootQuery<TProjection> {
         return new RootQueryImpl(
             this.mutableQuery,
-            this.projection,
+            this._projection,
             {...this.options, offset }
         );
     }
 
     fetchList(): Promise<Array<RowTypeOf<TProjection>>> {
         throw new Error();
+    }
+
+    get kind(): "ATOM" {
+        return "ATOM";
+    }
+
+    get tables(): ReadonlyArray<metadata.AbstractTable> {
+        return this.mutableQuery.tables;
+    }
+    
+    get wherePred(): ast.AbstractPred | undefined {
+        return this.mutableQuery.wherePred;
+    }
+    
+    get orders(): ReadonlyArray<ExpressionOrder> {
+        return this.mutableQuery.orders;
+    }
+    
+    get groupByExprs(): ReadonlyArray<ast.AbstractExpr<any>> | undefined {
+        return this.mutableQuery.groupByExprs;
+    }
+    
+    get havingPred(): ast.AbstractPred | undefined {
+        return this.mutableQuery.havingPred;
+    }
+
+    get projection(): ast.ProjectionContract {
+        return this._projection as any as ast.ProjectionContract;
+    }
+
+    accept(visitor: ast.Visitor): void {
+        visitor.visitAtomQuery(this);
     }
 }

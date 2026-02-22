@@ -1,17 +1,35 @@
-import { AnyModel, AtLeastOne, BaseModel, BaseQuery, BaseQueryMapOf, BaseQueryProjection, BaseQuerySelectMapArgs, metadata, RecursiveMutableBaseQuery, Table } from "@ts-grm/core";
+import { 
+    AnyModel, 
+    ast, 
+    AtLeastOne, 
+    BaseModel, 
+    BaseQuery, 
+    BaseQueryMapOf, 
+    BaseQueryProjection, 
+    BaseQuerySelectMapArgs, 
+    BaseTable, 
+    dsl, 
+    ExpressionOrder, 
+    metadata, 
+    RecursiveMutableBaseQuery, 
+    Table 
+} from "@ts-grm/core";
 import { MutableBaseQueryImpl } from "./mutable_base_query_impl";
-import { defaultQueryOptions, QueryOptions } from "./query_options";
+import { toTables } from "./utils";
+import { RecursiveMutableBaseQueryImpl } from "./recursive_mutable_base_query_impl";
+import { MapBaseQueryProjection } from "./query_projection";
 
-export class BaseQueryImpl<TProjection> implements metadata.BaseQueryImplementor<TProjection> {
+export class BaseQueryImpl<TProjection> 
+implements metadata.BaseQueryImplementor<TProjection>, ast.AtomQueryContract {
 
-    private readonly options: QueryOptions;
+    readonly options: ast.AtomQueryOptions;
 
     constructor(
         private readonly mutableQuery: MutableBaseQueryImpl,
         readonly args: BaseQueryMapOf<TProjection>,
-        options: QueryOptions | undefined
+        options: ast.AtomQueryOptions | undefined
     ) {
-        this.options = options ?? defaultQueryOptions;
+        this.options = options ?? ast.defaultAtomQueryOptions;
     }
 
     __type(): { baseQuery: TProjection | true; } {
@@ -55,13 +73,52 @@ export class BaseQueryImpl<TProjection> implements metadata.BaseQueryImplementor
             ) => TProjection
         ]
     ): BaseQuery<TProjection> {
-        throw new Error();
+        const prev = metadata.createTypedBaseTable(this.toModel(true)) as BaseTable<BaseQueryMapOf<TProjection>>;
+        const tables = toTables(args);
+        const mutableQuery = new RecursiveMutableBaseQueryImpl<TProjection>(prev, tables);
+        const fnArgs = [ mutableQuery, ...tables ];
+        const fn = args[args.length - 1] as Function;
+        const projection = fn.apply(undefined, fnArgs) as MapBaseQueryProjection<BaseQueryMapOf<TProjection>>;
+        const newQuery = new BaseQueryImpl(mutableQuery, projection.args, undefined);
+        return dsl.unionAll(this, newQuery);
     }
 
     toModel(
         isCte: boolean
     ): metadata.BaseModelImplementor<BaseQueryMapOf<TProjection>> {
         return new BaseModelImpl(this as any, isCte);
+    }
+
+    get kind(): "ATOM" {
+        return "ATOM";
+    }
+
+    get tables(): ReadonlyArray<metadata.AbstractTable> {
+        return this.mutableQuery.tables;
+    }
+    
+    get wherePred(): ast.AbstractPred | undefined {
+        return this.mutableQuery.wherePred;
+    }
+    
+    get orders(): ReadonlyArray<ExpressionOrder> {
+        return this.mutableQuery.orders;
+    }
+    
+    get groupByExprs(): ReadonlyArray<ast.AbstractExpr<any>> | undefined {
+        return this.mutableQuery.groupByExprs;
+    }
+    
+    get havingPred(): ast.AbstractPred | undefined {
+        return this.mutableQuery.havingPred;
+    }
+
+    get projection(): ast.ProjectionContract {
+        return this.args as any as ast.ProjectionContract;
+    }
+
+    accept(visitor: ast.Visitor): void {
+        visitor.visitAtomQuery(this);
     }
 }
 

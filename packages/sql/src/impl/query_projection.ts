@@ -23,6 +23,8 @@ implements RootQueryProjection<T, TKind> {
 
 export class ValRootQueryProjection<T> extends AbstractRootQueryProjection<T, "ONE"> {
 
+    readonly kind = "ROOT_SINGLE";
+
     constructor(
         readonly selection: RootQuerySelection<T>
     ) {
@@ -51,7 +53,7 @@ export class MapRootQueryProjection<T> extends AbstractRootQueryProjection<T, "M
 export class MapBaseQueryProjection<T extends BaseQuerySelectMapArgs> extends AbstractQueryProjection {
 
     __type(): { baseQueryProjection: T | true } {
-    return { baseQueryProjection: true };
+        return { baseQueryProjection: true };
     }
 
     constructor(readonly args: T) {

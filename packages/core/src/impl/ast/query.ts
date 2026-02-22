@@ -3,8 +3,14 @@ import { TableLike } from "@/dsl/table";
 import { AbstractPred } from "./pred";
 import { AbstractExpr } from "./expr";
 import { AbstractTable } from "../abstrat_table";
+import { MergedQueryKind } from "./query_factory";
+import { Visitor } from "./visitor";
 
-export interface QueryContract {
+export type QueryContract = AtomQueryContract | MergedQueryContract;
+
+export interface AtomQueryContract {
+
+    readonly kind: "ATOM";
 
     readonly tables: ReadonlyArray<AbstractTable>;
 
@@ -16,31 +22,52 @@ export interface QueryContract {
 
     readonly havingPred: AbstractPred | undefined;
 
-    readonly limit: number | undefined;
-
-    readonly offset: number | undefined;
-
-    readonly distinct: boolean;
+    readonly options: AtomQueryOptions;
 
     readonly projection: ProjectionContract;
+
+    accept(visitor: Visitor): void;
+}
+
+export interface MergedQueryContract {
+
+    readonly kind: MergedQueryKind;
+
+    readonly projection: ProjectionContract;
+
+    readonly queries: ReadonlyArray<QueryContract>;
+
+    accept(visitor: Visitor): void;
 }
 
 export type ProjectionContract = {
-    kind: "ROOT_SINGLE";
-    selection: RootQuerySelection<any>;
+    readonly kind: "ROOT_SINGLE";
+    readonly selection: RootQuerySelection<any>;
 } | {
-    kind: "ROOT_ARRAY";
-    selections: ReadonlyArray<RootQuerySelection<any>>;
+    readonly kind: "ROOT_ARRAY";
+    readonly selections: ReadonlyArray<RootQuerySelection<any>>;
 } | {
-    kind: "ROOT_MAP";
-    selections: { readonly [key: string]: RootQuerySelection<any> };
+    readonly kind: "ROOT_MAP";
+    readonly selections: { readonly [key: string]: RootQuerySelection<any> };
 } | {
     kind: "SUB_SINGLE";
-    selection: ExpressionLike;
+    readonly selection: ExpressionLike;
 } | {
     kind: "SUB_ARRAY";
-    selections: ReadonlyArray<ExpressionLike>;
+    readonly selections: ReadonlyArray<ExpressionLike>;
 } | {
     kind: "BASE";
     selections: { readonly [key: string]: ExpressionLike | TableLike; }
+};
+
+export type AtomQueryOptions = {
+    readonly distinct: boolean;
+    readonly limit: number;
+    readonly offset: number;
+};
+
+export const defaultAtomQueryOptions: AtomQueryOptions = {
+    distinct: false,
+    limit: -1,
+    offset: 0
 };

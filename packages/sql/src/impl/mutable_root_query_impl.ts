@@ -3,7 +3,9 @@ import { SqlClientImplementor } from "@/sql_client";
 import { AbstractRootQueryProjection } from "./query_projection";
 import { AbstractMutableQuery } from "./abstract_mutable_query";
 
-export class MutableRootQueryImpl extends AbstractMutableQuery implements MutableRootQuery {
+export class MutableRootQueryImpl 
+extends AbstractMutableQuery 
+implements MutableRootQuery {
 
     __type(): { mutableRootQuery: true; } {
         return { mutableRootQuery: true };

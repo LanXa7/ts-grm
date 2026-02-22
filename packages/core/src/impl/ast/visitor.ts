@@ -5,12 +5,14 @@ import { NativeExprContract } from "./native_expr";
 import type { BinaryNumExpr, UnaryMinusExpr } from "./num_expr";
 import type { BetweenPred, CmpPred, CompoundPred, InCollectionPred, LikePred, NullityPred } from "./pred";
 import type { PropExprContract } from "./prop_expr";
-import { ProjectionContract, QueryContract } from "./query";
+import { AtomQueryContract, MergedQueryContract, ProjectionContract } from "./query";
 import type { ConcatExpr, LeftExpr, LengthExpr, LowerExpr, PadExpr, PositionExpr, ReplaceExpr, ReverseExpr, RightExpr, SubstringExpr, TrimExpr, UpperExpr } from "./string_expr";
 
 export interface Visitor {
 
-    visitQuery(query: QueryContract): void;
+    visitAtomQuery(query: AtomQueryContract): void;
+
+    visitMergedQuery(query: MergedQueryContract): void;
 
     visitCmpPred(pred: CmpPred): void;
 
@@ -69,7 +71,7 @@ export interface Visitor {
 
 export abstract class AbstractVisitor implements Visitor {
 
-    visitQuery(query: QueryContract): void {
+    visitAtomQuery(query: AtomQueryContract): void {
         this.visitProjection(query.projection);
         query.wherePred?.accept(this);
         for (const order of query.orders) {
@@ -81,6 +83,12 @@ export abstract class AbstractVisitor implements Visitor {
             }
         }
         query.havingPred?.accept(this);
+    }
+
+    visitMergedQuery(query: MergedQueryContract): void {
+        for (const qry of query.queries) {
+            qry.accept(this);
+        }
     }
 
     visitCmpPred(pred: CmpPred): void {

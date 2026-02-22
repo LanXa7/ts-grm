@@ -1,130 +1,174 @@
-import { RootQuery } from "./root_query";
+import { RootQuery, RootQueryProjection } from "./root_query";
 import { ExpressionSubQuery, TupleSubQuery } from "./sub_query";
 import { BaseQuery } from "./base-query";
 import { AtLeastOne } from "./utils";
-import { supressUnused } from "@/utils";
+import { getQueryFactory } from "@/impl/ast/query_factory";
+import { StateError } from "@/error/common";
 
 export function unionAll<
-    TQuery extends RootQuery<any>,
+    TProjection extends RootQueryProjection<any>
 >(
-    ...queries: AtLeastOne<TQuery>
-): TQuery;
+    ...queries: AtLeastOne<RootQuery<TProjection>>
+): RootQuery<TProjection>;
 
-export function unionAll<
-    TQuery extends ExpressionSubQuery<any>,
->(
-    ...queries: AtLeastOne<TQuery>
-): TQuery;
+export function unionAll<TProjection>(
+    ...queries: AtLeastOne<ExpressionSubQuery<TProjection>>
+): ExpressionSubQuery<TProjection>;
 
-export function unionAll<
-    TQuery extends TupleSubQuery<any>,
->(
-    ...queries: AtLeastOne<TQuery>
-): TQuery;
+export function unionAll<TProjection>(
+    ...queries: AtLeastOne<TupleSubQuery<TProjection>>
+): TupleSubQuery<TProjection>;
 
-export function unionAll<
-    TQuery extends BaseQuery<any>,
->(
-    ...queries: AtLeastOne<TQuery>
-): TQuery;
+export function unionAll<TProjection>(
+    ...queries: AtLeastOne<BaseQuery<TProjection>>
+): BaseQuery<TProjection>;
 
 export function unionAll(
     ...queries: any[]
 ): any {
-    supressUnused(queries);
-    throw new Error();
+    const query = queries[0];
+    if (queries.length === 1) {
+        return query;
+    }
+    const type = query.__type();
+    const queryFactory = getQueryFactory();
+    if (type.rootQuery) {
+        return queryFactory.createMergedRootQuery("UNION_ALL", queries);
+    }
+    if (type.expressionSubQuery) {
+        return queryFactory.createMergedExpressionSubQuery("UNION_ALL", queries);
+    }
+    if (type.tupleSubQuery) {
+        return queryFactory.createMergedTupleSubQuery("UNION_ALL", queries);
+    }
+    if (type.baseQuery) {
+        return queryFactory.createMergedBaseQuery("UNION_ALL", queries);
+    }
+    throw new StateError("Illegal arguments");
 }
 
 export function union<
-    TQuery extends RootQuery<any>,
+    TProjection extends RootQueryProjection<any>
 >(
-    ...queries: AtLeastOne<TQuery>
-): TQuery;
+    ...queries: AtLeastOne<RootQuery<TProjection>>
+): RootQuery<TProjection>;
 
-export function union<
-    TQuery extends ExpressionSubQuery<any>,
->(
-    ...queries: AtLeastOne<TQuery>
-): TQuery;
+export function union<TProjection>(
+    ...queries: AtLeastOne<ExpressionSubQuery<TProjection>>
+): ExpressionSubQuery<TProjection>;
 
-export function union<
-    TQuery extends TupleSubQuery<any>,
->(
-    ...queries: AtLeastOne<TQuery>
-): TQuery;
+export function union<TProjection>(
+    ...queries: AtLeastOne<TupleSubQuery<TProjection>>
+): TupleSubQuery<TProjection>;
 
-export function union<
-    TQuery extends BaseQuery<any>,
->(
-    ...queries: AtLeastOne<TQuery>
-): TQuery;
+export function union<TProjection>(
+    ...queries: AtLeastOne<BaseQuery<TProjection>>
+): BaseQuery<TProjection>;
 
 export function union(
     ...queries: any[]
 ): any {
-    supressUnused(queries);
-    throw new Error();
+    const query = queries[0];
+    if (queries.length === 1) {
+        return query;
+    }
+    const type = query.__type();
+    const queryFactory = getQueryFactory();
+    if (type.rootQuery) {
+        return queryFactory.createMergedRootQuery("UNION", queries);
+    }
+    if (type.expressionSubQuery) {
+        return queryFactory.createMergedExpressionSubQuery("UNION", queries);
+    }
+    if (type.tupleSubQuery) {
+        return queryFactory.createMergedTupleSubQuery("UNION", queries);
+    }
+    if (type.baseQuery) {
+        return queryFactory.createMergedBaseQuery("UNION", queries);
+    }
+    throw new StateError("Illegal arguments");
 }
 
 export function minus<
-    TQuery extends RootQuery<any>,
+    TProjection extends RootQueryProjection<any>
 >(
-    ...queries: AtLeastOne<TQuery>
-): TQuery;
+    ...queries: AtLeastOne<RootQuery<TProjection>>
+): RootQuery<TProjection>;
 
-export function minus<
-    TQuery extends ExpressionSubQuery<any>,
->(
-    ...queries: AtLeastOne<TQuery>
-): TQuery;
+export function minus<TProjection>(
+    ...queries: AtLeastOne<ExpressionSubQuery<TProjection>>
+): ExpressionSubQuery<TProjection>;
 
-export function minus<
-    TQuery extends TupleSubQuery<any>,
->(
-    ...queries: AtLeastOne<TQuery>
-): TQuery;
+export function minus<TProjection>(
+    ...queries: AtLeastOne<TupleSubQuery<TProjection>>
+): TupleSubQuery<TProjection>;
 
-export function minus<
-    TQuery extends BaseQuery<any>,
->(
-    ...queries: AtLeastOne<TQuery>
-): TQuery;
+export function minus<TProjection>(
+    ...queries: AtLeastOne<BaseQuery<TProjection>>
+): BaseQuery<TProjection>;
 
 export function minus(
     ...queries: any[]
 ): any {
-    supressUnused(queries);
-    throw new Error();
+    const query = queries[0];
+    if (queries.length === 1) {
+        return query;
+    }
+    const type = query.__type();
+    const queryFactory = getQueryFactory();
+    if (type.rootQuery) {
+        return queryFactory.createMergedRootQuery("MINUS", queries);
+    }
+    if (type.expressionSubQuery) {
+        return queryFactory.createMergedExpressionSubQuery("MINUS", queries);
+    }
+    if (type.tupleSubQuery) {
+        return queryFactory.createMergedTupleSubQuery("MINUS", queries);
+    }
+    if (type.baseQuery) {
+        return queryFactory.createMergedBaseQuery("MINUS", queries);
+    }
+    throw new StateError("Illegal arguments");
 }
 
 export function intersect<
-    TQuery extends RootQuery<any>,
+    TProjection extends RootQueryProjection<any>
 >(
-    ...queries: AtLeastOne<TQuery>
-): TQuery;
+    ...queries: AtLeastOne<RootQuery<TProjection>>
+): RootQuery<TProjection>;
 
-export function intersect<
-    TQuery extends ExpressionSubQuery<any>,
->(
-    ...queries: AtLeastOne<TQuery>
-): TQuery;
+export function intersect<TProjection>(
+    ...queries: AtLeastOne<ExpressionSubQuery<TProjection>>
+): ExpressionSubQuery<TProjection>;
 
-export function intersect<
-    TQuery extends TupleSubQuery<any>,
->(
-    ...queries: AtLeastOne<TQuery>
-): TQuery;
+export function intersect<TProjection>(
+    ...queries: AtLeastOne<TupleSubQuery<TProjection>>
+): TupleSubQuery<TProjection>;
 
-export function intersect<
-    TQuery extends BaseQuery<any>,
->(
-    ...queries: AtLeastOne<TQuery>
-): TQuery;
+export function intersect<TProjection>(
+    ...queries: AtLeastOne<BaseQuery<TProjection>>
+): BaseQuery<TProjection>;
 
 export function intersect(
     ...queries: any[]
 ): any {
-    supressUnused(queries);
-    throw new Error();
+    const query = queries[0];
+    if (queries.length === 1) {
+        return query;
+    }
+    const type = query.__type();
+    const queryFactory = getQueryFactory();
+    if (type.rootQuery) {
+        return queryFactory.createMergedRootQuery("INTERSECT", queries);
+    }
+    if (type.expressionSubQuery) {
+        return queryFactory.createMergedExpressionSubQuery("INTERSECT", queries);
+    }
+    if (type.tupleSubQuery) {
+        return queryFactory.createMergedTupleSubQuery("INTERSECT", queries);
+    }
+    if (type.baseQuery) {
+        return queryFactory.createMergedBaseQuery("INTERSECT", queries);
+    }
+    throw new StateError("Illegal arguments");
 }
-

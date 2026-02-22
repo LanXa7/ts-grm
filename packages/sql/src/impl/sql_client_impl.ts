@@ -29,6 +29,7 @@ import { RootQueryImpl } from "./root_query_impl";
 import { AbstractRootQueryProjection, MapBaseQueryProjection } from "./query_projection";
 import { BaseModelImpl, BaseQueryImpl } from "./base_query_impl";
 import { MutableBaseQueryImpl } from "./mutable_base_query_impl";
+import { toTables } from "./utils";
 
 export class SqlClientImpl implements SqlClientImplementor {
 
@@ -66,10 +67,7 @@ export class SqlClientImpl implements SqlClientImplementor {
     ): RootQuery<TProjection> {
         const tables = toTables(args);
         const mutableQuery = new MutableRootQueryImpl(this, tables);
-        const fnArgs: Array<any> = [ mutableQuery ];
-        for (let i = 0; i < tables.length; i++) {
-            fnArgs[i + 1] = tables[i];
-        }
+        const fnArgs: Array<any> = [ mutableQuery, ...tables ];
         const fn = args[args.length - 1] as Function;
         const projection = fn.apply(undefined, fnArgs) as AbstractRootQueryProjection<any>;
         return new RootQueryImpl<TProjection>(mutableQuery, projection, undefined);
@@ -118,28 +116,39 @@ class QueryFactoryImpl implements ast.QueryFactory {
     ): BaseQuery<TProjection> {
         const tables = toTables(args);
         const mutableQuery = new MutableBaseQueryImpl(tables);
-        const fnArgs: Array<any> = [ mutableQuery ];
-        for (let i = 0; i < tables.length; i++) {
-            fnArgs[i + 1] = tables[i];
-        }
+        const fnArgs: Array<any> = [ mutableQuery, ...tables ];
         const fn = args[args.length - 1] as Function;
         const projection = fn.apply(undefined, fnArgs) as MapBaseQueryProjection<BaseQueryMapOf<TProjection>>;
         return new BaseQueryImpl(mutableQuery, projection.args, undefined);
     }
-}
 
-function toTables(
-    args: ReadonlyArray<any>
-): ReadonlyArray<metadata.AbstractTable> {
-    const tables: Array<metadata.AbstractTable> = [];
-    for (let i = 0; i < args.length - 1; i++) {
-        const model = args[i];
-        const table = model instanceof BaseModelImpl
-            ? metadata.createTypedBaseTable(model)
-            : metadata.Entity.of(model as AnyModel).table(undefined);
-        tables.push(table);
+    createMergedRootQuery<TProjection extends RootQueryProjection<any>>(
+        kind: ast.MergedQueryKind, 
+        queries: ReadonlyArray<RootQuery<TProjection>>
+    ): RootQuery<TProjection> {
+        throw new Error();    
     }
-    return tables;
+
+    createMergedExpressionSubQuery<TProjection>(
+        kind: ast.MergedQueryKind, 
+        queries: ReadonlyArray<ExpressionSubQuery<TProjection>>
+    ): ExpressionSubQuery<TProjection> {
+        throw new Error(); 
+    }
+
+    createMergedTupleSubQuery<TProjection>(
+        kind: ast.MergedQueryKind, 
+        queries: ReadonlyArray<TupleSubQuery<TProjection>>
+    ): TupleSubQuery<TProjection> {
+        throw new Error(); 
+    }
+
+    createMergedBaseQuery<TProjection>(
+        kind: ast.MergedQueryKind, 
+        queries: ReadonlyArray<BaseQuery<TProjection>>
+    ): BaseQuery<TProjection> {
+        throw new Error(); 
+    }
 }
 
 const queryFactory = new QueryFactoryImpl();

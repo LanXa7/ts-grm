@@ -68,7 +68,7 @@ extends MutableBaseQuery {
     
     __type(): { 
         mutableBaseQuery: true 
-        recursiveBaseQuery: TProjection
+        recursiveBaseQuery: TProjection | true
     };
 
     readonly prev: BaseTable<BaseQueryMapOf<TProjection>>;

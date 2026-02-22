@@ -20,9 +20,16 @@ export type {
     TrimExpr, 
     UpperExpr 
 } from "./string_expr";
-export type { QueryContract, ProjectionContract } from "./query";
+export type { 
+    QueryContract, 
+    AtomQueryContract, 
+    MergedQueryContract, 
+    ProjectionContract, 
+    AtomQueryOptions 
+} from "./query";
+export { defaultAtomQueryOptions } from "./query";
 export type { Visitor, AbstractVisitor } from "./visitor";
-export type { QueryFactory } from "./query_factory";
+export type { QueryFactory, MergedQueryKind } from "./query_factory";
 export { setQueryFactory } from "./query_factory";
 
 import { InternalFactory, setInteralFactory } from "@/impl/ast/internal_factory";
