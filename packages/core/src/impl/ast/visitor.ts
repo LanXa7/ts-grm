@@ -6,6 +6,7 @@ import type { BinaryNumExpr, UnaryMinusExpr } from "./num_expr";
 import type { BetweenPred, CmpPred, CompoundPred, InCollectionPred, LikePred, NullityPred } from "./pred";
 import type { PropExprContract } from "./prop_expr";
 import { AtomQueryContract, MergedQueryContract, ProjectionContract } from "./query";
+import { ShadowExprContract } from "./shadow_expr";
 import type { ConcatExpr, LeftExpr, LengthExpr, LowerExpr, PadExpr, PositionExpr, ReplaceExpr, ReverseExpr, RightExpr, SubstringExpr, TrimExpr, UpperExpr } from "./string_expr";
 
 export interface Visitor {
@@ -29,6 +30,8 @@ export interface Visitor {
     visitTablePropExpr(expr: PropExprContract): void;
 
     visitNativeExpr(expr: NativeExprContract): void;
+
+    visitShdowExpr(expr: ShadowExprContract): void;
 
     visitCoalesceExpr(expr: CoalesceExprContract): void;
 
@@ -130,6 +133,8 @@ export abstract class AbstractVisitor implements Visitor {
     }
 
     abstract visitNativeExpr(expr: NativeExprContract): void;
+
+    abstract visitShdowExpr(expr: ShadowExprContract): void;
 
     visitLowerExpr(expr: LowerExpr): void {
         expr.expr.accept(this);

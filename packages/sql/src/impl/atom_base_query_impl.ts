@@ -3,8 +3,6 @@ import {
     AtomBaseQuery, 
     BaseQuery, 
     BaseQueryMapOf, 
-    BaseQueryProjection, 
-    BaseQuerySelectMapArgs, 
     ExpressionOrder, 
     metadata, 
 } from "@ts-grm/core";
@@ -92,27 +90,5 @@ implements AtomBaseQuery<TProjection>, metadata.BaseQueryImplementor<TProjection
 
     accept(visitor: ast.Visitor): void {
         visitor.visitAtomQuery(this);
-    }
-}
-
-export class BaseModelImpl<T extends BaseQuerySelectMapArgs> implements metadata.BaseModelImplementor<T> {
-
-    __type(): {
-        baseModel: T | true;
-    } {
-        return { baseModel: true };
-    }
-
-    constructor(
-        private readonly _query: AbstractBaseQueryImpl<BaseQueryProjection<T>>,
-        readonly __isCte: boolean,
-    ) {}
-
-    get __args(): T {
-        return this._query.args;
-    }
-
-    toQuery(): metadata.BaseQueryImplementor<BaseQueryProjection<T>> {
-        return this._query;
     }
 }

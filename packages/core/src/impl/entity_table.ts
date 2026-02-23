@@ -5,31 +5,32 @@ import { Predicate } from "@/dsl/expression";
 import { createTableProp } from "./ast/prop_expr";
 import { JoinType } from "@/dsl/table";
 import { makeErr } from "./util";
-import { err } from "@/error";
 import { AbstractTable } from "./abstrat_table";
-import { BaseModel } from "@/dsl";
+import { ShadowAnchor } from "./shadow_anchor";
+import { BaseModelImplementor } from "./base_query_implementor";
+import { FetchedView } from "@/dsl/root_query";
+import { View } from "@/schema/dto";
+import { FetchedViewImpl } from "./fetched_view_impl";
 
 export abstract class AbstractEntityTable implements AbstractTable {
 
     readonly joinOperation: JoinOperation | undefined;
 
-    readonly isShadow: boolean;
-
-    private _shadow: AbstractEntityTable | undefined = undefined;
+    readonly anchor: ShadowAnchor | undefined;
 
     constructor(
         readonly entity: Entity,
-        options: JoinOperation | boolean | undefined
+        options: JoinOperation | ShadowAnchor | undefined
     ) {
         if (options == null) {
             this.joinOperation = undefined;
-            this.isShadow = false;
-        } else if (typeof options === "boolean") {
-            this.joinOperation = undefined;
-            this.isShadow = options;
+            this.anchor = undefined;
+        } else if ((options as any).parent) {
+            this.joinOperation = options as JoinOperation;
+            this.anchor = undefined;
         } else {
-            this.joinOperation = options;
-            this.isShadow = false;
+            this.joinOperation = undefined;
+            this.anchor = options as ShadowAnchor;
         }
     }
 
@@ -43,26 +44,16 @@ export abstract class AbstractEntityTable implements AbstractTable {
         }
     }
 
-    __setShadow(shadow: AbstractEntityTable) {
-        if (!shadow.isShadow) {
-            throw new err.ArgumentError("The argument is not shadow table");
-        }
-        if (this._shadow != null && this._shadow != shadow) {
-            throw new err.StateError("The current table can be exported at most once by the base query");
-        }
-        this._shadow = shadow;
-    }
-
     $acceptRisk(): this {
         return this;
     }
 
-    get shadow(): AbstractEntityTable | undefined {
-        return this._shadow;
+    get baseModel(): BaseModelImplementor<any> | undefined {
+        return this.anchor?.baseModel;
     }
 
-    get baseModel(): BaseModel<any> | undefined {
-        return undefined;
+    fetch<T>(view: View<any, T>): FetchedView<any, T> {
+        return new FetchedViewImpl(this, view);
     }
 }
 
@@ -80,7 +71,7 @@ export type JoinFilter = (
 
 export type EntityTableCtor = new(
     entity: Entity,
-    joinOperation: JoinOperation | boolean | undefined
+    joinOperation: JoinOperation | ShadowAnchor | undefined
 ) => AbstractEntityTable;
 
 export function createEntityTableClass(

@@ -14,5 +14,5 @@ export interface BaseModelImplementor<T extends BaseQuerySelectMapArgs> extends 
 
     readonly __isCte: boolean;
 
-    toQuery(): BaseQueryImplementor<BaseQueryProjection<T>>;
+    __toQuery(): BaseQueryImplementor<BaseQueryProjection<T>>;
 }

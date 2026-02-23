@@ -17,10 +17,6 @@ export class MergedRootQueryImpl<
         readonly kind: ast.MergedQueryKind,
         readonly queries: ReadonlyArray<ast.QueryContract>
     ) {}
-    
-    get projection(): ast.ProjectionContract {
-        return this.queries[0]!.projection;
-    }
 
     accept(visitor: ast.Visitor): void {
         visitor.visitMergedQuery(this);
@@ -42,12 +38,8 @@ implements BaseQuery<TProjection>, ast.MergedQueryContract {
         super();
     }
     
-    get projection(): ast.ProjectionContract {
-        return this.queries[0]!.projection;
-    }
-    
     get args(): BaseQueryMapOf<TProjection> {
-        throw new Error("Unsupported function args()");
+        return (this.queries[0]! as any as AbstractBaseQueryImpl<TProjection>).args;
     }
 
     accept(visitor: ast.Visitor): void {

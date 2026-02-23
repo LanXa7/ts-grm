@@ -6,6 +6,7 @@ import { dedent } from "@/error/util";
 import { capitalize, makeErr } from "./util";
 import { AbstractEntityTable, createEntityTableClass, EntityTableCtor, JoinOperation } from "./entity_table";
 import { StateError } from "@/error/common";
+import { ShadowAnchor } from "./shadow_anchor";
 
 export class Entity {
 
@@ -261,7 +262,7 @@ export class Entity {
         }
     }
 
-    table(options: JoinOperation | boolean | undefined): AbstractEntityTable {
+    table(options: JoinOperation | ShadowAnchor | undefined): AbstractEntityTable {
         return new (this._tableClass())(this, options);
     }
 

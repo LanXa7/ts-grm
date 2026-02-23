@@ -20,16 +20,26 @@ describe("SimpleQueryTest", () => {
 
     it("base", () => {
         const baseModel = dsl.derivedModel(
-            dsl.baseQuery(BOOK, (q, book) => {
-                return q.select({
-                    book,
-                    rank: dsl.native.num(`row_number() over(order by ${book.price} desc)`)
-                });
-            })
+            dsl.unionAll(
+                dsl.baseQuery(BOOK, (q, book) => {
+                    q.where(book.storeId.eq("2"));
+                    return q.select({
+                        book,
+                        rank: dsl.native.num(`row_number() over(order by ${book.price} desc)`)
+                    });
+                }),
+                dsl.baseQuery(BOOK, (q, book) => {
+                    q.where(book.name.ilike("in action", "ENDS_WITH"));
+                    return q.select({
+                        book,
+                        rank: dsl.native.num(`row_number() over(order by ${book.price} desc)`)
+                    });
+                })
+            )
         );
         const q = sqlClient.createQuery(baseModel, (q, base) => {
             q.where(base.rank.between(1, 3));
-            return q.select(base.book.name);
+            return q.select(base.book.fetch(SIMPLE_BOOK_VIEW));
         });
         console.log(q);
     });

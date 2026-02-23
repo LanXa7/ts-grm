@@ -82,20 +82,20 @@ export type RootQueryProjection<T, TKind = "ONE" | "ARRAY" | "MAP"> = {
     __type(): { selectedProjection: [T, TKind] | true };
 };
 
-export type SelectionLike = {
+export interface SelectionLike {
 
     __type(): {
         selectionLike: true;
     };
 }
 
-export type FetchedView<TModel extends AnyModel, X> = {
+export interface FetchedView<TModel extends AnyModel, X> extends SelectionLike {
 
     __type(): {
         selectionLike: true;
-        selectedView: [TModel, X] | undefined;
+        selectedView: [TModel, X] | true;
     };
-} & SelectionLike;
+};
 
 export type RootQuerySelection<T> =
     Expression<T, any> |

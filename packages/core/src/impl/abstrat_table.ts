@@ -1,9 +1,9 @@
-import { BaseModel } from "@/dsl";
 import { Entity } from "./entity";
+import { BaseModelImplementor } from "./base_query_implementor";
 
 export interface AbstractTable {
 
     get entity(): Entity | undefined;
 
-    get baseModel(): BaseModel<any> | undefined;
+    get baseModel(): BaseModelImplementor<any> | undefined;
 }

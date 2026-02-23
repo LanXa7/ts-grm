@@ -42,6 +42,8 @@ import { AbstractStrExpr } from "@/impl/ast/string_expr";
 import { AbstractDtExpr } from "@/impl/ast/dt_expr";
 import { createLiteral } from "@/impl/ast/literal";
 import { ExpressionOrder } from "@/dsl";
+import { ShadowCmpExpr, ShadowDtExpr, ShadowExpr, ShadowNumExpr, ShadowStrExpr } from "./shadow_expr";
+import { ShadowAnchor } from "../shadow_anchor";
 
 class InternalFactoryImpl implements InternalFactory {
 
@@ -116,6 +118,25 @@ class InternalFactoryImpl implements InternalFactory {
         defaultExprs: ReadonlyArray<AbstractDtExpr>
     ): CoalesceDtExpr {
         return new CoalesceDtExpr(expr, defaultExprs);
+    }
+
+    createShadowExpr<T>(
+        expr: AbstractExpr<T>, 
+        anchor: ShadowAnchor
+    ): AbstractExpr<T> {
+        if (expr instanceof AbstractDtExpr) {
+            return new ShadowDtExpr(anchor) as AbstractExpr<T>;
+        }
+        if (expr instanceof AbstractStrExpr) {
+            return new ShadowStrExpr(anchor) as AbstractExpr<T>;
+        }
+        if (expr instanceof AbstractNumExpr) {
+            return new ShadowNumExpr(anchor) as AbstractExpr<T>;
+        }
+        if (expr instanceof AbstractCmpExpr) {
+            return new ShadowCmpExpr(anchor) as AbstractExpr<T>;
+        }
+        return new ShadowExpr(anchor);
     }
 
     createLiteral(value: number): AbstractNumExpr<number>;

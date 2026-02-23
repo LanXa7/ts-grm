@@ -33,8 +33,6 @@ export interface MergedQueryContract {
 
     readonly kind: MergedQueryKind;
 
-    readonly projection: ProjectionContract;
-
     readonly queries: ReadonlyArray<QueryContract>;
 
     accept(visitor: Visitor): void;

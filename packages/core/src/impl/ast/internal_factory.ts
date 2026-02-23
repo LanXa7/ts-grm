@@ -6,6 +6,7 @@ import type { AbstractNumExpr } from "./num_expr";
 import type { AbstractStrExpr } from "./string_expr";
 import type { AbstractDtExpr } from "./dt_expr";
 import { ExpressionOrder } from "@/dsl";
+import { ShadowAnchor } from "../shadow_anchor";
 
 let _internalFactory: InternalFactory | undefined = undefined;
 
@@ -75,6 +76,11 @@ export interface InternalFactory {
         expr: AbstractDtExpr,
         defaultExprs: ReadonlyArray<AbstractDtExpr>
     ): CoalesceDtExpr;
+
+    createShadowExpr<T>(
+        expr: AbstractExpr<T>,
+        anchor: ShadowAnchor
+    ): AbstractExpr<T>;
 
     createLiteral(value: number): AbstractNumExpr<number>;
 
