@@ -96,8 +96,12 @@ describe("QueryTest", () => {
             q.where(book.name.ilikeIf(undefined));
             return q.select({
                 book: book.fetch(SIMPLE_BOOK_VIEW),
-                globalRank: dsl.native.num("row_number() over(order by ...)"),
-                localRank: dsl.native.num("row_number() over(parition by ...)")
+                globalRank: dsl.native.num `row_number() over(order by ${book.price})`,
+                localRank: dsl.native.num `row_number() over(parition by ${
+                    book.storeId
+                } order by ${
+                    book.price
+                } desc)`
             });
         }).fetchList();
 
@@ -195,9 +199,11 @@ describe("QueryTest", () => {
             dsl.baseQuery(BOOK, (q, book) => {
                 return q.select({
                     book,
-                    localRank: dsl.native.num(
-                        "row_number() over(partition by...)"
-                    )
+                    localRank: dsl.native.num `row_number() over(partition by ${
+                        book.storeId
+                    } order by ${
+                        book.price
+                    } desc)`
                 });
             })
         );

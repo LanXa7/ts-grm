@@ -25,14 +25,14 @@ describe("SimpleQueryTest", () => {
                     q.where(book.storeId.eq("2"));
                     return q.select({
                         book,
-                        rank: dsl.native.num(`row_number() over(order by ${book.price} desc)`)
+                        rank: dsl.native.num `row_number() over(order by ${book.price} desc)`
                     });
                 }),
                 dsl.baseQuery(BOOK, (q, book) => {
                     q.where(book.name.ilike("in action", "ENDS_WITH"));
                     return q.select({
                         book,
-                        rank: dsl.native.num(`row_number() over(order by ${book.price} desc)`)
+                        rank: dsl.native.num `row_number() over(order by ${book.price} desc)`
                     });
                 })
             )

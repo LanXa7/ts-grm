@@ -2,7 +2,7 @@ import { count } from "./aggregate";
 import { and, constant, not, or } from "./expression";
 import { all, any, exists, notExists, subQuery } from "./sub_query";
 import { unionAll, union, minus, intersect } from "./merged_query";
-import { num } from "./native";
+import { native } from "./native";
 import { baseQuery, cteModel, derivedModel } from "./base_query";
 import { tuple } from "./tuple";
 export { ExpressionOrder } from "./utils";
@@ -60,7 +60,5 @@ export const dsl = {
     cteModel,
     constant,
     tuple,
-    native: {
-        num
-    }
+    native
 };
