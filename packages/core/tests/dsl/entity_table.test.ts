@@ -3,7 +3,7 @@ import { AUTHOR, BOOK, BOOK_STORE, ORDER_ITEM } from "../model/model";
 import { describe, expect, it } from "vitest";
 import { EntityTable } from "@/dsl/table";
 import { AbstractNumExpr } from "@/impl/ast/num_expr";
-import { AbstractStrExpr } from "@/impl/ast/string_expr";
+import { AbstractStrExpr } from "@/impl/ast/str_expr";
 import { AbstractEntityTable } from "@/impl/entity_table";
 import { expectCode } from "../utils";
 

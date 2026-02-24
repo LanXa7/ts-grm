@@ -1,7 +1,7 @@
 import { AbstractDtExpr } from "./dt_expr";
 import { AbstractCmpExpr, AbstractExpr } from "./expr";
 import { AbstractNumExpr } from "./num_expr";
-import { AbstractStrExpr } from "./string_expr";
+import { AbstractStrExpr } from "./str_expr";
 import { Visitor } from "./visitor";
 
 export interface CoalesceExprContract {

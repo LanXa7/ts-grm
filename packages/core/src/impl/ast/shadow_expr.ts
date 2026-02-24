@@ -2,10 +2,11 @@ import { AbstractDtExpr } from "./dt_expr";
 import { AbstractCmpExpr, AbstractExpr } from "./expr";
 import { AbstractNumExpr } from "./num_expr";
 import { ShadowAnchor } from "../shadow_anchor";
-import { AbstractStrExpr } from "./string_expr";
+import { AbstractStrExpr } from "./str_expr";
 import { Visitor } from "./visitor";
+import { Node } from "./node";
 
-export interface ShadowExprContract {
+export interface ShadowExprContract extends Node {
 
     readonly anchor: ShadowAnchor;
 }

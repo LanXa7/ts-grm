@@ -2,7 +2,7 @@ import { NullityType } from "@/schema/prop";
 import { CompilationError, supressUnused } from "@/utils"
 import { ExpressionSubQuery } from "./sub_query";
 import { AtLeastOne, ExpressionOrder } from "./utils";
-import { AbstractStrExpr, ConcatExpr } from "@/impl/ast/string_expr";
+import { AbstractStrExpr, ConcatExpr } from "@/impl/ast/str_expr";
 import { ArgumentError } from "@/error/common";
 import { getInternalFactory } from "@/impl/ast/internal_factory";
 import { OrderNullsType } from "@/schema/order";
@@ -10,7 +10,7 @@ import { CompoundPred } from "@/impl/ast/pred";
 
 export type Expression<
     T, 
-    TAsNumber extends "AS_NUMBER" | undefined = undefined
+    TAsNumber extends AsNumberBound<T> = ""
 > = 
     NonNull<T> extends string
         ? TAsNumber extends "AS_NUMBER"
@@ -21,6 +21,8 @@ export type Expression<
     : NonNull<T> extends number
         ? NumExpression<T & Nullable<number>>
     : AnyExpression<T>;
+
+export type AsNumberBound<T> = T extends string ? "AS_NUMBER" | "" : "";
 
 export type Predicate = AnyExpression<boolean>;
 
@@ -35,12 +37,12 @@ type IsNull<T> =
         ? true
     : false;
 
-type AnyExpression<T> = {
+type AnyExpression<T, TAsNumber extends AsNumberBound<T> = ""> = {
     
     __type(): {
         selectionLike: true;
         expressionLike: true;
-        expression: T | undefined;
+        expression: [T, TAsNumber] | true;
     };
 
     asc(nulls?: OrderNullsType): ExpressionOrder;
@@ -111,7 +113,9 @@ type AnyExpression<T> = {
 
             coalesce<TArgs extends CoalesceArgs<T>>(
                 ...exprs: TArgs
-            ): Expression<CoalesceDataType<T, TArgs>>;
+            ): Expression<CoalesceDataType<T, TArgs>, TAsNumber & AsNumberBound<CoalesceDataType<T, TArgs>>>;
+
+            asNonNull(): Expression<NonNull<T>, TAsNumber>;
         }
         : object
 );
@@ -137,7 +141,10 @@ type CoalesceDataType<T, TArgs extends any[]> =
             )
         : T;
 
-type CmpExpression<T> = AnyExpression<T> & {
+type CmpExpression<
+    T, 
+    TAsNumber extends AsNumberBound<T> = ""
+> = AnyExpression<T, TAsNumber> & {
     
     __type(): { 
         selectionLike: true;
@@ -197,7 +204,9 @@ type MergeNullableType<
         ? Exclude<T1 | T2, number> 
         : T1 | T2;
 
-type NumExpression<T extends Nullable<string | number>> = CmpExpression<T> & {
+type NumExpression<
+    T extends Nullable<string | number>
+> = CmpExpression<T, T extends string ? "AS_NUMBER" : ""> & {
 
     __type(): { 
         selectionLike: true;

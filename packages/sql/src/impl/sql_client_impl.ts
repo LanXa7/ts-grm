@@ -30,11 +30,13 @@ import type {
 import { supressUnused, ast } from "@ts-grm/core";
 import { MutableRootQueryImpl } from "./mutable_root_query_impl";
 import { AtomRootQueryImpl } from "./atom_root_query_impl";
-import { AbstractRootQueryProjection, MapBaseQueryProjection } from "./query_projection";
+import { AbstractRootQueryProjection, AbstractSubQueryProjection, ExpressionSubQueryProjection, MapBaseQueryProjection } from "./query_projection";
 import { AtomBaseQueryImpl } from "./atom_base_query_impl";
 import { MutableBaseQueryImpl } from "./mutable_base_query_impl";
 import { toTables } from "./utils";
-import { MergedBaseQueryImpl, MergedRootQueryImpl } from "./merged_query";
+import { MergedBaseQueryImpl, MergedDtSubQueryImpl, MergedExprSubQueryImpl, MergedNumSubQueryImpl, MergedRootQueryImpl, MergedStrSubQueryImpl, MergedTupleSubQueryImpl } from "./merged_query";
+import { MutableSubQueryImpl } from "./mutable_sub_query_impl";
+import { AtomDtSubQueryImpl, AtomNumSubQueryImpl, AtomStrSubQueryImpl, AtomExprSubQueryImpl, AtomTupleSubQueryImpl } from "./atom_sub_query_impl";
 
 export class SqlClientImpl implements SqlClientImplementor {
 
@@ -101,8 +103,25 @@ class QueryFactoryImpl implements ast.QueryFactory {
         : TProjection extends void
             ? AtomExpressionSubQuery<Expression<number>>
         : never {
-        supressUnused(args);
-        throw new Error();
+        const tables = toTables(args);
+        const mutableQuery = new MutableSubQueryImpl(tables);
+        const fnArgs: Array<any> = [ mutableQuery, ...tables ];
+        const fn = args[args.length - 1] as Function;
+        const projection = fn.apply(undefined, fnArgs) as AbstractSubQueryProjection<TProjection, any>;
+        if (projection.kind === "SUB_ARRAY") {
+            return new AtomTupleSubQueryImpl(mutableQuery, projection, undefined) as any;
+        }
+        const selection = (projection as ExpressionSubQueryProjection<any>).selection;
+        if (selection instanceof ast.AbstractDtExpr) {
+            return new AtomDtSubQueryImpl(mutableQuery, projection, undefined) as any;
+        }
+        if (selection instanceof ast.AbstractStrExpr) {
+            return new AtomStrSubQueryImpl(mutableQuery, projection, undefined) as any;
+        }
+        if (selection instanceof ast.AbstractNumExpr) {
+            return new AtomNumSubQueryImpl(mutableQuery, projection, undefined) as any;
+        }
+        return new AtomExprSubQueryImpl(mutableQuery, projection, undefined) as any;
     }
         
     createAtomBaseQuery<
@@ -138,18 +157,23 @@ class QueryFactoryImpl implements ast.QueryFactory {
         kind: ast.MergedQueryKind, 
         queries: ReadonlyArray<ExpressionSubQuery<TProjection>>
     ): ExpressionSubQuery<TProjection> {
-        supressUnused(kind);
-        supressUnused(queries);
-        throw new Error(); 
+        if (queries instanceof ast.AbstractDtExpr) {
+            return new MergedDtSubQueryImpl(kind, queries as any) as any;
+        }
+        if (queries instanceof ast.AbstractStrExpr) {
+            return new MergedStrSubQueryImpl(kind, queries as any) as any;
+        }
+        if (queries instanceof ast.AbstractNumExpr) {
+            return new MergedNumSubQueryImpl(kind, queries as any) as any;
+        }
+        return new MergedExprSubQueryImpl(kind, queries as any) as any;
     }
 
     createMergedTupleSubQuery<TProjection>(
         kind: ast.MergedQueryKind, 
         queries: ReadonlyArray<TupleSubQuery<TProjection>>
     ): TupleSubQuery<TProjection> {
-        supressUnused(kind);
-        supressUnused(queries);
-        throw new Error(); 
+        return new MergedTupleSubQueryImpl(kind, queries as any) as any;
     }
 
     createMergedBaseQuery<TProjection>(

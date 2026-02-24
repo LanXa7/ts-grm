@@ -1,21 +1,23 @@
 import { collectNativeParts, NativeDtExpr, NativeNumExpr, NativeStrExpr } from "@/impl/ast/native_expr";
 import { Expression, ExpressionLike } from ".";
 
+export type NativeValueType = ExpressionLike | boolean | number | boolean | Date;
+
 type NativeNumCreator = {
     (
         strings: TemplateStringsArray, 
-        ...values: ReadonlyArray<ExpressionLike>
+        ...values: ReadonlyArray<NativeValueType>
     ): Expression<number>;
 
     asString(
         strings: TemplateStringsArray, 
-        ...values: ReadonlyArray<ExpressionLike>
-    ): Expression<number>;
+        ...values: ReadonlyArray<NativeValueType>
+    ): Expression<string, "AS_NUMBER">;
 }
 
 function num(
     strings: TemplateStringsArray, 
-    ...values: ReadonlyArray<ExpressionLike>
+    ...values: ReadonlyArray<NativeValueType>
 ) {
     return new NativeNumExpr<number>(
         collectNativeParts(strings, ...values)
@@ -24,7 +26,7 @@ function num(
 
 function numAsString(
     strings: TemplateStringsArray, 
-    ...values: ReadonlyArray<ExpressionLike>
+    ...values: ReadonlyArray<NativeValueType>
 ) {
     return new NativeNumExpr<string>(
         collectNativeParts(strings, ...values)
@@ -35,7 +37,7 @@ function numAsString(
 
 function str(
     strings: TemplateStringsArray, 
-    ...values: ReadonlyArray<ExpressionLike>
+    ...values: ReadonlyArray<NativeValueType>
 ) {
     return new NativeStrExpr(
         collectNativeParts(strings, ...values)
@@ -44,7 +46,7 @@ function str(
 
 function date(
     strings: TemplateStringsArray, 
-    ...values: ReadonlyArray<ExpressionLike>
+    ...values: ReadonlyArray<NativeValueType>
 ): Expression<Date> {
     return new NativeDtExpr(
         collectNativeParts(strings, ...values)

@@ -2,8 +2,10 @@ import { ExpressionLike } from "@/dsl";
 import { AbstractExpr } from "./expr";
 import { AbstractNumExpr } from "./num_expr";
 import { Visitor } from "./visitor";
-import { AbstractStrExpr } from "./string_expr";
+import { AbstractStrExpr } from "./str_expr";
 import { AbstractDtExpr } from "./dt_expr";
+import { NativeValueType } from "@/dsl/native";
+import { getInternalFactory } from "./internal_factory";
 
 export interface NativeExprContract {
 
@@ -14,7 +16,7 @@ export type NativePart = string | ExpressionLike;
 
 export function collectNativeParts(
     strings: TemplateStringsArray, 
-    ...values: ReadonlyArray<ExpressionLike>
+    ...values: ReadonlyArray<NativeValueType>
 ): ReadonlyArray<NativePart> {
     const parts: Array<NativePart> = new Array(strings.length + values.length);
     const firstStr = strings[0]!;
@@ -23,7 +25,18 @@ export function collectNativeParts(
         parts[cursor++] = firstStr;
     }
     for (let i = 0; i < values.length; i++) {
-        parts[cursor++] = values[i]!;
+        const value = values[i]!;
+        if (typeof value === "boolean") {
+            parts[cursor++] = getInternalFactory().createLiteral(value);
+        } else if (typeof value === "number") {
+            parts[cursor++] = getInternalFactory().createLiteral(value);
+        } else if (typeof value === "string") {
+            parts[cursor++] = getInternalFactory().createLiteral(value);
+        } else if (value instanceof Date) {
+            parts[cursor++] = getInternalFactory().createLiteral(value);
+        } else {
+            parts[cursor++] = values[i]! as ExpressionLike;
+        }
         const str = strings[i + 1]!;
         if (str.length !== 0) {
             parts[cursor++] = str;

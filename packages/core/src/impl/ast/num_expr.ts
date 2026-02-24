@@ -6,22 +6,6 @@ import { Visitor } from "./visitor";
 
 export abstract class AbstractNumExpr<T extends string | number> extends AbstractCmpExpr<T> {
 
-    __type(): { 
-        selectionLike: true;
-        expressionLike: true;
-        expression: T | undefined;
-        cmpExpression: T | undefined;
-        numExpression: T | undefined;
-    } {
-        return {
-            selectionLike: true,
-            expressionLike: true,
-            expression: undefined,
-            cmpExpression: undefined,
-            numExpression: undefined
-        };
-    }
-
     unaryMinus(): AbstractNumExpr<T> {
         return new UnaryMinusExpr(this);
     }

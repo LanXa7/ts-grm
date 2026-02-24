@@ -1,5 +1,8 @@
 export { AbstractSelection } from "./selection";
-export { AbstractExpr } from "./expr";
+export { AbstractExpr, AbstractCmpExpr } from "./expr";
+export { AbstractNumExpr } from "./num_expr";
+export { AbstractStrExpr } from "./str_expr";
+export { AbstractDtExpr } from "./dt_expr";
 export { AbstractPred } from "./pred";
 export type { DtDiffExpr, DtMinusExpr, DtPlusExpr } from "./dt_expr";
 export type { BinaryNumExpr, UnaryMinusExpr } from "./num_expr";
@@ -19,7 +22,7 @@ export type {
     SubstringExpr, 
     TrimExpr, 
     UpperExpr 
-} from "./string_expr";
+} from "./str_expr";
 export type { 
     QueryContract, 
     AtomQueryContract, 
@@ -38,7 +41,7 @@ import { AbstractExpr } from "@/impl/ast";
 import { CoalesceCmpExpr, CoalesceDtExpr, CoalesceExpr, CoalesceNumExpr, CoalesceStrExpr } from "@/impl/ast/coalesce_expr";
 import { AbstractCmpExpr } from "@/impl/ast/expr";
 import { AbstractNumExpr } from "@/impl/ast/num_expr";
-import { AbstractStrExpr } from "@/impl/ast/string_expr";
+import { AbstractStrExpr } from "@/impl/ast/str_expr";
 import { AbstractDtExpr } from "@/impl/ast/dt_expr";
 import { createLiteral } from "@/impl/ast/literal";
 import { ExpressionOrder } from "@/dsl";

@@ -1,6 +1,6 @@
 import { EntityProp } from "../entity_prop";
 import { AbstractNumExpr } from "./num_expr";
-import { AbstractStrExpr } from "./string_expr";
+import { AbstractStrExpr } from "./str_expr";
 import { AbstractDtExpr } from "./dt_expr";
 import { ArgumentError } from "@/error/common";
 import { AbstractEntityTable } from "../entity_table";

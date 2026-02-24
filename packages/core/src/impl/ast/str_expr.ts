@@ -9,22 +9,6 @@ import { Visitor } from "./visitor";
 
 export abstract class AbstractStrExpr extends AbstractCmpExpr<string> {
 
-    __type(): { 
-        selectionLike: true;
-        expressionLike: true;
-        expression: string | undefined;
-        cmpExpression: string | undefined;
-        strExpression: string | undefined;
-    } {
-        return {
-            selectionLike: true,
-            expressionLike: true,
-            expression: undefined,
-            cmpExpression: undefined,
-            strExpression: undefined
-        };
-    }
-
     like(
         value: string, 
         mode?: LikeMode

@@ -1,3 +1,4 @@
+import { AggregateExpr } from "./aggregate_expr";
 import { CoalesceExprContract } from "./coalesce_expr";
 import type { DtDiffExpr, DtMinusExpr, DtPlusExpr } from "./dt_expr";
 import { AbstractExpr } from "./expr";
@@ -7,7 +8,7 @@ import type { BetweenPred, CmpPred, CompoundPred, InCollectionPred, LikePred, Nu
 import type { PropExprContract } from "./prop_expr";
 import { AtomQueryContract, MergedQueryContract, ProjectionContract } from "./query";
 import { ShadowExprContract } from "./shadow_expr";
-import type { ConcatExpr, LeftExpr, LengthExpr, LowerExpr, PadExpr, PositionExpr, ReplaceExpr, ReverseExpr, RightExpr, SubstringExpr, TrimExpr, UpperExpr } from "./string_expr";
+import type { ConcatExpr, LeftExpr, LengthExpr, LowerExpr, PadExpr, PositionExpr, ReplaceExpr, ReverseExpr, RightExpr, SubstringExpr, TrimExpr, UpperExpr } from "./str_expr";
 
 export interface Visitor {
 
@@ -62,6 +63,8 @@ export interface Visitor {
     visitUnaryMinusExpr(expr: UnaryMinusExpr<any>): void;
 
     visitBinaryNumExpr(expr: BinaryNumExpr<any>): void;
+
+    visitAggregateExpr(expr: AggregateExpr<any>): void;
 
     visitDtPlusExpr(expr: DtPlusExpr): void;
 
@@ -203,6 +206,10 @@ export abstract class AbstractVisitor implements Visitor {
     visitBinaryNumExpr(expr: BinaryNumExpr<any>): void {
         expr.leftExpr.accept(this);
         expr.rightExpr.accept(this);
+    }
+
+    visitAggregateExpr(expr: AggregateExpr<any>): void {
+        expr.expr?.accept(this);
     }
 
     visitDtPlusExpr(expr: DtPlusExpr): void {

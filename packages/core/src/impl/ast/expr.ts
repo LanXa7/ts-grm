@@ -13,12 +13,12 @@ export abstract class AbstractExpr<T> extends AbstractSelection implements Node 
     __type(): {
         selectionLike: true;
         expressionLike: true;
-        expression: T | undefined;
+        expression: [T, any] | true;
     } {
         return {
             selectionLike: true,
             expressionLike: true,
-            expression: undefined
+            expression: true
         };
     }
 
@@ -192,14 +192,14 @@ export abstract class AbstractCmpExpr<T> extends AbstractExpr<T> {
     __type(): { 
         selectionLike: true;
         expressionLike: true;
-        expression: T | undefined;
-        cmpExpression: T | undefined;
+        expression: [T, any] | true;
+        cmpExpression: T | true;
     } {
         return {
             selectionLike: true,
             expressionLike: true,
-            expression: undefined,
-            cmpExpression: undefined
+            expression: true,
+            cmpExpression: true
         };
     }
 
@@ -350,5 +350,9 @@ export abstract class AbstractCmpExpr<T> extends AbstractExpr<T> {
             return factory.createLiteral(value) as AbstractCmpExpr<T>;
         });
         return factory.createCoalesceCmpExpr(this, arr);
+    }
+
+    asNonNull(): this {
+        return this;
     }
 }

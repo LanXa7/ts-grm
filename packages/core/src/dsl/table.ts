@@ -53,7 +53,7 @@ type DslMembers<
             TMembers[K] extends I64Prop<infer R, infer Nullity>
                 ? Expression<
                     MakeType<R, Nullity>,
-                    R extends string ? "AS_NUMBER" : undefined
+                    R extends string ? "AS_NUMBER" : ""
                 >
             : TMembers[K] extends ScalarProp<infer R, infer Nullity>
                 ? Expression<MakeType<R, CombinedNullity<TNullity, Nullity>>>
@@ -84,7 +84,7 @@ type ReferenceKeyMembers<TModel extends AnyModel, TMembers, TNullity extends Nul
             : AllModelMembers<TTargetModel>[TKey] extends I64Prop<infer R, any>
                 ? Expression<
                     MakeType<R, CombinedNullity<TNullity, Nullity>>, 
-                    R extends string ? "AS_NUMBER" : undefined
+                    R extends string ? "AS_NUMBER" : ""
                 >
                 : Expression<
                     MakeType<

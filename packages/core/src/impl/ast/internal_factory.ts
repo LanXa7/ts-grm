@@ -3,7 +3,7 @@ import type { AbstractCmpExpr, AbstractExpr } from "./expr";
 import type { BetweenPred, CmpOp, CmpPred, InCollectionPred, NullityPred } from "./pred";
 import type { CoalesceCmpExpr, CoalesceDtExpr, CoalesceExpr, CoalesceNumExpr, CoalesceStrExpr } from "./coalesce_expr";
 import type { AbstractNumExpr } from "./num_expr";
-import type { AbstractStrExpr } from "./string_expr";
+import type { AbstractStrExpr } from "./str_expr";
 import type { AbstractDtExpr } from "./dt_expr";
 import { ExpressionOrder } from "@/dsl";
 import { ShadowAnchor } from "../shadow_anchor";

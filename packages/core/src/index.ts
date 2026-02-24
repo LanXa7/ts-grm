@@ -29,6 +29,7 @@ export type  {
     TupleSubQuery,
     AtomTupleSubQuery,
     MutableSubQuery,
+    SubQuerySelectArrArgs,
     SubQueryProjection,
     BaseQuery,
     AtomBaseQuery,

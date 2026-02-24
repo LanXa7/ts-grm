@@ -96,7 +96,7 @@ export type ExpressionSubQuery<T> = {
 
     __type(): { 
         subQueryLike: true;
-        expressionSubQuery: T | undefined; 
+        expressionSubQuery: T | true; 
     };
 
     asValue(): T;
@@ -113,7 +113,7 @@ export type TupleSubQuery<TProjection> = {
 
     __type(): { 
         subQueryLike: true;
-        tupleSubQuery: TProjection | undefined; 
+        tupleSubQuery: TProjection | true; 
     };
 }
 
@@ -126,7 +126,7 @@ export type AtomTupleSubQuery<TProjection> = TupleSubQuery<TProjection> & {
 
 export type SubQueryProjection<T, TKind = "EXPRSSION" | "TUPLE"> = {
 
-    __type(): { subQueryProjection: [T, TKind] | undefined; }
+    __type(): { subQueryProjection: [T, TKind] | true; }
 };
 
-type SubQuerySelectArrArgs = AtLeastTwo<ExpressionLike>;
+export type SubQuerySelectArrArgs = AtLeastTwo<ExpressionLike>;
