@@ -50,43 +50,31 @@ type AnyExpression<T, TAsNumber extends AsNumberBound<T> = ""> = {
     desc(nulls?: OrderNullsType): ExpressionOrder;
 
     eq(
-        value: NonNull<T> | AnyExpression<NonNull<T>>
+        value: NonNull<T> | AnyExpression<NonNull<T>, TAsNumber>
     ): AnyExpression<boolean>;
     
     ne(
-        value: NonNull<T> | AnyExpression<NonNull<T>>
+        value: NonNull<T> | AnyExpression<NonNull<T>, TAsNumber>
     ): AnyExpression<boolean>;
 
-    in<Values extends (NonNull<T> | Expression<NonNull<T>>)[]>(
+    in<Values extends (NonNull<T> | Expression<NonNull<T>, TAsNumber>)[]>(
         ...values: HasSubqueryInArray<Values> extends true 
-            ? [SubqueryError]
-            : Values
-    ): AnyExpression<boolean>;
-
-    in<Values extends (NonNull<T> | Expression<NonNull<T>>)[]>(
-        values: HasSubqueryInArray<Values> extends true 
             ? [SubqueryError]
             : Values
     ): AnyExpression<boolean>;
 
     inSubQuery(
-        subQuery: ExpressionSubQuery<Expression<NonNull<T>>>
+        subQuery: ExpressionSubQuery<Expression<NonNull<T>, TAsNumber>>
     ): AnyExpression<boolean>;
 
-    notIn<Values extends (NonNull<T> | Expression<NonNull<T>>)[]>(
+    notIn<Values extends (NonNull<T> | Expression<NonNull<T>, TAsNumber>)[]>(
         ...values: HasSubqueryInArray<Values> extends true 
             ? [SubqueryError]
             : Values
     ): AnyExpression<boolean>;
 
-    notIn<Values extends (NonNull<T> | Expression<NonNull<T>>)[]>(
-        values: HasSubqueryInArray<Values> extends true 
-            ? [SubqueryError]
-            : Values
-    ): AnyExpression<boolean>;
-
     notInSubQuery(
-        subQuery: ExpressionSubQuery<Expression<NonNull<T>>>
+        subQuery: ExpressionSubQuery<Expression<NonNull<T>, TAsNumber>>
     ): AnyExpression<boolean>;
     
     eqIf(
@@ -356,19 +344,19 @@ export type MakeType<T, TNullity extends NullityType> =
 export function and(
     ...predicates: ReadonlyArray<Nullable<AnyExpression<boolean>>>
 ): AnyExpression<boolean> | undefined {
-    return CompoundPred.of("AND", predicates);
+    return CompoundPred.of("AND", predicates) as AnyExpression<boolean> | undefined;
 }
 
 export function or(
     ...predicates: ReadonlyArray<Nullable<AnyExpression<boolean>>>
 ): AnyExpression<boolean> | undefined {
-    return CompoundPred.of("OR", predicates);
+    return CompoundPred.of("OR", predicates) as AnyExpression<boolean> | undefined;
 }
 
 export function not(
     ...predicates: ReadonlyArray<Nullable<AnyExpression<boolean>>>
 ): AnyExpression<boolean> | undefined {
-    return CompoundPred.of("AND", predicates)?.negative();
+    return CompoundPred.of("AND", predicates)?.negative() as AnyExpression<boolean> | undefined;
 }
 
 export type ExpressionLike = {

@@ -7,7 +7,14 @@ export { AbstractPred } from "./pred";
 export type { DtDiffExpr, DtMinusExpr, DtPlusExpr } from "./dt_expr";
 export type { BinaryNumExpr, UnaryMinusExpr } from "./num_expr";
 export type { NativeExprContract } from "./native_expr";
-export type { CmpPred, CompoundPred, InCollectionPred, LikePred, NullityPred } from "./pred";
+export type { 
+    CmpPred, 
+    CompoundPred, 
+    InCollectionPred, 
+    InSubQueryPred,
+    LikePred, 
+    NullityPred 
+} from "./pred";
 export type { PropExprContract as TablePropExpr } from "./prop_expr";
 export type { 
     ConcatExpr, 
@@ -23,6 +30,12 @@ export type {
     TrimExpr, 
     UpperExpr 
 } from "./str_expr";
+export type {
+    TupleContract,
+    TupleCmpPred,
+    TupleInCollectionPred,
+    TupleInSubQueryPred,
+} from "./tuple";
 export type { 
     QueryContract, 
     AtomQueryContract, 
@@ -36,8 +49,8 @@ export type { QueryFactory, MergedQueryKind } from "./query_factory";
 export { setQueryFactory } from "./query_factory";
 
 import { InternalFactory, setInteralFactory } from "@/impl/ast/internal_factory";
-import { BetweenPred, CmpOp, CmpPred, InCollectionPred, NullityPred } from "@/impl/ast/pred";
-import { AbstractExpr } from "@/impl/ast";
+import { BetweenPred, CmpOp, CmpPred, InCollectionPred, InSubQueryPred, NullityPred } from "@/impl/ast/pred";
+import { AbstractExpr, QueryContract } from "@/impl/ast";
 import { CoalesceCmpExpr, CoalesceDtExpr, CoalesceExpr, CoalesceNumExpr, CoalesceStrExpr } from "@/impl/ast/coalesce_expr";
 import { AbstractCmpExpr } from "@/impl/ast/expr";
 import { AbstractNumExpr } from "@/impl/ast/num_expr";
@@ -73,12 +86,20 @@ class InternalFactoryImpl implements InternalFactory {
         return new BetweenPred(expr, min, max);    
     }
 
-    createInValuesPred<T>(
+    createInCollectionPred<T>(
         expr: AbstractExpr<T>,
         values: ReadonlyArray<T | AbstractExpr<T>>,
         neg: boolean
     ): InCollectionPred<T> {
         return new InCollectionPred(expr, values, neg);
+    }
+
+    createInSubQueryPred(
+        expr: AbstractExpr<any>, 
+        subQuery: QueryContract, 
+        neg: boolean
+    ): InSubQueryPred {
+        return new InSubQueryPred(expr, subQuery, neg);
     }
 
     createNullityPred(

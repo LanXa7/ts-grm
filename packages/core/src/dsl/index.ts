@@ -1,4 +1,4 @@
-import { count } from "./aggregate";
+import { count, sum, min, max, avg } from "./aggregate";
 import { and, constant, not, or } from "./expression";
 import { all, any, exists, notExists, subQuery } from "./sub_query";
 import { unionAll, union, minus, intersect } from "./merged_query";
@@ -9,6 +9,7 @@ export { ExpressionOrder } from "./utils";
 export type { SqlClient } from "./sql_client";
 export type { AtLeastOne } from "./utils";
 export type { Criteria } from "./criteria";
+export type { ExprTuple, ExprTupleMatchable } from "./tuple";
 export type { 
     RootQuery, 
     AtomRootQuery,
@@ -45,6 +46,10 @@ export type { LikeMode, Expression, ExpressionLike, Predicate } from "./expressi
 export const dsl = {
     subQuery,
     count,
+    sum,
+    min,
+    max,
+    avg,
     and,
     or,
     not,

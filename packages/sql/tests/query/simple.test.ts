@@ -8,12 +8,32 @@ describe("SimpleQueryTest", () => {
 
     const sqlClient = newSqlClient(new SqliteDriver(), {});
 
-    const SIMPLE_BOOK_VIEW = dto.view(BOOK, $ => $.id.name);
+    const SIMPLE_BOOK_VIEW = dto.view(BOOK, $ => $.id.name.edition);
     
     it("where", () => {
         const q = sqlClient.createQuery(BOOK, (q, book) => {
             q.where(book.id.eq(3));
             return q.select(book.id, book.name);
+        });
+        console.log(q);
+    });
+
+    it("sub", () => {
+        const q = sqlClient.createQuery(BOOK, (q, book) => {
+            q.where(
+                dsl.tuple(book.name, book.edition).inSubQuery(
+                    dsl.subQuery(BOOK, (q, book) => {
+                        q.groupBy(book.name);
+                        return q.select(
+                            book.name,
+                            dsl.max(book.edition).asNonNull()
+                        );
+                    })
+                )
+            )
+            return q.select(
+                book.fetch(SIMPLE_BOOK_VIEW)
+            );
         });
         console.log(q);
     });

@@ -120,7 +120,7 @@ describe("QueryTest", () => {
             q.where(
                 dsl.or(
                     book.name.in("a", "b"),
-                    book.name.in(["d", "e"]),
+                    book.name.in(...["d", "e"]),
                     book.name.in("e", book.store().name),
                     book.name.inSubQuery(
                         dsl.subQuery(BOOK, (q, book) => {
@@ -140,7 +140,7 @@ describe("QueryTest", () => {
             q.where(
                 dsl.or(
                     tuple(book.name, book.edition).in(["a", 1], ["b", 2]),
-                    tuple(book.name, book.edition).in([["c", 3], ["d", 4]]),
+                    tuple(book.name, book.edition).in(["c", 3], ["d", 4]),
                     tuple(book.name, book.edition).in(
                         ["e", 4],
                         [book.store().name, book.store().version]

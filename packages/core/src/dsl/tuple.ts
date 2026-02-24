@@ -1,39 +1,34 @@
-import { supressUnused } from "@/utils";
 import { Expression, ExpressionLike, Predicate } from "./expression"
 import { TupleSubQuery } from "./sub_query";
 import { AtLeastTwo } from "./utils";
+import { ExprTupleImpl } from "@/impl/ast/tuple";
 
 export function tuple<
     const TExpressions extends AtLeastTwo<ExpressionLike>
 >(
     ...expressions: TExpressions
 ): ExprTuple<TExpressions> {
-    supressUnused(expressions);
-    throw new Error();
+    return new ExprTupleImpl(expressions as any);
 }
 
-export type ExprTuple<TExpressions extends ExpressionLike[]> = {
+export interface ExprTuple<TExpressions extends ExpressionLike[]> {
 
-    __type(): { exprTuple: TExpressions | undefined }
+    __type(): { exprTuple: TExpressions | true }
 
-    eq(tuple: Matchable<TExpressions>): Predicate;
+    eq(tuple: ExprTupleMatchable<TExpressions>): Predicate;
 
-    ne(tuple: Matchable<TExpressions>): Predicate;
+    ne(tuple: ExprTupleMatchable<TExpressions>): Predicate;
 
-    in(...tuples: Matchable<TExpressions>[]): Predicate;
-
-    in(tuples: Matchable<TExpressions>[]): Predicate;
+    in(...tuples: ReadonlyArray<ExprTupleMatchable<TExpressions>>): Predicate;
 
     inSubQuery(subQuery: TupleSubQuery<TExpressions>): Predicate;
 
-    notIn(...tuples: Matchable<TExpressions>[]): Predicate;
-
-    notIn(tuples: Matchable<TExpressions>[]): Predicate;
+    notIn(...tuples: ReadonlyArray<ExprTupleMatchable<TExpressions>>): Predicate;
 
     notInSubQuery(subQuery: TupleSubQuery<TExpressions>): Predicate;
 }
 
-type Matchable<TExpressions> =
+export type ExprTupleMatchable<TExpressions> =
     {
         [K in keyof TExpressions]: 
             TExpressions[K] extends Expression<infer T>

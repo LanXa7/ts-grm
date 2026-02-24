@@ -1,6 +1,7 @@
 import { Expression, LikeMode } from "@/dsl";
 import { AbstractExpr } from "./expr";
 import { Visitor } from "./visitor";
+import { QueryContract } from "./query";
 
 export abstract class AbstractPred extends AbstractExpr<boolean> {
 
@@ -142,6 +143,29 @@ export class InCollectionPred<T> extends AbstractPred {
     }
 }
 
+export class InSubQueryPred extends AbstractPred {
+
+    constructor(
+        readonly expr: AbstractExpr<any>,
+        readonly subQuery: QueryContract,
+        readonly neg: boolean = false
+    ) {
+        super();
+    }
+
+    negative(): AbstractPred {
+        return new InSubQueryPred(
+            this.expr,
+            this.subQuery,
+            !this.neg
+        );
+    }
+
+    accept(visitor: Visitor): void {
+        visitor.visitInSubQueryPred(this);
+    }
+}
+
 export class CompoundPred extends AbstractPred {
 
     constructor(
@@ -172,7 +196,7 @@ export class CompoundPred extends AbstractPred {
             } else if (expr instanceof AbstractPred) {
                 preds.push(expr);
             } else if (expr instanceof AbstractExpr) {
-                preds.push(expr.eq(true));
+                preds.push(expr.eq(true) as AbstractPred);
             }
         }
         switch (preds.length) {

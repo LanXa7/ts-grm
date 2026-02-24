@@ -4,11 +4,12 @@ import type { DtDiffExpr, DtMinusExpr, DtPlusExpr } from "./dt_expr";
 import { AbstractExpr } from "./expr";
 import { NativeExprContract } from "./native_expr";
 import type { BinaryNumExpr, UnaryMinusExpr } from "./num_expr";
-import type { BetweenPred, CmpPred, CompoundPred, InCollectionPred, LikePred, NullityPred } from "./pred";
+import type { BetweenPred, CmpPred, CompoundPred, InCollectionPred, InSubQueryPred, LikePred, NullityPred } from "./pred";
 import type { PropExprContract } from "./prop_expr";
 import { AtomQueryContract, MergedQueryContract, ProjectionContract } from "./query";
 import { ShadowExprContract } from "./shadow_expr";
 import type { ConcatExpr, LeftExpr, LengthExpr, LowerExpr, PadExpr, PositionExpr, ReplaceExpr, ReverseExpr, RightExpr, SubstringExpr, TrimExpr, UpperExpr } from "./str_expr";
+import { TupleCmpPred, TupleContract, TupleInCollectionPred, TupleInSubQueryPred } from "./tuple";
 
 export interface Visitor {
 
@@ -16,15 +17,25 @@ export interface Visitor {
 
     visitMergedQuery(query: MergedQueryContract): void;
 
+    visitTuple(tuple: TupleContract): void;
+
+    visitTupleCmpPred(pred: TupleCmpPred): void;
+
+    visitTupleInCollectionPred(pred: TupleInCollectionPred): void;
+
+    visitTupleInSubQueryPred(pred: TupleInSubQueryPred): void;
+
     visitCmpPred(pred: CmpPred): void;
+
+    visitInCollectionPred(pred: InCollectionPred<any>): void;
+
+    visitInSubQueryPred(pred: InSubQueryPred): void;
 
     visitBetweenPred(pred: BetweenPred): void;
 
     visitLikePred(pred: LikePred): void;
 
     visitNullityPred(pred: NullityPred): void;
-
-    visitInCollectionPred(pred: InCollectionPred<any>): void;
 
     visitCompoundPred(pred: CompoundPred): void;
 
@@ -97,9 +108,39 @@ export abstract class AbstractVisitor implements Visitor {
         }
     }
 
+    visitTuple(_: TupleContract): void {
+
+    }
+
+    visitTupleCmpPred(pred: TupleCmpPred): void {
+        pred.leftTuple.accept(this);
+        pred.rightTuple.accept(this);
+    }
+
+    visitTupleInCollectionPred(pred: TupleInCollectionPred): void {
+        pred.tuple.accept(this);
+        for (const tuple of pred.tuples) {
+            tuple.accept(this);
+        }
+    }
+
+    visitTupleInSubQueryPred(pred: TupleInSubQueryPred): void {
+        pred.tuple.accept(this);
+        pred.subQuery.accept(this);
+    }
+
     visitCmpPred(pred: CmpPred): void {
         pred.leftExpr.accept(this);
         pred.rightExpr.accept(this);
+    }
+
+    visitInCollectionPred(pred: InCollectionPred<any>): void {
+        pred.expr.accept(this);
+    }
+
+    visitInSubQueryPred(pred: InSubQueryPred): void {
+        pred.expr.accept(this);
+        pred.subQuery.accept(this);
     }
 
     visitBetweenPred(pred: BetweenPred): void {
@@ -116,17 +157,15 @@ export abstract class AbstractVisitor implements Visitor {
         pred.expr.accept(this);
     }
 
-    visitInCollectionPred(pred: InCollectionPred<any>): void {
-        pred.expr.accept(this);
-    }
-
     visitCompoundPred(pred: CompoundPred): void {
         for (const p of pred.preds) {
             p.accept(this);
         }
     }
 
-    abstract visitTablePropExpr(expr: PropExprContract): void;
+    visitTablePropExpr(_: PropExprContract): void {
+
+    }
 
     visitCoalesceExpr(expr: CoalesceExprContract): void {
         expr.expr.accept(this);
@@ -135,9 +174,17 @@ export abstract class AbstractVisitor implements Visitor {
         }
     }
 
-    abstract visitNativeExpr(expr: NativeExprContract): void;
+    visitNativeExpr(expr: NativeExprContract): void {
+        for (const part of expr.parts) {
+            if (part instanceof AbstractExpr) {
+                part.accept(this);
+            }
+        }
+    }
 
-    abstract visitShdowExpr(expr: ShadowExprContract): void;
+    visitShdowExpr(_: ShadowExprContract): void {
+
+    }
 
     visitLowerExpr(expr: LowerExpr): void {
         expr.expr.accept(this);
@@ -227,7 +274,11 @@ export abstract class AbstractVisitor implements Visitor {
         expr.valueExpr.accept(this);
     }
 
-    abstract visitLiteral(value: any): void;
+    visitLiteral(_: any): void {
 
-    protected abstract visitProjection(projection: ProjectionContract): void;
+    }
+
+    visitProjection(_: ProjectionContract): void {
+        
+    }
 }

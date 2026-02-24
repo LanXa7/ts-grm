@@ -1,5 +1,4 @@
 import { ExpressionOrder, ExpressionSubQuery } from "@/dsl";
-import { supressUnused } from "@/utils";
 import { ArgumentError } from "@/error/common";
 import type { AbstractPred, CmpPred, NullityPred } from "./pred";
 import type { CoalesceCmpExpr, CoalesceExpr } from "./coalesce_expr";
@@ -64,14 +63,17 @@ export abstract class AbstractExpr<T> extends AbstractSelection implements Node 
                 values[0] instanceof AbstractExpr ? values[0] : factory.createLiteral(values[0])
             );
         }
-        return factory.createInValuesPred(this, values, false);
+        return factory.createInCollectionPred(this, values, false);
     }
 
     inSubQuery(
         subQuery: ExpressionSubQuery<AbstractExpr<T>>
-    ): AbstractExpr<boolean> {
-        supressUnused(subQuery);
-        throw new Error();
+    ): AbstractPred {
+        return getInternalFactory().createInSubQueryPred(
+            this,
+            subQuery as any,
+            false
+        );
     }
 
     notIn(
@@ -86,14 +88,17 @@ export abstract class AbstractExpr<T> extends AbstractSelection implements Node 
                 values[0] instanceof AbstractExpr ? values[0] : factory.createLiteral(values[0])
             );
         }
-        return factory.createInValuesPred(this, values, true);
+        return factory.createInCollectionPred(this, values, true);
     }
 
     notInSubQuery(
         subQuery: ExpressionSubQuery<AbstractExpr<T>>
-    ): AbstractExpr<boolean> {
-        supressUnused(subQuery);
-        throw new Error();
+    ): AbstractPred {
+        return getInternalFactory().createInSubQueryPred(
+            this,
+            subQuery as any,
+            true
+        );
     }
 
     eqIf(
@@ -139,7 +144,7 @@ export abstract class AbstractExpr<T> extends AbstractSelection implements Node 
                 factory.createLiteral(values[0])
             );
         }
-        return factory.createInValuesPred(this, values, false);
+        return factory.createInCollectionPred(this, values, false);
     }
 
     notInIf(
@@ -157,7 +162,7 @@ export abstract class AbstractExpr<T> extends AbstractSelection implements Node 
                 factory.createLiteral(values[0])
             );
         }
-        return factory.createInValuesPred(this, values, true);
+        return factory.createInCollectionPred(this, values, true);
     }
 
     isNull(): NullityPred {
@@ -182,6 +187,10 @@ export abstract class AbstractExpr<T> extends AbstractSelection implements Node 
             return factory.createLiteral(value);
         });
         return factory.createCoalesceExpr(this, arr);
+    }
+
+    asNonNull(): this {
+        return this;
     }
 
     abstract accept(visitor: Visitor): void;
@@ -350,9 +359,5 @@ export abstract class AbstractCmpExpr<T> extends AbstractExpr<T> {
             return factory.createLiteral(value) as AbstractCmpExpr<T>;
         });
         return factory.createCoalesceCmpExpr(this, arr);
-    }
-
-    asNonNull(): this {
-        return this;
     }
 }
