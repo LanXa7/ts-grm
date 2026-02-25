@@ -1,3 +1,4 @@
+import { err } from "@ts-grm/core";
 import { RealTable } from "./real_table";
 import { SqlBuilder } from "./sql_builder";
 
@@ -51,6 +52,10 @@ export class Composite extends Fragment {
 
     protected get isDirty(): boolean {
         return this._fragments != null || this._texts != null;
+    }
+
+    separator() {
+        throw new err.StateError(`Cannot invoke "separator", it is not supported by current composite`);
     }
 
     into(builder: SqlBuilder): void {
@@ -134,17 +139,30 @@ export class Scope extends Composite {
             return;
         }
         if (builder.pretty) {
+            let indent = true;
+            switch (this.kind) {
+                case "UNION":
+                case "UNION_ALL":
+                case "MINUS":
+                case "INTERSECT":
+                    indent = false;
+                    break;
+            }    
             for (const fragment of fragments) {
                 if (fragment instanceof Separator) {
                     fragment.into(builder);
                 } else {
-                    builder.indent();
+                    if (indent) {
+                        builder.indent();
+                    }
                     if (typeof fragment === "string") {
                         builder.sql(fragment);
                     } else {
                         fragment.into(builder);
                     }
-                    builder.unindent();
+                    if (indent) {
+                        builder.unindent();
+                    }
                 }
             }
         } else {

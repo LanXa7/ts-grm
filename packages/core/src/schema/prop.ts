@@ -86,7 +86,7 @@ export const prop = {
             associationType: "MANY_TO_MANY"
         });
     },
-};
+} as const;
 
 export class Prop<T, TNullity extends NullityType> {
 

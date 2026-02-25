@@ -2,8 +2,8 @@ import { AnyModel } from "@/schema/model";
 import { Expression, ExpressionLike, Predicate } from "./expression";
 import { EntityTable } from "./table";
 import { AtLeastOne, AtLeastTwo, ExpressionOrder } from "./utils";
-import { supressUnused } from "@/utils";
 import { getQueryFactory } from "@/impl/ast/query_factory";
+import { ExistsPred, subQueryExpr } from "@/impl/ast/sub_query_expr";
 
 export function subQuery<
     const TModels extends AtLeastOne<AnyModel>,
@@ -31,29 +31,25 @@ export function subQuery<
 export function all<TExpression extends ExpressionLike>(
     subQuery: ExpressionSubQuery<TExpression>
 ): TExpression {
-    supressUnused(subQuery);
-    throw new Error();
+    return subQueryExpr("ALL", subQuery as any) as any;
 }
 
 export function any<TExpression extends ExpressionLike>(
     subQuery: ExpressionSubQuery<TExpression>
 ): TExpression {
-    supressUnused(subQuery);
-    throw new Error();
+    return subQueryExpr("ANY", subQuery as any) as any;
 }
 
 export function exists(
     subQuery: SubQueryLike
 ): Predicate {
-    supressUnused(subQuery);
-    throw new Error();
+    return new ExistsPred(subQuery as any, false) as Predicate;
 }
 
 export function notExists(
     subQuery: SubQueryLike
 ): Predicate {
-    supressUnused(subQuery);
-    throw new Error();
+    return new ExistsPred(subQuery as any, true) as Predicate;
 }
         
 export interface MutableSubQuery {
@@ -92,15 +88,15 @@ export type SubQueryLike = {
     __type(): { subQueryLike: true; }
 }
 
-export type ExpressionSubQuery<T> = {
+export type ExpressionSubQuery<TExpression> = {
 
     __type(): { 
         subQueryLike: true;
-        expressionSubQuery: T | true; 
+        expressionSubQuery: TExpression | true; 
     };
 
-    asValue(): T;
-} & T;
+    asValue(): TExpression;
+} & TExpression;
 
 export type AtomExpressionSubQuery<T> = ExpressionSubQuery<T> & {
 

@@ -13,9 +13,12 @@ export type {
     InCollectionPred, 
     InSubQueryPred,
     LikePred, 
-    NullityPred 
+    NullityPred,
+    BetweenPred
 } from "./pred";
-export type { PropExprContract as TablePropExpr } from "./prop_expr";
+export type { PropExprContract } from "./prop_expr";
+export type { CoalesceExprContract } from "./coalesce_expr";
+export type { AggregateExpr } from "./aggregate_expr";
 export type { 
     ConcatExpr, 
     LeftExpr, 
@@ -31,11 +34,19 @@ export type {
     UpperExpr 
 } from "./str_expr";
 export type {
+    ShadowExprContract
+} from "./shadow_expr";
+export type {
     TupleContract,
     TupleCmpPred,
     TupleInCollectionPred,
     TupleInSubQueryPred,
 } from "./tuple";
+export type {
+    ExistsPred,
+    SubQueryExprContract,
+    SubQueryExprOp,
+} from "./sub_query_expr";
 export type { 
     QueryContract, 
     AtomQueryContract, 

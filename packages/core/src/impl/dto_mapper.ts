@@ -1,10 +1,10 @@
 import { ArgumentError } from "@/error/common";
-import { makeErr } from "./util";
 import { Dto, DtoField } from "./dto";
 import { Entity } from "./entity";
 import { EntityProp } from "./entity_prop";
 import { dtoField } from "./dto_builder";
 import { createRowReader, RowReader } from "./row_reader";
+import { makeErr } from "@/error/util";
 
 export function dtoMapper(dto: Dto, nullAsUndefined: boolean): DtoMapper {
     const mapper = new Mapper(

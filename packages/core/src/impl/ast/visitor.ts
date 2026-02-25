@@ -6,9 +6,10 @@ import { NativeExprContract } from "./native_expr";
 import type { BinaryNumExpr, UnaryMinusExpr } from "./num_expr";
 import type { BetweenPred, CmpPred, CompoundPred, InCollectionPred, InSubQueryPred, LikePred, NullityPred } from "./pred";
 import type { PropExprContract } from "./prop_expr";
-import { AtomQueryContract, MergedQueryContract, ProjectionContract } from "./query";
+import { AtomQueryContract, MergedQueryContract } from "./query";
 import { ShadowExprContract } from "./shadow_expr";
 import type { ConcatExpr, LeftExpr, LengthExpr, LowerExpr, PadExpr, PositionExpr, ReplaceExpr, ReverseExpr, RightExpr, SubstringExpr, TrimExpr, UpperExpr } from "./str_expr";
+import { ExistsPred, SubQueryExprContract } from "./sub_query_expr";
 import { TupleCmpPred, TupleContract, TupleInCollectionPred, TupleInSubQueryPred } from "./tuple";
 
 export interface Visitor {
@@ -39,9 +40,13 @@ export interface Visitor {
 
     visitCompoundPred(pred: CompoundPred): void;
 
+    visitExistsPred(pred: ExistsPred): void;
+
     visitTablePropExpr(expr: PropExprContract): void;
 
     visitNativeExpr(expr: NativeExprContract): void;
+
+    visitSubQueryExpr(expr: SubQueryExprContract): void;
 
     visitShdowExpr(expr: ShadowExprContract): void;
 
@@ -88,19 +93,7 @@ export interface Visitor {
 
 export abstract class AbstractVisitor implements Visitor {
 
-    visitAtomQuery(query: AtomQueryContract): void {
-        this.visitProjection(query.projection);
-        query.wherePred?.accept(this);
-        for (const order of query.orders) {
-            (order.expression as AbstractExpr<any>).accept(this);
-        }
-        if (query.groupByExprs != null) {
-            for (const expr of query.groupByExprs) {
-                expr.accept(this);
-            }
-        }
-        query.havingPred?.accept(this);
-    }
+    abstract visitAtomQuery(query: AtomQueryContract): void;
 
     visitMergedQuery(query: MergedQueryContract): void {
         for (const qry of query.queries) {
@@ -108,8 +101,10 @@ export abstract class AbstractVisitor implements Visitor {
         }
     }
 
-    visitTuple(_: TupleContract): void {
-
+    visitTuple(tuple: TupleContract): void {
+        for (const expr of tuple.exprs) {
+            expr.accept(this);
+        }
     }
 
     visitTupleCmpPred(pred: TupleCmpPred): void {
@@ -163,6 +158,10 @@ export abstract class AbstractVisitor implements Visitor {
         }
     }
 
+    visitExistsPred(pred: ExistsPred): void {
+        pred.subQuery.accept(this);
+    }
+
     visitTablePropExpr(_: PropExprContract): void {
 
     }
@@ -180,6 +179,10 @@ export abstract class AbstractVisitor implements Visitor {
                 part.accept(this);
             }
         }
+    }
+
+    visitSubQueryExpr(expr: SubQueryExprContract): void {
+        expr.subQuery.accept(this);
     }
 
     visitShdowExpr(_: ShadowExprContract): void {
@@ -276,9 +279,5 @@ export abstract class AbstractVisitor implements Visitor {
 
     visitLiteral(_: any): void {
 
-    }
-
-    visitProjection(_: ProjectionContract): void {
-        
     }
 }

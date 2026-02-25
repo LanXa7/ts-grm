@@ -1,3 +1,12 @@
+import { StateError } from "@/error/common";
+
+export function makeErr(message: string | (() => Error)): never {
+    if (typeof message === "string") {
+        throw new StateError(message);
+    }
+    throw message();
+}
+
 export function dedent(strings: TemplateStringsArray, ...values: any[]): string {
     const str = strings.reduce((result, string, i) =>
         result + string + (values[i] || ''), '');

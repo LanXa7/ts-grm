@@ -9,7 +9,7 @@ import { createTypedDtoBuilder } from "@/impl/dto_builder";
 import { Entity } from "@/impl/entity";
 import { dtoMapper, DtoMapper } from "@/impl/dto_mapper";
 
-export const dto = { view: viewCreator() };
+export const dto = { view: viewCreator() } as const;
 
 function viewCreator(): ViewCreator {
 

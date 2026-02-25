@@ -2,9 +2,8 @@ import { AssociationType, Prop, PropData, ScalarType } from "@/schema/prop";
 import { Entity } from "./entity";
 import { PropError } from "@/error/metadata_error";
 import { ModelImpl } from "./model_impl";
-import { dedent } from "@/error/util";
+import { dedent, makeErr } from "@/error/util";
 import { EntityPropOrder } from "./entity_prop_order";
-import { makeErr } from "./util";
 import { StateError } from "@/error/common";
 
 export class EntityProp {

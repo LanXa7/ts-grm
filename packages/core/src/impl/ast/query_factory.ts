@@ -1,5 +1,5 @@
 import { StateError } from "@/error/common";
-import { makeErr } from "../util";
+import { makeErr } from "@/error/util";
 import { 
     AtLeastOne, 
     BaseModel, 

@@ -67,4 +67,4 @@ export const dsl = {
     constant,
     tuple,
     native
-};
+} as const;
