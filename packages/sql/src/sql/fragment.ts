@@ -1,6 +1,8 @@
-import { err } from "@ts-grm/core";
+import { ast, err, SqlClient } from "@ts-grm/core";
 import { RealTable } from "./real_table";
 import { SqlBuilder } from "./sql_builder";
+import { FragmentGenGenVisitor } from "./fragment_gen_visitor";
+import { SqlClientImplementor } from "@/sql_client";
 
 export abstract class Fragment {
 
@@ -26,15 +28,16 @@ export class Composite extends Fragment {
         fragments.push(fragment);
     }
 
-    text(value: string) {
+    text(value: string): this {
         if (value === "") {
-            return;
+            return this;
         }
         let texts = this._texts;
         if (texts == null) {
             this._texts = texts = [];
         }
         texts.push(value);
+        return this;
     }
 
     protected flush() {
@@ -70,6 +73,12 @@ export class Composite extends Fragment {
                 }
             }
         }
+    }
+
+    static of(o: any, sqlClient: SqlClient): Composite {
+        const visitor = new FragmentGenGenVisitor(sqlClient as SqlClientImplementor);
+        (o as ast.Node).accept(visitor);
+        return visitor.toResult();
     }
 }
 

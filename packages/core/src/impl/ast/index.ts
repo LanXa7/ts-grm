@@ -4,7 +4,8 @@ export { AbstractNumExpr } from "./num_expr";
 export { AbstractStrExpr } from "./str_expr";
 export { AbstractDtExpr } from "./dt_expr";
 export { AbstractPred } from "./pred";
-export type { DtDiffExpr, DtMinusExpr, DtPlusExpr } from "./dt_expr";
+export type { Node } from "./node";
+export type { DtDiffExpr, DtPlusExpr } from "./dt_expr";
 export type { BinaryNumExpr, UnaryMinusExpr } from "./num_expr";
 export type { NativeExprContract } from "./native_expr";
 export type { 
@@ -55,11 +56,12 @@ export type {
     AtomQueryOptions 
 } from "./query";
 export { defaultAtomQueryOptions } from "./query";
-export type { Visitor, AbstractVisitor } from "./visitor";
+export type { Visitor } from "./visitor";
+export { AbstractVisitor } from "./visitor";
 export type { QueryFactory, MergedQueryKind } from "./query_factory";
 export { setQueryFactory } from "./query_factory";
 
-import { InternalFactory, setInteralFactory } from "@/impl/ast/internal_factory";
+import { getInternalFactory, InternalFactory, setInteralFactory } from "@/impl/ast/internal_factory";
 import { BetweenPred, CmpOp, CmpPred, InCollectionPred, InSubQueryPred, NullityPred } from "@/impl/ast/pred";
 import { AbstractExpr, QueryContract } from "@/impl/ast";
 import { CoalesceCmpExpr, CoalesceDtExpr, CoalesceExpr, CoalesceNumExpr, CoalesceStrExpr } from "@/impl/ast/coalesce_expr";
@@ -102,7 +104,15 @@ class InternalFactoryImpl implements InternalFactory {
         values: ReadonlyArray<T | AbstractExpr<T>>,
         neg: boolean
     ): InCollectionPred<T> {
-        return new InCollectionPred(expr, values, neg);
+        return new InCollectionPred(
+            expr, 
+            values.map(v => 
+                v instanceof AbstractExpr 
+                    ? v 
+                    : getInternalFactory().createLiteral(v)
+            ), 
+            neg
+        );
     }
 
     createInSubQueryPred(

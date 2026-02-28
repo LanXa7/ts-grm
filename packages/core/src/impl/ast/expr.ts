@@ -351,7 +351,7 @@ export abstract class AbstractCmpExpr<T> extends AbstractExpr<T> {
         const factory = getInternalFactory();
         const arr = values.map(value => {
             if (value == null) {
-                throw new ArgumentError("coalesce does not accept null/undefined value");
+                // throw new ArgumentError("coalesce does not accept null/undefined value");
             }
             if (value instanceof AbstractCmpExpr) {
                 return value;

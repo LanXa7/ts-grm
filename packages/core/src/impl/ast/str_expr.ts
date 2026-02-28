@@ -17,7 +17,7 @@ export abstract class AbstractStrExpr extends AbstractCmpExpr<string> {
         if (value === "" && finalMode === "CONTAINS") {
             return undefined;
         }
-        return new LikePred(this, value, finalMode, false);
+        return new LikePred(this, getInternalFactory().createLiteral(value), finalMode, false);
     };
 
     ilike(
@@ -28,7 +28,7 @@ export abstract class AbstractStrExpr extends AbstractCmpExpr<string> {
         if (value === "" && finalMode === "CONTAINS") {
             return undefined;
         }
-        return new LikePred(this, value, finalMode, true);
+        return new LikePred(this, getInternalFactory().createLiteral(value), finalMode, true);
     }
 
     likeIf(
@@ -42,7 +42,7 @@ export abstract class AbstractStrExpr extends AbstractCmpExpr<string> {
         if (value === "" && finalMode === "CONTAINS") {
             return undefined;
         }
-        return new LikePred(this, value, finalMode, false);
+        return new LikePred(this, getInternalFactory().createLiteral(value), finalMode, false);
     }
 
     ilikeIf(
@@ -56,7 +56,7 @@ export abstract class AbstractStrExpr extends AbstractCmpExpr<string> {
         if (value === "" && finalMode === "CONTAINS") {
             return undefined;
         }
-        return new LikePred(this, value, finalMode, true);
+        return new LikePred(this, getInternalFactory().createLiteral(value), finalMode, true);
     }
 
     lower(): LowerExpr {

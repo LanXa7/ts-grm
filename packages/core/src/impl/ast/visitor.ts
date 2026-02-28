@@ -1,6 +1,6 @@
 import { AggregateExpr } from "./aggregate_expr";
 import { CoalesceExprContract } from "./coalesce_expr";
-import type { DtDiffExpr, DtMinusExpr, DtPlusExpr } from "./dt_expr";
+import type { DtDiffExpr, DtPlusExpr } from "./dt_expr";
 import { AbstractExpr } from "./expr";
 import { NativeExprContract } from "./native_expr";
 import type { BinaryNumExpr, UnaryMinusExpr } from "./num_expr";
@@ -83,8 +83,6 @@ export interface Visitor {
     visitAggregateExpr(expr: AggregateExpr<any>): void;
 
     visitDtPlusExpr(expr: DtPlusExpr): void;
-
-    visitDtMinusExpr(expr: DtMinusExpr): void;
 
     visitDtDiffExpr(expr: DtDiffExpr): void;
 
@@ -263,11 +261,6 @@ export abstract class AbstractVisitor implements Visitor {
     }
 
     visitDtPlusExpr(expr: DtPlusExpr): void {
-        expr.expr.accept(this);
-        expr.valueExpr.accept(this);
-    }
-
-    visitDtMinusExpr(expr: DtMinusExpr): void {
         expr.expr.accept(this);
         expr.valueExpr.accept(this);
     }

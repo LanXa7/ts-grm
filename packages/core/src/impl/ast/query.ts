@@ -4,11 +4,11 @@ import { AbstractPred } from "./pred";
 import { AbstractExpr } from "./expr";
 import { AbstractTable } from "../abstrat_table";
 import { MergedQueryKind } from "./query_factory";
-import { Visitor } from "./visitor";
+import { Node } from "./node";
 
 export type QueryContract = AtomQueryContract | MergedQueryContract;
 
-export interface AtomQueryContract {
+export interface AtomQueryContract extends Node {
 
     readonly kind: "ATOM";
 
@@ -25,17 +25,13 @@ export interface AtomQueryContract {
     readonly options: AtomQueryOptions;
 
     readonly projection: ProjectionContract;
-
-    accept(visitor: Visitor): void;
 }
 
-export interface MergedQueryContract {
+export interface MergedQueryContract extends Node {
 
     readonly kind: MergedQueryKind;
 
     readonly queries: ReadonlyArray<QueryContract>;
-
-    accept(visitor: Visitor): void;
 }
 
 export type ProjectionContract = {

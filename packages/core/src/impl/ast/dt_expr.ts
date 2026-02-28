@@ -15,7 +15,8 @@ export abstract class AbstractDtExpr extends AbstractCmpExpr<Date> {
         return new DtPlusExpr(
             this, 
             typeof value === "number" ? getInternalFactory().createLiteral(value) : value,
-            timeUnit
+            timeUnit,
+            false
         );
     }
 
@@ -23,10 +24,11 @@ export abstract class AbstractDtExpr extends AbstractCmpExpr<Date> {
         value: number | AbstractNumExpr<number>, 
         timeUnit: TimeUnit
     ): AbstractDtExpr {
-        return new DtMinusExpr(
+        return new DtPlusExpr(
             this,
             typeof value === "number" ? getInternalFactory().createLiteral(value) : value,
-            timeUnit
+            timeUnit,
+            true
         );
     }
 
@@ -63,28 +65,14 @@ export class DtPlusExpr extends AbstractDtExpr {
     constructor(
         readonly expr: AbstractDtExpr,
         readonly valueExpr: AbstractNumExpr<number>,
-        readonly unit: TimeUnit
+        readonly unit: TimeUnit,
+        readonly neg: boolean
     ) {
         super();
     }
 
     accept(visitor: Visitor): void {
         visitor.visitDtPlusExpr(this);
-    }
-}
-
-export class DtMinusExpr extends AbstractDtExpr {
-
-    constructor(
-        readonly expr: AbstractDtExpr,
-        readonly valueExpr: AbstractNumExpr<number>,
-        readonly unit: TimeUnit
-    ) {
-        super();
-    }
-
-    accept(visitor: Visitor): void {
-        visitor.visitDtMinusExpr(this);
     }
 }
 

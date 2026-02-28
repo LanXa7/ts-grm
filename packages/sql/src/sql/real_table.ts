@@ -41,7 +41,7 @@ export class RealTable {
             this._filters = symbol.joinOperation?.filter != null ?
                 [symbol.joinOperation.filter] :
                 undefined;
-            this.isShadow = symbol.isShadow;
+            this.isShadow = symbol.anchor != null;
         } else {
             this._joinType = undefined;
             this._joinProp = undefined;

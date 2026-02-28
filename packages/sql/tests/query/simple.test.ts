@@ -3,6 +3,7 @@ import { newSqlClient } from "@/sql_client";
 import { BOOK } from "../model/model";
 import { describe, it } from "vitest";
 import { dsl, dto } from "@ts-grm/core";
+import { Composite } from "@/sql/fragment";
 
 describe("SimpleQueryTest", () => {
 
@@ -15,7 +16,8 @@ describe("SimpleQueryTest", () => {
             q.where(book.id.eq(3));
             return q.select(book.id, book.name);
         });
-        console.log(q);
+        const composite = Composite.of(q, sqlClient);
+        console.log(composite);
     });
 
     it("sub", () => {

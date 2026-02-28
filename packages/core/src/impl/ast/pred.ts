@@ -79,7 +79,7 @@ export class LikePred extends AbstractPred {
 
     constructor(
         readonly expr: AbstractExpr<string>,
-        readonly value: string,
+        readonly pattern: AbstractExpr<string>,
         readonly mode: LikeMode,
         readonly sensitive: boolean,
         readonly neg: boolean = false
@@ -90,7 +90,7 @@ export class LikePred extends AbstractPred {
     negative(): LikePred {
         return new LikePred(
             this.expr,
-            this.value,
+            this.pattern,
             this.mode,
             this.sensitive,
             !this.neg
@@ -124,7 +124,7 @@ export class InCollectionPred<T> extends AbstractPred {
 
     constructor(
         readonly expr: AbstractExpr<T>,
-        readonly values: ReadonlyArray<T | AbstractExpr<T>>,
+        readonly values: ReadonlyArray<AbstractExpr<T>>,
         readonly neg: boolean = false
     ) {
         super();
