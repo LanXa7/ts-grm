@@ -1,7 +1,7 @@
 import { ModelError, PropError } from "@/error/metadata_error";
 import { AnyModel, Ctor } from "@/schema/model";
 import { EntityProp } from "./entity_prop";
-import { ModelImpl } from "@/impl/model_impl";
+import { ModelImpl, ModelOptions } from "@/impl/model_impl";
 import { dedent, makeErr } from "@/error/util";
 import { capitalize } from "./util";
 import { AbstractEntityTable, createEntityTableClass, EntityTableCtor, JoinOperation } from "./entity_table";
@@ -12,6 +12,8 @@ export class Entity {
 
     readonly superEntity: Entity | undefined;
 
+    readonly explicitTableName: string | undefined;
+
     private _phase = 0;
 
     private _idProp: EntityProp | undefined = undefined;
@@ -21,6 +23,8 @@ export class Entity {
     private _allPropMap: ReadonlyMap<string, EntityProp> | undefined = undefined;
 
     private _expanedPropMap: ReadonlyMap<string, EntityProp> | undefined = undefined;
+
+    private _uniqueConstraintArr: ReadonlyArray<ReadonlyArray<EntityProp>> | undefined = undefined;
 
     private _tableCtor: EntityTableCtor | undefined;
 
@@ -36,7 +40,8 @@ export class Entity {
         readonly name: string, 
         private _idKey: string | undefined, 
         private _ctor: Ctor, 
-        superModel?: AnyModel
+        superModel: AnyModel | undefined,
+        private _options: ModelOptions
     ) {
         if (Entity._nextIdentity >= Number.MAX_SAFE_INTEGER) {
             throw new StateError(`The applicaion ha`);
@@ -51,6 +56,7 @@ export class Entity {
         this.superEntity = superModel !== undefined
             ? Entity.of(superModel)
             : undefined;
+        this.explicitTableName = _options.tableName;
         this._identity = ++Entity._nextIdentity;
     }
 
@@ -77,9 +83,15 @@ export class Entity {
     }
 
     get expanedPropMap(): ReadonlyMap<string, EntityProp> {
-        this.resolve(1);
+        this.resolve(2);
         return this._expanedPropMap ?? 
             makeErr(`The expandedPropMap of ${this.name} is not initialized`);
+    }
+
+    get uniqueContraints(): ReadonlyArray<ReadonlyArray<EntityProp>> {
+        this.resolve(2);
+        return this._uniqueConstraintArr ?? 
+            makeErr(`The uniqueConstraintArr of ${this.name} is not initialized`);
     }
 
     get identity(): number {
@@ -123,6 +135,7 @@ export class Entity {
                         prop.resolve(2);
                     }
                     this._addExpandedReferencedTargetKeyProps();
+                    this._uniqueConstraintArr = this._uniqueConstraints();
                     break;
             }
         } catch (err) {
@@ -260,6 +273,45 @@ export class Entity {
                 }
             }
         }
+    }
+
+    private _uniqueConstraints(): ReadonlyArray<ReadonlyArray<EntityProp>> {
+        const constraints: Array<ReadonlyArray<EntityProp>> = [];
+        for (const constraint of this._options._uniqueConstraints) {
+            const props: Array<EntityProp> = [];
+            for (const propPath of constraint) {
+                const prop = this._expanedPropMap?.get(propPath);
+                if (prop == null) {
+                    throw new ModelError(
+                        this.name, 
+                        `Illegal property path "${
+                            propPath
+                        }" in unique contraint, it does not exists`
+                    );
+                }
+                if (prop.referenceProp != null) {
+                    throw new ModelError(
+                        this.name, 
+                        `Illegal property path "${
+                            propPath
+                        }" in unique contraint, it cannot be associated key, please use "${
+                            prop.referenceProp.name
+                        }"`
+                    );
+                }
+                if (prop.scalarType == null && prop.referenceKeyProp == null) {
+                    throw new ModelError(
+                        this.name, 
+                        `Illegal property path "${
+                            propPath
+                        }" in unique contraint, it is neither scalar nor reference based on foreign key`
+                    );
+                }
+                props.push(prop);
+            }
+            constraints.push(props);
+        }
+        return constraints;
     }
 
     table(options: JoinOperation | ShadowAnchor | undefined): AbstractEntityTable {

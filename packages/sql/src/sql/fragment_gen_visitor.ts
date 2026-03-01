@@ -1,5 +1,5 @@
 import { ast, err, metadata } from "@ts-grm/core";
-import { Column, Composite, Scope, Value } from "./fragment";
+import { Column, Composite, Query, Scope, Source, Value } from "./fragment";
 import { Stack } from "./stack";
 import { Precedence } from "./precedence";
 import { JoinMergeScope } from "./join_merge_scope";
@@ -103,7 +103,7 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
                 isRoot = false;
         }
 
-        using _ = this._compositeStack.with(new Composite());
+        using _ = this._compositeStack.with(new Query());
         using __ = this._precedenceStack.with(Precedence.ROOT);
 
         if (!isRoot) {
@@ -114,6 +114,19 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
             this._compositeStack.current.text("select ");
             using _ = this._compositeStack.with(new Scope("INDENT"));
             this._visitProjection(query.projection);
+        }
+
+        {
+            this._compositeStack.current.text("from ");
+            using _ = this._compositeStack.with(
+                new Source(
+                    query.tables.map(t => 
+                        this._toRealTable(
+                            t as metadata.AbstractEntityTable | metadata.BaseTableTarget
+                        )
+                    )
+                )
+            );
         }
 
         const wherePred = query.wherePred;

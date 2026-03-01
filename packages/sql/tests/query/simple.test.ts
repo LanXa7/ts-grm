@@ -4,6 +4,7 @@ import { BOOK } from "../model/model";
 import { describe, it } from "vitest";
 import { dsl, dto } from "@ts-grm/core";
 import { Composite } from "@/sql/fragment";
+import { SqlBuilder } from "@/sql/sql_builder";
 
 describe("SimpleQueryTest", () => {
 
@@ -18,6 +19,9 @@ describe("SimpleQueryTest", () => {
         });
         const composite = Composite.of(q, sqlClient);
         console.log(composite);
+        const builder = new SqlBuilder(true, ":p", false);
+        composite.into(builder);
+        console.log(builder.build());
     });
 
     it("sub", () => {

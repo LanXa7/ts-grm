@@ -279,51 +279,32 @@ export class Value extends Fragment {
     }
 }
 
-export class Query extends Fragment {
+export class Query extends Composite {
 
-    constructor(
-        readonly rootTables: ReadonlyArray<RealTable>,
-        readonly where: Scope | undefined,
-        readonly orderBy: Scope | undefined,
-        readonly groupBy: Scope | undefined,
-        readonly having: Scope | undefined,
-        readonly select: Scope
-    ) {
-        super();
+    private _source: Source | undefined = undefined;
+
+    add(fragment: Fragment): void {
+        if (fragment instanceof Source) {
+            this._source = fragment;
+        }
+        super.add(fragment);
     }
 
     into(builder: SqlBuilder): void {
+        const source = this._source!;
         const tables = new Set<RealTable>();
-        for (const rootTable of this.rootTables) {
+        for (const rootTable of source.rootTables) {
             rootTable.collectTables(builder, tables);
         }
-        builder.sql("select ");
-        this.select.into(builder);
-        for (const table of tables) {
-            if (table.joinType == null) {
-                table.render(builder);
-            }
-        }
-        for (const table of tables) {
-            if (table.joinType != null) {
-                table.render(builder);
-            }
-        }
-        if (this.where != null) {
-            builder.sql("\nwhere\n");
-            this.where.into(builder);
-        }
-        if (this.orderBy != null) {
-            builder.sql("\norder by\n");
-            this.orderBy.into(builder);
-        }
-        if (this.groupBy != null) {
-            builder.sql("\ngroup by\n");
-            this.groupBy.into(builder);
-        }
-        if (this.having != null) {
-            builder.sql("\ngroup by\n");
-            this.having.into(builder);
-        }
+        super.into(builder);
+    }
+}
+
+export class Source extends Composite {
+
+    constructor(
+        readonly rootTables: ReadonlyArray<RealTable>
+    ) {
+        super();
     }
 }

@@ -23,6 +23,8 @@ export const BOOK = model("Book", "id", class {
         joinThisColumns: ["book_id"],
         joinTargetColumns: ["author_id"]
     }).orderBy("name.firstName", "name.lastName")
+}, ctx => {
+    ctx.tableName("BOOK").unique("name", "edition");
 });
 
 export const PAPER_BOOK = model.extends(BOOK)(
@@ -63,6 +65,8 @@ export const TREE_NODE = model("TreeNode", "id", class {
     name = prop.str()
     parentNode = prop.m2o(() => TREE_NODE).nullable()
     childNodes = prop.o2m(() => TREE_NODE).mappedBy("parentNode");
+}, ctx => {
+    ctx.unique("name", "parentNode");
 });
 
 export const ORDER = model("Order", "id", class {

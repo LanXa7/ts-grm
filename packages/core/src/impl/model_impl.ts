@@ -1,5 +1,6 @@
+import { ArgumentError } from "@/error/common";
 import { Entity } from "@/impl/entity";
-import { AnyModel, Ctor, Model } from "@/schema/model";
+import { AnyModel, Ctor, CtorMembers, Model, ModelContext, UniqueKeys } from "@/schema/model";
 
 export class ModelImpl<
     TName extends string, 
@@ -27,7 +28,8 @@ export class ModelImpl<
         readonly name: TName,
         readonly idKey: TIdKey | undefined,
         readonly ctor: TCtor,
-        readonly superModel?: AnyModel
+        readonly superModel: AnyModel | undefined,
+        readonly options: ModelOptions
     ) {}
 
     toEntity(): Entity {
@@ -41,9 +43,61 @@ export class ModelImpl<
                 this.name,
                 this.idKey,
                 this.ctor,
-                this.superModel
+                this.superModel,
+                this.options
             );
         }
         return entity;
+    }
+}
+
+export type ModelOptions = {
+    readonly tableName: string | undefined;
+    readonly _uniqueConstraints: ReadonlyArray<ReadonlyArray<string>>;
+};
+
+export class ModelContextImpl<TCtor extends Ctor> implements ModelContext<TCtor> {
+
+    private _tableName: string | undefined = undefined;
+
+    private readonly _uniqueConstraints: Array<ReadonlyArray<string>> = [];
+
+    private readonly _unqueKeySet = new Set<string>();
+    
+    __type(): { modelContext: TCtor | true } {
+        return { modelContext: true };
+    }
+
+    tableName(name: string): this {
+        if (name != "") {
+            this._tableName = name;
+        }
+        return this;
+    }
+
+    unique(...paths : UniqueKeys<CtorMembers<TCtor>>[]): this {
+        this._uniqueConstraints.push(paths);
+        return this;
+    }
+
+    _validateUnique(paths: ReadonlyArray<string>) {
+        const arr = [...paths].sort();
+        for (let i = 1; i < arr.length; i++) {
+            if (arr[i - 1] === arr[i]) {
+                throw new ArgumentError(`Duplicated property path "${arr[i]}"`);
+            }
+        }
+        const key = arr.join(",");
+        if (this._unqueKeySet.has(key)) {
+            throw new ArgumentError(`Duplicated unique constraints [${paths.join(", ")}]`);
+        }
+        this._unqueKeySet.add(key);
+    }
+
+    toModelOptions(): ModelOptions {
+        return {
+            tableName: this._tableName,
+            _uniqueConstraints: this._uniqueConstraints
+        };
     }
 }

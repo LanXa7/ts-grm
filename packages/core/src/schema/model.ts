@@ -1,6 +1,6 @@
 import { AssociatedProp, ManyToManyProp, ManyToOneProp, OneToOneProp, ScalarProp } from "@/schema/prop";
-import { FlattenMembers, supressUnused } from "@/utils";
-import { ModelImpl } from "@/impl/model_impl";
+import { FlattenMembers } from "@/utils";
+import { ModelContextImpl, ModelImpl } from "@/impl/model_impl";
 
 export const model: ModelCreator = modelImpl();
 
@@ -16,8 +16,11 @@ function modelImpl(): ModelCreator {
         ctor: TCtor,
         configurer?: (ctx: ModelContext<TCtor>) => void
     ): Model<TName, TIdKey, TCtor, CtorMembers<TCtor>, never> {
-        supressUnused(configurer);
-        return new ModelImpl(name, idKey, ctor);
+        const ctx = new ModelContextImpl<TCtor>();
+        if (configurer != null) {
+            configurer(ctx);
+        }
+        return new ModelImpl(name, idKey, ctor, undefined, ctx.toModelOptions());
     }
 
     function ext<
@@ -39,7 +42,10 @@ function modelImpl(): ModelCreator {
             MakeAllModelMembers<TCtor, TSuperModel>,
             ModelName<TSuperModel> | ModelSuperNames<TSuperModel>
         > => {
-            supressUnused(configurer);
+            const ctx = new ModelContextImpl<TCtor>();
+            if (configurer != null) {
+                configurer(ctx);
+            }
             return new ModelImpl<
                 TName, 
                 SuperIdKey<TSuperModel>, 
@@ -50,7 +56,8 @@ function modelImpl(): ModelCreator {
                 name, 
                 undefined, 
                 ctor, 
-                superModel
+                superModel,
+                ctx.toModelOptions()
             );
         }
     }
@@ -117,15 +124,13 @@ export interface Model<
 
 export type AnyModel = Model<any, any, any, any, any>;
 
-export class ModelContext<TCtor extends Ctor> {
+export interface ModelContext<TCtor extends Ctor> {
     
-    __type(): { modelContext: TCtor | undefined } {
-        return { modelContext: undefined };
-    };
+    __type(): { modelContext: TCtor | true };
 
-    unique(...paths : UniqueKeys<CtorMembers<TCtor>>[]) {
-        supressUnused(paths);
-    }
+    tableName(name: string): this;
+
+    unique(...paths : UniqueKeys<CtorMembers<TCtor>>[]): this;
 }
 
 type SuperIdKey<TSuperModel extends AnyModel> =
@@ -223,8 +228,8 @@ type UniqueKeysImpl<TFlattenCtorMembers> =
             [K in keyof TFlattenCtorMembers]: 
                 TFlattenCtorMembers[K] extends (
                     ScalarProp<any, any> 
-                    | OneToOneProp<any, any, "OWNING", ReferenceKey<any>>
-                    | ManyToOneProp<any, any, "OWNING", ReferenceKey<any>>
+                    | OneToOneProp<any, any, "OWNING", any>
+                    | ManyToOneProp<any, any, "OWNING", any>
                 )
                     ? K
                     : never

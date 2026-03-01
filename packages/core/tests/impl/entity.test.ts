@@ -1,5 +1,5 @@
 import { Entity } from "@/impl/entity";
-import { PAPER_BOOK, ORDER_ITEM } from "../model/model";
+import { PAPER_BOOK, ORDER_ITEM, BOOK, AUTHOR, TREE_NODE } from "../model/model";
 import { expect, it } from "vitest";
 import { makeErr } from "@/error/util";
 import { describe } from "node:test";
@@ -91,5 +91,20 @@ describe("EntityTest", () => {
             "orderId.y.a",
             "orderId.y.b"
         ]);
+    });
+
+    it("entityConfigurer", () => {
+        const bookEntity = Entity.of(BOOK);
+        expect(bookEntity.explicitTableName).toEqual("BOOK");
+        expect(bookEntity.uniqueContraints.length).toEqual(1);
+        expect(bookEntity.uniqueContraints[0]!.map(c => c.name)).toEqual(["name", "edition"]);
+
+        const authorEntity = Entity.of(AUTHOR);
+        expect(authorEntity.uniqueContraints.length).toEqual(1);
+        expect(authorEntity.uniqueContraints[0]!.map(c => c.name)).toEqual(["firstName", "lastName"]);
+
+        const treeNodeEntity = Entity.of(TREE_NODE);
+        expect(treeNodeEntity.uniqueContraints.length).toEqual(1);
+        expect(treeNodeEntity.uniqueContraints[0]!.map(c => c.name)).toEqual(["name", "parentNode"]);
     });
 });
