@@ -2,6 +2,7 @@ import { ModelOrder, OrderNullsType } from "@/schema/order";
 import { AllModelMembers, AnyModel, ManyToManyMappedByKeys, ModelIdKey, OneToManyMappedByKeys, OneToOneMappedByKeys, ReferenceKey } from "@/schema/model";
 import { CascaseType, JoinColumn, JoinColumns, JoinTable } from "./join";
 import { FlattenMembers } from "@/utils";
+import { ArgumentError } from "@/error/common";
 
 export const prop = {
 
@@ -290,21 +291,13 @@ class UnconfiguredOneToOneProp<
         return new OneToOneProp({...this.__data, mappedBy, nullity: "NULLABLE"});
     }
 
-    joinColumns<TTargetKeyProp extends ReferenceKey<TModel>>(
+    joinColumns<TTargetKeyProp extends ReferenceKey<TModel> = ModelIdKey<TModel>>(
         options: {
-            targetKeyProp: TTargetKeyProp
-            joinColumns?: JoinColumns<AllModelMembers<TModel>[TTargetKeyProp]>
+            targetKeyProp?: TTargetKeyProp
+            columns?: JoinColumns<AllModelMembers<TModel>[TTargetKeyProp]>
             cascade?: CascaseType
         }
     ): OneToOneProp<TModel, TNullity, "OWNING", TTargetKeyProp>;
-
-    joinColumns(
-        options: {
-            joinColumns?: JoinColumns<AllModelMembers<TModel>[ModelIdKey<TModel>]>;
-            referencedProp?: keyof AllModelMembers<TModel>; 
-            cascade?: CascaseType;
-        }
-    ): OneToOneProp<TModel, TNullity, "OWNING", ModelIdKey<TModel>>;
 
     joinColumns(
         ...joinColumns: JoinColumns<AllModelMembers<TModel>[ModelIdKey<TModel>]>
@@ -379,21 +372,13 @@ class UnconfiguredManyToOneProp<
         return new UnconfiguredManyToOneProp({...this.__data, nullity: "NULLABLE"});
     }
 
-    joinColumns<TTargetKeyProp extends ReferenceKey<TModel>>(
+    joinColumns<TTargetKeyProp extends ReferenceKey<TModel> = ModelIdKey<TModel>>(
         options: {
-            targetKeyProp: TTargetKeyProp
-            joinColumns?: JoinColumns<AllModelMembers<TModel>[TTargetKeyProp]>
+            targetKeyProp?: TTargetKeyProp
+            columns?: JoinColumns<AllModelMembers<TModel>[TTargetKeyProp]>
             cascade?: CascaseType
         }
     ): ManyToOneProp<TModel, TNullity, "OWNING", TTargetKeyProp>;
-
-    joinColumns(
-        options: {
-            joinColumns?: JoinColumns<AllModelMembers<TModel>[ModelIdKey<TModel>]>;
-            referencedProp?: keyof AllModelMembers<TModel>;
-            cascade?: CascaseType;
-        }
-    ): ManyToOneProp<TModel, TNullity, "OWNING", ModelIdKey<TModel>>;
 
     joinColumns(
         ...joinColumns: JoinColumns<AllModelMembers<TModel>[ModelIdKey<TModel>]>
@@ -675,6 +660,17 @@ function foreignKeyDataOf(data: any, targetModel: any): ForeignKeyData | undefin
     if (Array.isArray(data)) {
         const arr = data as ReadonlyArray<JoinColumn<any>>;
         const columns = arr.map(joinColumnDataOf);
+        if (columns.length > 1) {
+            for (const column of columns) {
+                if (column.referencedSubPath == null) {
+                    throw new ArgumentError(
+                        `For multiple join columns, the referencedSubPath of each column must be specified, but the column "${
+                            column.columnName
+                        }" misses it`
+                    );
+                }
+            }
+        }
         return {
             referencedProp: targetModel?._idKey,
             columns,
@@ -690,7 +686,7 @@ function foreignKeyDataOf(data: any, targetModel: any): ForeignKeyData | undefin
 
 function joinColumnDataOf(data: any): JoinColumnData {
     if (typeof data === "string") {
-        return { columnName: data as string, referencedSubPath: "" };
+        return { columnName: data as string, referencedSubPath: undefined };
     }
     return {
         columnName: data.columnName,

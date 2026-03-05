@@ -100,10 +100,10 @@ export const ORDER = model("Order", "id", class {
 export const ORDER_ITEM = model("OrderItem", "id", class {
     id = prop.i64();
     order = prop.m2o(ORDER).joinColumns({
-        joinColumns: [
-            { columnName: "order_x", referencedSubPath: "x" },
+        columns: [
             { columnName: "order_y_a", referencedSubPath: "y.a" },
-            { columnName: "order_y_b", referencedSubPath: "y.b" }
+            { columnName: "order_y_b", referencedSubPath: "y.b" },
+            { columnName: "order_x", referencedSubPath: "x" },
         ],
         cascade: "DELETE"
     });

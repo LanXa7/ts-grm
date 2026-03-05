@@ -1,31 +1,31 @@
-import type { metadata } from "@ts-grm/core";
+import { Entity } from "./entity";
+import { EntityProp } from "./entity_prop";
+import { Column } from "./storage";
 
 export interface DatabaseNamingStrategy {
 
-    tableName(entity: metadata.Entity): string;
+    tableName(entity: Entity): string;
 
-    sequenceName(entity: metadata.Entity): string;
+    sequenceName(entity: Entity): string;
 
-    columnName(prop: metadata.EntityProp): string;
+    columnName(prop: EntityProp): string;
 
-    foreignKeyColumnName(prop: metadata.EntityProp): string;
+    middleTableName(prop: EntityProp): string;
 
-    middleTableName(prop: metadata.EntityProp): string;
+    middleTableThisRefColumnName(prop: EntityProp): string;
 
-    middleTableThisRefColumnName(prop: metadata.EntityProp): string;
-
-    middleTableTargetRefColumnName(prop: metadata.EntityProp): string;
+    middleTableTargetRefColumnName(prop: EntityProp): string;
 }
 
-class DefaultDatabaseNamingStrategy implements DatabaseNamingStrategy {
+export class DefaultDatabaseNamingStrategy implements DatabaseNamingStrategy {
 
     constructor(private readonly lower: boolean) {}
 
-    tableName(entity: metadata.Entity): string {
+    tableName(entity: Entity): string {
         return toSnakeCase(entity.name, this.lower);
     }
 
-    sequenceName(entity: metadata.Entity): string {
+    sequenceName(entity: Entity): string {
         return `${
             toSnakeCase(entity.name, this.lower)
         }_${
@@ -33,15 +33,11 @@ class DefaultDatabaseNamingStrategy implements DatabaseNamingStrategy {
         }`;
     }
 
-    columnName(prop: metadata.EntityProp): string {
+    columnName(prop: EntityProp): string {
         return toSnakeCase(prop.name, this.lower);
     }
 
-    foreignKeyColumnName(prop: metadata.EntityProp): string {
-        return this.columnName(prop.referenceKeyProp ?? prop);
-    }
-
-    middleTableName(prop: metadata.EntityProp): string {
+    middleTableName(prop: EntityProp): string {
         return `${
             toSnakeCase(prop.declaringEntity.name, this.lower)
         }_${
@@ -51,19 +47,19 @@ class DefaultDatabaseNamingStrategy implements DatabaseNamingStrategy {
         }`;
     }
 
-    middleTableThisRefColumnName(prop: metadata.EntityProp): string {
+    middleTableThisRefColumnName(prop: EntityProp): string {
         return `${
             toSnakeCase(prop.declaringEntity.name, this.lower)
         }_${
-            toSnakeCase(prop.thisKey ?? "id", this.lower)
+            toSnakeCase(prop.thisKey!, this.lower)
         }`;
     }
 
-    middleTableTargetRefColumnName(prop: metadata.EntityProp): string {
+    middleTableTargetRefColumnName(prop: EntityProp): string {
         return `${
             toSnakeCase(prop.targetEntity!.name, this.lower)
         }_${
-            toSnakeCase(prop.targetKey ?? "id", this.lower)
+            toSnakeCase(prop.targetKey!, this.lower)
         }`;
     }
 }
@@ -78,3 +74,19 @@ function toSnakeCase(text: string, lower: boolean): string {
 export const UPPER_SNAKE_CASE_DATABASE_NAMING_STRATEGY = new DefaultDatabaseNamingStrategy(false);
 
 export const LOWER_SNAKE_CASE_DATABASE_NAMING_STRATEGY = new DefaultDatabaseNamingStrategy(true);
+
+export function joinColumnArr(
+    arr: ReadonlyArray<Column>, 
+    defaultNameFn: () => string
+): ReadonlyArray<Column> {
+    if (arr.length !== 1) {
+        return arr;
+    }
+    if (arr[0]!.name !== "") {
+        return arr;
+    }
+    return [{
+        ...arr[0]!,
+        name: defaultNameFn()
+    }];
+}

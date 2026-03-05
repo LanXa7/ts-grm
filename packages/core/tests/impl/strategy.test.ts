@@ -1,12 +1,12 @@
-import { UPPER_SNAKE_CASE_DATABASE_NAMING_STRATEGY, LOWER_SNAKE_CASE_DATABASE_NAMING_STRATEGY } from "@/cfg/database_naming_strategy";
-import { metadata } from "@ts-grm/core";
+import { UPPER_SNAKE_CASE_DATABASE_NAMING_STRATEGY, LOWER_SNAKE_CASE_DATABASE_NAMING_STRATEGY } from "@/impl/strategy";
 import { BOOK } from "../model/model";
 import { describe, expect, it } from "vitest";
+import { Entity } from "@/impl";
 
 describe("DatabaseNamingStrategyTest", () => {
 
     it("upper", () => {
-        const book = metadata.Entity.of(BOOK);
+        const book = Entity.of(BOOK);
         const storeProp = book.allPropMap.get("store")!;
         const store = storeProp.targetEntity!;
         const authorsProp = book.allPropMap.get("authors")!;
@@ -35,21 +35,18 @@ describe("DatabaseNamingStrategyTest", () => {
 
         expect(
             UPPER_SNAKE_CASE_DATABASE_NAMING_STRATEGY.columnName(
-                author.expanedPropMap.get("name.firstName")!
+                author.expandedPropMap.get("name.firstName")!
             )
         ).toEqual("FIRST_NAME");
         expect(
             UPPER_SNAKE_CASE_DATABASE_NAMING_STRATEGY.columnName(
-                author.expanedPropMap.get("name.lastName")!
+                author.expandedPropMap.get("name.lastName")!
             )
         ).toEqual("LAST_NAME");
 
         expect(
             UPPER_SNAKE_CASE_DATABASE_NAMING_STRATEGY.columnName(storeProp)
         ).toEqual("STORE");
-        expect(
-            UPPER_SNAKE_CASE_DATABASE_NAMING_STRATEGY.foreignKeyColumnName(storeProp)
-        ).toEqual("STORE_ID");
 
         expect(
             UPPER_SNAKE_CASE_DATABASE_NAMING_STRATEGY.middleTableName(authorsProp)
@@ -73,7 +70,7 @@ describe("DatabaseNamingStrategyTest", () => {
     });
 
     it("lower", () => {
-        const book = metadata.Entity.of(BOOK);
+        const book = Entity.of(BOOK);
         const storeProp = book.allPropMap.get("store")!;
         const store = storeProp.targetEntity!;
         const authorsProp = book.allPropMap.get("authors")!;
@@ -102,21 +99,18 @@ describe("DatabaseNamingStrategyTest", () => {
 
         expect(
             LOWER_SNAKE_CASE_DATABASE_NAMING_STRATEGY.columnName(
-                author.expanedPropMap.get("name.firstName")!
+                author.expandedPropMap.get("name.firstName")!
             )
         ).toEqual("first_name");
         expect(
             LOWER_SNAKE_CASE_DATABASE_NAMING_STRATEGY.columnName(
-                author.expanedPropMap.get("name.lastName")!
+                author.expandedPropMap.get("name.lastName")!
             )
         ).toEqual("last_name");
 
         expect(
             LOWER_SNAKE_CASE_DATABASE_NAMING_STRATEGY.columnName(storeProp)
         ).toEqual("store");
-        expect(
-            LOWER_SNAKE_CASE_DATABASE_NAMING_STRATEGY.foreignKeyColumnName(storeProp)
-        ).toEqual("store_id");
 
         expect(
             LOWER_SNAKE_CASE_DATABASE_NAMING_STRATEGY.middleTableName(authorsProp)

@@ -1,8 +1,8 @@
-import { DatabaseNamingStrategy } from "./database_naming_strategy";
+import { metadata } from "@ts-grm/core";
 
 export type SqlClientOptions = {
     
-    readonly databaseNamingStrategy: DatabaseNamingStrategy | undefined;
+    readonly databaseNamingStrategy: metadata.DatabaseNamingStrategy | undefined;
 
     readonly defaultBatchSize: number | number;
 };

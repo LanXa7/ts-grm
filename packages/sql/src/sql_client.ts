@@ -1,7 +1,7 @@
 import { err, SqlClient } from "@ts-grm/core";
 import { SqlClientOptions } from "./cfg/sql_client_options";
 import { Driver } from "./driver/deriver";
-import { UPPER_SNAKE_CASE_DATABASE_NAMING_STRATEGY } from "./cfg/database_naming_strategy";
+import { metadata } from "@ts-grm/core";
 import { SqlClientImpl } from "./impl/sql_client_impl";
 
 export function newSqlClient(
@@ -31,6 +31,6 @@ export interface SqlClientImplementor extends SqlClient {
 }
 
 const defaultOptions: SqlClientOptions = {
-    databaseNamingStrategy: UPPER_SNAKE_CASE_DATABASE_NAMING_STRATEGY,
+    databaseNamingStrategy: metadata.UPPER_SNAKE_CASE_DATABASE_NAMING_STRATEGY,
     defaultBatchSize: 64
 };

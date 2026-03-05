@@ -82,7 +82,7 @@ export class Entity {
             makeErr(`The allPropMap of ${this.name} is not initialized`);
     }
 
-    get expanedPropMap(): ReadonlyMap<string, EntityProp> {
+    get expandedPropMap(): ReadonlyMap<string, EntityProp> {
         this.resolve(2);
         return this._expanedPropMap ?? 
             makeErr(`The expandedPropMap of ${this.name} is not initialized`);
@@ -99,7 +99,7 @@ export class Entity {
     }
 
     prop(name: string): EntityProp {
-        return this.expanedPropMap.get(name) ?? 
+        return this.expandedPropMap.get(name) ?? 
             makeErr(`There is no property "${name}" in the model "${this.name}"`);
     }
 
@@ -262,7 +262,10 @@ export class Entity {
 
     private _addExpandedReferencedTargetKeyProps() {
         for (const prop of this.allPropMap.values()) {
-            const targetKeyProp = prop.referencedTargetKeyProp;
+            if (prop.associationType != null) {
+                continue;
+            }
+            const targetKeyProp = prop.targetKeyProp;
             if (targetKeyProp != null && targetKeyProp.props !== undefined) {
                 const map = new Map<string, EntityProp>();
                 targetKeyProp.collectDeeperProps(map);

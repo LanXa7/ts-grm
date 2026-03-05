@@ -1,10 +1,12 @@
-import { AssociationType, Prop, PropData, ScalarType } from "@/schema/prop";
+import { AssociationType, JoinColumnData, Prop, PropData, ScalarType } from "@/schema/prop";
 import { Entity } from "./entity";
 import { PropError } from "@/error/metadata_error";
 import { ModelImpl } from "./model_impl";
 import { dedent, makeErr } from "@/error/util";
 import { EntityPropOrder } from "./entity_prop_order";
 import { StateError } from "@/error/common";
+import { DatabaseNamingStrategy, joinColumnArr } from "./strategy";
+import { Column, Columns, MiddleTable, PropStorage } from "./storage";
 
 export class EntityProp {
 
@@ -16,6 +18,8 @@ export class EntityProp {
 
     readonly associationType: AssociationType | undefined;
 
+    private _span: number | undefined;
+
     private _props: ReadonlyMap<string, EntityProp> | undefined;
 
     private _targetEntity: Entity | undefined;
@@ -26,13 +30,19 @@ export class EntityProp {
 
     private _phase = 0;
 
-    readonly referencedTargetKeyPropName: string | undefined;
+    private _thisKeyProp: EntityProp | undefined;
 
-    private _referencedTargetKeyProp: EntityProp | undefined;
+    private _targetKeyProp: EntityProp | undefined;
 
     private _referenceKeyProp: EntityProp | undefined;
 
     private _referenceProp: EntityProp | undefined;
+
+    private _baseStorage: PropStorage | null | undefined;
+
+    private _strategy: DatabaseNamingStrategy | undefined;
+
+    private _storage: PropStorage | undefined;
 
     constructor(
         readonly declaringEntity: Entity,
@@ -46,7 +56,7 @@ export class EntityProp {
         this._scalarType = _data.scalarType; 
         this.associationType = _data.associationType;
         if (_data.props != null) {
-            this._props = this.createProps(_data.props);
+            this._props = this._createProps(_data.props);
         } else {
             this._props = undefined;
         }
@@ -62,8 +72,8 @@ export class EntityProp {
         } else {
             this._targetEntity = undefined;
         }
-        this.referencedTargetKeyPropName = this._referencedTargetKeyPropName();
-        this._referencedTargetKeyProp = undefined;
+        this._thisKeyProp = undefined;
+        this._targetKeyProp = undefined;
     }
 
     get scalarType(): ScalarType | undefined {
@@ -98,8 +108,41 @@ export class EntityProp {
         return this._referenceProp;
     }
 
-    get referencedTargetKeyProp(): EntityProp | undefined {
-        return this._referencedTargetKeyProp;
+    get referencedTargetKeyPropName(): string | undefined {
+        if (this._data.mappedBy != null) {
+            return undefined;
+        }
+        if (this.associationType === "MANY_TO_ONE" || this.associationType === "ONE_TO_ONE") {
+            return this._data.joinColumns?.referencedProp ?? this._targetEntity?.idKey;
+        }
+    }
+
+    get span(): number {
+        let span = this._span;
+        if (span == null) {
+            this._span = span = this._calcSpan();
+        }
+        return span;
+    }
+
+    private _calcSpan(): number {
+        if (this.associationType != null) {
+            return 0;
+        }
+        if (this.thisKeyProp == null && this.targetKeyProp != null) {
+            return this.targetKeyProp.span;
+        }
+        if (this._props != null) {
+            let span = 0;
+            for (const subProp of this._props.values()) {
+                span += subProp.span;
+            }
+            return span;
+        }
+        if (this._scalarType != null) {
+            return 1;
+        }
+        return 0;
     }
 
     get isRecursive(): boolean {
@@ -112,19 +155,34 @@ export class EntityProp {
     }
 
     get thisKey(): string | undefined {
-        return this._data.joinTable?.joinThis?.referencedProp;
+        const key = this._data.joinTable?.joinThis?.referencedProp;
+        if (key != null) {
+            return key;
+        }
+        return this.declaringEntity?.idKey;
     }
 
     get targetKey(): string | undefined {
-        const joinColumns = this._data.joinColumns;
-        if (joinColumns != null) {
-            return joinColumns.referencedProp;
+        let key = this._data.joinColumns?.referencedProp;
+        if (key != null) {
+            return key;
         }
-        const joinTable = this._data.joinTable;
-        if (joinTable != null) {
-            return joinTable.joinTarget?.referencedProp;        
+        key = this._data.joinTable?.joinThis?.referencedProp;
+        if (key != null) {
+            return key;
         }
-        return undefined;
+        this.resolve(2);
+        return this.targetEntity?.idKey;
+    }
+
+    get thisKeyProp(): EntityProp | undefined {
+        this.resolve(2);
+        return this._thisKeyProp;
+    }
+
+    get targetKeyProp(): EntityProp | undefined {
+        this.resolve(2);
+        return this._targetKeyProp;
     }
 
     private validateData() {
@@ -220,21 +278,9 @@ export class EntityProp {
         }
         this._resolveTarget(phase);
         if (phase === 2) {
+            this._resolveTargetKeyProps();
             this._resolveReferenceKeyProp();
         }
-    }
-
-    private _referencedTargetKeyPropName(): string | undefined {
-        if (this._data.associationType == null || 
-            this._data.associationType === "ONE_TO_MANY" ||
-            this._data.associationType === "MANY_TO_MANY" ||
-            this._data.mappedBy != null ||
-            this._data.joinTable != null
-        ) {
-            return undefined;
-        }
-        return this._data?.joinColumns?.referencedProp ??
-            this._targetEntity!.idKey;
     }
 
     private _initOrders() {
@@ -251,7 +297,7 @@ export class EntityProp {
                 if (paths.has(ord.path)) {
                     this.raise `Duplicated order paths "${path}"`
                 }
-                const prop = this._targetEntity!.expanedPropMap.get(path);
+                const prop = this._targetEntity!.expandedPropMap.get(path);
                 if (prop == null) {
                     throw this.raise `Illegal order path "${path}" 
                     which deos not exists in target model ${this._targetEntity?.name}`
@@ -266,7 +312,7 @@ export class EntityProp {
         if (this._data.mappedBy == null) {
             return;
         }
-        const prop = this._targetEntity?.expanedPropMap.get(this._data.mappedBy);
+        const prop = this._targetEntity?.expandedPropMap.get(this._data.mappedBy);
         if (prop == null) {
             throw this.raise `Illegal mappedBy "${this._data.mappedBy}" 
             which deos not exists in target model ${this._targetEntity?.name}`
@@ -285,18 +331,43 @@ export class EntityProp {
         this._targetEntity?.resolve(phase);
     }
 
+    private _resolveTargetKeyProps() {
+        if (this._data.mappedBy != null) {
+            return;
+        }
+        if (this._referenceProp != null) {
+            this._referenceProp._resolveTargetKeyProps();
+            this._targetKeyProp = this.referenceProp!._targetKeyProp;
+            return;
+        }
+        const joinTable = this._data.joinTable;
+        const joinColumns = this._data.joinColumns;
+        if (joinTable != null || this.associationType === "MANY_TO_MANY") {
+            if (joinTable?.joinThis?.referencedProp != null) {
+                this._thisKeyProp = this.declaringEntity.prop(joinTable.joinThis.referencedProp);
+            } else {
+                this._thisKeyProp = this.declaringEntity.idProp;
+            }
+            if (joinTable?.joinTarget?.referencedProp != null) {
+                this._targetKeyProp = this.targetEntity!.prop(joinTable.joinTarget.referencedProp);
+            } else {
+                this._targetKeyProp = this.targetEntity!.idProp;
+            }
+        } else if (joinColumns != null || this.associationType === "ONE_TO_ONE" || this.associationType == "MANY_TO_ONE") {
+            if (joinColumns?.referencedProp) {
+                this._targetKeyProp = this.targetEntity!.prop(joinColumns.referencedProp);
+            } else {
+                this._targetKeyProp = this.targetEntity!.idProp;
+            }
+        }
+    }
+
     private _resolveReferenceKeyProp() {
         const referenceProp = this._referenceProp;
         if (referenceProp == null) {
             return;
         }
-        const keyProp = referenceProp
-            ._targetEntity!
-            .allPropMap
-            .get(referenceProp._referencedTargetKeyPropName()!)!;
-        this._referencedTargetKeyProp = keyProp;
-        this._scalarType = keyProp._scalarType;
-        this._props = EntityProp._redirectSubPropMap(this, keyProp._props);
+        this._props = EntityProp._redirectSubPropMap(this, referenceProp.targetKeyProp!._props);
     }
 
     collectDeeperProps(map: Map<string, EntityProp>) {
@@ -341,7 +412,7 @@ export class EntityProp {
         );
     }
 
-    private createProps(
+    private _createProps(
         props: Record<string, Prop<any, any>>
     ): ReadonlyMap<string, EntityProp> {
         const resultMap = new Map<string, EntityProp>();
@@ -393,5 +464,270 @@ export class EntityProp {
             newMap.set(key, newValue);
         }
         return newMap;
+    }
+
+    toStorage(strategy: DatabaseNamingStrategy): PropStorage | undefined {
+        if (this._strategy === strategy) {
+            return this._storage;
+        }
+        if (this._data.mappedBy != null) {
+            const mappedBy = this.oppositeProp;
+            const mappedByStorage = mappedBy!.toStorage(strategy);
+            if (mappedByStorage == null || mappedByStorage.kind !== "MIDDLE_TABLE") {
+                this._storage = undefined;
+            } else {
+                this._storage = {
+                    ...mappedByStorage,
+                    toThisColumns: mappedByStorage.toTargetColumns,
+                    toTargetColumns: mappedByStorage.toThisColumns
+                };
+            };
+        } else {
+            const baseStorage = this._getBaseStorage();
+            if (baseStorage != null) {
+                this._storage = this._createStrage(baseStorage, strategy);
+            }
+        }
+        this._strategy = strategy;
+        return this._storage;
+    }
+
+    private _createStrage(
+        baseStorage: PropStorage, 
+        strategy: DatabaseNamingStrategy
+    ): PropStorage | undefined {
+        if (baseStorage.kind === "COLUMN" && baseStorage.name === "") {
+            return {
+                ...baseStorage,
+                name: strategy.columnName(this)
+            };
+        }
+        if (baseStorage.kind === "COLUMNS" && this.referenceKeyProp == null && this.referenceProp == null) {
+            const baseColumns = baseStorage as Columns;
+            const columns: Array<Column> = [];
+            let index = 0;
+            for (const prop of this._props!.values()) {
+                if (baseColumns[index]!.name !== "") {
+                    columns.push(baseColumns[index]!);
+                } else {
+                    columns.push({
+                        ...baseColumns[index]!,
+                        name: strategy.columnName(prop)
+                    });
+                }
+                index++;
+            }
+            (columns as any).kind = "COLUMNS";
+            return columns as any as Columns;
+        }
+        if (baseStorage.kind === "MIDDLE_TABLE") {
+            if (baseStorage.name === "" ||
+                baseStorage.toThisColumns[0]!.name === "" && 
+                baseStorage.toTargetColumns[0]!.name === ""
+            ) {
+                let middleTableName = baseStorage.name;
+                if (middleTableName === "") {
+                    middleTableName = strategy.middleTableName(this);
+                }
+                const toThisColumns = joinColumnArr(
+                    baseStorage.toThisColumns, 
+                    () => strategy.middleTableThisRefColumnName(this)
+                );
+                const toTargetColumns = joinColumnArr(
+                    baseStorage.toTargetColumns, 
+                    () => strategy.middleTableTargetRefColumnName(this)
+                );
+                return {
+                    kind: "MIDDLE_TABLE",
+                    name: middleTableName,
+                    toThisColumns,
+                    toTargetColumns
+                }
+            }
+        }
+        return baseStorage;
+    }
+
+    private _getBaseStorage(): PropStorage | undefined {
+        let baseStrogage = this._baseStorage;
+        if (baseStrogage === undefined) {
+            baseStrogage = this._createBaseStorage();
+            this._baseStorage = baseStrogage ?? null;
+        }
+        return baseStrogage !== null ? baseStrogage : undefined;
+    }
+
+    private _createBaseStorage(): PropStorage | undefined {
+        if (this.scalarType != null) {
+            return {
+                kind: "COLUMN",
+                name: this._data.columnName ?? "",
+                referencedSubProp: undefined
+            };
+        }
+        if (this._data.mappedBy != null) {
+            return undefined;
+        }
+        const joinTable = this._data.joinTable;
+        if (joinTable != null || this.associationType === "MANY_TO_MANY") {
+            const tableName = joinTable?.name ?? "";
+            const toThisColumns: Array<Column> = [];
+            const toTargetColumns: Array<Column> = [];
+            this._collectJoinColumns(
+                joinTable?.joinThis?.columns, 
+                "joinTable.joinThis.columns", 
+                this.thisKeyProp!, 
+                toThisColumns
+            );
+            this._collectJoinColumns(
+                joinTable?.joinTarget?.columns,
+                "joinTable.joinTarget.columns",
+                this.targetKeyProp!,
+                toTargetColumns
+            );
+            const middleTable: MiddleTable = {
+                kind: "MIDDLE_TABLE",
+                name: tableName,
+                toThisColumns,
+                toTargetColumns
+            };
+            return middleTable;
+        }
+        if (this.associationType != null) {
+            return undefined;
+        }
+        const columns: Array<Column> = [];
+        const referencedTargetKeyProp = this._targetKeyProp;
+        if (referencedTargetKeyProp != null) {
+            this._collectJoinColumns(
+                this._referenceProp!._data.joinColumns?.columns,
+                "joinColumns",
+                this._targetKeyProp!,
+                columns
+            );
+            if (columns.length === 1) {
+                return columns[0];
+            }
+        } else if (this._props != null) {
+            for (const subProp of this._props.values()) {
+                const subStorage = subProp._getBaseStorage() as Column | Columns;
+                if (Array.isArray(subStorage)) {
+                    columns.push(...subStorage);
+                } else {
+                    columns.push(subStorage as Column);
+                }
+            }
+        }
+        (columns as any).kind = "COLUMNS";
+        return columns as any as Columns;
+    }
+
+    private _collectJoinColumns(
+        joinColumns: ReadonlyArray<JoinColumnData> | undefined,
+        joinColumnsName: string,
+        targetKeyProp: EntityProp,
+        columns: Array<Column>
+    ): void {
+
+        if (joinColumns == null || joinColumns.length === 0) {
+            if (targetKeyProp._props != null) {
+                throw new PropError(
+                    this.declaringEntity.name,
+                    this.name,
+                    `The "${joinColumnsName}" must be explicitly specified when the foreign key has multiple-columns`
+                );
+            }
+            const column: Column = {
+                kind: "COLUMN",
+                name: "",
+                referencedSubProp: undefined
+            };
+            columns.push(column);
+            return;
+        }
+
+        if (joinColumns.length !== targetKeyProp.span) {
+            throw new PropError(
+                this.declaringEntity.name,
+                this.name,
+                `The size of "${joinColumnsName}" must be ${targetKeyProp.span}`
+            );
+        }
+
+        if (targetKeyProp._props == null) {
+            if (joinColumns[0]!.referencedSubPath != null) {
+                throw new PropError(
+                    this.declaringEntity.name,
+                    this.name,
+                    `The referencedSubPath of "${joinColumnsName}[0]" cannot be specified when the foreign key is single-column`
+                );
+            }
+            const column: Column = {
+                kind: "COLUMN",
+                name: "",
+                referencedSubProp: undefined
+            };
+            columns.push(column);
+            return;
+        }
+
+        const propMap = new Map<string, EntityProp>();
+        EntityProp._flatProps(targetKeyProp, undefined, propMap);
+        const joinColumnMap = new Map<string, JoinColumnData>();
+        for (const joinColumn of joinColumns) {
+            if (joinColumn.columnName === "") {
+                throw new PropError(
+                    this.declaringEntity.name,
+                    this.name,
+                    `The columName of each element of "${joinColumnsName}" must be specified when the foreign key has multiple-columns`
+                );
+            }
+            if (joinColumn.referencedSubPath == null) {
+                throw new PropError(
+                    this.declaringEntity.name,
+                    this.name,
+                    `The referencedSubPath of each element of "${joinColumnsName}" must be specified when the foreign key has multiple-columns`
+                );
+            }
+            if (!propMap.has(joinColumn.referencedSubPath)) {
+                throw new PropError(
+                    this.declaringEntity.name,
+                    this.name,
+                    `The referencedSubPath "${joinColumn.referencedSubPath}" of "${joinColumnsName}" is illegal`
+                );
+            }
+            joinColumnMap.set(joinColumn.referencedSubPath, joinColumn);
+        }
+        for (const [k, prop] of propMap.entries()) {
+            const joinColumn = joinColumnMap.get(k);
+            if (joinColumn == null) {
+                throw new PropError(
+                    this.declaringEntity.name,
+                    this.name,
+                    `The target key sub property "${prop.toString()}" of "${joinColumnsName}" is not referenced by any join column`
+                );
+            }
+            const column: Column = {
+                kind: "COLUMN",
+                name: joinColumn.columnName,
+                referencedSubProp: prop
+            };
+            columns.push(column);
+        }
+    }
+
+    private static _flatProps(
+        prop: EntityProp,
+        prefix: string | undefined, 
+        outputPropMap: Map<string, EntityProp>
+    ) {
+        if (prop.scalarType != null) {
+            outputPropMap.set(`${prefix}${prop.name}`, prop);
+        } else if (prop.props != null) {
+            const subPrefix = prefix == null ? "" : `${prefix}${prop.name}.`;
+            for (const subProp of prop.props.values()) {
+                EntityProp._flatProps(subProp, subPrefix, outputPropMap);
+            }
+        }
     }
 }

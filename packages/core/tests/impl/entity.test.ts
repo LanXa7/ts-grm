@@ -1,10 +1,38 @@
 import { Entity } from "@/impl/entity";
-import { PAPER_BOOK, ORDER_ITEM, BOOK, AUTHOR, TREE_NODE } from "../model/model";
-import { expect, it } from "vitest";
+import { PAPER_BOOK, ORDER_ITEM, BOOK, AUTHOR, TREE_NODE, BOOK_STORE } from "../model/model";
+import { describe, expect, it, JestAssertion } from "vitest";
 import { makeErr } from "@/error/util";
-import { describe } from "node:test";
+import { Column, PropStorage, UPPER_SNAKE_CASE_DATABASE_NAMING_STRATEGY } from "@/impl";
 
 describe("EntityTest", () => {
+
+    function expectStorage(storage: PropStorage | undefined): JestAssertion {
+        if (storage == null) {
+            return expect(undefined);
+        }
+        function columnJson(column: Column): any {
+            if (column.referencedSubProp == null) {
+                return column;
+            }
+            return {
+                ...column,
+                referencedSubProp: column.referencedSubProp.toString()
+            }
+        }
+        const json = storage.kind === "COLUMNS"
+            ? {
+                kind: "COLUMNS",
+                arr: storage.map(columnJson)
+            }
+            : storage.kind === "MIDDLE_TABLE" 
+                ? {
+                    ...storage,
+                    toThisColumns: storage.toThisColumns.map(columnJson),
+                    toTargetColumns: storage.toTargetColumns.map(columnJson)
+                }
+                : columnJson(storage);
+        return expect(json);
+    }
 
     it("entityWithSimpleColumns", () => {
         const paperBookEntity = Entity.of(PAPER_BOOK);
@@ -19,7 +47,7 @@ describe("EntityTest", () => {
             ["id", "name", "edition", "price", "store", "storeId", "authors", "size"].sort()
         ); 
         expect(
-            [...paperBookEntity.expanedPropMap.keys()].sort()
+            [...paperBookEntity.expandedPropMap.keys()].sort()
         ).toEqual(
             ["id", "name", "edition", "price", "store", "storeId", "authors", 
                 "size", "size.width", "size.height"].sort()
@@ -35,12 +63,12 @@ describe("EntityTest", () => {
         expect(storeDotBooks.oppositeProp).toEqual(bookDotStore);
         expect(storeDotBooks.orders).toEqual([
             { 
-                prop: paperBookEntity.superEntity!.expanedPropMap.get("name"),
+                prop: paperBookEntity.superEntity!.expandedPropMap.get("name"),
                 desc: false,
                 nulls: "UNSPECIFIED"
             },
             { 
-                prop: paperBookEntity.superEntity!.expanedPropMap.get("edition"),
+                prop: paperBookEntity.superEntity!.expandedPropMap.get("edition"),
                 desc: true,
                 nulls: "UNSPECIFIED"
             }
@@ -56,12 +84,12 @@ describe("EntityTest", () => {
         expect(authorDotBooks.oppositeProp).toEqual(bookDotAuthors);
         expect(bookDotAuthors.orders).toEqual([
             {
-                prop: authorModel.expanedPropMap.get("name.firstName"),
+                prop: authorModel.expandedPropMap.get("name.firstName"),
                 desc: false,
                 nulls: "UNSPECIFIED"
             },
             {
-                prop: authorModel.expanedPropMap.get("name.lastName"),
+                prop: authorModel.expandedPropMap.get("name.lastName"),
                 desc: false,
                 nulls: "UNSPECIFIED"
             }
@@ -82,7 +110,7 @@ describe("EntityTest", () => {
             "order",
             "orderId"
         ]);
-        expect(Array.from(orderItemEntity.expanedPropMap.keys())).toEqual([
+        expect(Array.from(orderItemEntity.expandedPropMap.keys())).toEqual([
             "id",
             "order",
             "orderId",
@@ -106,5 +134,141 @@ describe("EntityTest", () => {
         const treeNodeEntity = Entity.of(TREE_NODE);
         expect(treeNodeEntity.uniqueContraints.length).toEqual(1);
         expect(treeNodeEntity.uniqueContraints[0]!.map(c => c.name)).toEqual(["name", "parentNode"]);
+    });
+
+    it("storage", () => {
+
+        const strategy = UPPER_SNAKE_CASE_DATABASE_NAMING_STRATEGY;
+
+        const storeEntity = Entity.of(BOOK_STORE);
+        expect(storeEntity.prop("id").toStorage(strategy)).toEqual({
+            kind: "COLUMN",
+            name: "ID"
+        });
+        expect(storeEntity.prop("name").toStorage(strategy)).toEqual({
+            kind: "COLUMN",
+            name: "NAME"
+        });
+        expect(storeEntity.prop("version").toStorage(strategy)).toEqual({
+            kind: "COLUMN",
+            name: "VERSION"
+        });
+        expect(storeEntity.prop("books").toStorage(strategy)).toEqual(undefined);
+
+        const bookEntity = Entity.of(BOOK);
+        expect(bookEntity.prop("id").toStorage(strategy)).toEqual({
+            kind: "COLUMN",
+            name: "ID"
+        });
+        expect(bookEntity.prop("name").toStorage(strategy)).toEqual({
+            kind: "COLUMN",
+            name: "NAME"
+        });
+        expect(bookEntity.prop("edition").toStorage(strategy)).toEqual({
+            kind: "COLUMN",
+            name: "EDITION"
+        });
+        expect(bookEntity.prop("price").toStorage(strategy)).toEqual({
+            kind: "COLUMN",
+            name: "PRICE"
+        });
+        expect(bookEntity.prop("store").toStorage(strategy)).toEqual(undefined);
+        expect(bookEntity.prop("storeId").toStorage(strategy)).toEqual({
+            kind: "COLUMN",
+            name: "STORE_ID"
+        });
+        expectStorage(bookEntity.prop("authors").toStorage(strategy)!).toEqual({
+            "kind": "MIDDLE_TABLE",
+            "name": "book_author_mapping",
+            "toThisColumns": [
+                {
+                    "kind": "COLUMN",
+                    "name": "BOOK_ID",
+                    "referencedSubProp": undefined,
+                },
+            ],
+            "toTargetColumns": [
+                {
+                    "kind": "COLUMN",
+                    "name": "AUTHOR_ID",
+                    "referencedSubProp": undefined,
+                },
+            ]
+        });
+
+        const authorEntity = Entity.of(AUTHOR);
+        expect(authorEntity.prop("id").toStorage(strategy)).toEqual({
+            kind: "COLUMN",
+            name: "ID"
+        });
+        expect(authorEntity.prop("name").toStorage(strategy)!.kind).toEqual("COLUMNS");
+        expectStorage(authorEntity.prop("name").toStorage(strategy)!).toEqual({
+            kind: "COLUMNS",
+            arr: [
+                {
+                    "kind": "COLUMN",
+                    "name": "FIRST_NAME",
+                    "referencedSubProp": undefined
+                },
+                {
+                    "kind": "COLUMN",
+                    "name": "LAST_NAME",
+                    "referencedSubProp": undefined
+                },
+            ]
+        });
+        expect(authorEntity.prop("name.firstName").toStorage(strategy)).toEqual({
+            kind: "COLUMN",
+            name: "FIRST_NAME"
+        });
+        expect(authorEntity.prop("name.lastName").toStorage(strategy)).toEqual({
+            kind: "COLUMN",
+            name: "LAST_NAME"
+        });
+        expectStorage(authorEntity.prop("books").toStorage(strategy)!).toEqual({
+            "kind": "MIDDLE_TABLE",
+            "name": "book_author_mapping",
+            "toThisColumns": [
+                {
+                "kind": "COLUMN",
+                "name": "AUTHOR_ID",
+                "referencedSubProp": undefined,
+                },
+            ],
+            "toTargetColumns": [
+                {
+                "kind": "COLUMN",
+                "name": "BOOK_ID",
+                "referencedSubProp": undefined,
+                },
+            ]
+        });
+
+        const orderItemEntity = Entity.of(ORDER_ITEM);
+        expect(orderItemEntity.prop("id").toStorage(strategy)).toEqual({
+            kind: "COLUMN",
+            name: "ID"
+        });
+        expect(orderItemEntity.prop("order").toStorage(strategy)).toEqual(undefined);
+        expectStorage(orderItemEntity.prop("orderId").toStorage(strategy)!).toEqual({
+            "kind": "COLUMNS",
+            "arr": [
+                {
+                    "kind": "COLUMN",
+                    "name": "order_x",
+                    "referencedSubProp": "Order.id.x",
+                },
+                {
+                    "kind": "COLUMN",
+                    "name": "order_y_a",
+                    "referencedSubProp": "Order.id.y.a",
+                },
+                {
+                    "kind": "COLUMN",
+                    "name": "order_y_b",
+                    "referencedSubProp": "Order.id.y.b",
+                },
+            ]
+        });
     });
 });
