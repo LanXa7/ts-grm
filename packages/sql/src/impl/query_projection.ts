@@ -11,7 +11,7 @@ implements RootQueryProjection<T, TKind> {
         return { selectedProjection: true };
     }
 
-    static of(arr: any): AbstractRootQueryProjection<any, any> {
+    static of(arr: any[]): AbstractRootQueryProjection<any, any> {
         if (arr.length > 1) {
             return new ArrRootQueryProjection(arr as ReadonlyArray<RootQuerySelection<any>>);
         }

@@ -51,7 +51,7 @@ export interface Visitor {
 
     visitSubQueryExpr(expr: SubQueryExprContract): void;
 
-    visitShdowExpr(expr: ShadowExprContract): void;
+    visitShadowExpr(expr: ShadowExprContract): void;
 
     visitCoalesceExpr(expr: CoalesceExprContract): void;
 
@@ -190,7 +190,7 @@ export abstract class AbstractVisitor implements Visitor {
         expr.subQuery.accept(this);
     }
 
-    visitShdowExpr(_: ShadowExprContract): void {
+    visitShadowExpr(_: ShadowExprContract): void {
 
     }
 

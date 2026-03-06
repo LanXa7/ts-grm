@@ -95,23 +95,8 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
 
     visitAtomQuery(query: ast.AtomQueryContract): void {
 
-        let isRoot: boolean;
-        switch (query.projection.kind) {
-            case "ROOT_SINGLE":
-            case "ROOT_ARRAY":
-            case "ROOT_MAP":
-                isRoot = true;
-                break;
-            default:
-                isRoot = false;
-        }
-
         using _ = this._compositeStack.with(new Query());
         using __ = this._precedenceStack.with(Precedence.ROOT);
-
-        if (!isRoot) {
-            this._compositeStack.current.text("(");
-        }
         
         {
             this._compositeStack.current.text("select ");
@@ -164,10 +149,6 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
             this._compositeStack.current.text("\nhaving ");
             using _ = this._compositeStack.with(new Scope("INDENT"));
             havingPred.accept(this);
-        }
-
-        if (!isRoot) {
-            this._compositeStack.current.text(")");
         }
     }
 
@@ -302,6 +283,7 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
                 continue;
             }
             const column = field.prop.toStorage(this._strategy) as metadata.Column;
+            this._compositeStack.current.separator();
             this._compositeStack.current.add(new Column(realTable, column.name));
         }
     }
@@ -337,10 +319,11 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
 
     visitSubQueryExpr(expr: ast.SubQueryExprContract): void {
         this._compositeStack.current.text(expr.op.toLowerCase());
+        using _ = this._compositeStack.with(new Scope("VALUES"));
         expr.subQuery.accept(this);
     }
 
-    visitShdowExpr(_: ast.ShadowExprContract): void {
+    visitShadowExpr(_: ast.ShadowExprContract): void {
 
     }
 
@@ -456,26 +439,29 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
     private _visitProjection(projection: ast.ProjectionContract): void {
         switch (projection.kind) {
             case "ROOT_SINGLE":
-                this._visitSelection(projection.selection);
+                (projection.selection as any as ast.Node).accept(this);
                 break;
             case "ROOT_ARRAY":
                 for (const selection of projection.selections) {
                     this._compositeStack.current.separator();
-                    this._visitSelection(selection);
+                    (selection as any as ast.Node).accept(this);
                 }
                 break;
             case "ROOT_MAP":
                 for (const key in projection.selections) {
                     this._compositeStack.current.separator();
-                    this._visitSelection(projection.selections[key]!);
+                    (projection.selections[key] as any as ast.Node).accept(this);
                 }
                 break;
+            case "SUB_SINGLE":
+                (projection.selection as any as ast.Node).accept(this);
+                break;
+            case "SUB_ARRAY":
+                for (const selection of projection.selections) {
+                    this._compositeStack.current.separator();
+                    (selection as any as ast.Node).accept(this);
+                }
         }
-    }
-
-    private _visitSelection(selection: RootQuerySelection<any>) {
-        const node = selection as any as ast.Node;
-        node.accept(this);
     }
 
     private _toRealTable(table: metadata.AbstractEntityTable | metadata.BaseTableTarget): RealTable {

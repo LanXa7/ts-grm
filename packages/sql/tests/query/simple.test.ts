@@ -20,7 +20,7 @@ describe("SimpleQueryTest", () => {
     it("where", () => {
         const q = sqlClient.createQuery(BOOK, (q, book) => {
             q.where(book.id.eq(3));
-            return q.select(book.id, book.name);
+            return q.select(book.fetch(SIMPLE_BOOK_VIEW));
         });
         const composite = Composite.of(q, sqlClient);
         const builder = SqlBuilder.of(sqlClient);
@@ -29,14 +29,15 @@ describe("SimpleQueryTest", () => {
         expectCode(sql, `
             select 
                 tb_1_.ID,
-                tb_1_.NAME
+                tb_1_.NAME,
+                tb_1_.EDITION
             from BOOK tb_1_
             where 
                 tb_1_.ID = ?
         `);
     });
 
-    it("sub", () => {
+    it("subQuery", () => {
         const q = sqlClient.createQuery(BOOK, (q, book) => {
             q.where(
                 dsl.tuple(book.name, book.edition).inSubQuery(
@@ -53,10 +54,32 @@ describe("SimpleQueryTest", () => {
                 book.fetch(SIMPLE_BOOK_VIEW)
             );
         });
-        console.log(q);
+        const composite = Composite.of(q, sqlClient);
+        const builder = SqlBuilder.of(sqlClient);
+        composite.into(builder);
+        const [sql] = builder.build();
+        expectCode(sql, `
+            select 
+                tb_1_.ID,
+                tb_1_.NAME,
+                tb_1_.EDITION
+            from BOOK tb_1_
+            where 
+                (
+                    tb_1_.NAME,
+                    tb_1_.EDITION
+                ) in(
+                    select 
+                        tb_2_.NAME,
+                        max(tb_2_.EDITION)
+                    from BOOK tb_2_
+                    group by 
+                        tb_2_.NAME
+                )
+        `);
     });
 
-    it("base", () => {
+    it("baseQuery", () => {
         const baseModel = dsl.derivedModel(
             dsl.unionAll(
                 dsl.baseQuery(BOOK, (q, book) => {

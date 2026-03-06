@@ -20,7 +20,7 @@ export class ShadowExpr<T> extends AbstractExpr<T> implements ShadowExprContract
     }
 
     accept(visitor: Visitor): void {
-        visitor.visitShdowExpr(this);
+        visitor.visitShadowExpr(this);
     }
 }
 
@@ -33,7 +33,7 @@ export class ShadowCmpExpr<T> extends AbstractCmpExpr<T> implements ShadowExprCo
     }
 
     accept(visitor: Visitor): void {
-        visitor.visitShdowExpr(this);
+        visitor.visitShadowExpr(this);
     }
 }
 
@@ -46,7 +46,7 @@ export class ShadowNumExpr<T extends number | string> extends AbstractNumExpr<T>
     }
 
     accept(visitor: Visitor): void {
-        visitor.visitShdowExpr(this);
+        visitor.visitShadowExpr(this);
     }
 }
 
@@ -59,7 +59,7 @@ export class ShadowStrExpr extends AbstractStrExpr implements ShadowExprContract
     }
 
     accept(visitor: Visitor): void {
-        visitor.visitShdowExpr(this);
+        visitor.visitShadowExpr(this);
     }
 }
 
@@ -72,6 +72,6 @@ export class ShadowDtExpr extends AbstractDtExpr implements ShadowExprContract {
     }
 
     accept(visitor: Visitor): void {
-        visitor.visitShdowExpr(this);
+        visitor.visitShadowExpr(this);
     }
 }
