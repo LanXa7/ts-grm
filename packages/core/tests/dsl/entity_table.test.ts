@@ -78,10 +78,10 @@ describe("RuntimeTableTest", () => {
                         filter
                     });
                 }
-                static __id = $entity.expanedPropMap.get("id");
-                static __name = $entity.expanedPropMap.get("name");
-                static __version = $entity.expanedPropMap.get("version");
-                static __books = $entity.expanedPropMap.get("books");
+                static __id = $entity.expandedPropMap.get("id");
+                static __name = $entity.expandedPropMap.get("name");
+                static __version = $entity.expandedPropMap.get("version");
+                static __books = $entity.expandedPropMap.get("books");
             }
         `);
         expect(true).toEqual(table.id instanceof AbstractNumExpr);
@@ -213,13 +213,13 @@ describe("RuntimeTableTest", () => {
                     }
                     return expr;
                 }
-                static __id = $entity.expanedPropMap.get("id");
-                static __name = $entity.expanedPropMap.get("name");
-                static __edition = $entity.expanedPropMap.get("edition");
-                static __price = $entity.expanedPropMap.get("price");
-                static __store = $entity.expanedPropMap.get("store");
-                static __authors = $entity.expanedPropMap.get("authors");
-                static __storeId = $entity.expanedPropMap.get("storeId");
+                static __id = $entity.expandedPropMap.get("id");
+                static __name = $entity.expandedPropMap.get("name");
+                static __edition = $entity.expandedPropMap.get("edition");
+                static __price = $entity.expandedPropMap.get("price");
+                static __store = $entity.expandedPropMap.get("store");
+                static __authors = $entity.expandedPropMap.get("authors");
+                static __storeId = $entity.expandedPropMap.get("storeId");
             }
         `);
         expect(true).toEqual(table.id instanceof AbstractNumExpr);
@@ -309,10 +309,10 @@ describe("RuntimeTableTest", () => {
                         filter
                     });
                 }
-                static __id = $entity.expanedPropMap.get("id");
-                static __name_firstName = $entity.expanedPropMap.get("name.firstName");
-                static __name_lastName = $entity.expanedPropMap.get("name.lastName");
-                static __books = $entity.expanedPropMap.get("books");
+                static __id = $entity.expandedPropMap.get("id");
+                static __name_firstName = $entity.expandedPropMap.get("name.firstName");
+                static __name_lastName = $entity.expandedPropMap.get("name.lastName");
+                static __books = $entity.expandedPropMap.get("books");
             }
         `);
         expect(true).toEqual(table.id instanceof AbstractNumExpr);
@@ -416,11 +416,11 @@ describe("RuntimeTableTest", () => {
                     }
                     return embedded;
                 }
-                static __id = $entity.expanedPropMap.get("id");
-                static __order = $entity.expanedPropMap.get("order");
-                static __orderId_x = $entity.expanedPropMap.get("orderId.x");
-                static __orderId_y_a = $entity.expanedPropMap.get("orderId.y.a");
-                static __orderId_y_b = $entity.expanedPropMap.get("orderId.y.b");
+                static __id = $entity.expandedPropMap.get("id");
+                static __order = $entity.expandedPropMap.get("order");
+                static __orderId_x = $entity.expandedPropMap.get("orderId.x");
+                static __orderId_y_a = $entity.expandedPropMap.get("orderId.y.a");
+                static __orderId_y_b = $entity.expandedPropMap.get("orderId.y.b");
             }
         `);
         expect(true).toEqual(table.id instanceof AbstractNumExpr);

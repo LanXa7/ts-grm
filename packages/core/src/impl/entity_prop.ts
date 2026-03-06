@@ -367,6 +367,7 @@ export class EntityProp {
         if (referenceProp == null) {
             return;
         }
+        this._scalarType = referenceProp.targetKeyProp!.scalarType;
         this._props = EntityProp._redirectSubPropMap(this, referenceProp.targetKeyProp!._props);
     }
 

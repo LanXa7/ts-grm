@@ -247,7 +247,7 @@ function writePropMeta(prop: EntityProp, writer: CodeWriter) {
     }
     writer.code("static __");
     writePropPath(prop, "_", writer);
-    writer.code(" = $entity.expanedPropMap.get(\"");
+    writer.code(" = $entity.expandedPropMap.get(\"");
     writePropPath(prop, ".", writer);
     writer.code(`")`
     ).newLine(";");
