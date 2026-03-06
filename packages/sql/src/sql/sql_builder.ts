@@ -1,4 +1,7 @@
+import { metadata, SqlClient } from "@ts-grm/core";
 import { Value } from "./fragment";
+import { SqlClientImplementor } from "@/sql_client";
+import { SqlLoggerParameterType } from "@/cfg/sql_client_options";
 
 export class SqlBuilder {
 
@@ -15,10 +18,21 @@ export class SqlBuilder {
     private _nextTableAlias = 0;
 
     constructor(
+        readonly strategy: metadata.DatabaseNamingStrategy,
         readonly pretty: boolean,
-        readonly parameterPrefix: string, 
-        readonly nameParameter: boolean
+        readonly parameter: SqlLoggerParameterType,
+        readonly nameParameterPrefix: string | undefined
     ) {
+    }
+
+    static of(sqlClient: SqlClient): SqlBuilder {
+        const implementor = sqlClient as SqlClientImplementor;
+        return new SqlBuilder(
+            implementor.options.strategy,
+            implementor.options.sqlLogger.pretty,
+            implementor.options.sqlLogger.parameter,
+            implementor.driver.nameParameterPrefix
+        )
     }
 
     indent() {
@@ -62,10 +76,10 @@ export class SqlBuilder {
     value(value: Value): this {
         this._values.set(this._length, value);
         let str: string;
-        if (this.nameParameter) {
-            str = `${this.parameterPrefix}p${this._values.size}`;
+        if (this.nameParameterPrefix != null) {
+            str = `${this.nameParameterPrefix}${this._values.size}`;
         } else {
-            str = this.parameterPrefix;
+            str = "?";
         }
         this._sql(str);
         return this;

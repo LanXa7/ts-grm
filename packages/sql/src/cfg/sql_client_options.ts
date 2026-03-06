@@ -2,7 +2,18 @@ import { metadata } from "@ts-grm/core";
 
 export type SqlClientOptions = {
     
-    readonly databaseNamingStrategy: metadata.DatabaseNamingStrategy | undefined;
+    readonly strategy: metadata.DatabaseNamingStrategy;
 
-    readonly defaultBatchSize: number | number;
+    readonly defaultBatchSize: number;
+
+    readonly sqlLogger: SqlLogger;
 };
+
+export type SqlLogger = {
+
+    readonly pretty: boolean;
+
+    readonly parameter: SqlLoggerParameterType;
+}
+
+export type SqlLoggerParameterType = "PLACEHOLDER" | "COMMENT" | "INLINE";

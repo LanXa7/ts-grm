@@ -52,4 +52,4 @@ export type UnionToIntersection<U> =
 export type CompilationError<T extends string> =
     `\u274C ts-grm: ${T}`;
 
-export function supressUnused(_x: any) {}
+export function suppressUnused(_x: any) {}

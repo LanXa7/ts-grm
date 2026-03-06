@@ -7,12 +7,13 @@ import { capitalize } from "./util";
 import { AbstractEntityTable, createEntityTableClass, EntityTableCtor, JoinOperation } from "./entity_table";
 import { StateError } from "@/error/common";
 import { ShadowAnchor } from "./shadow_anchor";
+import { DatabaseNamingStrategy } from "./strategy";
 
 export class Entity {
 
     readonly superEntity: Entity | undefined;
 
-    readonly explicitTableName: string | undefined;
+    private readonly _explicitTableName: string | undefined;
 
     private _phase = 0;
 
@@ -49,14 +50,14 @@ export class Entity {
         if (!isValidModelName(name)) {
             throw new ModelError(
                 name,
-                dedent`Must fllow PascalCase naming convention:
+                dedent`Must follow PascalCase naming convention:
                 "${CAMEL_CASE_REGEX.source}"`
             )
         }
         this.superEntity = superModel !== undefined
             ? Entity.of(superModel)
             : undefined;
-        this.explicitTableName = _options.tableName;
+        this._explicitTableName = _options.tableName;
         this._identity = ++Entity._nextIdentity;
     }
 
@@ -101,6 +102,10 @@ export class Entity {
     prop(name: string): EntityProp {
         return this.expandedPropMap.get(name) ?? 
             makeErr(`There is no property "${name}" in the model "${this.name}"`);
+    }
+
+    toTableName(strategy: DatabaseNamingStrategy): string {
+        return this._explicitTableName ?? strategy.tableName(this);
     }
 
     resolve(phase: number): this {

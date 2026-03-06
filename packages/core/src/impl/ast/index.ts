@@ -35,6 +35,9 @@ export type {
     UpperExpr 
 } from "./str_expr";
 export type {
+    FetchedViewContract
+} from "./fetched_view";
+export type {
     ShadowExprContract
 } from "./shadow_expr";
 export type {
@@ -61,7 +64,7 @@ export { AbstractVisitor } from "./visitor";
 export type { QueryFactory, MergedQueryKind } from "./query_factory";
 export { setQueryFactory } from "./query_factory";
 
-import { getInternalFactory, InternalFactory, setInteralFactory } from "@/impl/ast/internal_factory";
+import { getInternalFactory, InternalFactory, setInternalFactory } from "@/impl/ast/internal_factory";
 import { BetweenPred, CmpOp, CmpPred, InCollectionPred, InSubQueryPred, NullityPred } from "@/impl/ast/pred";
 import { AbstractExpr, QueryContract } from "@/impl/ast";
 import { CoalesceCmpExpr, CoalesceDtExpr, CoalesceExpr, CoalesceNumExpr, CoalesceStrExpr } from "@/impl/ast/coalesce_expr";
@@ -199,4 +202,4 @@ class InternalFactoryImpl implements InternalFactory {
     }
 }
 
-setInteralFactory(new InternalFactoryImpl());
+setInternalFactory(new InternalFactoryImpl());

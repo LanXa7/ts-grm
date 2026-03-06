@@ -27,7 +27,7 @@ import type {
     AtomTupleSubQuery,
     AtomBaseQuery
 } from "@ts-grm/core";
-import { supressUnused, ast } from "@ts-grm/core";
+import { suppressUnused, ast } from "@ts-grm/core";
 import { MutableRootQueryImpl } from "./mutable_root_query_impl";
 import { AtomRootQueryImpl } from "./atom_root_query_impl";
 import { AbstractRootQueryProjection, AbstractSubQueryProjection, ExpressionSubQueryProjection, MapBaseQueryProjection } from "./query_projection";
@@ -53,8 +53,8 @@ export class SqlClientImpl implements SqlClientImplementor {
         view: V,
         criteria: Criteria<ModelOf<V>>
     ): Promise<TypeOf<V>> {
-        supressUnused(view);
-        supressUnused(criteria);
+        suppressUnused(view);
+        suppressUnused(criteria);
         throw new Error();
     }
 

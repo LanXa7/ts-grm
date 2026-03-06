@@ -5,10 +5,15 @@ import { describe, it } from "vitest";
 import { dsl, dto } from "@ts-grm/core";
 import { Composite } from "@/sql/fragment";
 import { SqlBuilder } from "@/sql/sql_builder";
+import { expectCode } from "../utils";
 
 describe("SimpleQueryTest", () => {
 
-    const sqlClient = newSqlClient(new SqliteDriver(), {});
+    const sqlClient = newSqlClient(new SqliteDriver(), {
+        sqlLogger: {
+            pretty: true
+        }
+    });
 
     const SIMPLE_BOOK_VIEW = dto.view(BOOK, $ => $.id.name.edition);
     
@@ -18,10 +23,17 @@ describe("SimpleQueryTest", () => {
             return q.select(book.id, book.name);
         });
         const composite = Composite.of(q, sqlClient);
-        console.log(composite);
-        const builder = new SqlBuilder(true, ":p", false);
+        const builder = SqlBuilder.of(sqlClient);
         composite.into(builder);
-        console.log(builder.build());
+        const [sql] = builder.build();
+        expectCode(sql, `
+            select 
+                tb_1_.ID,
+                tb_1_.NAME
+            from BOOK tb_1_
+            where 
+                tb_1_.ID = ?
+        `);
     });
 
     it("sub", () => {

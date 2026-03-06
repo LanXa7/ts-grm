@@ -2,7 +2,6 @@ export { Entity } from "./entity";
 export { EntityProp } from "./entity_prop";
 export { AbstractEntityTable } from "./entity_table";
 export { BaseTableTarget, createTypedBaseTable } from "./base_table";
-export { FetchedViewImpl } from "./fetched_view_impl";
 export { withShadowAnchor } from "./shadow_anchor";
 export { 
     DefaultDatabaseNamingStrategy, 

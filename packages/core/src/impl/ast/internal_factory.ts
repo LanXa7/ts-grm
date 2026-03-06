@@ -19,7 +19,7 @@ export function getInternalFactory(): InternalFactory {
     return factory;
 }
 
-export function setInteralFactory(factory: InternalFactory) {
+export function setInternalFactory(factory: InternalFactory) {
     _internalFactory = factory;
 }
 

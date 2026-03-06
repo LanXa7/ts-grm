@@ -1,4 +1,4 @@
-import { ast, err, SqlClient } from "@ts-grm/core";
+import { ast, err, metadata, SqlClient } from "@ts-grm/core";
 import { RealTable } from "./real_table";
 import { SqlBuilder } from "./sql_builder";
 import { FragmentGenGenVisitor } from "./fragment_gen_visitor";
@@ -306,5 +306,17 @@ export class Source extends Composite {
         readonly rootTables: ReadonlyArray<RealTable>
     ) {
         super();
+    }
+
+    into(builder: SqlBuilder): void {
+        for (const rootTable of this.rootTables) {
+            if (rootTable.symbol.baseModel == null) {
+                const entityTable = rootTable.symbol as metadata.AbstractEntityTable;
+                builder
+                    .sql(entityTable.entity.toTableName(builder.strategy))
+                    .sql(" ")
+                    .sql(rootTable.alias);
+            }
+        }
     }
 }

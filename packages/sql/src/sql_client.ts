@@ -3,22 +3,19 @@ import { SqlClientOptions } from "./cfg/sql_client_options";
 import { Driver } from "./driver/deriver";
 import { metadata } from "@ts-grm/core";
 import { SqlClientImpl } from "./impl/sql_client_impl";
+import { DeepPartial, merge } from "./utils";
 
 export function newSqlClient(
     driver: Driver,
-    options: Partial<SqlClientOptions>
+    options: DeepPartial<SqlClientOptions>
 ): SqlClient {
-    const finalOptions = { ...defaultOptions };
-    if (options.databaseNamingStrategy != null) {
-        finalOptions.databaseNamingStrategy = options.databaseNamingStrategy;
-    }
+    const finalOptions = merge(options, createDefaultOptions());
     if (options.defaultBatchSize != null) {
         if (options.defaultBatchSize < 2) {
             throw new err.ArgumentError(
                 `"options.defaultBatchSize" cannot be less than 2 when it is specified`
             );
         }
-        finalOptions.defaultBatchSize = options.defaultBatchSize;
     }
     return new SqlClientImpl(driver, finalOptions);
 }
@@ -30,7 +27,13 @@ export interface SqlClientImplementor extends SqlClient {
     readonly options: SqlClientOptions;
 }
 
-const defaultOptions: SqlClientOptions = {
-    databaseNamingStrategy: metadata.UPPER_SNAKE_CASE_DATABASE_NAMING_STRATEGY,
-    defaultBatchSize: 64
-};
+function createDefaultOptions(): SqlClientOptions {
+    return {
+        strategy: metadata.UPPER_SNAKE_CASE_DATABASE_NAMING_STRATEGY,
+        defaultBatchSize: 64,
+        sqlLogger: {
+            pretty: false,
+            parameter: "PLACEHOLDER"
+        }
+    };
+}

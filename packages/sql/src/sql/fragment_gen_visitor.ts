@@ -1,4 +1,4 @@
-import { ast, err, metadata } from "@ts-grm/core";
+import { ast, err, metadata, RootQuerySelection } from "@ts-grm/core";
 import { Column, Composite, Query, Scope, Source, Value } from "./fragment";
 import { Stack } from "./stack";
 import { Precedence } from "./precedence";
@@ -18,6 +18,8 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
     private readonly _joinMergeScopeStack =
         new Stack<JoinMergeScope>(undefined);
 
+    private readonly _strategy: metadata.DatabaseNamingStrategy;
+
     private readonly _nodeRender: NodeRender;
 
     private readonly _nodeRenderContext: NodeRenderContext;
@@ -26,6 +28,7 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
         readonly sqlClient: SqlClientImplementor
     ) {
         super();
+        this._strategy = sqlClient.options.strategy;
         this._nodeRender = sqlClient.driver.nodeRender;
         const that = this;
         this._compositeStack = new class extends Stack<Composite> {
@@ -74,7 +77,7 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
                 that._compositeStack.current.separator();
             }
         
-            withCompoisite(composite: Composite): Disposable {
+            withComposite(composite: Composite): Disposable {
                 return that._compositeStack.with(composite);
             }
         
@@ -112,12 +115,12 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
         
         {
             this._compositeStack.current.text("select ");
-            using _ = this._compositeStack.with(new Scope("INDENT"));
+            using _ = this._compositeStack.with(new Scope("COMMA"));
             this._visitProjection(query.projection);
         }
 
         {
-            this._compositeStack.current.text("from ");
+            this._compositeStack.current.text("\nfrom ");
             using _ = this._compositeStack.with(
                 new Source(
                     query.tables.map(t => 
@@ -131,14 +134,14 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
 
         const wherePred = query.wherePred;
         if (wherePred != null) {
-            this._compositeStack.current.text("where ");
+            this._compositeStack.current.text("\nwhere ");
             using _ = this._compositeStack.with(new Scope("INDENT"));
             query.wherePred?.accept(this);
         }
 
         const orders = query.orders;
         if (orders.length !== 0) {
-            this._compositeStack.current.text("order by ");
+            this._compositeStack.current.text("\norder by ");
             using _ = this._compositeStack.with(new Scope("COMMA"));
             for (const order of query.orders) {
                 this._compositeStack.current.separator();
@@ -148,7 +151,7 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
 
         const groupByExprs = query.groupByExprs;
         if (groupByExprs != null) {
-            this._compositeStack.current.text("group by ");
+            this._compositeStack.current.text("\ngroup by ");
             using _ = this._compositeStack.with(new Scope("COMMA"));
             for (const expr of groupByExprs) {
                 this._compositeStack.current.separator();
@@ -158,7 +161,7 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
 
         const havingPred = query.havingPred;
         if (havingPred != null) {
-            this._compositeStack.current.text("having ");
+            this._compositeStack.current.text("\nhaving ");
             using _ = this._compositeStack.with(new Scope("INDENT"));
             havingPred.accept(this);
         }
@@ -292,9 +295,21 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
         pred.subQuery.accept(this);
     }
 
+    visitFetchedView(fetchedView: ast.FetchedViewContract): void {
+        const realTable = this._toRealTable(fetchedView.table);
+        for (const field of fetchedView.view.mapper.fields) {
+            if (field.columnIndex == null) {
+                continue;
+            }
+            const column = field.prop.toStorage(this._strategy) as metadata.Column;
+            this._compositeStack.current.add(new Column(realTable, column.name));
+        }
+    }
+
     visitTablePropExpr(expr: ast.PropExprContract): void {
         const realTable = this._toRealTable(expr.table);
-        this._compositeStack.current.add(new Column(realTable, expr.prop.name));
+        const column = expr.prop.toStorage(this._strategy) as metadata.Column;
+        this._compositeStack.current.add(new Column(realTable, column.name));
     }
 
     visitCoalesceExpr(expr: ast.CoalesceExprContract): void {
@@ -441,7 +456,26 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
     private _visitProjection(projection: ast.ProjectionContract): void {
         switch (projection.kind) {
             case "ROOT_SINGLE":
+                this._visitSelection(projection.selection);
+                break;
+            case "ROOT_ARRAY":
+                for (const selection of projection.selections) {
+                    this._compositeStack.current.separator();
+                    this._visitSelection(selection);
+                }
+                break;
+            case "ROOT_MAP":
+                for (const key in projection.selections) {
+                    this._compositeStack.current.separator();
+                    this._visitSelection(projection.selections[key]!);
+                }
+                break;
         }
+    }
+
+    private _visitSelection(selection: RootQuerySelection<any>) {
+        const node = selection as any as ast.Node;
+        node.accept(this);
     }
 
     private _toRealTable(table: metadata.AbstractEntityTable | metadata.BaseTableTarget): RealTable {

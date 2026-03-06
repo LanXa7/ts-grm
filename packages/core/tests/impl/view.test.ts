@@ -309,7 +309,7 @@ describe("TestView", () => {
         });
     });
 
-    it("deepAssocitions", () => {
+    it("deepAssociations", () => {
         const view = dto.view(BOOK_STORE, $ => $
             .id
             .name

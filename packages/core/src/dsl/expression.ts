@@ -1,5 +1,5 @@
 import { NullityType } from "@/schema/prop";
-import { CompilationError, supressUnused } from "@/utils"
+import { CompilationError, suppressUnused } from "@/utils"
 import { ExpressionSubQuery } from "./sub_query";
 import { AtLeastOne, ExpressionOrder } from "./utils";
 import { AbstractStrExpr, ConcatExpr } from "@/impl/ast/str_expr";
@@ -237,7 +237,7 @@ type StrExpression<T extends Nullable<string>> = CmpExpression<T> & {
         expression: T | undefined;
         cmpExpression: T | undefined;
         numExpression: T | undefined;
-        strExpresion: T | undefined;
+        strExpression: T | undefined;
     }
 
     like(
@@ -368,7 +368,7 @@ export type ExpressionLike = {
 export function constant(
     value: number
 ): Expression<number> {
-    supressUnused(value);
+    suppressUnused(value);
     throw new Error();
 }
 

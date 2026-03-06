@@ -1,3 +1,4 @@
+import { FetchedViewContract } from "./fetched_view";
 import { AggregateExpr } from "./aggregate_expr";
 import { CoalesceExprContract } from "./coalesce_expr";
 import type { DtDiffExpr, DtPlusExpr } from "./dt_expr";
@@ -41,6 +42,8 @@ export interface Visitor {
     visitCompoundPred(pred: CompoundPred): void;
 
     visitExistsPred(pred: ExistsPred): void;
+
+    visitFetchedView(view: FetchedViewContract): void;
 
     visitTablePropExpr(expr: PropExprContract): void;
 
@@ -158,6 +161,10 @@ export abstract class AbstractVisitor implements Visitor {
 
     visitExistsPred(pred: ExistsPred): void {
         pred.subQuery.accept(this);
+    }
+
+    visitFetchedView(_: FetchedViewContract): void {
+
     }
 
     visitTablePropExpr(_: PropExprContract): void {

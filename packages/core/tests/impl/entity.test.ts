@@ -123,7 +123,7 @@ describe("EntityTest", () => {
 
     it("entityConfigurer", () => {
         const bookEntity = Entity.of(BOOK);
-        expect(bookEntity.explicitTableName).toEqual("BOOK");
+        expect(bookEntity.toTableName(UPPER_SNAKE_CASE_DATABASE_NAMING_STRATEGY)).toEqual("BOOK");
         expect(bookEntity.uniqueContraints.length).toEqual(1);
         expect(bookEntity.uniqueContraints[0]!.map(c => c.name)).toEqual(["name", "edition"]);
 

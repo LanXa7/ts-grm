@@ -4,7 +4,7 @@ export { dto } from "./schema/dto";
 export { err } from "./error";
 export { dsl } from "./dsl";
 
-export { supressUnused } from "./utils";
+export { suppressUnused } from "./utils";
 export { ExpressionOrder } from "./dsl";
 export * as metadata from "./impl";
 export * as ast from "./impl/ast";

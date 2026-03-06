@@ -60,7 +60,7 @@ export interface NodeRenderContext {
 
     separator(): void;
 
-    withCompoisite(composite: Composite): Disposable;
+    withComposite(composite: Composite): Disposable;
 
     withPrecedence(precedence: number): Disposable;
 

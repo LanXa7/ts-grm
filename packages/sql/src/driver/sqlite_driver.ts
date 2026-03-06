@@ -12,6 +12,10 @@ export class SqliteDriver implements Driver {
     get name(): string {
         return "sqlite";
     }
+
+    get nameParameterPrefix(): string | undefined {
+        return undefined;
+    }
 }
 
 const nodeRender = new class implements NodeRender {
