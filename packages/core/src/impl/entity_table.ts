@@ -5,7 +5,7 @@ import { Predicate } from "@/dsl/expression";
 import { createTableProp } from "./ast/prop_expr";
 import { JoinType } from "@/dsl/table";
 import { makeErr } from "@/error/util";
-import { AbstractTable } from "./abstrat_table";
+import { AbstractTable } from "./abstract_table";
 import { ShadowAnchor } from "./shadow_anchor";
 import { BaseModelImplementor } from "./base_query_implementor";
 import { FetchedView } from "@/dsl/root_query";

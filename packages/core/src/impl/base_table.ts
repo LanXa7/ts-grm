@@ -1,4 +1,4 @@
-import { AbstractTable } from "./abstrat_table";
+import { AbstractTable } from "./abstract_table";
 import { BaseModelImplementor } from "./base_query_implementor";
 
 export class BaseTableTarget {

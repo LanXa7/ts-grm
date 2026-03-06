@@ -1,58 +1,58 @@
 import { ModelOrder, OrderNullsType } from "@/schema/order";
 import { AllModelMembers, AnyModel, ManyToManyMappedByKeys, ModelIdKey, OneToManyMappedByKeys, OneToOneMappedByKeys, ReferenceKey } from "@/schema/model";
-import { CascaseType, JoinColumn, JoinColumns, JoinTable } from "./join";
+import { CascadeType, JoinColumn, JoinColumns, JoinTable } from "./join";
 import { FlattenMembers } from "@/utils";
 import { ArgumentError } from "@/error/common";
 
 export const prop = {
 
     str(): ScalarProp<string> {
-        return new ScalarProp({...EMPTY_PROP_DEFINTION_DATA, scalarType: "STR"});
+        return new ScalarProp({...EMPTY_PROP_DEFINITION_DATA, scalarType: "STR"});
     },
 
     i8(): ScalarProp<number> {
-        return new ScalarProp({...EMPTY_PROP_DEFINTION_DATA, scalarType: "I8"});
+        return new ScalarProp({...EMPTY_PROP_DEFINITION_DATA, scalarType: "I8"});
     },
 
     i16(): ScalarProp<number> {
-        return new ScalarProp({...EMPTY_PROP_DEFINTION_DATA, scalarType: "I16"});
+        return new ScalarProp({...EMPTY_PROP_DEFINITION_DATA, scalarType: "I16"});
     },
 
     i32(): ScalarProp<number> {
-        return new ScalarProp({...EMPTY_PROP_DEFINTION_DATA, scalarType: "I32"});
+        return new ScalarProp({...EMPTY_PROP_DEFINITION_DATA, scalarType: "I32"});
     },
 
     i64(): I64Prop<number> {
-        return new I64Prop({...EMPTY_PROP_DEFINTION_DATA, scalarType: "I64"});
+        return new I64Prop({...EMPTY_PROP_DEFINITION_DATA, scalarType: "I64"});
     },
 
     f32(): ScalarProp<number> {
-        return new ScalarProp({...EMPTY_PROP_DEFINTION_DATA, scalarType: "F32"});
+        return new ScalarProp({...EMPTY_PROP_DEFINITION_DATA, scalarType: "F32"});
     },
 
     f64(): ScalarProp<number> {
-        return new ScalarProp({...EMPTY_PROP_DEFINTION_DATA, scalarType: "F64"});
+        return new ScalarProp({...EMPTY_PROP_DEFINITION_DATA, scalarType: "F64"});
     },
 
     num(): ScalarProp<number> {
-        return new ScalarProp({...EMPTY_PROP_DEFINTION_DATA, scalarType: "NUM"});
+        return new ScalarProp({...EMPTY_PROP_DEFINITION_DATA, scalarType: "NUM"});
     },
 
     date(): ScalarProp<Date> {
-        return new ScalarProp({...EMPTY_PROP_DEFINTION_DATA, scalarType: "DATE"});
+        return new ScalarProp({...EMPTY_PROP_DEFINITION_DATA, scalarType: "DATE"});
     },
 
     embedded<TProps extends Record<string, EmbeddedMember>>(
         props: TProps
     ): EmbeddedProp<TProps, "NONNULL", FlattenMembers<TProps>> {
-        return new EmbeddedProp({...EMPTY_PROP_DEFINTION_DATA, props});
+        return new EmbeddedProp({...EMPTY_PROP_DEFINITION_DATA, props});
     },
 
     o2o<TModel extends AnyModel>(
         targetModel: ModelRef<TModel>
     ): UnconfiguredOneToOneProp<TModel, "NONNULL", "OWNING", ModelIdKey<TModel>> {
         return new UnconfiguredOneToOneProp({
-            ...EMPTY_PROP_DEFINTION_DATA, 
+            ...EMPTY_PROP_DEFINITION_DATA, 
             targetModel, 
             associationType: "ONE_TO_ONE"
         });
@@ -62,7 +62,7 @@ export const prop = {
         targetModel: ModelRef<TModel>
     ): UnconfiguredManyToOneProp<TModel, "NONNULL", "OWNING", ModelIdKey<TModel>> {
         return new UnconfiguredManyToOneProp({
-            ...EMPTY_PROP_DEFINTION_DATA, 
+            ...EMPTY_PROP_DEFINITION_DATA, 
             targetModel, 
             associationType: "MANY_TO_ONE"
         });
@@ -72,7 +72,7 @@ export const prop = {
         targetModel: ModelRef<TModel>
     ): UnconfiguredOneToManyProp<TModel> {
         return new UnconfiguredOneToManyProp({
-            ...EMPTY_PROP_DEFINTION_DATA, 
+            ...EMPTY_PROP_DEFINITION_DATA, 
             targetModel, 
             associationType: "ONE_TO_MANY"
         });
@@ -82,7 +82,7 @@ export const prop = {
         targetModel: ModelRef<TModel>
     ): UnconfiguredManyToManyProp<TModel> {
         return new UnconfiguredManyToManyProp({
-            ...EMPTY_PROP_DEFINTION_DATA, 
+            ...EMPTY_PROP_DEFINITION_DATA, 
             targetModel, 
             associationType: "MANY_TO_MANY"
         });
@@ -295,7 +295,7 @@ class UnconfiguredOneToOneProp<
         options: {
             targetKeyProp?: TTargetKeyProp
             columns?: JoinColumns<AllModelMembers<TModel>[TTargetKeyProp]>
-            cascade?: CascaseType
+            cascade?: CascadeType
         }
     ): OneToOneProp<TModel, TNullity, "OWNING", TTargetKeyProp>;
 
@@ -376,7 +376,7 @@ class UnconfiguredManyToOneProp<
         options: {
             targetKeyProp?: TTargetKeyProp
             columns?: JoinColumns<AllModelMembers<TModel>[TTargetKeyProp]>
-            cascade?: CascaseType
+            cascade?: CascadeType
         }
     ): ManyToOneProp<TModel, TNullity, "OWNING", TTargetKeyProp>;
 
@@ -592,7 +592,7 @@ export type JoinTableData = {
 export type ForeignKeyData = {
     readonly referencedProp: string | undefined;
     readonly columns: ReadonlyArray<JoinColumnData>;
-    readonly cascade: CascaseType;
+    readonly cascade: CascadeType;
 };
 
 export type JoinColumnData = {
@@ -606,7 +606,7 @@ export type ScalarType =
     | "F32" | "F64" | "NUM" 
     | "DATE";
 
-const EMPTY_PROP_DEFINTION_DATA: PropData = {
+const EMPTY_PROP_DEFINITION_DATA: PropData = {
     nullity: "NONNULL",
     scalarType: undefined,
     props: undefined,

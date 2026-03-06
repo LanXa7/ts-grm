@@ -31,12 +31,12 @@ export type JoinTable<
         joinThis?: {
             referencedProp?: string,
             columns?: WeakTypeJoinColumns,
-            cascade?: CascaseType
+            cascade?: CascadeType
         }
         joinTarget?: {
             referencedProp: TTargetReferencedProp,
             columns?: JoinColumns<AllModelMembers<TModel>[TTargetReferencedProp]>,
-            cascade?: CascaseType
+            cascade?: CascadeType
         }
     };
 
@@ -50,4 +50,4 @@ export type WeakTypeJoinColumn = string | {
     referencedSubPath: string
 };
 
-export type CascaseType = "NONE" | "UPDATE" | "DELETE" | "GRM_DELETE";
+export type CascadeType = "NONE" | "UPDATE" | "DELETE" | "GRM_DELETE";

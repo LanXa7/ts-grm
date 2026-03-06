@@ -11,7 +11,7 @@ export {
 } from "./strategy";
 export type { PropStorage, Column, MiddleTable } from "./storage";
 export type { DatabaseNamingStrategy } from "./strategy";
-export type { AbstractTable } from "./abstrat_table";
+export type { AbstractTable } from "./abstract_table";
 export type { TypedBaseTable } from "./base_table";
 export type { JoinOperation, JoinFilter } from "./entity_table";
 export type { BaseQueryImplementor, BaseModelImplementor } from "./base_query_implementor";

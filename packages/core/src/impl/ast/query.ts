@@ -2,7 +2,7 @@ import { ExpressionLike, ExpressionOrder, RootQuerySelection } from "@/dsl";
 import { TableLike } from "@/dsl/table";
 import { AbstractPred } from "./pred";
 import { AbstractExpr } from "./expr";
-import { AbstractTable } from "../abstrat_table";
+import { AbstractTable } from "../abstract_table";
 import { MergedQueryKind } from "./query_factory";
 import { Node } from "./node";
 
