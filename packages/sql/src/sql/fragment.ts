@@ -233,14 +233,6 @@ export class Column extends Fragment {
     }
 
     into(builder: SqlBuilder): void {
-        // if (this.table.isShadow) {
-        //     const baseTable = this.table._baseTable!;
-        //     builder
-        //         .sql(baseTable.alias)
-        //         .sql(".")
-        //         .sql(this.table.shadowAlias(this.name));
-        //     return;
-        // }
         builder.sql(this.table.alias).sql(".").sql(this.name);
     }
 }
@@ -273,38 +265,6 @@ export class ShadowExpr extends Fragment {
     into(builder: SqlBuilder): void {
         const alias = this.table.baseQueryMetadata.alias(this.exportedName, undefined);
         builder.sql(this.table.alias).sql(".").sql(alias);
-    }
-}
-
-export class ExportedTable extends Fragment {
-    
-    constructor(
-        readonly table: RealTable
-    ) {
-        super();
-    }
-
-    into(builder: SqlBuilder): void {
-        builder.sql("@@@");
-        // const shadowAliasMap = this.table._shadow?.shadowAliasMap;
-        // if (shadowAliasMap === undefined) {
-        //     builder.sql("1");
-        // } else {
-        //     let addComma = false;
-        //     for (const [columnName, alias] of shadowAliasMap.entries()) {
-        //         if (addComma) {
-        //             builder.sql(",\n");
-        //         } else {
-        //             addComma = true;
-        //         }
-        //         builder
-        //             .sql(this.table.alias)
-        //             .sql(".")
-        //             .sql(columnName)
-        //             .sql(" ")
-        //             .sql(alias);
-        //     }
-        // }
     }
 }
 
@@ -344,7 +304,11 @@ export class Query extends Composite {
 export class Source extends Composite {
 
     constructor(
-        readonly rootTables: ReadonlyArray<RealTable>
+        readonly rootTables: ReadonlyArray<RealTable>,
+        readonly recursive: {
+            prev: RealTable,
+            pred: Composite
+        } | undefined
     ) {
         super();
     }
@@ -367,6 +331,12 @@ export class Source extends Composite {
                 }
             }
         }
+        if (this.recursive != null) {
+            builder.sql("\ninner join ");
+            builder.sql(this.recursive.prev.alias);
+            builder.sql(" on ");
+            this.recursive.pred.into(builder);
+        }
     }
 
     cteHeadInto(builder: SqlBuilder): void {
@@ -383,6 +353,9 @@ export class Source extends Composite {
         const withScope = new Scope("COMMA");
         for (const cteTable of cteTables) {
             withScope.separator();
+            if (cteTable.symbol.baseModel!.__isRecursive) {
+                withScope.text("\nrecursive ");
+            }
             withScope.text(cteTable.alias).text("(");
             const metadata = cteTable.baseQueryMetadata!;
             let addComma = false;
@@ -427,3 +400,4 @@ export class Source extends Composite {
         return wrapper;
     }
 }
+

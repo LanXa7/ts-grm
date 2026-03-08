@@ -103,13 +103,20 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
 
         {
             this._compositeStack.current.text("\nfrom ");
+            let recursive: { prev: RealTable, pred: Composite } | undefined = undefined;
+            if (query.recursivePred != null) {
+                const visitor = new FragmentGenGenVisitor(this.sqlClient, this._baseQueryMetadata, this._tableMap);
+                query.recursivePred.accept(visitor);
+                recursive = { prev: this._baseQueryMetadata!.realTable, pred: visitor.toResult() };
+            }
             using _ = this._compositeStack.with(
                 new Source(
                     query.tables.map(t => 
                         this._toRealTable(
                             t as metadata.AbstractEntityTable | metadata.TypedBaseTable
                         )
-                    )
+                    ),
+                    recursive
                 )
             );
         }
@@ -417,7 +424,7 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
                 : Precedence.TIMES
         );
         expr.leftExpr.accept(this);
-        this._compositeStack.current.text(expr.op);
+        this._compositeStack.current.text(" ").text(expr.op).text(" ");
         expr.rightExpr.accept(this);
     }
 
@@ -445,6 +452,10 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
 
     visitLiteral(value: any): void {
         this._compositeStack.current.add(new Value(value));
+    }
+
+    visitConstant(value: number): void {
+        this._compositeStack.current.text(value.toString());
     }
 
     private _visitProjection(projection: ast.ProjectionContract): void {
@@ -503,6 +514,9 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
     private _toRealTable(
         table: metadata.AbstractEntityTable | metadata.TypedBaseTable
     ): RealTable {
+        if (table.baseModel && (table as any as metadata.TypedBaseTable).__isPrev) {
+            return this._baseQueryMetadata!.realTable;
+        }
         return this._tableMap.get(table) ?? err.makeErr("No mapped real table");
     }
 
@@ -513,6 +527,6 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
         if (this._compositeStack.size() != 1) {
             throw new err.StateError("compositeStack is not cleanup");
         }
-        return this._compositeStack.current.fragments![0]! as Composite;
+        return this._compositeStack.current as Composite;
     }
 }

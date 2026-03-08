@@ -25,6 +25,10 @@ export interface AtomQueryContract extends Node {
     readonly options: AtomQueryOptions;
 
     readonly projection: ProjectionContract;
+
+    readonly isRecursive: boolean;
+
+    readonly recursivePred: AbstractPred | undefined;
 }
 
 export interface MergedQueryContract extends Node {
@@ -32,6 +36,8 @@ export interface MergedQueryContract extends Node {
     readonly kind: MergedQueryKind;
 
     readonly queries: ReadonlyArray<QueryContract>;
+
+    readonly isRecursive: boolean;
 }
 
 export type ProjectionContract = {

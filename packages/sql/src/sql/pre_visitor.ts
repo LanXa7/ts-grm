@@ -55,6 +55,9 @@ export class PreVisitor extends ast.AbstractVisitor {
     }
 
     visitTablePropExpr(expr: ast.PropExprContract): void {
+        if (expr.table.baseModel && (expr.table as any as metadata.TypedBaseTable).__isPrev) {
+            return;
+        }
         const shadow = expr.table.shadow;
         if (shadow == null) {
             this._toRealTable(expr.table);

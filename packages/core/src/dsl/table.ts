@@ -169,7 +169,7 @@ type CollectionJoinAction<
 > = {
     (): TRiskAccepted extends true
         ? EntityTableMembers<TModel, TMembers, "NONNULL", true>
-        : RiskUnkownJoinedTable<TModel, TMembers, "NONNULL">;
+        : RiskUnknownJoinedTable<TModel, TMembers, "NONNULL">;
     
     <TJoinType extends JoinType>(
         joinType: TJoinType
@@ -180,7 +180,7 @@ type CollectionJoinAction<
             TJoinType extends "LEFT" ? "NULLABLE" : "NONNULL", 
             TRiskAccepted
         >
-        : RiskUnkownJoinedTable<
+        : RiskUnknownJoinedTable<
             TModel,
             TMembers, 
             TJoinType extends "LEFT" ? "NULLABLE" : "NONNULL"
@@ -198,14 +198,14 @@ type CollectionJoinAction<
             TJoinType extends "LEFT" ? "NULLABLE" : "NONNULL", 
             TRiskAccepted
         >
-        : RiskUnkownJoinedTable<
+        : RiskUnknownJoinedTable<
             TModel,
             TMembers, 
             TJoinType extends "LEFT" ? "NULLABLE" : "NONNULL"
         >;
 };
 
-type RiskUnkownJoinedTable<
+type RiskUnknownJoinedTable<
     TModel extends AnyModel, 
     TMembers extends object, 
     TNullity extends NullityType
@@ -230,7 +230,7 @@ type WeakJoinAction<
             "NONNULL", 
             TRiskAccepted
         >
-        : RiskUnkownJoinedTable<
+        : RiskUnknownJoinedTable<
             TTargetModel,
             AllModelMembers<TTargetModel>, 
             "NONNULL"
@@ -250,7 +250,7 @@ type WeakJoinAction<
             TJoinType extends "LEFT" ? "NULLABLE" : "NONNULL", 
             TRiskAccepted
         >
-        : RiskUnkownJoinedTable<
+        : RiskUnknownJoinedTable<
             TTargetModel,
             AllModelMembers<TTargetModel>, 
             TJoinType extends "LEFT" ? "NULLABLE" : "NONNULL"

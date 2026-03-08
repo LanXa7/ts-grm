@@ -16,6 +16,10 @@ export class SqliteDriver implements Driver {
     get nameParameterPrefix(): string | undefined {
         return undefined;
     }
+
+    get isRecursiveKeywordRequired() {
+        return true;
+    }
 }
 
 const nodeRender = new class implements NodeRender {

@@ -11,7 +11,8 @@ export class BaseTableTarget {
     private _args: BaseQuerySelectMapArgs | undefined;
 
     constructor(
-        readonly baseModel: BaseModelImplementor<any>
+        readonly baseModel: BaseModelImplementor<any>,
+        readonly __isPrev: boolean
     ) {}
     
     __initialize(self: TypedBaseTable) {
@@ -37,17 +38,22 @@ export class BaseTableTarget {
 }
 
 export interface TypedBaseTable extends AbstractTable {
+
     __type(): {
         tableLike: true,
         baseTable: true
-    }
-    __unwrap(): BaseTableTarget
+    };
+    
+    __unwrap(): BaseTableTarget;
+
+    __isPrev: boolean;
 }
 
 export function createTypedBaseTable(
-    baseModel: BaseModelImplementor<any>
+    baseModel: BaseModelImplementor<any>,
+    prev: boolean
 ): TypedBaseTable {
-    const baseTable = new BaseTableTarget(baseModel);
+    const baseTable = new BaseTableTarget(baseModel, prev);
     const proxy = new Proxy(baseTable, typedBaseTableHandler) as any as TypedBaseTable;
     baseTable.__initialize(proxy);
     return proxy;
@@ -65,6 +71,8 @@ const typedBaseTableHandler: ProxyHandler<BaseTableTarget> = {
                 };
             case "__unwrap":
                 return () => target;
+            case "__isPrev":
+                return target.__isPrev;
             case "entity":
                 return undefined;
             case "baseModel":

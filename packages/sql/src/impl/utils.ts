@@ -8,7 +8,7 @@ export function toTables(
     for (let i = 0; i < args.length - 1; i++) {
         const model = args[i];
         const table = model instanceof BaseModelImpl
-            ? metadata.createTypedBaseTable(model)
+            ? metadata.createTypedBaseTable(model, false)
             : metadata.Entity.of(model as AnyModel).table(undefined);
         tables.push(table);
     }

@@ -9,6 +9,7 @@ import {
 import { MutableBaseQueryImpl } from "./mutable_base_query_impl";
 import { MapBaseQueryProjection } from "./query_projection";
 import { AbstractBaseQueryImpl } from "./abstract_base_query_impl";
+import { RecursiveMutableBaseQueryImpl } from "./recursive_mutable_base_query_impl";
 
 export class AtomBaseQueryImpl<TProjection> 
 extends AbstractBaseQueryImpl<TProjection>
@@ -20,7 +21,8 @@ implements
     readonly options: ast.AtomQueryOptions;
 
     constructor(
-        private readonly mutableQuery: MutableBaseQueryImpl,
+        readonly mutableQuery: MutableBaseQueryImpl,
+        readonly recursivePred: ast.AbstractPred | undefined,
         readonly _projection: MapBaseQueryProjection<BaseQueryMapOf<TProjection>>,
         options: ast.AtomQueryOptions | undefined
     ) {
@@ -38,6 +40,7 @@ implements
     distinct(): BaseQuery<TProjection> {
         return new AtomBaseQueryImpl(
             this.mutableQuery,
+            this.recursivePred,
             this._projection,
             {...this.options, distinct: true }
         );
@@ -46,6 +49,7 @@ implements
     limit(limit: number): AtomBaseQuery<TProjection> {
         return new AtomBaseQueryImpl(
             this.mutableQuery,
+            this.recursivePred,
             this._projection,
             {...this.options, limit }
         );
@@ -54,6 +58,7 @@ implements
     offset(offset: number): AtomBaseQuery<TProjection> {
         return new AtomBaseQueryImpl(
             this.mutableQuery,
+            this.recursivePred,
             this._projection,
             {...this.options, offset }
         );
@@ -89,6 +94,10 @@ implements
 
     get projection(): ast.ProjectionContract {
         return this._projection as any as ast.ProjectionContract;
+    }
+
+    get isRecursive(): boolean {
+        return this.mutableQuery instanceof RecursiveMutableBaseQueryImpl;
     }
 
     accept(visitor: ast.Visitor): void {

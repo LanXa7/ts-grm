@@ -1,3 +1,5 @@
+import { RealTable } from "./real_table";
+
 export class BaseQueryMetadata {
 
     private readonly _aliasMap = new Map<string, string>();
@@ -5,7 +7,8 @@ export class BaseQueryMetadata {
     private readonly _columnMap = new Map<string, string | Array<ExportedColumn>>();
 
     constructor(
-        readonly isCte: boolean
+        readonly isCte: boolean,
+        readonly realTable: RealTable
     ) {}
 
     alias(

@@ -91,15 +91,15 @@ export interface Visitor {
     visitDtDiffExpr(expr: DtDiffExpr): void;
 
     visitLiteral(value: any): void;
+
+    visitConstant(value: number): void;
 }
 
 export abstract class AbstractVisitor implements Visitor {
 
     visitAtomQuery(query: AtomQueryContract): void {
-        const wherePred = query.wherePred;
-        if (wherePred != null) {
-            wherePred.accept(this);
-        }
+        query.recursivePred?.accept(this);
+        query.wherePred?.accept(this);
         for (const order of query.orders) {
             (order.expression as any as Node).accept(this);
         }
@@ -109,10 +109,7 @@ export abstract class AbstractVisitor implements Visitor {
                 groupByExpr.accept(this);
             }
         }
-        const havingPred = query.havingPred;
-        if (havingPred != null) {
-            havingPred.accept(this);
-        }
+        query.havingPred?.accept(this);
     }
 
     visitMergedQuery(query: MergedQueryContract): void {
@@ -298,5 +295,9 @@ export abstract class AbstractVisitor implements Visitor {
 
     visitLiteral(_: any): void {
 
+    }
+
+    visitConstant(_: number): void {
+        
     }
 }

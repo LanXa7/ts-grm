@@ -8,7 +8,7 @@ export class AbstractMutableQuery {
 
     private _groupByExprs: ReadonlyArray<ExpressionLike> | undefined = undefined;
 
-    private _havingPreidicate: Predicate | undefined = undefined;
+    private _havingPredicate: Predicate | undefined = undefined;
 
     constructor(
         readonly tables: ReadonlyArray<metadata.AbstractTable>
@@ -57,7 +57,7 @@ export class AbstractMutableQuery {
         if (this._groupByExprs == null) {
             throw new err.StateError(`"having" cannot be invoked before "groupBy"`);
         }
-        this._havingPreidicate = dsl.and(this._havingPreidicate, ...predicates);
+        this._havingPredicate = dsl.and(this._havingPredicate, ...predicates);
         return this;
     }
 
@@ -74,6 +74,6 @@ export class AbstractMutableQuery {
     }
     
     get havingPred(): ast.AbstractPred | undefined {
-        return this._havingPreidicate as ast.AbstractPred | undefined;
+        return this._havingPredicate as ast.AbstractPred | undefined;
     }
 }

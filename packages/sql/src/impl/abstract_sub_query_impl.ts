@@ -21,6 +21,14 @@ export abstract class AbstractTupleSubQueryImpl {
     asValue(): this {
         return this;
     }
+
+    get isRecursive(): boolean {
+        return false;
+    }
+
+    get recursivePred(): ast.AbstractPred | undefined {
+        return undefined;
+    }
 }
 
 export abstract class AbstractExprSubQueryImpl extends ast.AbstractExpr<any> {
@@ -43,6 +51,14 @@ export abstract class AbstractExprSubQueryImpl extends ast.AbstractExpr<any> {
 
     asValue(): this {
         return this;
+    }
+
+    get isRecursive(): boolean {
+        return false;
+    }
+
+    get recursivePred(): ast.AbstractPred | undefined {
+        return undefined;
     }
 }
 
@@ -71,6 +87,14 @@ export abstract class AbstractNumSubQueryImpl extends ast.AbstractNumExpr<any> {
     asValue(): this {
         return this;
     }
+
+    get isRecursive(): boolean {
+        return false;
+    }
+
+    get recursivePred(): ast.AbstractPred | undefined {
+        return undefined;
+    }
 }
 
 export abstract class AbstractStrSubQueryImpl extends ast.AbstractStrExpr {
@@ -98,6 +122,14 @@ export abstract class AbstractStrSubQueryImpl extends ast.AbstractStrExpr {
     asValue(): this {
         return this;
     }
+
+    get isRecursive(): boolean {
+        return false;
+    }
+
+    get recursivePred(): ast.AbstractPred | undefined {
+        return undefined;
+    }
 }
 
 export abstract class AbstractDtSubQueryImpl extends ast.AbstractDtExpr {
@@ -124,5 +156,13 @@ export abstract class AbstractDtSubQueryImpl extends ast.AbstractDtExpr {
 
     asValue(): this {
         return this;
+    }
+
+    get isRecursive(): boolean {
+        return false;
+    }
+
+    get recursivePred(): ast.AbstractPred | undefined {
+        return undefined;
     }
 }

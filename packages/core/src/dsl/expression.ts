@@ -1,5 +1,5 @@
 import { NullityType } from "@/schema/prop";
-import { CompilationError, suppressUnused } from "@/utils"
+import { CompilationError } from "@/utils"
 import { ExpressionSubQuery } from "./sub_query";
 import { AtLeastOne, ExpressionOrder } from "./utils";
 import { AbstractStrExpr, ConcatExpr } from "@/impl/ast/str_expr";
@@ -7,6 +7,7 @@ import { ArgumentError } from "@/error/common";
 import { getInternalFactory } from "@/impl/ast/internal_factory";
 import { OrderNullsType } from "@/schema/order";
 import { CompoundPred } from "@/impl/ast/pred";
+import { ConstantExpr } from "@/impl/ast/constant";
 
 export type Expression<
     T, 
@@ -368,8 +369,7 @@ export type ExpressionLike = {
 export function constant(
     value: number
 ): Expression<number> {
-    suppressUnused(value);
-    throw new Error();
+    return new ConstantExpr(value) as any as Expression<number>;
 }
 
 export function concat(

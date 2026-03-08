@@ -19,6 +19,10 @@ export class MergedRootQueryImpl<
         readonly queries: ReadonlyArray<ast.QueryContract>
     ) {}
 
+    get isRecursive(): boolean {
+        return false;
+    }
+
     accept(visitor: ast.Visitor): void {
         visitor.visitMergedQuery(this);
     }
@@ -31,12 +35,22 @@ implements BaseQuery<TProjection>, ast.MergedQueryContract {
     __type(): { baseQuery: TProjection | true; } {
         return { baseQuery: true };
     }
+
+    readonly isRecursive: boolean;
     
     constructor(
         readonly kind: ast.MergedQueryKind,
         readonly queries: ReadonlyArray<ast.QueryContract>
     ) {
         super();
+        let recursive = false;
+        for (const query of queries) {
+            if (query.isRecursive) {
+                recursive = true;
+                break;
+            } 
+        }
+        this.isRecursive = recursive;
     }
     
     get args(): BaseQueryMapOf<TProjection> {

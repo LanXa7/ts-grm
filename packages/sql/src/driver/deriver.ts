@@ -7,4 +7,6 @@ export interface Driver {
     readonly nodeRender: NodeRender;
 
     readonly nameParameterPrefix: string | undefined;
+
+    readonly isRecursiveKeywordRequired: boolean;
 }

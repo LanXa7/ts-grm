@@ -225,12 +225,14 @@ describe("QueryTest", () => {
                     treeNode,
                     depth: dsl.constant(0)
                 });
-            }).unionAllRecursively(TREE_NODE, (q, treeNode) => {
-                q.where(treeNode.parentNodeId.eq(q.prev.treeNode.id));
-                return q.select({
-                    treeNode,
-                    depth: q.prev.depth.plus(1)
-                })
+            }).unionAllRecursively(TREE_NODE, {
+                join: (prev, treeNode) => treeNode.parentNodeId.eq(prev.treeNode.id),
+                query: (q, treeNode) => {
+                    return q.select({
+                        treeNode,
+                        depth: q.prev.depth.plus(1)
+                    })
+                }
             })
         );
         const rows = await sqlClient().createQuery(baseModel, (q, base) => {

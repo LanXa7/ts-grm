@@ -1,4 +1,4 @@
-import { AnyModel, AtLeastOne, BaseModel, BaseQuery, BaseQueryMapOf, BaseQueryProjection, BaseQuerySelectMapArgs, BaseTable, dsl, metadata, RecursiveMutableBaseQuery, Table } from "@ts-grm/core";
+import { AnyModel, ast, AtLeastOne, BaseModel, BaseQuery, BaseQueryMapOf, BaseQueryProjection, BaseQuerySelectMapArgs, BaseTable, dsl, metadata, Predicate, RecursiveMutableBaseQuery, Table } from "@ts-grm/core";
 import { toTables } from "./utils";
 import { RecursiveMutableBaseQueryImpl } from "./recursive_mutable_base_query_impl";
 import { MapBaseQueryProjection } from "./query_projection";
@@ -12,25 +12,36 @@ implements metadata.BaseQueryImplementor<TProjection> {
     };
 
     unionAllRecursively<
-        const TModels extends AtLeastOne<AnyModel | BaseModel<any>>
-    >(
-        ...args: [
-            ...models: TModels,
-            fn: (
-                q: RecursiveMutableBaseQuery<TProjection>,
-                ...tables: {
-                    [K in keyof TModels]: Table<TModels[K]>
-                } extends infer T ? T extends any[] ? T : never : never
-            ) => TProjection
-        ]
-    ): BaseQuery<TProjection> {
-        const prev = metadata.createTypedBaseTable(this.toModel(true)) as BaseTable<BaseQueryMapOf<TProjection>>;
+            const TModels extends AtLeastOne<AnyModel | BaseModel<any>>,
+            const TPrev extends BaseTable<BaseQueryMapOf<TProjection>>
+        >(
+            ...args: [
+                ...models: TModels,
+                fnOptions: {
+                    readonly join: (
+                        prev: TPrev, 
+                        ...tables: {
+                            [K in keyof TModels]: Table<TModels[K]>
+                        } extends infer T ? T extends any[] ? T : never : never
+                    ) => Predicate,
+                    readonly query: (
+                        q: RecursiveMutableBaseQuery<TProjection>,
+                        ...tables: {
+                            [K in keyof TModels]: Table<TModels[K]>
+                        } extends infer T ? T extends any[] ? T : never : never
+                    ) => TProjection
+                }
+            ]
+        ): BaseQuery<TProjection> {
+        const prev = metadata.createTypedBaseTable(this.toModel(true), true) as BaseTable<BaseQueryMapOf<TProjection>>;
         const tables = toTables(args);
+        const options = args[args.length - 1] as any;
+        const join = options.join as Function;
+        const query = options.query as Function;
+        const predicate = join.apply(undefined, [ prev, ...tables ]) as Predicate;
         const mutableQuery = new RecursiveMutableBaseQueryImpl<TProjection>(prev, tables);
-        const fnArgs = [ mutableQuery, ...tables ];
-        const fn = args[args.length - 1] as Function;
-        const projection = fn.apply(undefined, fnArgs) as MapBaseQueryProjection<BaseQueryMapOf<TProjection>>;
-        const newQuery = new AtomBaseQueryImpl(mutableQuery, projection, undefined);
+        const projection = query.apply(undefined, [ mutableQuery, ...tables ]) as MapBaseQueryProjection<BaseQueryMapOf<TProjection>>;
+        const newQuery = new AtomBaseQueryImpl(mutableQuery, predicate as any, projection, undefined);
         return dsl.unionAll(this, newQuery);
     }
 
@@ -62,6 +73,10 @@ export class BaseModelImpl<T extends BaseQuerySelectMapArgs> implements metadata
 
     get __args(): T {
         return this._args;
+    }
+
+    get __isRecursive(): boolean {
+        return (this._query as any as ast.QueryContract).isRecursive;
     }
 
     __toQuery(): metadata.BaseQueryImplementor<BaseQueryProjection<T>> {

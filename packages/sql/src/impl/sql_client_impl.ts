@@ -143,7 +143,7 @@ class QueryFactoryImpl implements ast.QueryFactory {
         const fnArgs: Array<any> = [ mutableQuery, ...tables ];
         const fn = args[args.length - 1] as Function;
         const projection = fn.apply(undefined, fnArgs) as MapBaseQueryProjection<BaseQueryMapOf<TProjection>>;
-        return new AtomBaseQueryImpl(mutableQuery, projection, undefined);
+        return new AtomBaseQueryImpl(mutableQuery, undefined, projection, undefined);
     }
 
     createMergedRootQuery<TProjection extends RootQueryProjection<any>>(

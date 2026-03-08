@@ -4,10 +4,15 @@ import { BaseTable, Table, TableLike } from "./table";
 import { AtLeastOne, ExpressionOrder } from "./utils";
 import { getQueryFactory } from "@/impl/ast/query_factory";
 import { BaseQueryImplementor } from "@/impl/base_query_implementor";
+import { QueryContract } from "@/impl/ast";
+import { ArgumentError } from "@/error/common";
 
 export function derivedModel<TQuery extends BaseQuery<any>>(
     query: TQuery,
 ) : BaseModel<BaseQueryMapOf<TQuery>> {
+    if ((query as any as QueryContract).isRecursive) {
+        throw new ArgumentError("The query contains recursive query, please use \"dsl.cteModel\"");
+    }
     return (query as any as BaseQueryImplementor<any>).toModel(false) as 
         BaseModel<BaseQueryMapOf<TQuery>>;
 }
@@ -79,16 +84,25 @@ export interface BaseQuery<TProjection> {
     __type(): { baseQuery: TProjection | true; };
 
     unionAllRecursively<
-        const TModels extends AtLeastOne<AnyModel | BaseModel<any>>
+        const TModels extends AtLeastOne<AnyModel | BaseModel<any>>,
+        const TPrev extends BaseTable<BaseQueryMapOf<TProjection>>
     >(
         ...args: [
             ...models: TModels,
-            fn: (
-                q: RecursiveMutableBaseQuery<TProjection>,
-                ...tables: {
-                    [K in keyof TModels]: Table<TModels[K]>
-                } extends infer T ? T extends any[] ? T : never : never
-            ) => TProjection
+            fnOptions: {
+                readonly join: (
+                    prev: TPrev, 
+                    ...tables: {
+                        [K in keyof TModels]: Table<TModels[K]>
+                    } extends infer T ? T extends any[] ? T : never : never
+                ) => Predicate,
+                readonly query: (
+                    q: RecursiveMutableBaseQuery<TProjection>,
+                    ...tables: {
+                        [K in keyof TModels]: Table<TModels[K]>
+                    } extends infer T ? T extends any[] ? T : never : never
+                ) => TProjection
+            }
         ]
     ): BaseQuery<TProjection>;
 }
