@@ -1,22 +1,17 @@
-import { ast, err, metadata, RootQuerySelection } from "@ts-grm/core";
-import { Column, Composite, Query, Scope, Source, Value } from "./fragment";
+import { ast, err, metadata } from "@ts-grm/core";
+import { Column, Composite, Query, Scope, ShadowColumn, ShadowExpr, Source, Value } from "./fragment";
 import { Stack } from "./stack";
 import { Precedence } from "./precedence";
-import { JoinMergeScope } from "./join_merge_scope";
-import { NodeRender, NodeRenderContext } from "@/driver/fun_render";
+import { NodeRender, NodeRenderContext } from "@/driver/node_render";
 import { RealTable } from "./real_table";
 import { SqlClientImplementor } from "@/sql_client";
+import { BaseQueryMetadata } from "./base_query_metadata";
 
 export class FragmentGenGenVisitor extends ast.AbstractVisitor {
 
     private readonly _compositeStack: Stack<Composite>;
 
     private readonly _precedenceStack: Stack<number>;
-
-    private _tableMap = new Map<metadata.AbstractEntityTable | metadata.BaseTableTarget, RealTable>();
-
-    private readonly _joinMergeScopeStack =
-        new Stack<JoinMergeScope>(undefined);
 
     private readonly _strategy: metadata.DatabaseNamingStrategy;
 
@@ -25,7 +20,9 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
     private readonly _nodeRenderContext: NodeRenderContext;
 
     constructor(
-        readonly sqlClient: SqlClientImplementor
+        readonly sqlClient: SqlClientImplementor,
+        private readonly _baseQueryMetadata: BaseQueryMetadata | undefined,
+        private readonly _tableMap: ReadonlyMap<metadata.AbstractEntityTable | metadata.TypedBaseTable, RealTable>
     ) {
         super();
         this._strategy = sqlClient.options.strategy;
@@ -110,7 +107,7 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
                 new Source(
                     query.tables.map(t => 
                         this._toRealTable(
-                            t as metadata.AbstractEntityTable | metadata.BaseTableTarget
+                            t as metadata.AbstractEntityTable | metadata.TypedBaseTable
                         )
                     )
                 )
@@ -128,9 +125,14 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
         if (orders.length !== 0) {
             this._compositeStack.current.text("\norder by ");
             using _ = this._compositeStack.with(new Scope("COMMA"));
+            const current = this._compositeStack.current;
             for (const order of query.orders) {
-                this._compositeStack.current.separator();
+                current.separator();
                 (order.expression as ast.AbstractExpr<any>).accept(this);
+                current.text(order.desc ? " desc" : " asc");
+                if (order.nullsType !== "UNSPECIFIED") {
+                    current.text(`nulls ${order.nullsType.toLowerCase()}`);
+                }
             }
         }
 
@@ -240,9 +242,7 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
     }
 
     visitLikePred(pred: ast.LikePred): void {
-        using _ = this._precedenceStack.with(Precedence.COMPARISON);
-        pred.expr.accept(this);
-        pred.pattern.accept(this);
+        this._nodeRender.renderLikePred(pred, this._nodeRenderContext);
     }
 
     visitNullityPred(pred: ast.NullityPred): void {
@@ -256,17 +256,9 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
     }
 
     visitCompoundPred(pred: ast.CompoundPred): void {
-        if (pred.op === "AND") {
-            using _ = this._precedenceStack.with(Precedence.AND);
-            for (const p of pred.preds) {
-                p.accept(this);
-            }
-        } else {
-            this._precedenceStack.with(Precedence.OR);
-            for (const p of pred.preds) {
-                using _ = this._joinMergeScopeStack.with(new JoinMergeScope());
-                p.accept(this);
-            }
+        using _ = this._precedenceStack.with(pred.op === "AND" ? Precedence.AND : Precedence.OR);
+        for (const p of pred.preds) {
+            p.accept(this);
         }
     }
 
@@ -277,21 +269,34 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
     }
 
     visitFetchedView(fetchedView: ast.FetchedViewContract): void {
-        const realTable = this._toRealTable(fetchedView.table);
+        const table = fetchedView.table;
+        
         for (const field of fetchedView.view.mapper.fields) {
             if (field.columnIndex == null) {
                 continue;
             }
             const column = field.prop.toStorage(this._strategy) as metadata.Column;
             this._compositeStack.current.separator();
-            this._compositeStack.current.add(new Column(realTable, column.name));
+            if (table.baseModel != null) {
+                const realTable = this._toRealTable((table as metadata.AbstractEntityTable).shadow!);
+                this._compositeStack.current.add(new ShadowColumn(realTable, table.anchor!.exportedName, column.name));
+            } else {
+                const realTable = this._toRealTable(table);
+                this._compositeStack.current.add(new Column(realTable, column.name));
+            }
         }
     }
 
     visitTablePropExpr(expr: ast.PropExprContract): void {
-        const realTable = this._toRealTable(expr.table);
+        const shadow = expr.table.shadow;
         const column = expr.prop.toStorage(this._strategy) as metadata.Column;
-        this._compositeStack.current.add(new Column(realTable, column.name));
+        if (shadow != null) {
+            const shadowRealTable = this._toRealTable(shadow);
+            this._compositeStack.current.add(new ShadowColumn(shadowRealTable, expr.table.anchor!.exportedName!, column.name));
+        } else {
+            const realTable = this._toRealTable(expr.table);
+            this._compositeStack.current.add(new Column(realTable, column.name));
+        }
     }
 
     visitCoalesceExpr(expr: ast.CoalesceExprContract): void {
@@ -323,8 +328,14 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
         expr.subQuery.accept(this);
     }
 
-    visitShadowExpr(_: ast.ShadowExprContract): void {
-
+    visitShadowExpr(expr: ast.ShadowExprContract): void {
+        const shadow = expr.shadow;
+        if (shadow != null) {
+            const realTable = this._toRealTable(shadow);
+            this._compositeStack.current.add(new ShadowExpr(realTable, expr.anchor.exportedName));
+        } else {
+            (expr.anchor.original as any as ast.Node).accept(this);
+        }
     }
 
     visitLowerExpr(expr: ast.LowerExpr): void {
@@ -461,40 +472,37 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
                     this._compositeStack.current.separator();
                     (selection as any as ast.Node).accept(this);
                 }
+                break;
+            case "BASE":
+                for (const key in projection.args) {
+                    const exportedData = this._baseQueryMetadata!.exportedData(key)!;
+                    const selection = projection.args[key];
+                    if (typeof exportedData === "string") {
+                        this._compositeStack.current.separator();
+                        const expr = selection as any as ast.ShadowExprContract;
+                        expr.accept(this);
+                        this._compositeStack.current.text(' ').text(exportedData);
+                    } else {
+                        for (const exportedColumn of exportedData) {
+                            this._compositeStack.current.separator();
+                            const table = selection as metadata.AbstractEntityTable;
+                            const realTable = this._toRealTable(table);
+                            this._compositeStack.current.add(new Column(realTable, exportedColumn.columnName));
+                            this._compositeStack.current.text(" ").text(exportedColumn.alias);
+                        }
+                    }
+                }
+                break;
         }
     }
 
-    private _toRealTable(table: metadata.AbstractEntityTable | metadata.BaseTableTarget): RealTable {
-        let realTable = this._tableMap.get(table);
-        if (realTable == null) {
-            const joinOperation = table instanceof metadata.AbstractEntityTable 
-                ? table.joinOperation
-                : undefined;
-            if (joinOperation == null) {
-                realTable = new RealTable(table);
-            } else {
-                const parentRealTable = this._toRealTable(joinOperation.parent);
-                realTable = parentRealTable.child(
-                    table as metadata.AbstractEntityTable, 
-                    this._joinMergeScopeStack.currentOrUndefined
-                );
-            }
-            if (table instanceof metadata.AbstractEntityTable) {
-                // const anchor = table.anchor;
-                // if (anchor != null) {
-                //     realTable._shadow = this.toRealTable(shadow);
-                // }
-                // TODO
-            }
-            this._tableMap.set(table, realTable);
-        }
-        return realTable;
+    private _toRealTable(
+        table: metadata.AbstractEntityTable | metadata.TypedBaseTable
+    ): RealTable {
+        return this._tableMap.get(table) ?? err.makeErr("No mapped real table");
     }
 
     toResult(): Composite {
-        if (this._joinMergeScopeStack.size() !== 0) {
-            throw new err.StateError("joinMergeScopeStack is not cleanup");
-        }
         if (this._precedenceStack.size() !== 0) {
             throw new err.StateError("precedenceStack is not cleanup");
         }

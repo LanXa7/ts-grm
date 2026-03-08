@@ -17,7 +17,11 @@ export abstract class AbstractStrExpr extends AbstractCmpExpr<string> {
         if (value === "" && finalMode === "CONTAINS") {
             return undefined;
         }
-        return new LikePred(this, getInternalFactory().createLiteral(value), finalMode, false);
+        return new LikePred(
+            this, 
+            getInternalFactory().createLiteral(likePattern(value, false, finalMode)), 
+            false
+        );
     };
 
     ilike(
@@ -28,7 +32,11 @@ export abstract class AbstractStrExpr extends AbstractCmpExpr<string> {
         if (value === "" && finalMode === "CONTAINS") {
             return undefined;
         }
-        return new LikePred(this, getInternalFactory().createLiteral(value), finalMode, true);
+        return new LikePred(
+            this, 
+            getInternalFactory().createLiteral(likePattern(value, true, finalMode)), 
+            true
+        );
     }
 
     likeIf(
@@ -38,11 +46,7 @@ export abstract class AbstractStrExpr extends AbstractCmpExpr<string> {
         if (value == null) {
             return undefined;
         }
-        const finalMode = mode ?? "CONTAINS";
-        if (value === "" && finalMode === "CONTAINS") {
-            return undefined;
-        }
-        return new LikePred(this, getInternalFactory().createLiteral(value), finalMode, false);
+        return this.like(value, mode);
     }
 
     ilikeIf(
@@ -52,11 +56,7 @@ export abstract class AbstractStrExpr extends AbstractCmpExpr<string> {
         if (value == null) {
             return undefined;
         }
-        const finalMode = mode ?? "CONTAINS";
-        if (value === "" && finalMode === "CONTAINS") {
-            return undefined;
-        }
-        return new LikePred(this, getInternalFactory().createLiteral(value), finalMode, true);
+        return this.ilike(value, mode);
     }
 
     lower(): LowerExpr {
@@ -339,4 +339,17 @@ export class ConcatExpr extends AbstractStrExpr {
     accept(visitor: Visitor): void {
         visitor.visitConcatExpr(this);
     }
+}
+
+function likePattern(value: string, insensitive: boolean, mode: LikeMode): string {
+    if (insensitive) {
+        value = value.toLowerCase();
+    }
+    if (!value.startsWith("%") && (mode === "CONTAINS" || mode === "ENDS_WITH")) {
+        value = `%${value}`;
+    }
+    if (!value.endsWith("%") && (mode === "CONTAINS" || mode === "STARTS_WITH")) {
+        value = `${value}%`;
+    }
+    return value;
 }

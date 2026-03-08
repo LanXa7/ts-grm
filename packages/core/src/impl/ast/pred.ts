@@ -1,4 +1,4 @@
-import { Expression, LikeMode } from "@/dsl";
+import { Expression } from "@/dsl";
 import { AbstractExpr } from "./expr";
 import { Visitor } from "./visitor";
 import { QueryContract } from "./query";
@@ -80,8 +80,7 @@ export class LikePred extends AbstractPred {
     constructor(
         readonly expr: AbstractExpr<string>,
         readonly pattern: AbstractExpr<string>,
-        readonly mode: LikeMode,
-        readonly sensitive: boolean,
+        readonly insensitive: boolean,
         readonly neg: boolean = false
     ) {
         super();
@@ -91,8 +90,7 @@ export class LikePred extends AbstractPred {
         return new LikePred(
             this.expr,
             this.pattern,
-            this.mode,
-            this.sensitive,
+            this.insensitive,
             !this.neg
         );
     }

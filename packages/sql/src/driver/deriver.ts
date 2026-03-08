@@ -1,4 +1,4 @@
-import { NodeRender } from "./fun_render";
+import { NodeRender } from "./node_render";
 
 export interface Driver {
 

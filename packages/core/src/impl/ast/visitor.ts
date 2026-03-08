@@ -12,6 +12,7 @@ import { ShadowExprContract } from "./shadow_expr";
 import type { ConcatExpr, LeftExpr, LengthExpr, LowerExpr, PadExpr, PositionExpr, ReplaceExpr, ReverseExpr, RightExpr, SubstringExpr, TrimExpr, UpperExpr } from "./str_expr";
 import { ExistsPred, SubQueryExprContract } from "./sub_query_expr";
 import { TupleCmpPred, TupleContract, TupleInCollectionPred, TupleInSubQueryPred } from "./tuple";
+import { Node } from "./node";
 
 export interface Visitor {
 
@@ -94,7 +95,25 @@ export interface Visitor {
 
 export abstract class AbstractVisitor implements Visitor {
 
-    abstract visitAtomQuery(query: AtomQueryContract): void;
+    visitAtomQuery(query: AtomQueryContract): void {
+        const wherePred = query.wherePred;
+        if (wherePred != null) {
+            wherePred.accept(this);
+        }
+        for (const order of query.orders) {
+            (order.expression as any as Node).accept(this);
+        }
+        const groupByExprs = query.groupByExprs;
+        if (groupByExprs != null) {
+            for (const groupByExpr of groupByExprs) {
+                groupByExpr.accept(this);
+            }
+        }
+        const havingPred = query.havingPred;
+        if (havingPred != null) {
+            havingPred.accept(this);
+        }
+    }
 
     visitMergedQuery(query: MergedQueryContract): void {
         for (const qry of query.queries) {

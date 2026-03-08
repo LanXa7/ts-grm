@@ -3,6 +3,11 @@ import { ast } from "@ts-grm/core";
 
 export interface NodeRender {
 
+    renderLikePred(
+        expr: ast.LikePred,
+        ctx: NodeRenderContext
+    ): void;
+
     renderReverseExpr(
         expr: ast.ReverseExpr,
         ctx: NodeRenderContext

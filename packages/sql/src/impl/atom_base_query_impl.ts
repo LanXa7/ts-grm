@@ -12,7 +12,10 @@ import { AbstractBaseQueryImpl } from "./abstract_base_query_impl";
 
 export class AtomBaseQueryImpl<TProjection> 
 extends AbstractBaseQueryImpl<TProjection>
-implements AtomBaseQuery<TProjection>, metadata.BaseQueryImplementor<TProjection>, ast.AtomQueryContract {
+implements 
+    AtomBaseQuery<TProjection>, 
+    metadata.BaseQueryImplementor<TProjection>, 
+    ast.AtomQueryContract {
 
     readonly options: ast.AtomQueryOptions;
 

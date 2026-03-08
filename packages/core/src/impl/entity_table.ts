@@ -11,12 +11,16 @@ import { BaseModelImplementor } from "./base_query_implementor";
 import { FetchedView } from "@/dsl/root_query";
 import { View } from "@/schema/dto";
 import { FetchedViewImpl } from "./fetched_view_impl";
+import { TypedBaseTable } from "./base_table";
+import { StateError } from "@/error/common";
 
 export abstract class AbstractEntityTable implements AbstractTable {
 
     readonly joinOperation: JoinOperation | undefined;
 
     readonly anchor: ShadowAnchor | undefined;
+
+    private _shadow: TypedBaseTable | undefined = undefined;
 
     constructor(
         readonly entity: Entity,
@@ -54,6 +58,26 @@ export abstract class AbstractEntityTable implements AbstractTable {
 
     fetch<T>(view: View<any, T>): FetchedView<any, T> {
         return new FetchedViewImpl(this, view);
+    }
+
+    get shadow(): TypedBaseTable | undefined {
+        return this._shadow;
+    }
+
+    forShadow(shadow: TypedBaseTable): AbstractEntityTable {
+        if (this._shadow === shadow) {
+            return this;
+        }
+        if (shadow.baseModel !== this.anchor?.baseModel) {
+            throw new StateError(
+                "Failed to create a clone table for the shadow, " + 
+                "because the model of the shadow anchor in the current table " + 
+                "differs from the model of the actual shadow"
+            );
+        }
+        const cloned = Object.assign(Object.create(Object.getPrototypeOf(this)), this) as AbstractEntityTable;
+        cloned._shadow = shadow;
+        return cloned;
     }
 }
 

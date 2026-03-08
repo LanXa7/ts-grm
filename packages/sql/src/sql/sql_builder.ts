@@ -5,6 +5,8 @@ import { SqlLoggerParameterType } from "@/cfg/sql_client_options";
 
 export class SqlBuilder {
 
+    readonly strategy: metadata.DatabaseNamingStrategy;
+
     private readonly _parts: Array<string> = [];
 
     private _length: number = 0;
@@ -18,17 +20,18 @@ export class SqlBuilder {
     private _nextTableAlias = 0;
 
     constructor(
-        readonly strategy: metadata.DatabaseNamingStrategy,
+        readonly sqlClient: SqlClientImplementor,
         readonly pretty: boolean,
         readonly parameter: SqlLoggerParameterType,
         readonly nameParameterPrefix: string | undefined
     ) {
+        this.strategy = sqlClient.options.strategy;
     }
 
     static of(sqlClient: SqlClient): SqlBuilder {
         const implementor = sqlClient as SqlClientImplementor;
         return new SqlBuilder(
-            implementor.options.strategy,
+            implementor,
             implementor.options.sqlLogger.pretty,
             implementor.options.sqlLogger.parameter,
             implementor.driver.nameParameterPrefix

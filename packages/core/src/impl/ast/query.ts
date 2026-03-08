@@ -51,7 +51,7 @@ export type ProjectionContract = {
     readonly selections: ReadonlyArray<ExpressionLike>;
 } | {
     kind: "BASE";
-    selections: { readonly [key: string]: ExpressionLike | TableLike; }
+    args: { readonly [key: string]: ExpressionLike | TableLike; }
 };
 
 export type AtomQueryOptions = {

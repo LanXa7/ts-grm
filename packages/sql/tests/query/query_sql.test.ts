@@ -7,7 +7,7 @@ import { Composite } from "@/sql/fragment";
 import { SqlBuilder } from "@/sql/sql_builder";
 import { expectCode } from "../utils";
 
-describe("SimpleQueryTest", () => {
+describe("QuerySqlTest", () => {
 
     const sqlClient = newSqlClient(new SqliteDriver(), {
         sqlLogger: {
@@ -22,7 +22,7 @@ describe("SimpleQueryTest", () => {
             q.where(book.id.eq(3));
             return q.select(book.fetch(SIMPLE_BOOK_VIEW));
         });
-        const composite = Composite.of(q, sqlClient);
+        const composite = Composite.of(q, sqlClient, undefined);
         const builder = SqlBuilder.of(sqlClient);
         composite.into(builder);
         const [sql] = builder.build();
@@ -54,7 +54,7 @@ describe("SimpleQueryTest", () => {
                 book.fetch(SIMPLE_BOOK_VIEW)
             );
         });
-        const composite = Composite.of(q, sqlClient);
+        const composite = Composite.of(q, sqlClient, undefined);
         const builder = SqlBuilder.of(sqlClient);
         composite.into(builder);
         const [sql] = builder.build();
@@ -100,8 +100,43 @@ describe("SimpleQueryTest", () => {
         );
         const q = sqlClient.createQuery(baseModel, (q, base) => {
             q.where(base.rank.between(1, 3));
+            q.orderBy(base.book.price.desc());
             return q.select(base.book.fetch(SIMPLE_BOOK_VIEW));
         });
-        console.log(q);
+        const composite = Composite.of(q, sqlClient, undefined);
+        const builder = SqlBuilder.of(sqlClient);
+        composite.into(builder);
+        const [sql] = builder.build();
+        expectCode(sql, `
+            select 
+                tb_1_.c1,
+                tb_1_.c2,
+                tb_1_.c3
+            from (
+                select 
+                    tb_2_.ID c1,
+                    tb_2_.NAME c2,
+                    tb_2_.EDITION c3,
+                    tb_2_.PRICE c5,
+                    row_number() over(order by tb_2_.PRICE desc) c4
+                from BOOK tb_2_
+                where 
+                    tb_2_.STORE_ID = ?
+                union all
+                select 
+                    tb_3_.ID c1,
+                    tb_3_.NAME c2,
+                    tb_3_.EDITION c3,
+                    tb_3_.PRICE c5,
+                    row_number() over(order by tb_3_.PRICE desc) c4
+                from BOOK tb_3_
+                where 
+                    lower(tb_3_.NAME) like ?
+            ) tb_1_
+            where 
+                tb_1_.c4 between ? and ?
+            order by 
+                tb_1_.c5 desc
+        `);
     });
 });

@@ -1,6 +1,6 @@
 import { ast, err } from "@ts-grm/core";
 import { Driver } from "./deriver";
-import { NodeRender, NodeRenderContext } from "./fun_render";
+import { NodeRender, NodeRenderContext } from "./node_render";
 import { Precedence } from "@/sql/precedence";
 
 export class SqliteDriver implements Driver {
@@ -19,6 +19,19 @@ export class SqliteDriver implements Driver {
 }
 
 const nodeRender = new class implements NodeRender {
+
+    renderLikePred(pred: ast.LikePred, ctx: NodeRenderContext): void {
+        using _ = ctx.withPrecedence(Precedence.COMPARISON);
+        if (pred.insensitive) {
+            ctx.text("lower(");
+            ctx.render(pred.expr);
+            ctx.text(") like ");
+        } else {
+            ctx.render(pred.expr);
+            ctx.text(" like ");
+        }
+        ctx.render(pred.pattern);
+    }
 
     renderReverseExpr(_expr: ast.ReverseExpr, _ctx: NodeRenderContext): void {
         this._unsupported("reverse");

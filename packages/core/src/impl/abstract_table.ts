@@ -1,9 +1,12 @@
 import { Entity } from "./entity";
 import { BaseModelImplementor } from "./base_query_implementor";
+import { TypedBaseTable } from "./base_table";
 
 export interface AbstractTable {
 
-    get entity(): Entity | undefined;
+    readonly entity: Entity | undefined;
 
-    get baseModel(): BaseModelImplementor<any> | undefined;
+    readonly baseModel: BaseModelImplementor<any> | undefined;
+
+    readonly shadow: TypedBaseTable | undefined;
 }

@@ -3,6 +3,8 @@ import { RealTable } from "./real_table";
 import { SqlBuilder } from "./sql_builder";
 import { FragmentGenGenVisitor } from "./fragment_gen_visitor";
 import { SqlClientImplementor } from "@/sql_client";
+import { BaseQueryMetadata } from "./base_query_metadata";
+import { PreVisitor } from "./pre_visitor";
 
 export abstract class Fragment {
 
@@ -75,8 +77,14 @@ export class Composite extends Fragment {
         }
     }
 
-    static of(o: any, sqlClient: SqlClient): Composite {
-        const visitor = new FragmentGenGenVisitor(sqlClient as SqlClientImplementor);
+    static of(o: any, sqlClient: SqlClient, metadata: BaseQueryMetadata | undefined): Composite {
+        const preVisitor = new PreVisitor(sqlClient as SqlClientImplementor);
+        (o as ast.Node).accept(preVisitor);
+        const visitor = new FragmentGenGenVisitor(
+            sqlClient as SqlClientImplementor, 
+            metadata, 
+            preVisitor.tableMap
+        );
         (o as ast.Node).accept(visitor);
         return visitor.toResult();
     }
@@ -225,15 +233,46 @@ export class Column extends Fragment {
     }
 
     into(builder: SqlBuilder): void {
-        if (this.table.isShadow) {
-            const baseTable = this.table._baseTable!;
-            builder
-                .sql(baseTable.alias)
-                .sql(".")
-                .sql(this.table.shadowAlias(this.name));
-            return;
-        }
+        // if (this.table.isShadow) {
+        //     const baseTable = this.table._baseTable!;
+        //     builder
+        //         .sql(baseTable.alias)
+        //         .sql(".")
+        //         .sql(this.table.shadowAlias(this.name));
+        //     return;
+        // }
         builder.sql(this.table.alias).sql(".").sql(this.name);
+    }
+}
+
+export class ShadowColumn extends Fragment {
+    
+    constructor(
+        readonly table: RealTable, 
+        readonly exportedName: string,
+        readonly name: string
+    ) {
+        super();
+    }
+
+    into(builder: SqlBuilder): void {
+        const alias = this.table.baseQueryMetadata.alias(this.exportedName, this.name);
+        builder.sql(this.table.alias).sql(".").sql(alias);
+    }
+}
+
+export class ShadowExpr extends Fragment {
+
+    constructor(
+        readonly table: RealTable, 
+        readonly exportedName: string
+    ) {
+        super();
+    }
+
+    into(builder: SqlBuilder): void {
+        const alias = this.table.baseQueryMetadata.alias(this.exportedName, undefined);
+        builder.sql(this.table.alias).sql(".").sql(alias);
     }
 }
 
@@ -246,25 +285,26 @@ export class ExportedTable extends Fragment {
     }
 
     into(builder: SqlBuilder): void {
-        const shadowAliasMap = this.table._shadow?.shadowAliasMap;
-        if (shadowAliasMap === undefined) {
-            builder.sql("1");
-        } else {
-            let addComma = false;
-            for (const [columnName, alias] of shadowAliasMap.entries()) {
-                if (addComma) {
-                    builder.sql(",\n");
-                } else {
-                    addComma = true;
-                }
-                builder
-                    .sql(this.table.alias)
-                    .sql(".")
-                    .sql(columnName)
-                    .sql(" ")
-                    .sql(alias);
-            }
-        }
+        builder.sql("@@@");
+        // const shadowAliasMap = this.table._shadow?.shadowAliasMap;
+        // if (shadowAliasMap === undefined) {
+        //     builder.sql("1");
+        // } else {
+        //     let addComma = false;
+        //     for (const [columnName, alias] of shadowAliasMap.entries()) {
+        //         if (addComma) {
+        //             builder.sql(",\n");
+        //         } else {
+        //             addComma = true;
+        //         }
+        //         builder
+        //             .sql(this.table.alias)
+        //             .sql(".")
+        //             .sql(columnName)
+        //             .sql(" ")
+        //             .sql(alias);
+        //     }
+        // }
     }
 }
 
@@ -316,6 +356,19 @@ export class Source extends Composite {
                     .sql(entityTable.entity.toTableName(builder.strategy))
                     .sql(" ")
                     .sql(rootTable.alias);
+            } else {
+                const baseTable = rootTable.symbol as metadata.TypedBaseTable;
+                if (!baseTable.baseModel!.__isCte) {
+                    const composite = Composite.of(
+                        baseTable.baseModel!.__toQuery(), 
+                        builder.sqlClient,
+                        rootTable.baseQueryMetadata
+                    );
+                    const wrapper = new Scope("VALUES");
+                    wrapper.add(composite);
+                    wrapper.into(builder);
+                }
+                builder.sql(" ").sql(rootTable.alias);
             }
         }
     }

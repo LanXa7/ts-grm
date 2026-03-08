@@ -169,9 +169,9 @@ class InternalFactoryImpl implements InternalFactory {
     }
 
     createShadowExpr<T>(
-        expr: AbstractExpr<T>, 
         anchor: ShadowAnchor
     ): AbstractExpr<T> {
+        const expr = anchor.original;
         if (expr instanceof AbstractDtExpr) {
             return new ShadowDtExpr(anchor) as AbstractExpr<T>;
         }

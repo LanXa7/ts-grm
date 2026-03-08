@@ -1,14 +1,17 @@
-import { BaseQuerySelectMapArgs } from "@/dsl";
+import { BaseQuerySelectMapArgs, ExpressionLike } from "@/dsl";
 import { BaseModelImplementor } from "./base_query_implementor";
 import { AbstractEntityTable } from "./entity_table";
 import { AbstractExpr } from "./ast";
 import { getInternalFactory } from "./ast/internal_factory";
+import { TableLike } from "@/dsl/table";
 
 export type ShadowAnchor = {
 
     readonly baseModel: BaseModelImplementor<any>;
 
-    readonly exportName: string;
+    readonly exportedName: string;
+
+    readonly original: ExpressionLike | TableLike;
 };
 
 export function withShadowAnchor<
@@ -17,18 +20,18 @@ export function withShadowAnchor<
     args: T,
     baseModel: BaseModelImplementor<T>
 ): T {
-    const withAnchorArgs: {[key: string]: any} = {};
+    const withAnchorArgs: {[key: string]: ExpressionLike | TableLike } = {};
     for (const key in args) {
         if (typeof key !== "string") {
             continue;
         }
         const value = args[key];
-        const anchor: ShadowAnchor = { baseModel, exportName: key };
+        const anchor: ShadowAnchor = { baseModel, exportedName: key, original: value as any };
         if (value instanceof AbstractEntityTable) {
             const table = value.entity.table(anchor);
             withAnchorArgs[key] = table;
         } else if (value instanceof AbstractExpr) {
-            const expr = getInternalFactory().createShadowExpr(value, anchor);
+            const expr = getInternalFactory().createShadowExpr(anchor);
             withAnchorArgs[key] = expr;
         }
     }

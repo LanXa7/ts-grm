@@ -1,11 +1,39 @@
+import { StateError } from "@/error/common";
 import { AbstractTable } from "./abstract_table";
 import { BaseModelImplementor } from "./base_query_implementor";
+import { BaseQuerySelectMapArgs } from "@/dsl";
+import { makeErr } from "@/error/util";
 
 export class BaseTableTarget {
 
+    private _self: TypedBaseTable | undefined;
+
+    private _args: BaseQuerySelectMapArgs | undefined;
+
     constructor(
         readonly baseModel: BaseModelImplementor<any>
-    ) {} 
+    ) {}
+    
+    __initialize(self: TypedBaseTable) {
+        if (this._self != null) {
+            throw new StateError("BaseTableTarget cannot be initialized twice");
+        }
+        this._self = self;
+    }
+
+    get __args(): BaseQuerySelectMapArgs {
+        if (this._args != null) {
+            return this._args;
+        }
+        const self = this._self ?? makeErr("The self has not been initialized");
+        const args = { ...this.baseModel.__args };
+        for (const key in args) {
+            const value = args[key];
+            args[key] = value.forShadow(self);
+        }
+        this._args = args;
+        return args;
+    }
 }
 
 export interface TypedBaseTable extends AbstractTable {
@@ -20,7 +48,9 @@ export function createTypedBaseTable(
     baseModel: BaseModelImplementor<any>
 ): TypedBaseTable {
     const baseTable = new BaseTableTarget(baseModel);
-    return new Proxy(baseTable, typedBaseTableHandler) as any as TypedBaseTable;
+    const proxy = new Proxy(baseTable, typedBaseTableHandler) as any as TypedBaseTable;
+    baseTable.__initialize(proxy);
+    return proxy;
 }
 
 const typedBaseTableHandler: ProxyHandler<BaseTableTarget> = {
@@ -34,13 +64,15 @@ const typedBaseTableHandler: ProxyHandler<BaseTableTarget> = {
                     return { tableLike: true, baseTable: true };
                 };
             case "__unwrap":
-                return target;
+                return () => target;
             case "entity":
                 return undefined;
             case "baseModel":
                 return target.baseModel;
+            case "shadow":
+                return undefined;
             default:
-                return target.baseModel.__args[prop] ?? Reflect.get(target, prop);
+                return target.__args[prop] ?? Reflect.get(target, prop);
         }
     }
 };

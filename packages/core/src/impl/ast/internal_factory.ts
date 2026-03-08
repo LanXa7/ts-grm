@@ -85,7 +85,6 @@ export interface InternalFactory {
     ): CoalesceDtExpr;
 
     createShadowExpr<T>(
-        expr: AbstractExpr<T>,
         anchor: ShadowAnchor
     ): AbstractExpr<T>;
 

@@ -1,7 +1,7 @@
 import { err, JoinType, metadata } from "@ts-grm/core";
 import { JoinMergeScope } from "./join_merge_scope";
 import { SqlBuilder } from "./sql_builder";
-import { Scope } from "./fragment";
+import { BaseQueryMetadata } from "./base_query_metadata";
 
 export class RealTable {
 
@@ -21,32 +21,19 @@ export class RealTable {
 
     private _alias: string | undefined = undefined;
 
-    // TODO:
-    _baseQuery: Scope | undefined;
+    private _baseQueryMetadata: BaseQueryMetadata | undefined = undefined;
 
-    _baseTable: RealTable | undefined;
-
-    readonly isShadow: boolean;
-
-    _shadow: RealTable | undefined;
-
-    private _shadowAliasMap: Map<string, string> | undefined = undefined;
-
-    private _nextShadowAliasId = 0;
-
-    constructor(readonly symbol: metadata.AbstractEntityTable | metadata.BaseTableTarget) {
+    constructor(readonly symbol: metadata.AbstractEntityTable | metadata.TypedBaseTable) {
         if (symbol instanceof metadata.AbstractEntityTable) {
             this._joinType = symbol.joinOperation?.joinType;
             this._joinProp = symbol.joinOperation?.joinProp;
             this._filters = symbol.joinOperation?.filter != null ?
                 [symbol.joinOperation.filter] :
                 undefined;
-            this.isShadow = symbol.anchor != null;
         } else {
             this._joinType = undefined;
             this._joinProp = undefined;
             this._filters = undefined;
-            this.isShadow = false;
         }
     }
 
@@ -163,37 +150,29 @@ export class RealTable {
         builder.sql(" ").sql(this._alias!);
     }
 
-    private _renderDefinition(builder: SqlBuilder) {
-        if (this._baseQuery != null) {
-            builder.sql("(");
-            this._baseQuery?.into(builder);
-            builder.sql(")");
-        }
+    private _renderDefinition(_: SqlBuilder) {
+        // TODO
     }
 
     get alias(): string {
         const alias = this._alias;
         if (alias == null) {
-            throw new err.StateError("The table alias has not been allocated");
+            return "_unknown_" + this.identity;
+            //throw new err.StateError("The table alias has not been allocated");
         }
         return alias;
     }
 
-    shadowAlias(columnName: string): string {
-        let shadowAliasMap = this._shadowAliasMap;
-        let alias = shadowAliasMap?.get(columnName);
-        if (alias != null) {
-            return alias;
+    get baseQueryMetadata(): BaseQueryMetadata {
+        let metadata = this._baseQueryMetadata;
+        if (metadata != null) {
+            return metadata;
         }
-        if (shadowAliasMap == null) {
-            this._shadowAliasMap = shadowAliasMap = new Map();
+        if (this.symbol.baseModel == null) {
+            throw new err.StateError("Cannot get base query metadata from entity metadata");
         }
-        alias = `c${++this._baseTable!._nextShadowAliasId}`;
-        shadowAliasMap.set(columnName, alias);
-        return alias;
-    }
-
-    get shadowAliasMap(): ReadonlyMap<string, string> | undefined {
-        return this._shadowAliasMap;
+        metadata = new BaseQueryMetadata();
+        this._baseQueryMetadata = metadata;
+        return metadata;
     }
 }
