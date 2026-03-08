@@ -481,14 +481,18 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
                         this._compositeStack.current.separator();
                         const expr = selection as any as ast.ShadowExprContract;
                         expr.accept(this);
-                        this._compositeStack.current.text(' ').text(exportedData);
+                        if (!this._baseQueryMetadata!.isCte) {
+                            this._compositeStack.current.text(' ').text(exportedData);
+                        }
                     } else {
                         for (const exportedColumn of exportedData) {
                             this._compositeStack.current.separator();
                             const table = selection as metadata.AbstractEntityTable;
                             const realTable = this._toRealTable(table);
                             this._compositeStack.current.add(new Column(realTable, exportedColumn.columnName));
-                            this._compositeStack.current.text(" ").text(exportedColumn.alias);
+                            if (!this._baseQueryMetadata!.isCte) {
+                                this._compositeStack.current.text(" ").text(exportedColumn.alias);
+                            }
                         }
                     }
                 }

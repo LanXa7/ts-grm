@@ -4,6 +4,10 @@ export class BaseQueryMetadata {
 
     private readonly _columnMap = new Map<string, string | Array<ExportedColumn>>();
 
+    constructor(
+        readonly isCte: boolean
+    ) {}
+
     alias(
         exportedName: string, 
         columnName: string | undefined

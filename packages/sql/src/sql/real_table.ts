@@ -157,8 +157,7 @@ export class RealTable {
     get alias(): string {
         const alias = this._alias;
         if (alias == null) {
-            return "_unknown_" + this.identity;
-            //throw new err.StateError("The table alias has not been allocated");
+            throw new err.StateError("The table alias has not been allocated");
         }
         return alias;
     }
@@ -171,7 +170,7 @@ export class RealTable {
         if (this.symbol.baseModel == null) {
             throw new err.StateError("Cannot get base query metadata from entity metadata");
         }
-        metadata = new BaseQueryMetadata();
+        metadata = new BaseQueryMetadata(this.symbol.baseModel.__isCte);
         this._baseQueryMetadata = metadata;
         return metadata;
     }

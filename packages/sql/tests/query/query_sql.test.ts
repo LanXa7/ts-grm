@@ -139,4 +139,67 @@ describe("QuerySqlTest", () => {
                 tb_1_.c5 desc
         `);
     });
+
+    it("cteBaseQuery", () => {
+        const baseModel = dsl.cteModel(
+            dsl.unionAll(
+                dsl.baseQuery(BOOK, (q, book) => {
+                    q.where(book.storeId.eq("2"));
+                    return q.select({
+                        book,
+                        rank: dsl.native.num `row_number() over(order by ${book.price} desc)`
+                    });
+                }),
+                dsl.baseQuery(BOOK, (q, book) => {
+                    q.where(book.name.ilike("in action", "ENDS_WITH"));
+                    return q.select({
+                        book,
+                        rank: dsl.native.num `row_number() over(order by ${book.price} desc)`
+                    });
+                })
+            )
+        );
+        const q = sqlClient.createQuery(baseModel, (q, base) => {
+            q.where(base.rank.between(1, 3));
+            q.orderBy(base.book.price.desc());
+            return q.select(base.book.fetch(SIMPLE_BOOK_VIEW));
+        });
+        const composite = Composite.of(q, sqlClient, undefined);
+        const builder = SqlBuilder.of(sqlClient);
+        composite.into(builder);
+        const [sql] = builder.build();
+        expectCode(sql, `
+            with
+                tb_1_(c1, c2, c3, c5, c4) as (
+                    select 
+                        tb_2_.ID,
+                        tb_2_.NAME,
+                        tb_2_.EDITION,
+                        tb_2_.PRICE,
+                        row_number() over(order by tb_2_.PRICE desc)
+                    from BOOK tb_2_
+                    where 
+                        tb_2_.STORE_ID = ?
+                    union all
+                    select 
+                        tb_3_.ID,
+                        tb_3_.NAME,
+                        tb_3_.EDITION,
+                        tb_3_.PRICE,
+                        row_number() over(order by tb_3_.PRICE desc)
+                    from BOOK tb_3_
+                    where 
+                        lower(tb_3_.NAME) like ?
+                )
+            select 
+                tb_1_.c1,
+                tb_1_.c2,
+                tb_1_.c3
+            from tb_1_
+            where 
+                tb_1_.c4 between ? and ?
+            order by 
+                tb_1_.c5 desc
+        `);
+    });
 });

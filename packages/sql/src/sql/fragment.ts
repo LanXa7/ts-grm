@@ -336,6 +336,7 @@ export class Query extends Composite {
         for (const rootTable of source.rootTables) {
             rootTable.collectTables(builder, tables);
         }
+        source.cteHeadInto(builder);
         super.into(builder);
     }
 }
@@ -358,18 +359,71 @@ export class Source extends Composite {
                     .sql(rootTable.alias);
             } else {
                 const baseTable = rootTable.symbol as metadata.TypedBaseTable;
-                if (!baseTable.baseModel!.__isCte) {
-                    const composite = Composite.of(
-                        baseTable.baseModel!.__toQuery(), 
-                        builder.sqlClient,
-                        rootTable.baseQueryMetadata
-                    );
-                    const wrapper = new Scope("VALUES");
-                    wrapper.add(composite);
-                    wrapper.into(builder);
+                if (baseTable.baseModel!.__isCte) {
+                    builder.sql(rootTable.alias);
+                } else {
+                    Source.baseQueryFragment(rootTable, builder.sqlClient).into(builder);
+                    builder.sql(" ").sql(rootTable.alias)
                 }
-                builder.sql(" ").sql(rootTable.alias);
             }
         }
+    }
+
+    cteHeadInto(builder: SqlBuilder): void {
+        const cteTables: Array<RealTable> = [];
+        for (const rootTable of this.rootTables) {
+            if (rootTable.symbol.baseModel != null && rootTable.symbol.baseModel.__isCte) {
+                cteTables.push(rootTable);
+            }
+        }
+        if (cteTables.length === 0) {
+            return;
+        }
+        builder.sql("with");
+        const withScope = new Scope("COMMA");
+        for (const cteTable of cteTables) {
+            withScope.separator();
+            withScope.text(cteTable.alias).text("(");
+            const metadata = cteTable.baseQueryMetadata!;
+            let addComma = false;
+            for (const key in cteTable.symbol.baseModel!.__args) {
+                const exportedData = metadata.exportedData(key);
+                if (typeof exportedData === "string") {
+                    if (addComma) {
+                        withScope.text(", ");
+                    } else {
+                        addComma = true;
+                    }
+                    withScope.text(exportedData);
+                } else {
+                    for (const exportedColumn of exportedData!) {
+                        if (addComma) {
+                            withScope.text(", ");
+                        } else {
+                            addComma = true;
+                        }
+                        withScope.text(exportedColumn.alias);
+                    }
+                }
+            }
+            withScope.text(")");
+            withScope.text(" as ");
+            withScope.add(Source.baseQueryFragment(cteTable, builder.sqlClient));
+        }
+        withScope.into(builder);
+    }
+
+    private static baseQueryFragment(
+        table: RealTable,
+        sqlClient: SqlClientImplementor
+    ) {
+        const composite = Composite.of(
+            table.symbol.baseModel!.__toQuery(), 
+            sqlClient,
+            table.baseQueryMetadata
+        );
+        const wrapper = new Scope("VALUES");
+        wrapper.add(composite);
+        return wrapper;
     }
 }
