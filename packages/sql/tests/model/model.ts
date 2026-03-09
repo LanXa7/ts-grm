@@ -95,7 +95,7 @@ export const ORDER_ITEM = model("OrderItem", "id", class {
     id = prop.i64()
     order = prop.m2o(ORDER)
     .joinColumns({
-        joinColumns: [
+        columns: [
             { columnName: "order_x", referencedSubPath: "x" },
             { columnName: "order_y_a", referencedSubPath: "y.a" },
             { columnName: "order_y_b", referencedSubPath: "y.b" }
