@@ -1,6 +1,6 @@
 import { Entity } from "./entity";
 import { EntityProp } from "./entity_prop";
-import { Column } from "./storage";
+import { Column, PropStorage } from "./storage";
 
 export interface DatabaseNamingStrategy {
 
@@ -75,18 +75,46 @@ export const UPPER_SNAKE_CASE_DATABASE_NAMING_STRATEGY = new DefaultDatabaseNami
 
 export const LOWER_SNAKE_CASE_DATABASE_NAMING_STRATEGY = new DefaultDatabaseNamingStrategy(true);
 
-export function joinColumnArr(
-    arr: ReadonlyArray<Column>, 
-    defaultNameFn: () => string
+export function isIllegal(storage: PropStorage) {
+    switch (storage.kind) {
+        case "COLUMN":
+            return storage.name === "" || storage.referencedColumnName === "";
+        case "COLUMNS":
+            return storage.find(isIllegal) != null;
+        case "MIDDLE_TABLE":
+            return storage.name == "" 
+                || storage.toThisColumns.find(isIllegal) != null 
+                || storage.toTargetColumns.find(isIllegal) != null;
+    }
+}
+
+export function fixColumnArr(
+    columns: ReadonlyArray<Column>, 
+    columnNameSupplier: () => string,
+    referencedColumnNameSupplier: (c: Column) => string
 ): ReadonlyArray<Column> {
-    if (arr.length !== 1) {
-        return arr;
-    }
-    if (arr[0]!.name !== "") {
-        return arr;
-    }
-    return [{
-        ...arr[0]!,
-        name: defaultNameFn()
-    }];
+    return columns.map(c => fixColumn(
+        c, 
+        columnNameSupplier, 
+        () => referencedColumnNameSupplier(c)
+    ));
+}
+
+export function fixColumn(
+    column: Column, 
+    columnNameSupplier: () => string,
+    referencedColumnNameSupplier: () => string
+): Column {
+    return {
+        ...column,
+        name: notEmpty(column.name, columnNameSupplier),
+        referencedColumnName: notEmpty(column.referencedColumnName, referencedColumnNameSupplier)
+    };
+}
+
+export function notEmpty<T extends string | undefined>(
+    name: T,
+    supplier: () => string
+) {
+    return name === "" ? supplier() : name;
 }

@@ -5,7 +5,7 @@ import { ModelImpl } from "./model_impl";
 import { dedent, makeErr } from "@/error/util";
 import { EntityPropOrder } from "./entity_prop_order";
 import { StateError } from "@/error/common";
-import { DatabaseNamingStrategy, joinColumnArr } from "./strategy";
+import { DatabaseNamingStrategy, isIllegal, fixColumn, fixColumnArr, notEmpty } from "./strategy";
 import { Column, Columns, MiddleTable, PropStorage, StorageType } from "./storage";
 
 export class EntityProp {
@@ -70,7 +70,7 @@ export class EntityProp {
                     ? _data.targetModel() as ModelImpl<any, any, any, any, any>
                     : _data.targetModel as ModelImpl<any, any, any, any, any>;
             if (targetModel == null) {
-                this.raise `The associatied model must be specified`
+                this.raise `The associated model must be specified`
             }
             this._targetEntity = targetModel.toUnresolvedEntity();
         } else {
@@ -531,74 +531,88 @@ export class EntityProp {
     private _createStorage(
         baseStorage: PropStorage, 
         strategy: DatabaseNamingStrategy
-    ): PropStorage | undefined {
-        if (baseStorage.kind === "COLUMN" && baseStorage.name === "") {
-            return {
-                ...baseStorage,
-                name: strategy.columnName(this)
-            };
+    ): PropStorage {
+        if (!isIllegal(baseStorage)) {
+            return baseStorage;
         }
-        if (baseStorage.kind === "COLUMNS" && this.referenceKeyProp == null && this.referenceProp == null) {
-            const baseColumns = baseStorage as Columns;
-            const columns: Array<Column> = [];
-            let index = 0;
-            for (const prop of this._props!.values()) {
-                if (baseColumns[index]!.name !== "") {
-                    columns.push(baseColumns[index]!);
-                } else {
-                    columns.push({
-                        ...baseColumns[index]!,
-                        name: strategy.columnName(prop)
-                    });
+        if (baseStorage.kind === "COLUMN") {
+            return fixColumn(
+                    baseStorage, 
+                    () => strategy.columnName(this), 
+                    () => (baseStorage.referencedProp!.toStorage(strategy) as Column).name
+                );
+        }
+        if (baseStorage.kind === "COLUMNS") {
+            let columns: ReadonlyArray<Column>;
+            if (this.referenceKeyProp == null && this.referenceProp == null) {
+                const arr: Array<Column> = [];
+                const baseColumns = baseStorage as Columns;
+                let index = 0;
+                for (const prop of this._props!.values()) {
+                    arr.push(
+                        fixColumn(
+                            baseColumns[index]!,
+                            () => strategy.columnName(prop),
+                            () => (baseColumns[index]!.referencedProp?.toStorage(strategy) as Column).name
+                        )
+                    )
+                    index++;
                 }
-                index++;
+                columns = arr;
+            } else {
+                columns = fixColumnArr(
+                    baseStorage,
+                    () => strategy.columnName(this),
+                    c => (c.referencedProp!.toStorage(strategy) as Column).name
+                );
             }
             (columns as any).kind = "COLUMNS";
             return columns as any as Columns;
         }
         if (baseStorage.kind === "MIDDLE_TABLE") {
-            if (baseStorage.name === "" ||
-                baseStorage.toThisColumns[0]!.name === "" && 
-                baseStorage.toTargetColumns[0]!.name === ""
-            ) {
-                let middleTableName = baseStorage.name;
-                if (middleTableName === "") {
-                    middleTableName = strategy.middleTableName(this);
-                }
-                const toThisColumns = joinColumnArr(
-                    baseStorage.toThisColumns, 
-                    () => strategy.middleTableThisRefColumnName(this)
-                );
-                const toTargetColumns = joinColumnArr(
-                    baseStorage.toTargetColumns, 
-                    () => strategy.middleTableTargetRefColumnName(this)
-                );
-                return {
-                    kind: "MIDDLE_TABLE",
-                    name: middleTableName,
-                    toThisColumns,
-                    toTargetColumns
-                }
-            }
+            return {
+                kind: "MIDDLE_TABLE",
+                name: notEmpty(baseStorage.name, () => strategy.middleTableName(this)),
+                toThisColumns: fixColumnArr(
+                    baseStorage.toThisColumns,
+                    () => strategy.middleTableThisRefColumnName(this), 
+                    c => (c.referencedProp!.toStorage(strategy) as Column).name
+                ),
+                toTargetColumns: fixColumnArr(
+                    baseStorage.toTargetColumns,
+                    () => strategy.middleTableTargetRefColumnName(this), 
+                    c => (c.referencedProp!.toStorage(strategy) as Column).name
+                ),
+            };
         }
         return baseStorage;
     }
 
     private _getBaseStorage(): PropStorage | undefined {
-        let baseStrogage = this._baseStorage;
-        if (baseStrogage === undefined) {
-            baseStrogage = this._createBaseStorage();
-            this._baseStorage = baseStrogage ?? null;
+        let baseStorage = this._baseStorage;
+        if (baseStorage === undefined) {
+            baseStorage = this._createBaseStorage();
+            this._baseStorage = baseStorage ?? null;
         }
-        return baseStrogage !== null ? baseStrogage : undefined;
+        return baseStorage !== null ? baseStorage : undefined;
     }
 
     private _createBaseStorage(): PropStorage | undefined {
         if (this.scalarType != null) {
+            if (this.referenceProp != null) {
+                const targetKeyProp = this.referenceProp.targetKeyProp;
+                return {
+                    kind: "COLUMN",
+                    name: this._data.columnName ?? "",
+                    referencedProp: targetKeyProp,
+                    referencedColumnName: (targetKeyProp?._getBaseStorage() as Column).name
+                };
+            }
             return {
                 kind: "COLUMN",
                 name: this._data.columnName ?? "",
-                referencedSubProp: undefined
+                referencedProp: undefined,
+                referencedColumnName: undefined
             };
         }
         if (this._data.mappedBy != null) {
@@ -664,7 +678,6 @@ export class EntityProp {
         targetKeyProp: EntityProp,
         columns: Array<Column>
     ): void {
-
         if (joinColumns == null || joinColumns.length === 0) {
             if (targetKeyProp._props != null) {
                 throw new PropError(
@@ -676,7 +689,8 @@ export class EntityProp {
             const column: Column = {
                 kind: "COLUMN",
                 name: "",
-                referencedSubProp: undefined
+                referencedProp: targetKeyProp,
+                referencedColumnName: (targetKeyProp._getBaseStorage() as Column).name
             };
             columns.push(column);
             return;
@@ -701,7 +715,8 @@ export class EntityProp {
             const column: Column = {
                 kind: "COLUMN",
                 name: "",
-                referencedSubProp: undefined
+                referencedProp: targetKeyProp,
+                referencedColumnName: (targetKeyProp._getBaseStorage() as Column).name
             };
             columns.push(column);
             return;
@@ -715,7 +730,7 @@ export class EntityProp {
                 throw new PropError(
                     this.declaringEntity.name,
                     this.name,
-                    `The columName of each element of "${joinColumnsName}" must be specified when the foreign key has multiple-columns`
+                    `The columnName of each element of "${joinColumnsName}" must be specified when the foreign key has multiple-columns`
                 );
             }
             if (joinColumn.referencedSubPath == null) {
@@ -746,7 +761,8 @@ export class EntityProp {
             const column: Column = {
                 kind: "COLUMN",
                 name: joinColumn.columnName,
-                referencedSubProp: prop
+                referencedProp: prop,
+                referencedColumnName: (prop._getBaseStorage() as Column).name
             };
             columns.push(column);
         }

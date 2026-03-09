@@ -13,7 +13,8 @@ export type PropStorage =
 export type Column = {
     readonly kind: "COLUMN";
     readonly name: string;
-    readonly referencedSubProp: EntityProp | undefined;
+    readonly referencedProp: EntityProp | undefined;
+    readonly referencedColumnName: string | undefined;
 };
 
 export type Columns = {

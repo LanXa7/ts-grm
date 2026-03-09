@@ -11,12 +11,12 @@ describe("EntityTest", () => {
             return expect(undefined);
         }
         function columnJson(column: Column): any {
-            if (column.referencedSubProp == null) {
+            if (column.referencedProp == null) {
                 return column;
             }
             return {
                 ...column,
-                referencedSubProp: column.referencedSubProp.toString()
+                referencedProp: column.referencedProp.toString()
             }
         }
         const json = storage.kind === "COLUMNS"
@@ -172,13 +172,17 @@ describe("EntityTest", () => {
             kind: "COLUMN",
             name: "PRICE"
         });
-        expect(bookEntity.prop("store").toStorage(strategy)).toEqual({
+        expectStorage(bookEntity.prop("store").toStorage(strategy)).toEqual({
             kind: "COLUMN",
-            name: "STORE_ID"
+            name: "STORE_ID",
+            referencedProp: "BookStore.id",
+            referencedColumnName: "ID"
         });
-        expect(bookEntity.prop("storeId").toStorage(strategy)).toEqual({
+        expectStorage(bookEntity.prop("storeId").toStorage(strategy)).toEqual({
             kind: "COLUMN",
-            name: "STORE_ID"
+            name: "STORE_ID",
+            referencedProp: "BookStore.id",
+            referencedColumnName: "ID"
         });
         expectStorage(bookEntity.prop("authors").toStorage(strategy)!).toEqual({
             "kind": "MIDDLE_TABLE",
@@ -187,14 +191,16 @@ describe("EntityTest", () => {
                 {
                     "kind": "COLUMN",
                     "name": "BOOK_ID",
-                    "referencedSubProp": undefined,
+                    "referencedProp": "Book.id",
+                    "referencedColumnName": "ID"
                 },
             ],
             "toTargetColumns": [
                 {
                     "kind": "COLUMN",
                     "name": "AUTHOR_ID",
-                    "referencedSubProp": undefined,
+                    "referencedProp": "Author.id",
+                    "referencedColumnName": "ID"
                 },
             ]
         });
@@ -211,12 +217,12 @@ describe("EntityTest", () => {
                 {
                     "kind": "COLUMN",
                     "name": "FIRST_NAME",
-                    "referencedSubProp": undefined
+                    "referencedProp": undefined
                 },
                 {
                     "kind": "COLUMN",
                     "name": "LAST_NAME",
-                    "referencedSubProp": undefined
+                    "referencedProp": undefined
                 },
             ]
         });
@@ -233,16 +239,18 @@ describe("EntityTest", () => {
             "name": "book_author_mapping",
             "toThisColumns": [
                 {
-                "kind": "COLUMN",
-                "name": "AUTHOR_ID",
-                "referencedSubProp": undefined,
+                    "kind": "COLUMN",
+                    "name": "AUTHOR_ID",
+                    "referencedProp": "Author.id",
+                    "referencedColumnName": "ID"
                 },
             ],
             "toTargetColumns": [
                 {
-                "kind": "COLUMN",
-                "name": "BOOK_ID",
-                "referencedSubProp": undefined,
+                    "kind": "COLUMN",
+                    "name": "BOOK_ID",
+                    "referencedProp": "Book.id",
+                    "referencedColumnName": "ID"
                 },
             ]
         });
@@ -258,17 +266,20 @@ describe("EntityTest", () => {
                 {
                     "kind": "COLUMN",
                     "name": "order_x",
-                    "referencedSubProp": "Order.id.x",
+                    "referencedProp": "Order.id.x",
+                    "referencedColumnName": "X"
                 },
                 {
                     "kind": "COLUMN",
                     "name": "order_y_a",
-                    "referencedSubProp": "Order.id.y.a",
+                    "referencedProp": "Order.id.y.a",
+                    "referencedColumnName": "A"
                 },
                 {
                     "kind": "COLUMN",
                     "name": "order_y_b",
-                    "referencedSubProp": "Order.id.y.b",
+                    "referencedProp": "Order.id.y.b",
+                    "referencedColumnName": "B"
                 },
             ]
         });
@@ -278,17 +289,20 @@ describe("EntityTest", () => {
                 {
                     "kind": "COLUMN",
                     "name": "order_x",
-                    "referencedSubProp": "Order.id.x",
+                    "referencedProp": "Order.id.x",
+                    "referencedColumnName": "X"
                 },
                 {
                     "kind": "COLUMN",
                     "name": "order_y_a",
-                    "referencedSubProp": "Order.id.y.a",
+                    "referencedProp": "Order.id.y.a",
+                    "referencedColumnName": "A"
                 },
                 {
                     "kind": "COLUMN",
                     "name": "order_y_b",
-                    "referencedSubProp": "Order.id.y.b",
+                    "referencedProp": "Order.id.y.b",
+                    "referencedColumnName": "B"
                 },
             ]
         });
