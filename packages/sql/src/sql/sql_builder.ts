@@ -5,6 +5,10 @@ import { SqlLoggerParameterType } from "@/cfg/sql_client_options";
 
 export class SqlBuilder {
 
+    private static _emptyWithPrettyDisposable: Disposable = {
+        [Symbol.dispose]: (): void => {}
+    };
+
     readonly strategy: metadata.DatabaseNamingStrategy;
 
     private readonly _parts: Array<string> = [];
@@ -21,7 +25,7 @@ export class SqlBuilder {
 
     constructor(
         readonly sqlClient: SqlClientImplementor,
-        readonly pretty: boolean,
+        private _pretty: boolean,
         readonly parameter: SqlLoggerParameterType,
         readonly nameParameterPrefix: string | undefined
     ) {
@@ -36,6 +40,23 @@ export class SqlBuilder {
             implementor.options.sqlLogger.parameter,
             implementor.driver.nameParameterPrefix
         )
+    }
+
+    get pretty(): boolean {
+        return this._pretty;
+    }
+
+    withPretty(pretty: boolean | undefined): Disposable {
+        const oldPretty = this._pretty;
+        if (pretty == null || oldPretty === pretty) {
+            return SqlBuilder._emptyWithPrettyDisposable;
+        }
+        this._pretty = pretty;
+        return {
+            [Symbol.dispose]: (): void => {
+                this._pretty = oldPretty;
+            }
+        };
     }
 
     indent() {

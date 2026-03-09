@@ -6,7 +6,7 @@ import { dedent, makeErr } from "@/error/util";
 import { EntityPropOrder } from "./entity_prop_order";
 import { StateError } from "@/error/common";
 import { DatabaseNamingStrategy, joinColumnArr } from "./strategy";
-import { Column, Columns, MiddleTable, PropStorage } from "./storage";
+import { Column, Columns, MiddleTable, PropStorage, StorageType } from "./storage";
 
 export class EntityProp {
 
@@ -14,35 +14,39 @@ export class EntityProp {
 
     readonly inputNonNull: boolean;
 
-    private _scalarType: ScalarType | undefined;
+    private _scalarType: ScalarType | undefined = undefined;
 
-    readonly associationType: AssociationType | undefined;
+    readonly associationType: AssociationType | undefined = undefined;
 
-    private _span: number | undefined;
+    private _span: number | undefined = undefined;
 
-    private _props: ReadonlyMap<string, EntityProp> | undefined;
+    private _props: ReadonlyMap<string, EntityProp> | undefined = undefined;
 
-    private _targetEntity: Entity | undefined;
+    private _targetEntity: Entity | undefined = undefined;
 
     private _orders:  ReadonlyArray<EntityPropOrder> | undefined = undefined;
 
-    private _oppositeProp: EntityProp | undefined;
+    private _mappedByProp: EntityProp | undefined = undefined;
+
+    private _oppositeProp: EntityProp | undefined = undefined;
 
     private _phase = 0;
 
-    private _thisKeyProp: EntityProp | undefined;
+    private _thisKeyProp: EntityProp | undefined = undefined;
 
-    private _targetKeyProp: EntityProp | undefined;
+    private _targetKeyProp: EntityProp | undefined = undefined;
 
-    private _referenceKeyProp: EntityProp | undefined;
+    private _referenceKeyProp: EntityProp | undefined = undefined;
 
-    private _referenceProp: EntityProp | undefined;
+    private _referenceProp: EntityProp | undefined = undefined;
 
-    private _baseStorage: PropStorage | null | undefined;
+    private _storageType: StorageType | undefined = undefined;
 
-    private _strategy: DatabaseNamingStrategy | undefined;
+    private _baseStorage: PropStorage | null | undefined = undefined;
 
-    private _storage: PropStorage | undefined;
+    private _strategy: DatabaseNamingStrategy | undefined = undefined;
+
+    private _storage: PropStorage | undefined = undefined;
 
     constructor(
         readonly declaringEntity: Entity,
@@ -86,6 +90,11 @@ export class EntityProp {
 
     get targetEntity(): Entity | undefined {
         return this._targetEntity?.resolve(2);
+    }
+
+    get mappedByProp(): EntityProp | undefined {
+        this.declaringEntity.resolve(2);
+        return this._mappedByProp;
     }
 
     get oppositeProp(): EntityProp | undefined {
@@ -323,7 +332,8 @@ export class EntityProp {
             its target model is not this model`
         }
         // TODO 
-        this._oppositeProp = prop!;
+        this._mappedByProp = prop;
+        this._oppositeProp = prop;
         prop!._oppositeProp = this;
     }
 
@@ -467,6 +477,29 @@ export class EntityProp {
         return newMap;
     }
 
+    get storageType(): StorageType {
+        let storageType = this._storageType;
+        if (storageType == null) {
+            const baseStorage = this._getBaseStorage();
+            if (baseStorage != null) {
+                storageType = baseStorage.kind;
+            } else if (this._referenceKeyProp != null) {
+                storageType = this._referenceKeyProp._getBaseStorage()?.kind ?? "NONE";
+            } else if (this._mappedByProp != null) {
+                const baseStorage = this._mappedByProp._getBaseStorage();
+                if (baseStorage?.kind === "MIDDLE_TABLE") {
+                    storageType = "MIDDLE_TABLE";
+                } else {
+                    storageType = "NONE";
+                }
+            } else {
+                storageType = "NONE";
+            }
+            this._storageType = storageType;
+        }
+        return storageType;
+    }
+
     toStorage(strategy: DatabaseNamingStrategy): PropStorage | undefined {
         if (this._strategy === strategy) {
             return this._storage;
@@ -483,17 +516,19 @@ export class EntityProp {
                     toTargetColumns: mappedByStorage.toThisColumns
                 };
             };
+        } else if (this.referenceKeyProp != null) {
+            this._storage = this.referenceKeyProp.toStorage(strategy);
         } else {
             const baseStorage = this._getBaseStorage();
             if (baseStorage != null) {
-                this._storage = this._createStrage(baseStorage, strategy);
+                this._storage = this._createStorage(baseStorage, strategy);
             }
         }
         this._strategy = strategy;
         return this._storage;
     }
 
-    private _createStrage(
+    private _createStorage(
         baseStorage: PropStorage, 
         strategy: DatabaseNamingStrategy
     ): PropStorage | undefined {

@@ -2,6 +2,7 @@ import { ast, err } from "@ts-grm/core";
 import { Driver } from "./deriver";
 import { NodeRender, NodeRenderContext } from "./node_render";
 import { Precedence } from "@/sql/precedence";
+import { Scope } from "@/sql/fragment";
 
 export class SqliteDriver implements Driver {
 
@@ -24,15 +25,29 @@ export class SqliteDriver implements Driver {
 
 const nodeRender = new class implements NodeRender {
 
+    renderInCollectionPred(
+        expr: ast.InCollectionPred<any>, 
+        ctx: NodeRenderContext
+    ): void {
+        using _ = ctx.withPrecedence(Precedence.COMPARISON);
+        ctx.render(expr.expr);
+        ctx.text(expr.neg ? " not in": " in");
+        using __ = ctx.withComposite(new Scope("VALUES", false));
+        for (const value of expr.values) {
+            ctx.separator();
+            ctx.render(value);
+        }
+    }
+
     renderLikePred(pred: ast.LikePred, ctx: NodeRenderContext): void {
         using _ = ctx.withPrecedence(Precedence.COMPARISON);
         if (pred.insensitive) {
             ctx.text("lower(");
             ctx.render(pred.expr);
-            ctx.text(") like ");
+            ctx.text(pred.neg ? ") not like ": ") like ");
         } else {
             ctx.render(pred.expr);
-            ctx.text(" like ");
+            ctx.text(pred.neg ? " not like " : " like ");
         }
         ctx.render(pred.pattern);
     }

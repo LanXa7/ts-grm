@@ -7,12 +7,14 @@ import { Column } from "./fragment";
 
 export class PreVisitor extends ast.AbstractVisitor {
 
-    private _tableMap = new Map<metadata.AbstractEntityTable | metadata.TypedBaseTable, RealTable>();
+    private readonly _tableMap = new Map<metadata.AbstractEntityTable | metadata.TypedBaseTable, RealTable>();
     
     private readonly _joinMergeScopeStack =
         new Stack<JoinMergeScope>(undefined);
 
     private readonly _strategy: metadata.DatabaseNamingStrategy;
+
+    private _filterProcessingTables: Array<RealTable> | undefined = undefined;
         
     constructor(sqlClient: SqlClientImplementor) {
         super();
@@ -20,13 +22,11 @@ export class PreVisitor extends ast.AbstractVisitor {
     }
 
     get tableMap(): ReadonlyMap<metadata.AbstractEntityTable | metadata.TypedBaseTable, RealTable> {
+        this._processFilters();
         return this._tableMap;
     }
 
     visitAtomQuery(query: ast.AtomQueryContract): void {
-        for (const table of query.tables) {
-            this._toRealTable(table as any);
-        }
         const projection = query.projection;
         switch (projection.kind) {
             case "ROOT_SINGLE":
@@ -52,6 +52,9 @@ export class PreVisitor extends ast.AbstractVisitor {
                 break;
         }
         super.visitAtomQuery(query);
+        for (const table of query.tables) {
+            this._toRealTable(table as any);
+        }
     }
 
     visitTablePropExpr(expr: ast.PropExprContract): void {
@@ -131,7 +134,23 @@ export class PreVisitor extends ast.AbstractVisitor {
                 );
             }
             this._tableMap.set(table, realTable);
+            if (this._filterProcessingTables != null) {
+                this._filterProcessingTables.push(realTable);
+            }
         }
         return realTable;
+    }
+
+    private _processFilters() {
+        if (this._filterProcessingTables == null) {
+            this._filterProcessingTables = Array.from(this._tableMap.values());
+        }
+        while (this._filterProcessingTables.length != 0) {
+            const arr = this._filterProcessingTables;
+            this._filterProcessingTables = [];
+            for (const table of arr) {
+                table.filterPred?.accept(this);
+            }
+        }
     }
 }

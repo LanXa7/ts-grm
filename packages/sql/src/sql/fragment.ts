@@ -93,7 +93,8 @@ export class Composite extends Fragment {
 export class Scope extends Composite {
 
     constructor(
-        readonly kind: ScopeKind
+        readonly kind: ScopeKind,
+        readonly pretty?: boolean
     ) {
         super();
     }
@@ -129,6 +130,7 @@ export class Scope extends Composite {
 
     into(builder: SqlBuilder): void {
         this.flush();
+        using _ = builder.withPretty(this.pretty);
         if (builder.pretty) {
             if (this.kind === "VALUES") {
                 builder.sql("(\n");
@@ -315,21 +317,10 @@ export class Source extends Composite {
 
     into(builder: SqlBuilder): void {
         for (const rootTable of this.rootTables) {
-            if (rootTable.symbol.baseModel == null) {
-                const entityTable = rootTable.symbol as metadata.AbstractEntityTable;
-                builder
-                    .sql(entityTable.entity.toTableName(builder.strategy))
-                    .sql(" ")
-                    .sql(rootTable.alias);
-            } else {
-                const baseTable = rootTable.symbol as metadata.TypedBaseTable;
-                if (baseTable.baseModel!.__isCte) {
-                    builder.sql(rootTable.alias);
-                } else {
-                    Source.baseQueryFragment(rootTable, builder.sqlClient).into(builder);
-                    builder.sql(" ").sql(rootTable.alias)
-                }
-            }
+            Source._tableToBuilder(rootTable, builder);
+        }
+        for (const rootTable of this.rootTables) {
+            Source._childrenToBuilder(rootTable, builder);
         }
         if (this.recursive != null) {
             builder.sql("\ninner join ");
@@ -356,37 +347,29 @@ export class Source extends Composite {
             if (cteTable.symbol.baseModel!.__isRecursive) {
                 withScope.text("\nrecursive ");
             }
-            withScope.text(cteTable.alias).text("(");
+            withScope.text(cteTable.alias);
             const metadata = cteTable.baseQueryMetadata!;
-            let addComma = false;
+            const aliasScope = new Scope("VALUES", false);
             for (const key in cteTable.symbol.baseModel!.__args) {
                 const exportedData = metadata.exportedData(key);
                 if (typeof exportedData === "string") {
-                    if (addComma) {
-                        withScope.text(", ");
-                    } else {
-                        addComma = true;
-                    }
-                    withScope.text(exportedData);
+                    aliasScope.separator();
+                    aliasScope.text(exportedData);
                 } else {
                     for (const exportedColumn of exportedData!) {
-                        if (addComma) {
-                            withScope.text(", ");
-                        } else {
-                            addComma = true;
-                        }
-                        withScope.text(exportedColumn.alias);
+                        aliasScope.separator();
+                        aliasScope.text(exportedColumn.alias);
                     }
                 }
             }
-            withScope.text(")");
+            withScope.add(aliasScope);
             withScope.text(" as ");
-            withScope.add(Source.baseQueryFragment(cteTable, builder.sqlClient));
+            withScope.add(Source._baseQueryFragment(cteTable, builder.sqlClient));
         }
         withScope.into(builder);
     }
 
-    private static baseQueryFragment(
+    private static _baseQueryFragment(
         table: RealTable,
         sqlClient: SqlClientImplementor
     ) {
@@ -398,6 +381,41 @@ export class Source extends Composite {
         const wrapper = new Scope("VALUES");
         wrapper.add(composite);
         return wrapper;
+    }
+
+    private static _tableToBuilder(
+        table: RealTable,
+        builder: SqlBuilder
+    ): void {
+        if (table.symbol.baseModel == null) {
+            const entityTable = table.symbol as metadata.AbstractEntityTable;
+            builder
+                .sql(entityTable.entity.toTableName(builder.strategy))
+                .sql(" ")
+                .sql(table.alias);
+        } else {
+            const baseTable = table.symbol as metadata.TypedBaseTable;
+            if (baseTable.baseModel!.__isCte) {
+                builder.sql(table.alias);
+            } else {
+                Source._baseQueryFragment(table, builder.sqlClient).into(builder);
+                builder.sql(" ").sql(table.alias)
+            }
+        }
+    }
+
+    private static _childrenToBuilder(
+        table: RealTable,
+        builder: SqlBuilder
+    ): void {
+        for (const child of table.children) {
+            builder.sql("\n");
+            builder.sql(child.joinType!.toLowerCase());
+            builder.sql(" join ");
+            Source._tableToBuilder(child, builder);
+            builder.sql(" on ");
+            child.joinConditionFragment!.into(builder);
+        }
     }
 }
 

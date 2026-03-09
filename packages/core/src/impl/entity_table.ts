@@ -89,9 +89,13 @@ export type JoinOperation = {
 };
 
 export type JoinFilter = (
-    source: AbstractEntityTable, 
-    target: AbstractEntityTable
-) => Predicate;
+    ctx: JoinFilterContext
+) => Predicate | undefined;
+
+export type JoinFilterContext = {
+    readonly source: AbstractEntityTable, 
+    readonly target: AbstractEntityTable
+};
 
 export type EntityTableCtor = new(
     entity: Entity,

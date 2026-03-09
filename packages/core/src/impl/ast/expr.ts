@@ -52,7 +52,7 @@ export abstract class AbstractExpr<T> extends AbstractSelection implements Node 
     }
 
     in(
-        values: ReadonlyArray<T | AbstractExpr<T>>
+        ...values: ReadonlyArray<T | AbstractExpr<T>>
     ): AbstractPred {
         validateInValues(values);
         const factory = getInternalFactory();
@@ -77,7 +77,7 @@ export abstract class AbstractExpr<T> extends AbstractSelection implements Node 
     }
 
     notIn(
-        values: ReadonlyArray<T | AbstractExpr<T>>
+        ...values: ReadonlyArray<T | AbstractExpr<T>>
     ): AbstractPred {
         validateInValues(values);
         const factory = getInternalFactory();

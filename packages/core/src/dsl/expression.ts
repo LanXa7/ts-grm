@@ -261,6 +261,26 @@ type StrExpression<T extends Nullable<string>> = CmpExpression<T> & {
         mode?: LikeMode
     ): AnyExpression<boolean> | undefined;
 
+    notLike(
+        value: string, 
+        mode?: LikeMode
+    ): AnyExpression<boolean> | undefined;
+
+    notIlike(
+        value: string, 
+        mode?: LikeMode
+    ): AnyExpression<boolean> | undefined;
+
+    notLikeIf(
+        value: Nullable<string>, 
+        mode?: LikeMode
+    ): AnyExpression<boolean> | undefined;
+
+    notIlikeIf(
+        value: Nullable<string>, 
+        mode?: LikeMode
+    ): AnyExpression<boolean> | undefined;
+
     lower(): StrExpression<T>;
 
     upper(): StrExpression<T>;

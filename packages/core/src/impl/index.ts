@@ -8,7 +8,7 @@ export {
     UPPER_SNAKE_CASE_DATABASE_NAMING_STRATEGY, 
     LOWER_SNAKE_CASE_DATABASE_NAMING_STRATEGY 
 } from "./strategy";
-export type { PropStorage, Column, MiddleTable } from "./storage";
+export type { StorageType, PropStorage, Column, Columns, MiddleTable } from "./storage";
 export type { DatabaseNamingStrategy } from "./strategy";
 export type { AbstractTable } from "./abstract_table";
 export type { TypedBaseTable } from "./base_table";

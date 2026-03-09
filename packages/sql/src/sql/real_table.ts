@@ -1,11 +1,14 @@
-import { err, JoinType, metadata } from "@ts-grm/core";
+import { ast, dsl, err, JoinType, metadata, Predicate } from "@ts-grm/core";
 import { JoinMergeScope } from "./join_merge_scope";
 import { SqlBuilder } from "./sql_builder";
 import { BaseQueryMetadata } from "./base_query_metadata";
+import { Fragment } from "./fragment";
 
 export class RealTable {
 
     private static _nextIdentity = 0;
+
+    private _parent: RealTable | undefined = undefined;
 
     readonly identity = ++RealTable._nextIdentity;
 
@@ -19,9 +22,19 @@ export class RealTable {
 
     private _filters: Array<metadata.JoinFilter> | undefined = undefined;
 
+    private _filterPred: ast.AbstractPred | undefined = undefined;
+
+    private _filterPredResolved = false;
+
     private _alias: string | undefined = undefined;
 
+    private _middleTableAlias: string | undefined = undefined;
+
     private _baseQueryMetadata: BaseQueryMetadata | undefined = undefined;
+
+    private _children: ReadonlyArray<RealTable> | undefined = undefined;
+
+    joinConditionFragment: Fragment | undefined = undefined;
 
     constructor(readonly symbol: metadata.AbstractEntityTable | metadata.TypedBaseTable) {
         if (symbol instanceof metadata.AbstractEntityTable) {
@@ -39,6 +52,10 @@ export class RealTable {
 
     get joinType(): JoinType | undefined {
         return this._joinType;
+    }
+
+    get parent(): RealTable | undefined {
+        return this._parent;
     }
 
     get joinProp(): metadata.EntityProp | undefined {
@@ -81,10 +98,23 @@ export class RealTable {
                 this._laxChildMap = laxChildMap = new Map();
             }
             child = new RealTable(symbol);
+            child._parent = this;
             restrictChildMap.set(restrictKey, child);
             laxChildMap.set(laxKey, child);
+            this._children = undefined;
         }
         return child;
+    }
+
+    get children(): ReadonlyArray<RealTable> {
+        let children = this._children;
+        if (children == null) {
+            children = this._laxChildMap == null 
+                ? []
+                : Array.from(this._laxChildMap.values());
+            this._children = children;
+        }
+        return children;
     }
 
     private _mergeFilter(filter: metadata.JoinFilter | undefined) {
@@ -94,6 +124,7 @@ export class RealTable {
                 this._filters = filters = [];
             }
             filters.push(filter);
+            this._filterPredResolved = false;
         }
     }
 
@@ -124,6 +155,9 @@ export class RealTable {
     }
 
     collectTables(builder: SqlBuilder, tables: Set<RealTable>) {
+        if (this.joinProp?.storageType === "MIDDLE_TABLE") {
+            this._middleTableAlias = builder.allocateTableAlias();
+        }
         this._alias = builder.allocateTableAlias();
         tables.add(this);
         if (this._restrictChildMap != null) {
@@ -133,27 +167,6 @@ export class RealTable {
         }
     }
 
-    render(builder: SqlBuilder) {
-        if (this._joinType == null) {
-            builder.sql("\nfrom ");
-            this._renderDefinition(builder);
-            builder.sql(" ").sql(this._alias!);
-            return;
-        }
-        builder.sql("\n");
-        if (this._joinType === "LEFT") {
-            builder.sql("left join ");
-        } else {
-            builder.sql("inner join ");
-        }
-        this._renderDefinition(builder);
-        builder.sql(" ").sql(this._alias!);
-    }
-
-    private _renderDefinition(_: SqlBuilder) {
-        // TODO
-    }
-
     get alias(): string {
         const alias = this._alias;
         if (alias == null) {
@@ -161,6 +174,15 @@ export class RealTable {
             //throw new err.StateError("The table alias has not been allocated");
         }
         return alias;
+    }
+
+    get middleTableAlias(): string | undefined {
+        const middleTableAlias = this._middleTableAlias;
+        if (middleTableAlias == null && this.joinProp?.storageType == "MIDDLE_TABLE") {
+            return `__unknown__${this.identity}`;
+            //throw new err.StateError("The middle table alias has not been allocated");
+        }
+        return middleTableAlias;
     }
 
     get baseQueryMetadata(): BaseQueryMetadata {
@@ -174,5 +196,24 @@ export class RealTable {
         metadata = new BaseQueryMetadata(this.symbol.baseModel.__isCte, this);
         this._baseQueryMetadata = metadata;
         return metadata;
+    }
+
+    get filterPred(): ast.AbstractPred | undefined {
+        if (this._filterPredResolved) {
+            return this._filterPred;
+        }
+        let predicate : Predicate | undefined = undefined;
+        if (this.filters != null) {
+            for (const filter of this.filters) {
+                const newPredicate = filter({
+                    source: this._parent?.symbol as any, 
+                    target: this.symbol as any
+                });
+                predicate = dsl.and(predicate, newPredicate);
+            }
+        }
+        this._filterPred = predicate as ast.AbstractPred | undefined;
+        this._filterPredResolved = true;
+        return undefined;
     }
 }

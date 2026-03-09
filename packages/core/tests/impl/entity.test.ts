@@ -172,7 +172,10 @@ describe("EntityTest", () => {
             kind: "COLUMN",
             name: "PRICE"
         });
-        expect(bookEntity.prop("store").toStorage(strategy)).toEqual(undefined);
+        expect(bookEntity.prop("store").toStorage(strategy)).toEqual({
+            kind: "COLUMN",
+            name: "STORE_ID"
+        });
         expect(bookEntity.prop("storeId").toStorage(strategy)).toEqual({
             kind: "COLUMN",
             name: "STORE_ID"
@@ -249,7 +252,26 @@ describe("EntityTest", () => {
             kind: "COLUMN",
             name: "ID"
         });
-        expect(orderItemEntity.prop("order").toStorage(strategy)).toEqual(undefined);
+        expectStorage(orderItemEntity.prop("order").toStorage(strategy)).toEqual({
+            "kind": "COLUMNS",
+            "arr": [
+                {
+                    "kind": "COLUMN",
+                    "name": "order_x",
+                    "referencedSubProp": "Order.id.x",
+                },
+                {
+                    "kind": "COLUMN",
+                    "name": "order_y_a",
+                    "referencedSubProp": "Order.id.y.a",
+                },
+                {
+                    "kind": "COLUMN",
+                    "name": "order_y_b",
+                    "referencedSubProp": "Order.id.y.b",
+                },
+            ]
+        });
         expectStorage(orderItemEntity.prop("orderId").toStorage(strategy)!).toEqual({
             "kind": "COLUMNS",
             "arr": [

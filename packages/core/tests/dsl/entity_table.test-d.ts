@@ -29,20 +29,20 @@ test("TableMembers", () => {
     expectTypeOf<typeof storeName2>().toEqualTypeOf<Expression<string | null | undefined>>();
 
     const storeName3 = book().store({
-        filter: (source, target) => source.name.eq(target.name)
+        filter: ctx => ctx.source.name.eq(ctx.target.name)
     }).name;
     expectTypeOf<typeof storeName3>().toEqualTypeOf<Expression<string>>();
 
     const weakJoinName1 = store().join(
         AUTHOR, 
-        (source, target) => source.name.eq(target.name().firstName)
+        ctx => ctx.source.name.eq(ctx.target.name().firstName)
     ).$acceptRisk().name().firstName;
     expectTypeOf<typeof weakJoinName1>().toEqualTypeOf<Expression<string>>();
 
     const weakJoinName2 = store().join(
         AUTHOR, 
         "LEFT",
-        (source, target) => source.name.eq(target.name().firstName)
+        ctx => ctx.source.name.eq(ctx.target.name().firstName)
     ).$acceptRisk().name().firstName;
     expectTypeOf<typeof weakJoinName2>().toEqualTypeOf<Expression<string | null | undefined>>();
 });

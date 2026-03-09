@@ -1,9 +1,14 @@
 import { EntityProp } from "./entity_prop";
 
+export type StorageType = "NONE" 
+    | Column["kind"] 
+    | Columns["kind"] 
+    | MiddleTable["kind"];
+
 export type PropStorage = 
-    Column | 
-    Columns |
-    MiddleTable;
+    Column 
+    | Columns 
+    | MiddleTable;
 
 export type Column = {
     readonly kind: "COLUMN";

@@ -261,4 +261,98 @@ describe("QuerySqlTest", () => {
                 tb_1_.c2 asc
         `);
     });
+
+    it("mergeAllJoins", () => {
+        const q = sqlClient.createQuery(BOOK, (q, book) => {
+            q.where(
+                book.store().version.in(1, 2, 4, 8)
+            );
+            q.where(
+                book.store({
+                    filter: ctx => ctx.target.name.notLike("alex")
+                }).name.ilike("n")
+            );
+            q.where(
+                book.store("LEFT").version.notIn(1, 4, 9, 16)
+            );  
+            q.where(
+                book.store({
+                    joinType: "LEFT",
+                    filter: ctx => ctx.target.name.notLike("bob")
+                }).version.ne(1)
+            );
+            return q.select(book.fetch(SIMPLE_BOOK_VIEW));
+        });
+        const composite = Composite.of(q, sqlClient, undefined);
+        const builder = SqlBuilder.of(sqlClient);
+        composite.into(builder);
+        const [sql] = builder.build();
+        expectCode(sql, `
+            select 
+                tb_1_.ID,
+                tb_1_.NAME,
+                tb_1_.EDITION
+            from BOOK tb_1_
+            inner join BOOK_STORE tb_2_ on 
+                tb_1_.STORE_ID = tb_2_.ID
+            and
+                tb_2_.NAME not like ?
+            and
+                tb_2_.NAME not like ?
+            where 
+                    tb_2_.VERSION in(?, ?, ?, ?)
+                and
+                    lower(tb_2_.NAME) like ?
+                and
+                    tb_2_.VERSION not in(?, ?, ?, ?)
+                and
+                    tb_2_.VERSION <> ?
+        `);
+    });
+
+    it("mergeSomeJoins", () => {
+        const q = sqlClient.createQuery(BOOK, (q, book) => {
+            q.where(
+                dsl.or(
+                    book.store().version.in(1, 2, 4, 8),
+                    book.store({
+                        filter: ctx => ctx.target.name.notLike("alex")
+                    }).name.ilike("n"),
+                    book.store("LEFT").version.notIn(1, 4, 9, 16),
+                    book.store({
+                        joinType: "LEFT",
+                        filter: ctx => ctx.target.name.notLike("bob")
+                    }).version.ne(1)
+                )
+            );
+            return q.select(book.fetch(SIMPLE_BOOK_VIEW));
+        });
+        const composite = Composite.of(q, sqlClient, undefined);
+        const builder = SqlBuilder.of(sqlClient);
+        composite.into(builder);
+        const [sql] = builder.build();
+        expectCode(sql, `
+            select 
+                tb_1_.ID,
+                tb_1_.NAME,
+                tb_1_.EDITION
+            from BOOK tb_1_
+            inner join BOOK_STORE tb_2_ on 
+                tb_1_.STORE_ID = tb_2_.ID
+            and
+                tb_2_.NAME not like ?
+            left join BOOK_STORE tb_3_ on 
+                tb_1_.STORE_ID = tb_3_.ID
+            and
+                tb_3_.NAME not like ?
+            where 
+                    tb_2_.VERSION in(?, ?, ?, ?)
+                or
+                    lower(tb_2_.NAME) like ?
+                or
+                    tb_3_.VERSION not in(?, ?, ?, ?)
+                or
+                    tb_3_.VERSION <> ?
+        `);
+    });
 });

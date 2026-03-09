@@ -258,7 +258,12 @@ type WeakJoinAction<
 };
 
 type FilterType<TParentModel extends AnyModel, TModel extends AnyModel> =
-    (source: EntityTable<TParentModel>, target: EntityTable<TModel>) => Predicate;
+    (ctx: FilterContextType<TParentModel, TModel>) => Predicate | undefined;
+
+type FilterContextType<TParentModel extends AnyModel, TModel extends AnyModel> = {
+    readonly source: EntityTable<TParentModel>;
+    readonly target: EntityTable<TModel>
+};
 
 export type BaseTable<
     TMap extends BaseQuerySelectMapArgs,

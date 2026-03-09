@@ -90,6 +90,14 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
         this._compositeStack.with(new Composite());
     }
 
+    cloneVisitor() {
+        return new FragmentGenGenVisitor(
+            this.sqlClient,
+            this._baseQueryMetadata,
+            this._tableMap
+        );
+    }
+
     visitAtomQuery(query: ast.AtomQueryContract): void {
 
         using _ = this._compositeStack.with(new Query());
@@ -105,20 +113,17 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
             this._compositeStack.current.text("\nfrom ");
             let recursive: { prev: RealTable, pred: Composite } | undefined = undefined;
             if (query.recursivePred != null) {
-                const visitor = new FragmentGenGenVisitor(this.sqlClient, this._baseQueryMetadata, this._tableMap);
+                const visitor = this.cloneVisitor();
                 query.recursivePred.accept(visitor);
                 recursive = { prev: this._baseQueryMetadata!.realTable, pred: visitor.toResult() };
             }
-            using _ = this._compositeStack.with(
-                new Source(
-                    query.tables.map(t => 
-                        this._toRealTable(
-                            t as metadata.AbstractEntityTable | metadata.TypedBaseTable
-                        )
-                    ),
-                    recursive
+            const tables = query.tables.map(t => 
+                this._toRealTable(
+                    t as metadata.AbstractEntityTable | metadata.TypedBaseTable
                 )
             );
+            this._fillJoinConditions(tables);
+            using _ = this._compositeStack.with(new Source(tables, recursive));
         }
 
         const wherePred = query.wherePred;
@@ -220,13 +225,10 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
     }
 
     visitInCollectionPred(pred: ast.InCollectionPred<any>): void {
-        using _ = this._precedenceStack.with(Precedence.COMPARISON);
-        pred.expr.accept(this);
-        this._compositeStack.current.text(pred.neg ? " not in" : " in");
-        using __ = this._compositeStack.with(new Scope("VALUES"));
-        using ___ = this._precedenceStack.with(Precedence.ROOT);
-        for (const value of pred.values) {
-            value.accept(this);
+        if (pred.values.length === 0) {
+            this._compositeStack.current.text(pred.neg ? "1 = 1" : "1 = 0");
+        } else {
+            this._nodeRender.renderInCollectionPred(pred, this._nodeRenderContext);
         }
     }
 
@@ -263,8 +265,11 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
     }
 
     visitCompoundPred(pred: ast.CompoundPred): void {
-        using _ = this._precedenceStack.with(pred.op === "AND" ? Precedence.AND : Precedence.OR);
+        using _ = this._compositeStack.with(new Scope(pred.op));
+        using __ = this._precedenceStack.with(pred.op === "AND" ? Precedence.AND : Precedence.OR);
+        const current = this._compositeStack.current;
         for (const p of pred.preds) {
+            current.separator();
             p.accept(this);
         }
     }
@@ -528,5 +533,118 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
             throw new err.StateError("compositeStack is not cleanup");
         }
         return this._compositeStack.current as Composite;
+    }
+
+    private _fillJoinConditions(tables: ReadonlyArray<RealTable>) {
+        for (const table of tables) {
+            const parent = table.parent;
+            if (parent != null) {
+                const scope = new Scope("AND");
+                const joinProp = table.joinProp;
+                if (joinProp != null) {
+                    this._fillJoinProp(joinProp, parent, table, scope);
+                }
+                const filterPred = table.filterPred;
+                if (filterPred != null) {
+                    scope.separator();
+                    this._fillFilterPred(filterPred, scope);
+                }
+                table.joinConditionFragment = scope;
+            }
+            this._fillJoinConditions(table.children);
+        }
+    }
+
+    private _fillJoinProp(
+        joinProp: metadata.EntityProp,
+        source: RealTable,
+        target: RealTable,
+        scope: Scope
+    ): void {
+        const strategy = this.sqlClient.options.strategy;
+        const storage = joinProp.toStorage(strategy);
+        if (storage == null) {
+            const mappedByProp = joinProp.mappedByProp;
+            if (mappedByProp != null) {
+                this._fillJoinForeignKey(
+                    source,
+                    target,
+                    mappedByProp.toStorage(this._strategy)!,
+                    mappedByProp.targetKeyProp?.toStorage(this._strategy),
+                    scope
+                )
+            }
+        } else if (storage.kind != "MIDDLE_TABLE") {
+            this._fillJoinForeignKey(
+                source,
+                target,
+                storage,
+                joinProp.targetKeyProp?.toStorage(this._strategy),
+                scope
+            );
+        } else {
+            throw new Error("Middle table is not supported yet");
+        }
+    }
+
+    private _fillJoinForeignKey(
+        source: RealTable,
+        target: RealTable,
+        sourceStorage: metadata.PropStorage,
+        targetStorage: metadata.PropStorage | undefined,
+        scope: Scope
+    ) {
+        switch (sourceStorage.kind) {
+            case "COLUMN":
+                scope.add(
+                    new Column(source, sourceStorage.name)
+                );
+                scope.text(" = ");
+                scope.add(
+                    new Column(
+                        target, 
+                        (targetStorage as metadata.Column).name
+                    )
+                );
+                break;
+            case "COLUMNS":
+                for (let i = 0; i < sourceStorage.length; i++) {
+                    scope.separator();
+                    scope.add(
+                        new Column(source, sourceStorage[i]!.name)
+                    );
+                    scope.text(" = ");
+                    scope.add(
+                        new Column(
+                            target, 
+                            (targetStorage as metadata.Columns)[i]!.name
+                        )
+                    );
+                }
+                break;
+        }
+    }
+
+    private _fillFilterPred(
+        pred: ast.AbstractPred,
+        scope: Scope
+    ): void {
+        const visitor = this.cloneVisitor();
+        pred.accept(visitor);
+        const composite = visitor.toResult();
+        if (composite.fragments!.length === 1) {
+            const result = composite.fragments![0]!;
+            if (result instanceof Scope && result.kind === scope.kind) {
+                for (const fragment of result.fragments!) {
+                    if (typeof fragment === "string") {
+                        scope.text(fragment);
+                    } else {
+                        scope.add(fragment);
+                    }
+                }
+                return;
+            }
+        }
+        scope.add(composite);
     }
 }

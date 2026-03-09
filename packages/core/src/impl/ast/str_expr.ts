@@ -59,6 +59,58 @@ export abstract class AbstractStrExpr extends AbstractCmpExpr<string> {
         return this.ilike(value, mode);
     }
 
+    notLike(
+        value: string, 
+        mode?: LikeMode
+    ): LikePred | undefined {
+        const finalMode = mode ?? "CONTAINS";
+        if (value === "" && finalMode === "CONTAINS") {
+            return undefined;
+        }
+        return new LikePred(
+            this, 
+            getInternalFactory().createLiteral(likePattern(value, false, finalMode)), 
+            false,
+            true
+        );
+    };
+
+    notIlike(
+        value: string, 
+        mode?: LikeMode
+    ): LikePred | undefined {
+        const finalMode = mode ?? "CONTAINS";
+        if (value === "" && finalMode === "CONTAINS") {
+            return undefined;
+        }
+        return new LikePred(
+            this, 
+            getInternalFactory().createLiteral(likePattern(value, true, finalMode)), 
+            true,
+            true
+        );
+    }
+
+    notLikeIf(
+        value: string | null | undefined, 
+        mode?: LikeMode
+    ): LikePred | undefined {
+        if (value == null) {
+            return undefined;
+        }
+        return this.notLike(value, mode);
+    }
+
+    notIlikeIf(
+        value: string | null | undefined, 
+        mode?: LikeMode
+    ): LikePred | undefined {
+        if (value == null) {
+            return undefined;
+        }
+        return this.notIlike(value, mode);
+    }
+
     lower(): LowerExpr {
         return new LowerExpr(this);
     }
