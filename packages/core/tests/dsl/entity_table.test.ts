@@ -250,6 +250,7 @@ describe("RuntimeTableTest", () => {
                     return expr;
                 }
                 name() {
+                    const self = this;
                     let embedded = this._name;
                     if (embedded == null) {
                         this._name = embedded = new class {
@@ -258,14 +259,14 @@ describe("RuntimeTableTest", () => {
                             get firstName() {
                                 let expr = this._firstName;
                                 if (expr == null) {
-                                    this._firstName = expr = $createTableProp(this, ThisClass.__name_firstName);
+                                    this._firstName = expr = $createTableProp(self, ThisClass.__name_firstName);
                                 }
                                 return expr;
                             }
                             get lastName() {
                                 let expr = this._lastName;
                                 if (expr == null) {
-                                    this._lastName = expr = $createTableProp(this, ThisClass.__name_lastName);
+                                    this._lastName = expr = $createTableProp(self, ThisClass.__name_lastName);
                                 }
                                 return expr;
                             }
@@ -376,6 +377,7 @@ describe("RuntimeTableTest", () => {
                     });
                 }
                 orderId() {
+                    const self = this;
                     let embedded = this._orderId;
                     if (embedded == null) {
                         this._orderId = embedded = new class {
@@ -384,7 +386,7 @@ describe("RuntimeTableTest", () => {
                             get x() {
                                 let expr = this._x;
                                 if (expr == null) {
-                                    this._x = expr = $createTableProp(this, ThisClass.__orderId_x);
+                                    this._x = expr = $createTableProp(self, ThisClass.__orderId_x);
                                 }
                                 return expr;
                             }
@@ -397,14 +399,14 @@ describe("RuntimeTableTest", () => {
                                         get a() {
                                             let expr = this._a;
                                             if (expr == null) {
-                                                this._a = expr = $createTableProp(this, ThisClass.__orderId_y_a);
+                                                this._a = expr = $createTableProp(self, ThisClass.__orderId_y_a);
                                             }
                                             return expr;
                                         }
                                         get b() {
                                             let expr = this._b;
                                             if (expr == null) {
-                                                this._b = expr = $createTableProp(this, ThisClass.__orderId_y_b);
+                                                this._b = expr = $createTableProp(self, ThisClass.__orderId_y_b);
                                             }
                                             return expr;
                                         }

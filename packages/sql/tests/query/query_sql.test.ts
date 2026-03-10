@@ -1,8 +1,8 @@
 import { SqliteDriver } from "@/driver/sqlite_driver";
 import { newSqlClient } from "@/sql_client";
-import { BOOK, TREE_NODE } from "../model/model";
+import { BOOK, BOOK_STORE, TREE_NODE } from "../model/model";
 import { describe, it } from "vitest";
-import { dsl, dto } from "@ts-grm/core";
+import { dsl, dto, RootQuery } from "@ts-grm/core";
 import { Composite } from "@/sql/fragment";
 import { SqlBuilder } from "@/sql/sql_builder";
 import { expectCode } from "../utils";
@@ -15,18 +15,24 @@ describe("QuerySqlTest", () => {
         }
     });
 
+    function sql(q: RootQuery<any>): string {
+        const composite = Composite.of(q, sqlClient, undefined);
+        const builder = SqlBuilder.of(sqlClient);
+        composite.into(builder);
+        const [sql] = builder.build();
+        return sql;
+    }
+
     const SIMPLE_BOOK_VIEW = dto.view(BOOK, $ => $.id.name.edition);
+
+    const SIMPLE_STORE_VIEW = dto.view(BOOK_STORE, $ => $.id.name.version);
     
     it("where", () => {
         const q = sqlClient.createQuery(BOOK, (q, book) => {
             q.where(book.id.eq(3));
             return q.select(book.fetch(SIMPLE_BOOK_VIEW));
         });
-        const composite = Composite.of(q, sqlClient, undefined);
-        const builder = SqlBuilder.of(sqlClient);
-        composite.into(builder);
-        const [sql] = builder.build();
-        expectCode(sql, `
+        expectCode(sql(q), `
             select 
                 tb_1_.ID,
                 tb_1_.NAME,
@@ -54,11 +60,7 @@ describe("QuerySqlTest", () => {
                 book.fetch(SIMPLE_BOOK_VIEW)
             );
         });
-        const composite = Composite.of(q, sqlClient, undefined);
-        const builder = SqlBuilder.of(sqlClient);
-        composite.into(builder);
-        const [sql] = builder.build();
-        expectCode(sql, `
+        expectCode(sql(q), `
             select 
                 tb_1_.ID,
                 tb_1_.NAME,
@@ -103,11 +105,7 @@ describe("QuerySqlTest", () => {
             q.orderBy(base.book.price.desc());
             return q.select(base.book.fetch(SIMPLE_BOOK_VIEW));
         });
-        const composite = Composite.of(q, sqlClient, undefined);
-        const builder = SqlBuilder.of(sqlClient);
-        composite.into(builder);
-        const [sql] = builder.build();
-        expectCode(sql, `
+        expectCode(sql(q), `
             select 
                 tb_1_.c1,
                 tb_1_.c2,
@@ -164,11 +162,7 @@ describe("QuerySqlTest", () => {
             q.orderBy(base.book.price.desc());
             return q.select(base.book.fetch(SIMPLE_BOOK_VIEW));
         });
-        const composite = Composite.of(q, sqlClient, undefined);
-        const builder = SqlBuilder.of(sqlClient);
-        composite.into(builder);
-        const [sql] = builder.build();
-        expectCode(sql, `
+        expectCode(sql(q), `
             with
                 tb_1_(c1, c2, c3, c5, c4) as (
                     select 
@@ -229,11 +223,7 @@ describe("QuerySqlTest", () => {
                 base.depth
             );
         });
-        const composite = Composite.of(q, sqlClient, undefined);
-        const builder = SqlBuilder.of(sqlClient);
-        composite.into(builder);
-        const [sql] = builder.build();
-        expectCode(sql, `
+        expectCode(sql(q), `
             with
                 recursive tb_1_(c1, c2, c3) as (
                     select 
@@ -262,14 +252,14 @@ describe("QuerySqlTest", () => {
         `);
     });
 
-    it("mergeAllJoins", () => {
+    it("mergeAllJoinsByReference", () => {
         const q = sqlClient.createQuery(BOOK, (q, book) => {
             q.where(
                 book.store().version.in(1, 2, 4, 8)
             );
             q.where(
                 book.store({
-                    filter: ctx => ctx.target.name.notLike("alex")
+                    filter: ctx => ctx.target.name.notLike("name1")
                 }).name.ilike("n")
             );
             q.where(
@@ -278,16 +268,12 @@ describe("QuerySqlTest", () => {
             q.where(
                 book.store({
                     joinType: "LEFT",
-                    filter: ctx => ctx.target.name.notLike("bob")
+                    filter: ctx => ctx.target.name.notLike("name2")
                 }).version.ne(1)
             );
             return q.select(book.fetch(SIMPLE_BOOK_VIEW));
         });
-        const composite = Composite.of(q, sqlClient, undefined);
-        const builder = SqlBuilder.of(sqlClient);
-        composite.into(builder);
-        const [sql] = builder.build();
-        expectCode(sql, `
+        expectCode(sql(q), `
             select 
                 tb_1_.ID,
                 tb_1_.NAME,
@@ -310,28 +296,24 @@ describe("QuerySqlTest", () => {
         `);
     });
 
-    it("mergeSomeJoins", () => {
+    it("mergeSomeJoinsByReference", () => {
         const q = sqlClient.createQuery(BOOK, (q, book) => {
             q.where(
                 dsl.or(
                     book.store().version.in(1, 2, 4, 8),
                     book.store({
-                        filter: ctx => ctx.target.name.notLike("alex")
+                        filter: ctx => ctx.target.name.notLike("name1")
                     }).name.ilike("n"),
                     book.store("LEFT").version.notIn(1, 4, 9, 16),
                     book.store({
                         joinType: "LEFT",
-                        filter: ctx => ctx.target.name.notLike("bob")
+                        filter: ctx => ctx.target.name.notLike("name2")
                     }).version.ne(1)
                 )
             );
             return q.select(book.fetch(SIMPLE_BOOK_VIEW));
         });
-        const composite = Composite.of(q, sqlClient, undefined);
-        const builder = SqlBuilder.of(sqlClient);
-        composite.into(builder);
-        const [sql] = builder.build();
-        expectCode(sql, `
+        expectCode(sql(q), `
             select 
                 tb_1_.ID,
                 tb_1_.NAME,
@@ -353,6 +335,184 @@ describe("QuerySqlTest", () => {
                     tb_3_.VERSION not in(?, ?, ?, ?)
                 or
                     tb_3_.VERSION <> ?
+        `);
+    });
+
+    it("mergeAllJoinsByBackReference", () => {
+        const q = sqlClient.createQuery(BOOK_STORE, (q, store) => {
+            q.where(
+                store.books().$acceptRisk().name.in("java", "c++", "c#", "typescript")
+            );
+            q.where(
+                store.books({
+                    filter: ctx => ctx.target.name.notLike("name1")
+                }).$acceptRisk().name.ilike("n")
+            );
+            q.where(
+                store.books("LEFT").$acceptRisk().name.notIn("cobol", "pascal", "fortran", "perl")
+            );  
+            q.where(
+                store.books({
+                    joinType: "LEFT",
+                    filter: ctx => ctx.target.name.notLike("name2")
+                }).$acceptRisk().edition.ne(1)
+            );
+            return q.select(store.fetch(SIMPLE_STORE_VIEW));
+        });
+        expectCode(sql(q), `
+            select 
+                tb_1_.ID,
+                tb_1_.NAME,
+                tb_1_.VERSION
+            from BOOK_STORE tb_1_
+            inner join BOOK tb_2_ on 
+                tb_1_.ID = tb_2_.STORE_ID
+            and
+                tb_2_.NAME not like ?
+            and
+                tb_2_.NAME not like ?
+            where 
+                    tb_2_.NAME in(?, ?, ?, ?)
+                and
+                    lower(tb_2_.NAME) like ?
+                and
+                    tb_2_.NAME not in(?, ?, ?, ?)
+                and
+                    tb_2_.EDITION <> ?
+        `);
+    });
+
+    it("mergeSomeJoinsByBackReference", () => {
+        const q = sqlClient.createQuery(BOOK_STORE, (q, store) => {
+            q.where(
+                dsl.or(
+                    store.books().$acceptRisk().name.in("java", "c++", "c#", "typescript"),
+                    store.books({
+                        filter: ctx => ctx.target.name.notLike("name1")
+                    }).$acceptRisk().name.ilike("n"),
+                    store.books("LEFT").$acceptRisk().name.notIn("cobol", "pascal", "fortran", "perl"),
+                    store.books({
+                        joinType: "LEFT",
+                        filter: ctx => ctx.target.name.notLike("name2")
+                    }).$acceptRisk().edition.ne(1)
+                )
+            );
+            return q.select(store.fetch(SIMPLE_STORE_VIEW));
+        });
+        expectCode(sql(q), `
+            select 
+                tb_1_.ID,
+                tb_1_.NAME,
+                tb_1_.VERSION
+            from BOOK_STORE tb_1_
+            inner join BOOK tb_2_ on 
+                tb_1_.ID = tb_2_.STORE_ID
+            and
+                tb_2_.NAME not like ?
+            left join BOOK tb_3_ on 
+                tb_1_.ID = tb_3_.STORE_ID
+            and
+                tb_3_.NAME not like ?
+            where 
+                    tb_2_.NAME in(?, ?, ?, ?)
+                or
+                    lower(tb_2_.NAME) like ?
+                or
+                    tb_3_.NAME not in(?, ?, ?, ?)
+                or
+                    tb_3_.EDITION <> ?
+        `);
+    });
+
+    it("mergeAllJoinsByMiddleTable", () => {
+        const q = sqlClient.createQuery(BOOK, (q, book) => {
+            q.where(
+                book.authors().$acceptRisk().name().lastName.in("smith", "johnson", "williams", "brown")
+            );
+            q.where(
+                book.authors({
+                    filter: ctx => ctx.target.name().firstName.notLike("name1")
+                }).$acceptRisk().name().firstName.ilike("n")
+            );
+            q.where(
+                book.authors("LEFT").$acceptRisk().name().lastName.notIn("fernsehby", "macgillivray", "pussett", "bythesea")
+            );
+            q.where(
+                book.authors({
+                    joinType: "LEFT",
+                    filter: ctx => ctx.target.name().firstName.notLike("name2")
+                }).$acceptRisk().name().firstName.ne("tim")
+            );
+            return q.select(book.fetch(SIMPLE_BOOK_VIEW));
+        });
+        expectCode(sql(q), `
+            select 
+                tb_1_.ID,
+                tb_1_.NAME,
+                tb_1_.EDITION
+            from BOOK tb_1_
+            inner join book_author_mapping tb_2_ on 
+                tb_1_.ID = tb_2_.BOOK_ID
+            inner join AUTHOR tb_3_ on 
+                tb_2_.AUTHOR_ID = tb_3_.ID
+            and
+                tb_3_.FIRST_NAME not like ?
+            and
+                tb_3_.FIRST_NAME not like ?
+            where 
+                    tb_3_.LAST_NAME in(?, ?, ?, ?)
+                and
+                    lower(tb_3_.FIRST_NAME) like ?
+                and
+                    tb_3_.LAST_NAME not in(?, ?, ?, ?)
+                and
+                    tb_3_.FIRST_NAME <> ?
+        `);
+    });
+
+    it("mergeSomeJoinsByMiddleTable", () => {
+        const q = sqlClient.createQuery(BOOK, (q, book) => {
+            q.where(
+                dsl.or(
+                    book.authors().$acceptRisk().name().lastName.in("smith", "johnson", "williams", "brown"),
+                    book.authors({
+                        filter: ctx => ctx.target.name().firstName.notLike("name1")
+                    }).$acceptRisk().name().firstName.ilike("n"),
+                    book.authors("LEFT").$acceptRisk().name().lastName.notIn("fernsehby", "macgillivray", "pussett", "bythesea"),
+                    book.authors({
+                        joinType: "LEFT",
+                        filter: ctx => ctx.target.name().firstName.notLike("name2")
+                    }).$acceptRisk().name().firstName.ne("tim")
+                )
+            );
+            return q.select(book.fetch(SIMPLE_BOOK_VIEW));
+        });
+        expectCode(sql(q), `
+            select 
+                tb_1_.ID,
+                tb_1_.NAME,
+                tb_1_.EDITION
+            from BOOK tb_1_
+            inner join book_author_mapping tb_2_ on 
+                tb_1_.ID = tb_2_.BOOK_ID
+            inner join AUTHOR tb_3_ on 
+                tb_2_.AUTHOR_ID = tb_3_.ID
+            and
+                tb_3_.FIRST_NAME not like ?
+            left join book_author_mapping tb_4_ on 
+                tb_1_.ID = tb_4_.BOOK_ID
+            left join AUTHOR tb_5_ on 
+                tb_4_.AUTHOR_ID = tb_5_.ID
+            and
+                tb_5_.FIRST_NAME not like ?
+            where 
+                    tb_3_.LAST_NAME in(?, ?, ?, ?)
+                or
+                    lower(tb_3_.FIRST_NAME) like ?
+                or
+                    tb_5_.LAST_NAME not in(?, ?, ?, ?)
+                or
+                    tb_5_.FIRST_NAME <> ?
         `);
     });
 });

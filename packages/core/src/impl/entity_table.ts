@@ -169,7 +169,9 @@ function writeScalarProp(prop: EntityProp, writer: CodeWriter) {
             writer
                 .code("this._")
                 .code(prop.name)
-                .code(" = expr = $createTableProp(this, ThisClass.__");
+                .code(" = expr = $createTableProp(")
+                .code(prop.parentProp == null ? "this" : "self")
+                .code(", ThisClass.__");
             writePropPath(prop, "_", writer);
             writer.code(")").newLine(";");
         }).newLine();
@@ -247,6 +249,9 @@ function writeJoinTable(
 
 function writeEmbeddedProp(prop: EntityProp, writer: CodeWriter) {
     writer.code(prop.name).code("() ").scope("CURLY_BRACKETS", () => {
+        if (prop.parentProp == null) {
+            writer.code("const self = this").newLine(";");
+        }
         writer.code("let embedded = this._").code(prop.name).newLine(";");
         writer.code("if (embedded == null) ").scope("CURLY_BRACKETS", () => {
             writer.code("this._").code(prop.name).code(" = embedded = new class ");

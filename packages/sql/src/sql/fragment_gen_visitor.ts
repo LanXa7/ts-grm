@@ -1,11 +1,12 @@
 import { ast, err, metadata } from "@ts-grm/core";
-import { Column, Composite, Query, Scope, ShadowColumn, ShadowExpr, Source, Value } from "./fragment";
+import { Alias, Composite, Query, Scope, ShadowColumn, ShadowExpr, Source, Value } from "./fragment";
 import { Stack } from "./stack";
 import { Precedence } from "./precedence";
 import { NodeRender, NodeRenderContext } from "@/driver/node_render";
 import { RealTable } from "./real_table";
 import { SqlClientImplementor } from "@/sql_client";
 import { BaseQueryMetadata } from "./base_query_metadata";
+import { TableFragmentCreator } from "./table_fragment_creator";
 
 export class FragmentGenGenVisitor extends ast.AbstractVisitor {
 
@@ -18,6 +19,8 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
     private readonly _nodeRender: NodeRender;
 
     private readonly _nodeRenderContext: NodeRenderContext;
+
+    private readonly _tableFragmentCreator: TableFragmentCreator;
 
     constructor(
         readonly sqlClient: SqlClientImplementor,
@@ -55,10 +58,10 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
                 if (current <= precedence) {
                     return disposable1;
                 }
-                that._compositeStack.current.text("(");
+                that._compositeStack.current.add("(");
                 return {
                     [Symbol.dispose]() {
-                        that._compositeStack.current.text(")");
+                        that._compositeStack.current.add(")");
                         disposable1[Symbol.dispose]();
                     }
                 };
@@ -67,7 +70,7 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
         this._nodeRenderContext = new class implements NodeRenderContext {
 
             text(value: string): void {
-                that._compositeStack.current.text(value);
+                that._compositeStack.current.add(value);
             }
             
             separator(): void {
@@ -86,6 +89,10 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
                 node.accept(that);
             }
         }
+        this._tableFragmentCreator = new TableFragmentCreator(
+            this.sqlClient,
+            () => this.cloneVisitor()
+        );
         // No disposing to record the root result
         this._compositeStack.with(new Composite());
     }
@@ -104,13 +111,13 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
         using __ = this._precedenceStack.with(Precedence.ROOT);
         
         {
-            this._compositeStack.current.text("select ");
+            this._compositeStack.current.add("select ");
             using _ = this._compositeStack.with(new Scope("COMMA"));
             this._visitProjection(query.projection);
         }
 
         {
-            this._compositeStack.current.text("\nfrom ");
+            this._compositeStack.current.add("\nfrom ");
             let recursive: { prev: RealTable, pred: Composite } | undefined = undefined;
             if (query.recursivePred != null) {
                 const visitor = this.cloneVisitor();
@@ -122,35 +129,35 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
                     t as metadata.AbstractEntityTable | metadata.TypedBaseTable
                 )
             );
-            this._fillJoinConditions(tables);
+            this._fillTableFragments(tables);
             using _ = this._compositeStack.with(new Source(tables, recursive));
         }
 
         const wherePred = query.wherePred;
         if (wherePred != null) {
-            this._compositeStack.current.text("\nwhere ");
+            this._compositeStack.current.add("\nwhere ");
             using _ = this._compositeStack.with(new Scope("INDENT"));
             query.wherePred?.accept(this);
         }
 
         const orders = query.orders;
         if (orders.length !== 0) {
-            this._compositeStack.current.text("\norder by ");
+            this._compositeStack.current.add("\norder by ");
             using _ = this._compositeStack.with(new Scope("COMMA"));
             const current = this._compositeStack.current;
             for (const order of query.orders) {
                 current.separator();
                 (order.expression as ast.AbstractExpr<any>).accept(this);
-                current.text(order.desc ? " desc" : " asc");
+                current.add(order.desc ? " desc" : " asc");
                 if (order.nullsType !== "UNSPECIFIED") {
-                    current.text(`nulls ${order.nullsType.toLowerCase()}`);
+                    current.add(`nulls ${order.nullsType.toLowerCase()}`);
                 }
             }
         }
 
         const groupByExprs = query.groupByExprs;
         if (groupByExprs != null) {
-            this._compositeStack.current.text("\ngroup by ");
+            this._compositeStack.current.add("\ngroup by ");
             using _ = this._compositeStack.with(new Scope("COMMA"));
             for (const expr of groupByExprs) {
                 this._compositeStack.current.separator();
@@ -160,7 +167,7 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
 
         const havingPred = query.havingPred;
         if (havingPred != null) {
-            this._compositeStack.current.text("\nhaving ");
+            this._compositeStack.current.add("\nhaving ");
             using _ = this._compositeStack.with(new Scope("INDENT"));
             havingPred.accept(this);
         }
@@ -186,7 +193,7 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
     visitTupleCmpPred(pred: ast.TupleCmpPred): void {
         using _ = this._precedenceStack.with(Precedence.COMPARISON);
         pred.leftTuple.accept(this);
-        this._compositeStack.current.text(" ").text(pred.op).text(" ");
+        this._compositeStack.current.add(" ").add(pred.op).add(" ");
         pred.rightTuple.accept(this);
     }
 
@@ -195,7 +202,7 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
         using _ = this._precedenceStack.with(Precedence.COMPARISON);
 
         pred.tuple.accept(this);
-        this._compositeStack.current.text(pred.neg ? " not in" : " in");
+        this._compositeStack.current.add(pred.neg ? " not in" : " in");
 
         using __ = this._compositeStack.with(new Scope("VALUES"));
         using ___ = this._precedenceStack.with(Precedence.ROOT);
@@ -210,7 +217,7 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
         using _ = this._precedenceStack.with(Precedence.COMPARISON);
 
         pred.tuple.accept(this);
-        this._compositeStack.current.text(pred.neg ? " not in" : " in");
+        this._compositeStack.current.add(pred.neg ? " not in" : " in");
 
         using __ = this._compositeStack.with(new Scope("VALUES"));
         using ___ = this._precedenceStack.with(Precedence.ROOT);
@@ -220,13 +227,13 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
     visitCmpPred(pred: ast.CmpPred): void {
         using _ = this._precedenceStack.with(Precedence.COMPARISON);
         pred.leftExpr.accept(this);
-        this._compositeStack.current.text(" ").text(pred.op).text(" ");
+        this._compositeStack.current.add(" ").add(pred.op).add(" ");
         pred.rightExpr.accept(this);
     }
 
     visitInCollectionPred(pred: ast.InCollectionPred<any>): void {
         if (pred.values.length === 0) {
-            this._compositeStack.current.text(pred.neg ? "1 = 1" : "1 = 0");
+            this._compositeStack.current.add(pred.neg ? "1 = 1" : "1 = 0");
         } else {
             this._nodeRender.renderInCollectionPred(pred, this._nodeRenderContext);
         }
@@ -235,7 +242,7 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
     visitInSubQueryPred(pred: ast.InSubQueryPred): void {
         using _ = this._precedenceStack.with(Precedence.COMPARISON);
         pred.expr.accept(this);
-        this._compositeStack.current.text(pred.neg ? " not in" : " in");
+        this._compositeStack.current.add(pred.neg ? " not in" : " in");
         using __ = this._compositeStack.with(new Scope("VALUES"));
         using ___ = this._precedenceStack.with(Precedence.ROOT);
         pred.subQuery.accept(this);
@@ -244,9 +251,9 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
     visitBetweenPred(pred: ast.BetweenPred): void {
         using _ = this._precedenceStack.with(Precedence.COMPARISON);
         pred.expr.accept(this);
-        this._compositeStack.current.text(" between ");
+        this._compositeStack.current.add(" between ");
         pred.minExpr.accept(this);
-        this._compositeStack.current.text(" and ");
+        this._compositeStack.current.add(" and ");
         pred.maxExpr.accept(this);
     }
 
@@ -258,9 +265,9 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
         using _ = this._precedenceStack.with(Precedence.UNARY);
         pred.expr.accept(this);
         if (pred.neg) {
-            this._compositeStack.current.text(" is not null");
+            this._compositeStack.current.add(" is not null");
         } else {
-            this._compositeStack.current.text(" is null");
+            this._compositeStack.current.add(" is null");
         }
     }
 
@@ -276,7 +283,7 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
 
     visitExistsPred(pred: ast.ExistsPred): void {
         using _ = this._precedenceStack.with(Precedence.UNARY);
-        this._compositeStack.current.text(pred.neg ? " not exists" : "exists")
+        this._compositeStack.current.add(pred.neg ? " not exists" : "exists")
         pred.subQuery.accept(this);
     }
 
@@ -294,7 +301,7 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
                 this._compositeStack.current.add(new ShadowColumn(realTable, table.anchor!.exportedName, column.name));
             } else {
                 const realTable = this._toRealTable(table);
-                this._compositeStack.current.add(new Column(realTable, column.name));
+                this._compositeStack.current.add(new Alias(realTable)).add(".").add(column.name);
             }
         }
     }
@@ -307,12 +314,12 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
             this._compositeStack.current.add(new ShadowColumn(shadowRealTable, expr.table.anchor!.exportedName!, column.name));
         } else {
             const realTable = this._toRealTable(expr.table);
-            this._compositeStack.current.add(new Column(realTable, column.name));
+            this._compositeStack.current.add(new Alias(realTable)).add(".").add(column.name);
         }
     }
 
     visitCoalesceExpr(expr: ast.CoalesceExprContract): void {
-        this._compositeStack.current.text("coalesce")
+        this._compositeStack.current.add("coalesce")
         using _ = this._compositeStack.with(new Scope("VALUES"));
         using __ = this._precedenceStack.with(Precedence.ROOT);
         expr.expr.accept(this);
@@ -327,7 +334,7 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
         const current = this._compositeStack.current;
         for (const part of expr.parts) {
             if (typeof part === "string") {
-                current.text(part);
+                current.add(part);
             } else {
                 (part as ast.AbstractExpr<any>).accept(this);
             }
@@ -335,7 +342,7 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
     }
 
     visitSubQueryExpr(expr: ast.SubQueryExprContract): void {
-        this._compositeStack.current.text(expr.op.toLowerCase());
+        this._compositeStack.current.add(expr.op.toLowerCase());
         using _ = this._compositeStack.with(new Scope("VALUES"));
         expr.subQuery.accept(this);
     }
@@ -353,17 +360,17 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
     visitLowerExpr(expr: ast.LowerExpr): void {
         using _ = this._precedenceStack.with(Precedence.ROOT);
         const current = this._compositeStack.current;
-        current.text("lower(");
+        current.add("lower(");
         expr.expr.accept(this);
-        current.text(")");
+        current.add(")");
     }
 
     visitUpperExpr(expr: ast.UpperExpr): void {
         using _ = this._precedenceStack.with(Precedence.ROOT);
         const current = this._compositeStack.current;
-        current.text("upper(");
+        current.add("upper(");
         expr.expr.accept(this);
-        current.text(")");
+        current.add(")");
     }
 
     visitReverseExpr(expr: ast.ReverseExpr): void {
@@ -381,13 +388,13 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
     visitReplaceExpr(expr: ast.ReplaceExpr): void {
         using _ = this._precedenceStack.with(Precedence.ROOT);
         const current = this._compositeStack.current;
-        current.text("replace(");
+        current.add("replace(");
         expr.expr.accept(this);
-        current.text(", ");
+        current.add(", ");
         expr.oldStrExpr.accept(this);
-        current.text(", ");
+        current.add(", ");
         expr.newStrExpr.accept(this);
-        current.text(")");
+        current.add(")");
     }
 
     visitPadExpr(expr: ast.PadExpr): void {
@@ -418,7 +425,7 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
 
     visitUnaryMinusExpr(expr: ast.UnaryMinusExpr<any>): void {
         using _ = this._precedenceStack.with(Precedence.UNARY);
-        this._compositeStack.current.text("-");
+        this._compositeStack.current.add("-");
         expr.expr.accept(this);
     }
 
@@ -429,21 +436,21 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
                 : Precedence.TIMES
         );
         expr.leftExpr.accept(this);
-        this._compositeStack.current.text(" ").text(expr.op).text(" ");
+        this._compositeStack.current.add(" ").add(expr.op).add(" ");
         expr.rightExpr.accept(this);
     }
 
     visitAggregateExpr(expr: ast.AggregateExpr<any>): void {
         using _ = this._precedenceStack.with(Precedence.ROOT);
         const current = this._compositeStack.current;
-        current.text(expr.op.toLowerCase());
-        current.text("(");
+        current.add(expr.op.toLowerCase());
+        current.add("(");
         if (expr.expr == null) {
-            current.text("1");
+            current.add("1");
         } else {
             expr.expr.accept(this);
         }
-        current.text(")");
+        current.add(")");
     }
 
     visitDtPlusExpr(expr: ast.DtPlusExpr): void {
@@ -460,7 +467,7 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
     }
 
     visitConstant(value: number): void {
-        this._compositeStack.current.text(value.toString());
+        this._compositeStack.current.add(value.toString());
     }
 
     private _visitProjection(projection: ast.ProjectionContract): void {
@@ -498,16 +505,16 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
                         const expr = selection as any as ast.ShadowExprContract;
                         expr.accept(this);
                         if (!this._baseQueryMetadata!.isCte) {
-                            this._compositeStack.current.text(' ').text(exportedData);
+                            this._compositeStack.current.add(' ').add(exportedData);
                         }
                     } else {
                         for (const exportedColumn of exportedData) {
                             this._compositeStack.current.separator();
                             const table = selection as metadata.AbstractEntityTable;
                             const realTable = this._toRealTable(table);
-                            this._compositeStack.current.add(new Column(realTable, exportedColumn.columnName));
+                            this._compositeStack.current.add(new Alias(realTable)).add(".").add(exportedColumn.columnName);
                             if (!this._baseQueryMetadata!.isCte) {
-                                this._compositeStack.current.text(" ").text(exportedColumn.alias);
+                                this._compositeStack.current.add(" ").add(exportedColumn.alias);
                             }
                         }
                     }
@@ -535,116 +542,13 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
         return this._compositeStack.current as Composite;
     }
 
-    private _fillJoinConditions(tables: ReadonlyArray<RealTable>) {
+    private _fillTableFragments(tables: ReadonlyArray<RealTable>) {
         for (const table of tables) {
-            const parent = table.parent;
-            if (parent != null) {
-                const scope = new Scope("AND");
-                const joinProp = table.joinProp;
-                if (joinProp != null) {
-                    this._fillJoinProp(joinProp, parent, table, scope);
-                }
-                const filterPred = table.filterPred;
-                if (filterPred != null) {
-                    scope.separator();
-                    this._fillFilterPred(filterPred, scope);
-                }
-                table.joinConditionFragment = scope;
+            if (table.symbol.baseModel != null && table.symbol.baseModel?.__isCte) {
+                table.cteDefinitionFragment = this._tableFragmentCreator.createDefinition(table);
             }
-            this._fillJoinConditions(table.children);
+            table.fragment = this._tableFragmentCreator.createUsage(table);
+            this._fillTableFragments(table.children);
         }
-    }
-
-    private _fillJoinProp(
-        joinProp: metadata.EntityProp,
-        source: RealTable,
-        target: RealTable,
-        scope: Scope
-    ): void {
-        const strategy = this.sqlClient.options.strategy;
-        const storage = joinProp.toStorage(strategy);
-        if (storage == null) {
-            const mappedByProp = joinProp.mappedByProp;
-            if (mappedByProp != null) {
-                this._fillJoinForeignKey(
-                    source,
-                    target,
-                    mappedByProp.toStorage(this._strategy)!,
-                    mappedByProp.targetKeyProp?.toStorage(this._strategy),
-                    scope
-                )
-            }
-        } else if (storage.kind != "MIDDLE_TABLE") {
-            this._fillJoinForeignKey(
-                source,
-                target,
-                storage,
-                joinProp.targetKeyProp?.toStorage(this._strategy),
-                scope
-            );
-        } else {
-            throw new Error("Middle table is not supported yet");
-        }
-    }
-
-    private _fillJoinForeignKey(
-        source: RealTable,
-        target: RealTable,
-        sourceStorage: metadata.PropStorage,
-        targetStorage: metadata.PropStorage | undefined,
-        scope: Scope
-    ) {
-        switch (sourceStorage.kind) {
-            case "COLUMN":
-                scope.add(
-                    new Column(source, sourceStorage.name)
-                );
-                scope.text(" = ");
-                scope.add(
-                    new Column(
-                        target, 
-                        (targetStorage as metadata.Column).name
-                    )
-                );
-                break;
-            case "COLUMNS":
-                for (let i = 0; i < sourceStorage.length; i++) {
-                    scope.separator();
-                    scope.add(
-                        new Column(source, sourceStorage[i]!.name)
-                    );
-                    scope.text(" = ");
-                    scope.add(
-                        new Column(
-                            target, 
-                            (targetStorage as metadata.Columns)[i]!.name
-                        )
-                    );
-                }
-                break;
-        }
-    }
-
-    private _fillFilterPred(
-        pred: ast.AbstractPred,
-        scope: Scope
-    ): void {
-        const visitor = this.cloneVisitor();
-        pred.accept(visitor);
-        const composite = visitor.toResult();
-        if (composite.fragments!.length === 1) {
-            const result = composite.fragments![0]!;
-            if (result instanceof Scope && result.kind === scope.kind) {
-                for (const fragment of result.fragments!) {
-                    if (typeof fragment === "string") {
-                        scope.text(fragment);
-                    } else {
-                        scope.add(fragment);
-                    }
-                }
-                return;
-            }
-        }
-        scope.add(composite);
     }
 }

@@ -34,7 +34,9 @@ export class RealTable {
 
     private _children: ReadonlyArray<RealTable> | undefined = undefined;
 
-    joinConditionFragment: Fragment | undefined = undefined;
+    cteDefinitionFragment: Fragment | undefined = undefined;
+
+    fragment: Fragment | undefined = undefined;
 
     constructor(readonly symbol: metadata.AbstractEntityTable | metadata.TypedBaseTable) {
         if (symbol instanceof metadata.AbstractEntityTable) {

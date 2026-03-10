@@ -3,7 +3,6 @@ import { Stack } from "./stack";
 import { JoinMergeScope } from "./join_merge_scope";
 import { RealTable } from "./real_table";
 import { SqlClientImplementor } from "@/sql_client";
-import { Column } from "./fragment";
 
 export class PreVisitor extends ast.AbstractVisitor {
 
@@ -67,7 +66,7 @@ export class PreVisitor extends ast.AbstractVisitor {
         } else {
             this._toRealTable(shadow).baseQueryMetadata.alias(
                 expr.table.anchor!.exportedName, 
-                (expr.prop.toStorage(this._strategy) as any as Column).name
+                (expr.prop.toStorage(this._strategy) as any as metadata.Column).name
             );
         }
     }

@@ -1,4 +1,4 @@
-import { ast, err, metadata, SqlClient } from "@ts-grm/core";
+import { ast, err, SqlClient } from "@ts-grm/core";
 import { RealTable } from "./real_table";
 import { SqlBuilder } from "./sql_builder";
 import { FragmentGenGenVisitor } from "./fragment_gen_visitor";
@@ -15,48 +15,21 @@ export class Composite extends Fragment {
 
     protected _fragments: Array<Fragment | string> | undefined = undefined;
 
-    private _texts: Array<string> | undefined = undefined;
-
     get fragments(): ReadonlyArray<Fragment | string> | undefined {
         return this._fragments;
     }
 
-    add(fragment: Fragment) {
-        this.flush();
+    add(fragment: Fragment | string): this {
         let fragments = this._fragments;
         if (fragments == null) {
             this._fragments = fragments = [];
         }
         fragments.push(fragment);
-    }
-
-    text(value: string): this {
-        if (value === "") {
-            return this;
-        }
-        let texts = this._texts;
-        if (texts == null) {
-            this._texts = texts = [];
-        }
-        texts.push(value);
         return this;
     }
 
-    protected flush() {
-        let texts = this._texts;
-        if (texts == null) {
-            return;
-        }
-        let fragments = this._fragments;
-        if (fragments == null) {
-            this._fragments = fragments = [];
-        }
-        fragments.push(texts.join(""));
-        this._texts = undefined;
-    }
-
     protected get isDirty(): boolean {
-        return this._fragments != null || this._texts != null;
+        return this._fragments != null;
     }
 
     separator() {
@@ -64,7 +37,6 @@ export class Composite extends Fragment {
     }
 
     into(builder: SqlBuilder): void {
-        this.flush();
         const fragments = this._fragments;
         if (fragments != null) {
             for (const fragment of fragments) {
@@ -99,7 +71,7 @@ export class Scope extends Composite {
         super();
     }
 
-    separator() {
+    separator(): this {
         if (this.isDirty) {
             switch (this.kind) {
                 case "AND":
@@ -126,10 +98,10 @@ export class Scope extends Composite {
                     break;
             }
         }
+        return this;
     }
 
     into(builder: SqlBuilder): void {
-        this.flush();
         using _ = builder.withPretty(this.pretty);
         if (builder.pretty) {
             if (this.kind === "VALUES") {
@@ -225,17 +197,29 @@ export class Separator extends Fragment {
     }
 }
 
-export class Column extends Fragment {
+export class Alias extends Fragment {
     
     constructor(
-        readonly table: RealTable, 
-        readonly name: string
+        readonly table: RealTable
     ) {
         super();
     }
 
     into(builder: SqlBuilder): void {
-        builder.sql(this.table.alias).sql(".").sql(this.name);
+        builder.sql(this.table.alias);
+    }
+}
+
+export class MiddleAlias extends Fragment {
+    
+    constructor(
+        readonly table: RealTable
+    ) {
+        super();
+    }
+
+    into(builder: SqlBuilder): void {
+        builder.sql(this.table.middleTableAlias!);
     }
 }
 
@@ -285,11 +269,12 @@ export class Query extends Composite {
 
     private _source: Source | undefined = undefined;
 
-    add(fragment: Fragment): void {
+    add(fragment: Fragment): this {
         if (fragment instanceof Source) {
             this._source = fragment;
         }
         super.add(fragment);
+        return this;
     }
 
     into(builder: SqlBuilder): void {
@@ -317,10 +302,10 @@ export class Source extends Composite {
 
     into(builder: SqlBuilder): void {
         for (const rootTable of this.rootTables) {
-            Source._tableToBuilder(rootTable, builder);
+            rootTable.fragment?.into(builder);
         }
         for (const rootTable of this.rootTables) {
-            Source._childrenToBuilder(rootTable, builder);
+            Source._renderChildTables(rootTable.children, builder);
         }
         if (this.recursive != null) {
             builder.sql("\ninner join ");
@@ -330,13 +315,11 @@ export class Source extends Composite {
         }
     }
 
-    cteHeadInto(builder: SqlBuilder): void {
+    cteHeadInto(
+        builder: SqlBuilder
+    ): void {
         const cteTables: Array<RealTable> = [];
-        for (const rootTable of this.rootTables) {
-            if (rootTable.symbol.baseModel != null && rootTable.symbol.baseModel.__isCte) {
-                cteTables.push(rootTable);
-            }
-        }
+        Source._collectCteTables(this.rootTables, cteTables);
         if (cteTables.length === 0) {
             return;
         }
@@ -345,76 +328,49 @@ export class Source extends Composite {
         for (const cteTable of cteTables) {
             withScope.separator();
             if (cteTable.symbol.baseModel!.__isRecursive) {
-                withScope.text("\nrecursive ");
+                withScope.add("\nrecursive ");
             }
-            withScope.text(cteTable.alias);
+            withScope.add(cteTable.alias);
             const metadata = cteTable.baseQueryMetadata!;
             const aliasScope = new Scope("VALUES", false);
             for (const key in cteTable.symbol.baseModel!.__args) {
                 const exportedData = metadata.exportedData(key);
                 if (typeof exportedData === "string") {
                     aliasScope.separator();
-                    aliasScope.text(exportedData);
+                    aliasScope.add(exportedData);
                 } else {
                     for (const exportedColumn of exportedData!) {
                         aliasScope.separator();
-                        aliasScope.text(exportedColumn.alias);
+                        aliasScope.add(exportedColumn.alias);
                     }
                 }
             }
             withScope.add(aliasScope);
-            withScope.text(" as ");
-            withScope.add(Source._baseQueryFragment(cteTable, builder.sqlClient));
+            withScope.add(" as ");
+            withScope.add(cteTable.cteDefinitionFragment!);
         }
         withScope.into(builder);
     }
 
-    private static _baseQueryFragment(
-        table: RealTable,
-        sqlClient: SqlClientImplementor
-    ) {
-        const composite = Composite.of(
-            table.symbol.baseModel!.__toQuery(), 
-            sqlClient,
-            table.baseQueryMetadata
-        );
-        const wrapper = new Scope("VALUES");
-        wrapper.add(composite);
-        return wrapper;
-    }
-
-    private static _tableToBuilder(
-        table: RealTable,
-        builder: SqlBuilder
+    private static _collectCteTables(
+        tables: ReadonlyArray<RealTable>, 
+        outArr: Array<RealTable>
     ): void {
-        if (table.symbol.baseModel == null) {
-            const entityTable = table.symbol as metadata.AbstractEntityTable;
-            builder
-                .sql(entityTable.entity.toTableName(builder.strategy))
-                .sql(" ")
-                .sql(table.alias);
-        } else {
-            const baseTable = table.symbol as metadata.TypedBaseTable;
-            if (baseTable.baseModel!.__isCte) {
-                builder.sql(table.alias);
-            } else {
-                Source._baseQueryFragment(table, builder.sqlClient).into(builder);
-                builder.sql(" ").sql(table.alias)
+        for (const table of tables) {
+            if (table.cteDefinitionFragment != null) {
+                outArr.push(table);
             }
+            Source._collectCteTables(table.children, outArr);
         }
     }
 
-    private static _childrenToBuilder(
-        table: RealTable,
+    private static _renderChildTables(
+        tables: ReadonlyArray<RealTable>,
         builder: SqlBuilder
-    ): void {
-        for (const child of table.children) {
-            builder.sql("\n");
-            builder.sql(child.joinType!.toLowerCase());
-            builder.sql(" join ");
-            Source._tableToBuilder(child, builder);
-            builder.sql(" on ");
-            child.joinConditionFragment!.into(builder);
+    ) {
+        for (const table of tables) {
+            table.fragment!.into(builder);
+            this._renderChildTables(table.children, builder);
         }
     }
 }
