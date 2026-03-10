@@ -13,6 +13,7 @@ import { View } from "@/schema/dto";
 import { FetchedViewImpl } from "./fetched_view_impl";
 import { TypedBaseTable } from "./base_table";
 import { StateError } from "@/error/common";
+import { AnyModel } from "@/schema/model";
 
 export abstract class AbstractEntityTable implements AbstractTable {
 
@@ -54,6 +55,20 @@ export abstract class AbstractEntityTable implements AbstractTable {
 
     get baseModel(): BaseModelImplementor<any> | undefined {
         return this.anchor?.baseModel;
+    }
+
+    join(model: AnyModel, options: JoinFilter | {
+        readonly joinType?: JoinType,
+        readonly filter: JoinFilter
+    }) {
+        const joinType = typeof options === "function" ? "INNER" : options.joinType ?? "INNER";
+        const filter = typeof options === "function" ? options : options.filter;
+        return Entity.of(model).table({
+            parent: this, 
+            joinType, 
+            joinProp: undefined, 
+            filter
+        });
     }
 
     fetch<T>(view: View<any, T>): FetchedView<any, T> {

@@ -20,7 +20,7 @@ export class RealTable {
 
     private _joinProp: metadata.EntityProp | undefined = undefined;
 
-    private _filters: Array<metadata.JoinFilter> | undefined = undefined;
+    private _filters: Set<metadata.JoinFilter> | undefined = undefined;
 
     private _filterPred: ast.AbstractPred | undefined = undefined;
 
@@ -38,13 +38,19 @@ export class RealTable {
 
     fragment: Fragment | undefined = undefined;
 
-    constructor(readonly symbol: metadata.AbstractEntityTable | metadata.TypedBaseTable) {
+    constructor(
+        readonly symbol: metadata.AbstractEntityTable | metadata.TypedBaseTable
+    ) {
         if (symbol instanceof metadata.AbstractEntityTable) {
             this._joinType = symbol.joinOperation?.joinType;
             this._joinProp = symbol.joinOperation?.joinProp;
-            this._filters = symbol.joinOperation?.filter != null ?
-                [symbol.joinOperation.filter] :
-                undefined;
+            if (symbol.joinOperation?.filter != null) {
+                let filters = this._filters;
+                if (filters == null) {
+                    this._filters = filters = new Set<metadata.JoinFilter>();
+                }
+                filters.add(symbol.joinOperation.filter);
+            }
         } else {
             this._joinType = undefined;
             this._joinProp = undefined;
@@ -64,7 +70,7 @@ export class RealTable {
         return this._joinProp;
     }
 
-    get filters(): ReadonlyArray<metadata.JoinFilter> | undefined {
+    get filters(): ReadonlySet<metadata.JoinFilter> | undefined {
         return this._filters;
     }
 
@@ -123,9 +129,9 @@ export class RealTable {
         if (filter != null) {
             let filters = this._filters;
             if (filters == null) {
-                this._filters = filters = [];
+                this._filters = filters = new Set<metadata.JoinFilter>();
             }
-            filters.push(filter);
+            filters.add(filter);
             this._filterPredResolved = false;
         }
     }
@@ -205,8 +211,8 @@ export class RealTable {
             return this._filterPred;
         }
         let predicate : Predicate | undefined = undefined;
-        if (this.filters != null) {
-            for (const filter of this.filters) {
+        if (this._filters != null) {
+            for (const filter of this._filters) {
                 const newPredicate = filter({
                     source: this._parent?.symbol as any, 
                     target: this.symbol as any

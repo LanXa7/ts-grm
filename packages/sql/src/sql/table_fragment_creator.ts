@@ -42,7 +42,15 @@ export class TableFragmentCreator {
                     break;
             }
         } else {
-            throw new Error("No implemented");
+            composite
+                .add("\n")
+                .add(table.joinType!.toLowerCase())
+                .add(" join ");
+            this._addTable(table, composite);
+            composite.add(" on ");
+            const scope = new Scope("AND");
+            this._addJoinFilter(table, scope);
+            composite.add(scope);
         }
         return composite;
     }

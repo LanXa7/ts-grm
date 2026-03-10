@@ -23,7 +23,7 @@ export class Entity {
 
     private _allPropMap: ReadonlyMap<string, EntityProp> | undefined = undefined;
 
-    private _expanedPropMap: ReadonlyMap<string, EntityProp> | undefined = undefined;
+    private _expandedPropMap: ReadonlyMap<string, EntityProp> | undefined = undefined;
 
     private _uniqueConstraintArr: ReadonlyArray<ReadonlyArray<EntityProp>> | undefined = undefined;
 
@@ -85,7 +85,7 @@ export class Entity {
 
     get expandedPropMap(): ReadonlyMap<string, EntityProp> {
         this.resolve(2);
-        return this._expanedPropMap ?? 
+        return this._expandedPropMap ?? 
             makeErr(`The expandedPropMap of ${this.name} is not initialized`);
     }
 
@@ -130,7 +130,7 @@ export class Entity {
                     this._declaredPropMap = this._createDeclaredProps();
                     this._idProp = this._findIdProp();
                     this._allPropMap = this._createAllProps();
-                    this._expanedPropMap = this._expandProps();
+                    this._expandedPropMap = this._expandProps();
                     break;
                 case 2:
                     for (const prop of this.declaredPropMap.values()) {
@@ -277,7 +277,7 @@ export class Entity {
                 const offset = targetKeyProp.name.length;
                 for (const [key, value] of map.entries()) {
                     const newKey = `${prop.name}${key.substring(offset)}`;
-                    (this._expanedPropMap as Map<string, EntityProp>).set(newKey, value);
+                    (this._expandedPropMap as Map<string, EntityProp>).set(newKey, value);
                 }
             }
         }
@@ -288,7 +288,7 @@ export class Entity {
         for (const constraint of this._options._uniqueConstraints) {
             const props: Array<EntityProp> = [];
             for (const propPath of constraint) {
-                const prop = this._expanedPropMap?.get(propPath);
+                const prop = this._expandedPropMap?.get(propPath);
                 if (prop == null) {
                     throw new ModelError(
                         this.name, 

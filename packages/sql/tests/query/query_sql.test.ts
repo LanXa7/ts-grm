@@ -1,8 +1,8 @@
 import { SqliteDriver } from "@/driver/sqlite_driver";
 import { newSqlClient } from "@/sql_client";
-import { BOOK, BOOK_STORE, TREE_NODE } from "../model/model";
+import { AUTHOR, BOOK, BOOK_STORE, TREE_NODE } from "../model/model";
 import { describe, it } from "vitest";
-import { dsl, dto, RootQuery } from "@ts-grm/core";
+import { dsl, dto, FilterType, RootQuery } from "@ts-grm/core";
 import { Composite } from "@/sql/fragment";
 import { SqlBuilder } from "@/sql/sql_builder";
 import { expectCode } from "../utils";
@@ -255,17 +255,11 @@ describe("QuerySqlTest", () => {
     it("mergeAllJoinsByReference", () => {
         const q = sqlClient.createQuery(BOOK, (q, book) => {
             q.where(
-                book.store().version.in(1, 2, 4, 8)
-            );
-            q.where(
+                book.store().version.in(1, 2, 4, 8),
                 book.store({
                     filter: ctx => ctx.target.name.notLike("name1")
-                }).name.ilike("n")
-            );
-            q.where(
-                book.store("LEFT").version.notIn(1, 4, 9, 16)
-            );  
-            q.where(
+                }).name.ilike("n"),
+                book.store("LEFT").version.notIn(1, 4, 9, 16),
                 book.store({
                     joinType: "LEFT",
                     filter: ctx => ctx.target.name.notLike("name2")
@@ -341,17 +335,11 @@ describe("QuerySqlTest", () => {
     it("mergeAllJoinsByBackReference", () => {
         const q = sqlClient.createQuery(BOOK_STORE, (q, store) => {
             q.where(
-                store.books().$acceptRisk().name.in("java", "c++", "c#", "typescript")
-            );
-            q.where(
+                store.books().$acceptRisk().name.in("java", "c++", "c#", "typescript"),
                 store.books({
                     filter: ctx => ctx.target.name.notLike("name1")
-                }).$acceptRisk().name.ilike("n")
-            );
-            q.where(
-                store.books("LEFT").$acceptRisk().name.notIn("cobol", "pascal", "fortran", "perl")
-            );  
-            q.where(
+                }).$acceptRisk().name.ilike("n"),
+                store.books("LEFT").$acceptRisk().name.notIn("cobol", "pascal", "fortran", "perl"),
                 store.books({
                     joinType: "LEFT",
                     filter: ctx => ctx.target.name.notLike("name2")
@@ -427,17 +415,11 @@ describe("QuerySqlTest", () => {
     it("mergeAllJoinsByMiddleTable", () => {
         const q = sqlClient.createQuery(BOOK, (q, book) => {
             q.where(
-                book.authors().$acceptRisk().name().lastName.in("smith", "johnson", "williams", "brown")
-            );
-            q.where(
+                book.authors().$acceptRisk().name().lastName.in("smith", "johnson", "williams", "brown"),
                 book.authors({
                     filter: ctx => ctx.target.name().firstName.notLike("name1")
-                }).$acceptRisk().name().firstName.ilike("n")
-            );
-            q.where(
-                book.authors("LEFT").$acceptRisk().name().lastName.notIn("fernsehby", "macgillivray", "pussett", "bythesea")
-            );
-            q.where(
+                }).$acceptRisk().name().firstName.ilike("n"),
+                book.authors("LEFT").$acceptRisk().name().lastName.notIn("fernsehby", "macgillivray", "pussett", "bythesea"),
                 book.authors({
                     joinType: "LEFT",
                     filter: ctx => ctx.target.name().firstName.notLike("name2")
@@ -513,6 +495,72 @@ describe("QuerySqlTest", () => {
                     tb_5_.LAST_NAME not in(?, ?, ?, ?)
                 or
                     tb_5_.FIRST_NAME <> ?
+        `);
+    });
+
+    it("mergeAllWeakJoins", () => {
+        const q = sqlClient.createQuery(BOOK, (q, book) => {
+            const filter: FilterType<typeof BOOK, typeof AUTHOR> = 
+                ctx => ctx.source.name.eq(ctx.target.name().firstName);
+            q.where(
+                book.join(AUTHOR, filter)
+                    .$acceptRisk()
+                    .name()
+                    .lastName.like("a"),
+                book.join(AUTHOR, { joinType: "LEFT", filter })
+                    .$acceptRisk()
+                    .name()
+                    .lastName.like("b")
+            );
+            return q.select(book.fetch(SIMPLE_BOOK_VIEW));
+        });
+        expectCode(sql(q), `
+            select 
+                tb_1_.ID,
+                tb_1_.NAME,
+                tb_1_.EDITION
+            from BOOK tb_1_
+            inner join AUTHOR tb_2_ on 
+                tb_1_.NAME = tb_2_.FIRST_NAME
+            where 
+                    tb_2_.LAST_NAME like ?
+                and
+                    tb_2_.LAST_NAME like ?
+        `);
+    });
+
+    it("mergeSomeWeakJoins", () => {
+        const q = sqlClient.createQuery(BOOK, (q, book) => {
+            const filter: FilterType<typeof BOOK, typeof AUTHOR> = 
+                ctx => ctx.source.name.eq(ctx.target.name().firstName);
+            q.where(
+                dsl.or(
+                    book.join(AUTHOR, filter)
+                        .$acceptRisk()
+                        .name()
+                        .lastName.like("a"),
+                    book.join(AUTHOR, { joinType: "LEFT", filter })
+                        .$acceptRisk()
+                        .name()
+                        .lastName.like("b")
+                )
+            );
+            return q.select(book.fetch(SIMPLE_BOOK_VIEW));
+        });
+        expectCode(sql(q), `
+            select 
+                tb_1_.ID,
+                tb_1_.NAME,
+                tb_1_.EDITION
+            from BOOK tb_1_
+            inner join AUTHOR tb_2_ on 
+                tb_1_.NAME = tb_2_.FIRST_NAME
+            left join AUTHOR tb_3_ on 
+                tb_1_.NAME = tb_3_.FIRST_NAME
+            where 
+                    tb_2_.LAST_NAME like ?
+                or
+                    tb_3_.LAST_NAME like ?
         `);
     });
 });

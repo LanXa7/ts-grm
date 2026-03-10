@@ -40,7 +40,7 @@ export type {
     BaseQueryProjection,
     BaseQueryMapOf
 } from "./base_query";
-export type { Table, JoinType, EntityTable, BaseTable } from "./table";
+export type { Table, JoinType, EntityTable, BaseTable, FilterType, FilterContextType } from "./table";
 export type { LikeMode, Expression, ExpressionLike, Predicate } from "./expression";
 
 export const dsl = {

@@ -150,8 +150,8 @@ type ReferenceJoinAction<
     
     <TJoinType extends JoinType = "INNER">(
         options: {
-            joinType?: TJoinType,
-            filter?: FilterType<TParentModel, TModel>
+            readonly joinType?: TJoinType,
+            readonly filter?: FilterType<TParentModel, TModel>
         }
     ): EntityTableMembers<
         TModel, 
@@ -188,8 +188,8 @@ type CollectionJoinAction<
     
     <TJoinType extends JoinType = "INNER">(
         options: {
-            joinType?: TJoinType,
-            filter?: FilterType<TParentModel, TModel>
+            readonly joinType?: TJoinType,
+            readonly filter?: FilterType<TParentModel, TModel>
         }
     ): TRiskAccepted extends true
         ? EntityTableMembers<
@@ -238,11 +238,13 @@ type WeakJoinAction<
 
     join<
         TTargetModel extends AnyModel,
-        TJoinType extends JoinType,
+        TJoinType extends JoinType = "INNER",
     >(
         targetModel: TTargetModel,
-        joinType: TJoinType,
-        filter: FilterType<TModel, TTargetModel>
+        options: {
+            readonly joinType?: TJoinType,
+            readonly filter: FilterType<TModel, TTargetModel>
+        }
     ): TRiskAccepted extends true
         ? EntityTableMembers<
             TTargetModel, 
@@ -257,12 +259,18 @@ type WeakJoinAction<
         >;
 };
 
-type FilterType<TParentModel extends AnyModel, TModel extends AnyModel> =
+export type FilterType<
+    TParentModel extends AnyModel | BaseModel<any>, 
+    TModel extends AnyModel | BaseModel<any>
+> =
     (ctx: FilterContextType<TParentModel, TModel>) => Predicate | undefined;
 
-type FilterContextType<TParentModel extends AnyModel, TModel extends AnyModel> = {
-    readonly source: EntityTable<TParentModel>;
-    readonly target: EntityTable<TModel>
+export type FilterContextType<
+    TParentModel extends AnyModel | BaseModel<any>, 
+    TModel extends AnyModel | BaseModel<any>
+> = {
+    readonly source: Table<TParentModel>;
+    readonly target: Table<TModel>
 };
 
 export type BaseTable<
