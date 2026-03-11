@@ -25,7 +25,7 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
     constructor(
         readonly sqlClient: SqlClientImplementor,
         private readonly _baseQueryMetadata: BaseQueryMetadata | undefined,
-        private readonly _tableMap: ReadonlyMap<metadata.AbstractEntityTable | metadata.TypedBaseTable, RealTable>
+        private readonly _tableMap: ReadonlyMap<metadata.AbstractTable, RealTable>
     ) {
         super();
         this._strategy = sqlClient.options.strategy;
@@ -91,13 +91,13 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
         }
         this._tableFragmentCreator = new TableFragmentCreator(
             this.sqlClient,
-            () => this.cloneVisitor()
+            () => this._cloneVisitor()
         );
         // No disposing to record the root result
         this._compositeStack.with(new Composite());
     }
 
-    cloneVisitor() {
+    private _cloneVisitor() {
         return new FragmentGenGenVisitor(
             this.sqlClient,
             this._baseQueryMetadata,
@@ -120,7 +120,7 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
             this._compositeStack.current.add("\nfrom ");
             let recursive: { prev: RealTable, pred: Composite } | undefined = undefined;
             if (query.recursivePred != null) {
-                const visitor = this.cloneVisitor();
+                const visitor = this._cloneVisitor();
                 query.recursivePred.accept(visitor);
                 recursive = { prev: this._baseQueryMetadata!.realTable, pred: visitor.toResult() };
             }
@@ -296,9 +296,9 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
             }
             const column = field.prop.toStorage(this._strategy) as metadata.Column;
             this._compositeStack.current.separator();
-            if (table.baseModel != null) {
-                const realTable = this._toRealTable((table as metadata.AbstractEntityTable).shadow!);
-                this._compositeStack.current.add(new ShadowColumn(realTable, table.anchor!.exportedName, column.name));
+            if (table.__shadow != null) {
+                const realTable = this._toRealTable(table.__shadow!);
+                this._compositeStack.current.add(new ShadowColumn(realTable, table.__anchor!.exportedName, column.name));
             } else {
                 const realTable = this._toRealTable(table);
                 this._compositeStack.current.add(new Alias(realTable)).add(".").add(column.name);
@@ -307,11 +307,11 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
     }
 
     visitTablePropExpr(expr: ast.PropExprContract): void {
-        const shadow = expr.table.shadow;
+        const shadow = expr.table.__shadow;
         const column = expr.prop.toStorage(this._strategy) as metadata.Column;
         if (shadow != null) {
             const shadowRealTable = this._toRealTable(shadow);
-            this._compositeStack.current.add(new ShadowColumn(shadowRealTable, expr.table.anchor!.exportedName!, column.name));
+            this._compositeStack.current.add(new ShadowColumn(shadowRealTable, expr.table.__anchor!.exportedName!, column.name));
         } else {
             const realTable = this._toRealTable(expr.table);
             this._compositeStack.current.add(new Alias(realTable)).add(".").add(column.name);
@@ -507,7 +507,7 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
                         if (!this._baseQueryMetadata!.isCte) {
                             this._compositeStack.current.add(' ').add(exportedData);
                         }
-                    } else {
+                    } else if (exportedData != null) {
                         for (const exportedColumn of exportedData) {
                             this._compositeStack.current.separator();
                             const table = selection as metadata.AbstractEntityTable;
@@ -526,7 +526,7 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
     private _toRealTable(
         table: metadata.AbstractEntityTable | metadata.TypedBaseTable
     ): RealTable {
-        if (table.baseModel && (table as any as metadata.TypedBaseTable).__isPrev) {
+        if (table.__isPrev) {
             return this._baseQueryMetadata!.realTable;
         }
         return this._tableMap.get(table) ?? err.makeErr("No mapped real table");
@@ -544,7 +544,7 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
 
     private _fillTableFragments(tables: ReadonlyArray<RealTable>) {
         for (const table of tables) {
-            if (table.symbol.baseModel != null && table.symbol.baseModel?.__isCte) {
+            if (table.symbol.__isCte) {
                 table.cteDefinitionFragment = this._tableFragmentCreator.createDefinition(table);
             }
             table.fragment = this._tableFragmentCreator.createUsage(table);

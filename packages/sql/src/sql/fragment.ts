@@ -327,13 +327,13 @@ export class Source extends Composite {
         const withScope = new Scope("COMMA");
         for (const cteTable of cteTables) {
             withScope.separator();
-            if (cteTable.symbol.baseModel!.__isRecursive) {
+            if (cteTable.symbol.__baseModel!.__isRecursive) {
                 withScope.add("\nrecursive ");
             }
             withScope.add(cteTable.alias);
             const metadata = cteTable.baseQueryMetadata!;
             const aliasScope = new Scope("VALUES", false);
-            for (const key in cteTable.symbol.baseModel!.__args) {
+            for (const key in cteTable.symbol.__args!) {
                 const exportedData = metadata.exportedData(key);
                 if (typeof exportedData === "string") {
                     aliasScope.separator();

@@ -39,17 +39,17 @@ export class RealTable {
     fragment: Fragment | undefined = undefined;
 
     constructor(
-        readonly symbol: metadata.AbstractEntityTable | metadata.TypedBaseTable
+        readonly symbol: metadata.AbstractTable
     ) {
-        if (symbol instanceof metadata.AbstractEntityTable) {
-            this._joinType = symbol.joinOperation?.joinType;
-            this._joinProp = symbol.joinOperation?.joinProp;
-            if (symbol.joinOperation?.filter != null) {
+        if (symbol.__joinOperation != undefined) {
+            this._joinType = symbol.__joinOperation?.joinType;
+            this._joinProp = symbol.__joinOperation?.joinProp;
+            if (symbol.__joinOperation?.filter != null) {
                 let filters = this._filters;
                 if (filters == null) {
                     this._filters = filters = new Set<metadata.JoinFilter>();
                 }
-                filters.add(symbol.joinOperation.filter);
+                filters.add(symbol.__joinOperation.filter);
             }
         } else {
             this._joinType = undefined;
@@ -78,7 +78,7 @@ export class RealTable {
         symbol: metadata.AbstractEntityTable, 
         scope: JoinMergeScope | undefined
     ): RealTable {
-        const joinOperation = symbol.joinOperation;
+        const joinOperation = symbol.__joinOperation;
         if (joinOperation == null) {
             throw new err.ArgumentError(`symbol.joinOperation cannot be null`);
         }
@@ -141,11 +141,12 @@ export class RealTable {
         joinType: JoinType | undefined
     ): string {
         return `${
-            symbol.entity.identity
+            (symbol.__entity ?? symbol.__baseModel).identity
         }\x1F${
-            symbol.joinOperation!.joinProp?.name ?? ""
+            symbol.__joinOperation!.joinProp?.name 
+                ?? `j(${symbol.__joinOperation!.weakJoinModel!.identifier})`
         }\x1F${
-            joinType ?? symbol.joinOperation!.joinType
+            joinType ?? symbol.__joinOperation!.joinType
         }`;
     }
 
@@ -154,9 +155,10 @@ export class RealTable {
         scope: JoinMergeScope | undefined
     ): string {
         return `${
-            symbol.entity.identity
+            (symbol.__entity ?? symbol.__baseModel).identity
         }\x1F${
-            symbol.joinOperation!.joinProp?.name ?? ""
+            symbol.__joinOperation!.joinProp?.name
+                ?? `j(${symbol.__joinOperation!.weakJoinModel!.identifier})`
         }\x1F${
             scope?.identity ?? 0
         }`;
@@ -198,10 +200,10 @@ export class RealTable {
         if (metadata != null) {
             return metadata;
         }
-        if (this.symbol.baseModel == null) {
+        if (this.symbol.__baseModel == null) {
             throw new err.StateError("Cannot get base query metadata from entity metadata");
         }
-        metadata = new BaseQueryMetadata(this.symbol.baseModel.__isCte, this);
+        metadata = new BaseQueryMetadata(this.symbol.__isCte, this);
         this._baseQueryMetadata = metadata;
         return metadata;
     }

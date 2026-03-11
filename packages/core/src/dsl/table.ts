@@ -4,14 +4,16 @@ import { Expression, MakeType, Predicate } from "./expression";
 import { FilterNever } from "@/utils";
 import { View } from "@/schema/dto";
 import { FetchedView } from "./root_query";
-import { BaseQuerySelectMapArgs, BaseModel } from "./base_query";
+import { BaseQuerySelectMapArgs, BaseModel, BaseQueryMapOf } from "./base_query";
 
 export type TableLike = {
 
     __type(): { tableLike: true; };
 };
 
-export type Table<T extends AnyModel | BaseModel<any>, TRiskAccepted extends boolean = false> =
+export type ModelLike = AnyModel | BaseModel<any>;
+
+export type Table<T extends ModelLike, TRiskAccepted extends boolean = false> =
     T extends AnyModel
         ? EntityTable<T, TRiskAccepted>
     : T extends BaseModel<infer TMap>
@@ -214,7 +216,7 @@ type RiskUnknownJoinedTable<
 };
 
 type WeakJoinAction<
-    TModel extends AnyModel,
+    TModel extends ModelLike,
     TRiskAccepted extends boolean
 > = {
 
@@ -257,17 +259,35 @@ type WeakJoinAction<
             AllModelMembers<TTargetModel>, 
             TJoinType extends "LEFT" ? "NULLABLE" : "NONNULL"
         >;
+
+    join<
+        TTargetModel extends BaseModel<any>,
+    >(
+        targetModel: TTargetModel,
+        filter: FilterType<TModel, TTargetModel>
+    ): BaseTable<BaseQueryMapOf<TTargetModel>, TRiskAccepted>;
+
+    join<
+        TTargetModel extends BaseModel<any>,
+        TJoinType extends JoinType = "INNER",
+    >(
+        targetModel: TTargetModel,
+        options: {
+            readonly joinType?: TJoinType,
+            readonly filter: FilterType<TModel, TTargetModel>
+        }
+    ): BaseTable<BaseQueryMapOf<TTargetModel>, TRiskAccepted>;
 };
 
 export type FilterType<
-    TParentModel extends AnyModel | BaseModel<any>, 
-    TModel extends AnyModel | BaseModel<any>
+    TParentModel extends ModelLike, 
+    TModel extends ModelLike
 > =
     (ctx: FilterContextType<TParentModel, TModel>) => Predicate | undefined;
 
 export type FilterContextType<
-    TParentModel extends AnyModel | BaseModel<any>, 
-    TModel extends AnyModel | BaseModel<any>
+    TParentModel extends ModelLike, 
+    TModel extends ModelLike
 > = {
     readonly source: Table<TParentModel>;
     readonly target: Table<TModel>
@@ -286,7 +306,7 @@ export type BaseTable<
         TMap[K] extends EntityTable<any, any>
             ? MakeRiskAcceptedTable<TMap[K], TRiskAccepted>
             : TMap[K];
-};
+} & WeakJoinAction<BaseModel<TMap>, TRiskAccepted>;
 
 type MakeRiskAcceptedTable<TEntityTable, TRiskAccepted extends boolean = false> =
     TEntityTable extends EntityTable<infer M extends AnyModel, any>

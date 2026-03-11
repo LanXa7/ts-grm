@@ -78,6 +78,14 @@ implements AtomRootQuery<TProjection>, ast.AtomQueryContract {
         return this._projection as any as ast.ProjectionContract;
     }
 
+    get isRecursive(): boolean {
+        return false;
+    }
+
+    get recursivePred(): ast.AbstractPred | undefined {
+        return undefined;
+    }
+
     accept(visitor: ast.Visitor): void {
         visitor.visitAtomQuery(this);
     }

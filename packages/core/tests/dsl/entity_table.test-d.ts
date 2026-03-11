@@ -41,8 +41,10 @@ test("TableMembers", () => {
 
     const weakJoinName2 = store().join(
         AUTHOR, 
-        "LEFT",
-        ctx => ctx.source.name.eq(ctx.target.name().firstName)
+        {
+            joinType: "LEFT",
+            filter: ctx => ctx.source.name.eq(ctx.target.name().firstName)
+        }
     ).$acceptRisk().name().firstName;
     expectTypeOf<typeof weakJoinName2>().toEqualTypeOf<Expression<string | null | undefined>>();
 });

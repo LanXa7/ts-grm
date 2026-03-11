@@ -133,6 +133,8 @@ export type BaseQueryMapOf<T> =
         ? R
     : T extends BaseQuery<infer P>
         ? BaseQueryMapOf<P>
+    : T extends BaseModel<infer R>
+        ? R
     : never;
 
 export interface BaseModel<

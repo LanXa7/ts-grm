@@ -14,7 +14,7 @@ export class TableFragmentCreator {
 
     createDefinition(table: RealTable) {
         const composite = Composite.of(
-            table.symbol.baseModel!.__toQuery(), 
+            table.symbol.__baseModel!.__toQuery(), 
             this.sqlClient,
             table.baseQueryMetadata
         );
@@ -59,15 +59,15 @@ export class TableFragmentCreator {
         table: RealTable,
         composite: Composite
     ) {
-        if (table.symbol.baseModel == null) {
+        if (table.symbol.__entity != null) {
             const entityTable = table.symbol as metadata.AbstractEntityTable;
             composite
-                .add(entityTable.entity.toTableName(this.sqlClient.options.strategy))
+                .add(entityTable.__entity.toTableName(this.sqlClient.options.strategy))
                 .add(" ")
                 .add(new Alias(table));
         } else {
             const baseTable = table.symbol as metadata.TypedBaseTable;
-            if (baseTable.baseModel!.__isCte) {
+            if (baseTable.__isCte) {
                 composite.add(new Alias(table));
             } else {
                 composite.add(this.createDefinition(table));

@@ -33,7 +33,7 @@ implements metadata.BaseQueryImplementor<TProjection> {
                 }
             ]
         ): BaseQuery<TProjection> {
-        const prev = metadata.createTypedBaseTable(this.toModel(true), true) as BaseTable<BaseQueryMapOf<TProjection>>;
+        const prev = metadata.createTypedBaseTable(this.toModel(true), "PREV") as any as BaseTable<BaseQueryMapOf<TProjection>>;
         const tables = toTables(args);
         const options = args[args.length - 1] as any;
         const join = options.join as Function;
@@ -62,11 +62,13 @@ export class BaseModelImpl<T extends BaseQuerySelectMapArgs> implements metadata
         return { baseModel: true };
     }
 
+    readonly identifier: number = metadata.allocateModelIdentifier();
+
     private readonly _args: T;
 
     constructor(
         private readonly _query: AbstractBaseQueryImpl<BaseQueryProjection<T>>,
-        readonly __isCte: boolean,
+        readonly __isCte: boolean
     ) {
         this._args = metadata.withShadowAnchor(_query.args, this);
     }

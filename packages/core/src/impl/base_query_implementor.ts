@@ -1,14 +1,15 @@
 import { BaseModel, BaseQuery } from "@/dsl";
 import { BaseQueryMapOf, BaseQueryProjection, BaseQuerySelectMapArgs } from "@/dsl/base_query";
+import { ModelContract } from "./model_contract";
 
-export interface BaseQueryImplementor<TProjction> extends BaseQuery<TProjction> {
+export interface BaseQueryImplementor<TProjection> extends BaseQuery<TProjection> {
 
     toModel(
         isCte: boolean
-    ): BaseModelImplementor<BaseQueryMapOf<TProjction>>;
+    ): BaseModelImplementor<BaseQueryMapOf<TProjection>>;
 }
 
-export interface BaseModelImplementor<T extends BaseQuerySelectMapArgs> extends BaseModel<T> {
+export interface BaseModelImplementor<T extends BaseQuerySelectMapArgs> extends BaseModel<T>, ModelContract {
 
     readonly __args: T;
 

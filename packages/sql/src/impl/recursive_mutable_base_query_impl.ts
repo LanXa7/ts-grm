@@ -1,4 +1,4 @@
-import { ast, BaseQueryMapOf, BaseTable, err, metadata, RecursiveMutableBaseQuery } from "@ts-grm/core";
+import { BaseQueryMapOf, BaseTable, metadata, RecursiveMutableBaseQuery } from "@ts-grm/core";
 import { MutableBaseQueryImpl } from "./mutable_base_query_impl";
 
 export class RecursiveMutableBaseQueryImpl<TProjection>

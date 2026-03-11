@@ -3,40 +3,45 @@ import { Entity } from "./entity";
 import { EntityProp } from "./entity_prop";
 import { Predicate } from "@/dsl/expression";
 import { createTableProp } from "./ast/prop_expr";
-import { JoinType } from "@/dsl/table";
+import { JoinType, ModelLike } from "@/dsl/table";
 import { makeErr } from "@/error/util";
-import { AbstractTable } from "./abstract_table";
+import { AbstractTable, createJoinedTable } from "./abstract_table";
 import { ShadowAnchor } from "./shadow_anchor";
-import { BaseModelImplementor } from "./base_query_implementor";
 import { FetchedView } from "@/dsl/root_query";
 import { View } from "@/schema/dto";
 import { FetchedViewImpl } from "./fetched_view_impl";
 import { TypedBaseTable } from "./base_table";
 import { StateError } from "@/error/common";
-import { AnyModel } from "@/schema/model";
+import { ModelContract } from "./model_contract";
+import { BaseQuerySelectMapArgs } from "@/dsl";
+import { BaseModelImplementor } from "./base_query_implementor";
 
 export abstract class AbstractEntityTable implements AbstractTable {
 
-    readonly joinOperation: JoinOperation | undefined;
+    readonly __joinOperation: JoinOperation | undefined;
 
-    readonly anchor: ShadowAnchor | undefined;
+    readonly __anchor: ShadowAnchor | undefined;
 
     private _shadow: TypedBaseTable | undefined = undefined;
 
     constructor(
-        readonly entity: Entity,
+        readonly __entity: Entity,
         options: JoinOperation | ShadowAnchor | undefined
     ) {
+        let joinOperation: JoinOperation | undefined;
+        let anchor: ShadowAnchor | undefined;
         if (options == null) {
-            this.joinOperation = undefined;
-            this.anchor = undefined;
+            joinOperation = undefined;
+            anchor = undefined;
         } else if ((options as any).parent) {
-            this.joinOperation = options as JoinOperation;
-            this.anchor = undefined;
+            joinOperation = options as JoinOperation;
+            anchor = undefined;
         } else {
-            this.joinOperation = undefined;
-            this.anchor = options as ShadowAnchor;
+            joinOperation = undefined;
+            anchor = options as ShadowAnchor;
         }
+        this.__joinOperation = joinOperation;
+        this.__anchor = anchor;
     }
 
     __type(): {
@@ -53,37 +58,26 @@ export abstract class AbstractEntityTable implements AbstractTable {
         return this;
     }
 
-    get baseModel(): BaseModelImplementor<any> | undefined {
-        return this.anchor?.baseModel;
-    }
-
-    join(model: AnyModel, options: JoinFilter | {
+    join(model: ModelLike, options: JoinFilter | {
         readonly joinType?: JoinType,
         readonly filter: JoinFilter
     }) {
-        const joinType = typeof options === "function" ? "INNER" : options.joinType ?? "INNER";
-        const filter = typeof options === "function" ? options : options.filter;
-        return Entity.of(model).table({
-            parent: this, 
-            joinType, 
-            joinProp: undefined, 
-            filter
-        });
+        return createJoinedTable(this, model, options);
     }
 
     fetch<T>(view: View<any, T>): FetchedView<any, T> {
         return new FetchedViewImpl(this, view);
     }
 
-    get shadow(): TypedBaseTable | undefined {
+    get __shadow(): TypedBaseTable | undefined {
         return this._shadow;
     }
 
-    forShadow(shadow: TypedBaseTable): AbstractEntityTable {
+    __forShadow(shadow: TypedBaseTable): AbstractEntityTable {
         if (this._shadow === shadow) {
             return this;
         }
-        if (shadow.baseModel !== this.anchor?.baseModel) {
+        if (shadow.__baseModel !== this.__anchor?.baseModel) {
             throw new StateError(
                 "Failed to create a clone table for the shadow, " + 
                 "because the model of the shadow anchor in the current table " + 
@@ -94,12 +88,29 @@ export abstract class AbstractEntityTable implements AbstractTable {
         cloned._shadow = shadow;
         return cloned;
     }
+
+    get __baseModel(): BaseModelImplementor<any> | undefined {
+        return undefined;
+    }
+
+    get __args(): BaseQuerySelectMapArgs | undefined {
+        return undefined;
+    }
+
+    get __isCte(): boolean {
+        return false;
+    }
+
+    get __isPrev(): boolean {
+        return false;
+    }
 }
 
 export type JoinOperation = {
-    readonly parent: AbstractEntityTable;
+    readonly parent: AbstractTable;
     readonly joinType: JoinType;
     readonly joinProp: EntityProp | undefined;
+    readonly weakJoinModel: ModelContract | undefined;
     readonly filter: JoinFilter | undefined;
 };
 
@@ -108,8 +119,8 @@ export type JoinFilter = (
 ) => Predicate | undefined;
 
 export type JoinFilterContext = {
-    readonly source: AbstractEntityTable, 
-    readonly target: AbstractEntityTable
+    readonly source: AbstractTable, 
+    readonly target: AbstractTable
 };
 
 export type EntityTableCtor = new(

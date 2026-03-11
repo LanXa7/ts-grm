@@ -6,7 +6,7 @@ import { SqlClientImplementor } from "@/sql_client";
 
 export class PreVisitor extends ast.AbstractVisitor {
 
-    private readonly _tableMap = new Map<metadata.AbstractEntityTable | metadata.TypedBaseTable, RealTable>();
+    private readonly _tableMap = new Map<metadata.AbstractTable, RealTable>();
     
     private readonly _joinMergeScopeStack =
         new Stack<JoinMergeScope>(undefined);
@@ -20,7 +20,7 @@ export class PreVisitor extends ast.AbstractVisitor {
         this._strategy = sqlClient.options.strategy;
     }
 
-    get tableMap(): ReadonlyMap<metadata.AbstractEntityTable | metadata.TypedBaseTable, RealTable> {
+    get tableMap(): ReadonlyMap<metadata.AbstractTable, RealTable> {
         this._processFilters();
         return this._tableMap;
     }
@@ -57,22 +57,22 @@ export class PreVisitor extends ast.AbstractVisitor {
     }
 
     visitTablePropExpr(expr: ast.PropExprContract): void {
-        if (expr.table.baseModel && (expr.table as any as metadata.TypedBaseTable).__isPrev) {
+        if (expr.table.__isPrev) {
             return;
         }
-        const shadow = expr.table.shadow;
+        const shadow = expr.table.__shadow;
         if (shadow == null) {
             this._toRealTable(expr.table);
         } else {
             this._toRealTable(shadow).baseQueryMetadata.alias(
-                expr.table.anchor!.exportedName, 
+                expr.table.__anchor!.exportedName, 
                 (expr.prop.toStorage(this._strategy) as any as metadata.Column).name
             );
         }
     }
 
     visitFetchedView(view: ast.FetchedViewContract): void {
-        const shadow = view.table.shadow;
+        const shadow = view.table.__shadow;
         if (shadow == null) {
             this._toRealTable(view.table); 
         } else {
@@ -82,7 +82,7 @@ export class PreVisitor extends ast.AbstractVisitor {
                     continue;
                 }
                 const column = field.prop.toStorage(this._strategy) as metadata.Column;
-                metadata.alias(view.table.anchor!.exportedName, column.name);
+                metadata.alias(view.table.__anchor!.exportedName, column.name);
             }
         }
     }
@@ -110,19 +110,17 @@ export class PreVisitor extends ast.AbstractVisitor {
     }
 
     private _toRealTable(
-        table: metadata.AbstractEntityTable | metadata.TypedBaseTable
+        table: metadata.AbstractTable
     ): RealTable {
         let realTable = this._tableMap.get(table);
         if (realTable == null) {
-            if (table.entity != null && table.shadow == null) {
-                const anchor = (table as metadata.AbstractEntityTable).anchor;
+            if (table.__shadow == null) {
+                const anchor = (table as metadata.AbstractEntityTable).__anchor;
                 if (anchor != null) {
                     throw new err.ArgumentError("The argument cannot be table with shadow anchor does not have shadow");
                 }
             }
-            const joinOperation = table instanceof metadata.AbstractEntityTable 
-                ? table.joinOperation
-                : undefined;
+            const joinOperation = table.__joinOperation;
             if (joinOperation == null) {
                 realTable = new RealTable(table);
             } else {

@@ -28,7 +28,7 @@ export function withShadowAnchor<
         const value = args[key];
         const anchor: ShadowAnchor = { baseModel, exportedName: key, original: value as any };
         if (value instanceof AbstractEntityTable) {
-            const table = value.entity.table(anchor);
+            const table = value.__entity.table(anchor);
             withAnchorArgs[key] = table;
         } else if (value instanceof AbstractExpr) {
             const expr = getInternalFactory().createShadowExpr(anchor);

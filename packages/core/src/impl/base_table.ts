@@ -1,19 +1,40 @@
 import { StateError } from "@/error/common";
-import { AbstractTable } from "./abstract_table";
+import { AbstractTable, createJoinedTable } from "./abstract_table";
 import { BaseModelImplementor } from "./base_query_implementor";
-import { BaseQuerySelectMapArgs } from "@/dsl";
+import { BaseQuerySelectMapArgs, JoinType, ModelLike } from "@/dsl";
 import { makeErr } from "@/error/util";
+import { JoinFilter, JoinOperation } from "./entity_table";
 
-export class BaseTableTarget {
+class BaseTableTarget {
 
     private _self: TypedBaseTable | undefined;
 
     private _args: BaseQuerySelectMapArgs | undefined;
 
+    readonly __joinOperation: JoinOperation | undefined;
+
+    readonly __isPrev: boolean = false;
+
     constructor(
-        readonly baseModel: BaseModelImplementor<any>,
-        readonly __isPrev: boolean
-    ) {}
+        readonly __baseModel: BaseModelImplementor<any>,
+        options: JoinOperation | "PREV" | undefined
+    ) {
+        let joinOperation: JoinOperation | undefined;
+        let isPrev: boolean | undefined;
+
+        if (typeof options === "string") {
+            joinOperation = undefined;
+            isPrev = true;
+        } else if (options != null) {
+            joinOperation = options;
+            isPrev = false;
+        } else {
+            joinOperation = undefined;
+            isPrev = false;
+        }
+        this.__joinOperation = joinOperation;
+        this.__isPrev = isPrev;
+    }
     
     __initialize(self: TypedBaseTable) {
         if (this._self != null) {
@@ -26,14 +47,18 @@ export class BaseTableTarget {
         if (this._args != null) {
             return this._args;
         }
-        const self = this._self ?? makeErr("The self has not been initialized");
-        const args = { ...this.baseModel.__args };
+        const self = this.self;
+        const args = { ...this.__baseModel.__args };
         for (const key in args) {
             const value = args[key];
-            args[key] = value.forShadow(self);
+            args[key] = value.__forShadow(self);
         }
         this._args = args;
         return args;
+    }
+
+    get self(): TypedBaseTable {
+        return this._self ?? makeErr("The self has not been initialized");
     }
 }
 
@@ -45,15 +70,13 @@ export interface TypedBaseTable extends AbstractTable {
     };
     
     __unwrap(): BaseTableTarget;
-
-    __isPrev: boolean;
 }
 
 export function createTypedBaseTable(
     baseModel: BaseModelImplementor<any>,
-    prev: boolean
+    options: JoinOperation | "PREV" | undefined
 ): TypedBaseTable {
-    const baseTable = new BaseTableTarget(baseModel, prev);
+    const baseTable = new BaseTableTarget(baseModel, options);
     const proxy = new Proxy(baseTable, typedBaseTableHandler) as any as TypedBaseTable;
     baseTable.__initialize(proxy);
     return proxy;
@@ -61,7 +84,7 @@ export function createTypedBaseTable(
 
 const typedBaseTableHandler: ProxyHandler<BaseTableTarget> = {
     get: (target: BaseTableTarget, prop: string | symbol, _: any) => {
-        if (typeof prop === 'symbol') {
+        if (typeof prop === "symbol") {
             return Reflect.get(target, prop);
         }
         switch (prop) {
@@ -71,14 +94,23 @@ const typedBaseTableHandler: ProxyHandler<BaseTableTarget> = {
                 };
             case "__unwrap":
                 return () => target;
+            case "__isCte":
+                return target.__baseModel.__isCte;
             case "__isPrev":
                 return target.__isPrev;
-            case "entity":
+            case "__entity":
                 return undefined;
-            case "baseModel":
-                return target.baseModel;
-            case "shadow":
+            case "__baseModel":
+                return target.__baseModel;
+            case "__anchor":
                 return undefined;
+            case "__shadow":
+                return undefined;
+            case "join":
+                return (model: ModelLike, options: {
+                    readonly joinType?: JoinType,
+                    readonly filter: JoinFilter
+                }) => createJoinedTable(target.self, model, options);
             default:
                 return target.__args[prop] ?? Reflect.get(target, prop);
         }

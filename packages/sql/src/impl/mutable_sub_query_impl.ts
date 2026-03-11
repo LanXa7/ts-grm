@@ -1,4 +1,4 @@
-import { ExpressionLike, metadata, MutableSubQuery, SubQueryProjection, SubQuerySelectArrArgs, supressUnused } from "@ts-grm/core";
+import { ExpressionLike, metadata, MutableSubQuery, SubQueryProjection, SubQuerySelectArrArgs } from "@ts-grm/core";
 import { AbstractMutableQuery } from "./abstract_mutable_query";
 import { AbstractSubQueryProjection } from "./query_projection";
 

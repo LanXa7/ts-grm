@@ -48,6 +48,7 @@ export type  {
     ExpressionLike,
     Predicate,
     RowTypeOf,
+    ModelLike,
     FilterType,
     FilterContextType
 } from "./dsl";

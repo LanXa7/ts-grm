@@ -14,7 +14,7 @@ export interface ShadowExprContract extends Node {
 
     readonly shadow: TypedBaseTable | undefined;
 
-    forShadow(shadow: TypedBaseTable): ShadowExprContract;
+    __forShadow(shadow: TypedBaseTable): ShadowExprContract;
 }
 
 export class ShadowExpr<T> extends AbstractExpr<T> implements ShadowExprContract {
@@ -31,7 +31,7 @@ export class ShadowExpr<T> extends AbstractExpr<T> implements ShadowExprContract
         return this._shadow;
     }
 
-    forShadow(shadow: TypedBaseTable): ShadowExprContract {
+    __forShadow(shadow: TypedBaseTable): ShadowExprContract {
         if (this._shadow === shadow) {
             return this;
         }
@@ -59,7 +59,7 @@ export class ShadowCmpExpr<T> extends AbstractCmpExpr<T> implements ShadowExprCo
         return this._shadow;
     }
 
-    forShadow(shadow: TypedBaseTable): ShadowExprContract {
+    __forShadow(shadow: TypedBaseTable): ShadowExprContract {
         if (this._shadow === shadow) {
             return this;
         }
@@ -87,7 +87,7 @@ export class ShadowNumExpr<T extends number | string> extends AbstractNumExpr<T>
         return this._shadow;
     }
 
-    forShadow(shadow: TypedBaseTable): ShadowExprContract {
+    __forShadow(shadow: TypedBaseTable): ShadowExprContract {
         if (this._shadow === shadow) {
             return this;
         }
@@ -115,7 +115,7 @@ export class ShadowStrExpr extends AbstractStrExpr implements ShadowExprContract
         return this._shadow;
     }
 
-    forShadow(shadow: TypedBaseTable): ShadowExprContract {
+    __forShadow(shadow: TypedBaseTable): ShadowExprContract {
         if (this._shadow === shadow) {
             return this;
         }
@@ -143,7 +143,7 @@ export class ShadowDtExpr extends AbstractDtExpr implements ShadowExprContract {
         return this._shadow;
     }
 
-    forShadow(shadow: TypedBaseTable): ShadowExprContract {
+    __forShadow(shadow: TypedBaseTable): ShadowExprContract {
         if (this._shadow === shadow) {
             return this;
         }
@@ -161,7 +161,7 @@ function cloneShadowExpr<T extends ShadowExprContract>(
     expr: T,
     shadow: TypedBaseTable
 ) {
-    if (shadow.baseModel !== expr.anchor?.baseModel) {
+    if (shadow.__baseModel !== expr.anchor?.baseModel) {
         throw new StateError(
             "Failed to create a clone expression for the shadow, " + 
             "because the model of the shadow anchor in the current expression " + 

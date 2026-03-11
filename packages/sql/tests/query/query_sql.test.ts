@@ -498,7 +498,7 @@ describe("QuerySqlTest", () => {
         `);
     });
 
-    it("mergeAllWeakJoins", () => {
+    it("mergeableWeakJoins", () => {
         const q = sqlClient.createQuery(BOOK, (q, book) => {
             const filter: FilterType<typeof BOOK, typeof AUTHOR> = 
                 ctx => ctx.source.name.eq(ctx.target.name().firstName);
@@ -529,7 +529,7 @@ describe("QuerySqlTest", () => {
         `);
     });
 
-    it("mergeSomeWeakJoins", () => {
+    it("unmergeableWeakJoins", () => {
         const q = sqlClient.createQuery(BOOK, (q, book) => {
             const filter: FilterType<typeof BOOK, typeof AUTHOR> = 
                 ctx => ctx.source.name.eq(ctx.target.name().firstName);
@@ -562,5 +562,35 @@ describe("QuerySqlTest", () => {
                 or
                     tb_3_.LAST_NAME like ?
         `);
+    });
+
+    it("derivedTableJoinDerivedTable", () => {
+        const baseStoreModel = dsl.derivedModel(
+            dsl.baseQuery(BOOK_STORE, (q, store) => {
+                return q.select({
+                    store,
+                    rank: dsl.native.num `row_number() over(order by ${store.name} desc)`
+                })
+            })
+        );
+        const baseBookModel = dsl.derivedModel(
+            dsl.baseQuery(BOOK, (q, book) => {
+                return q.select({
+                    book,
+                    rank: dsl.native.num `row_number() over(order by ${book.price} desc)`
+                })
+            })
+        );
+        const q = sqlClient.createQuery(baseBookModel, (q, baseBook) => {
+            const baseStore = baseBook.join(
+                baseStoreModel, 
+                ctx => ctx.source.rank.eq(ctx.target.rank)
+            );
+            return q.select(
+                baseBook.book.fetch(SIMPLE_BOOK_VIEW),
+                baseStore.store.fetch(SIMPLE_STORE_VIEW)
+            );
+        });
+        console.log(sql(q));
     });
 });

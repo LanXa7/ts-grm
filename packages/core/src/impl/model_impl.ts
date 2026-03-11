@@ -1,6 +1,7 @@
 import { ArgumentError } from "@/error/common";
 import { Entity } from "@/impl/entity";
 import { AnyModel, Ctor, CtorMembers, Model, ModelContext, UniqueKeys } from "@/schema/model";
+import { ModelContract } from "./model_contract";
 
 export class ModelImpl<
     TName extends string, 
@@ -14,7 +15,9 @@ export class ModelImpl<
     TCtor,
     TAllMembers,
     TSuperNames
-> {
+>, ModelContract {
+
+    readonly identifier: number = allocateModelIdentifier();
 
     private _entity: Entity | undefined;
 
@@ -100,4 +103,10 @@ export class ModelContextImpl<TCtor extends Ctor> implements ModelContext<TCtor>
             _uniqueConstraints: this._uniqueConstraints
         };
     }
+}
+
+let _nextModelIdentifier = 0;
+
+export function allocateModelIdentifier(): number {
+    return ++_nextModelIdentifier;
 }
