@@ -618,4 +618,160 @@ describe("QuerySqlTest", () => {
                 tb_1_.c4 = tb_2_.c4
         `);
     });
+
+    it("cteTableJoinCteTable", () => {
+        const baseStoreModel = dsl.cteModel(
+            dsl.baseQuery(BOOK_STORE, (q, store) => {
+                return q.select({
+                    store,
+                    rank: dsl.native.num `row_number() over(order by ${store.version} desc)`
+                })
+            })
+        );
+        const baseBookModel = dsl.cteModel(
+            dsl.baseQuery(BOOK, (q, book) => {
+                return q.select({
+                    book,
+                    rank: dsl.native.num `row_number() over(order by ${book.edition} desc)`
+                })
+            })
+        );
+        const q = sqlClient.createQuery(baseBookModel, (q, baseBook) => {
+            const baseStore = baseBook.join(
+                baseStoreModel, 
+                ctx => ctx.source.book.name.eq(ctx.target.store.name)
+            );
+            q.where(
+                baseBook.rank.le(3),
+                baseStore.rank.le(3)
+            );
+            return q.select(
+                baseBook.book.id,
+                baseStore.store.id
+            );
+        });
+        expectCode(sql(q), `
+            with
+                tb_1_(c1, c3, c2) as (
+                    select 
+                        tb_3_.ID,
+                        tb_3_.NAME,
+                        row_number() over(order by tb_3_.EDITION desc)
+                    from BOOK tb_3_
+                ),
+                tb_2_(c1, c3, c2) as (
+                    select 
+                        tb_4_.ID,
+                        tb_4_.NAME,
+                        row_number() over(order by tb_4_.VERSION desc)
+                    from BOOK_STORE tb_4_
+                )
+            select 
+                tb_1_.c1,
+                tb_2_.c1
+            from tb_1_
+            inner join tb_2_ on 
+                tb_1_.c3 = tb_2_.c3
+            where 
+                    tb_1_.c2 <= ?
+                and
+                    tb_2_.c2 <= ?
+        `);
+    });
+
+    it("cteTableJoinEntityTable", () => {
+        const baseBookModel = dsl.cteModel(
+            dsl.baseQuery(BOOK, (q, book) => {
+                return q.select({
+                    book,
+                    rank: dsl.native.num `row_number() over(order by ${book.edition} desc)`
+                })
+            })
+        );
+        const q = sqlClient.createQuery(baseBookModel, (q, baseBook) => {
+            const store = baseBook.join(
+                BOOK_STORE, 
+                ctx => dsl.and(
+                    ctx.source.book.storeId.eq(ctx.target.id),
+                    ctx.source.rank.eq(1)
+                )
+            ).$acceptRisk();
+            return q.select(
+                baseBook.book.fetch(SIMPLE_BOOK_VIEW),
+                store.fetch(SIMPLE_STORE_VIEW)
+            );
+        });
+        expectCode(sql(q), `
+            with
+                tb_1_(c1, c2, c3, c4, c5) as (
+                    select 
+                        tb_3_.ID,
+                        tb_3_.NAME,
+                        tb_3_.EDITION,
+                        tb_3_.STORE_ID,
+                        row_number() over(order by tb_3_.EDITION desc)
+                    from BOOK tb_3_
+                )
+            select 
+                tb_1_.c1,
+                tb_1_.c2,
+                tb_1_.c3,
+                tb_2_.ID,
+                tb_2_.NAME,
+                tb_2_.VERSION
+            from tb_1_
+            inner join BOOK_STORE tb_2_ on 
+                tb_1_.c4 = tb_2_.ID
+            and
+                tb_1_.c5 = ?
+        `);
+    });
+
+    it("entityJoinCteTable", () => {
+        const baseBookModel = dsl.cteModel(
+            dsl.baseQuery(BOOK, (q, book) => {
+                return q.select({
+                    book,
+                    rank: dsl.native.num `row_number() over(order by ${book.edition} desc)`
+                })
+            })
+        );
+        const q = sqlClient.createQuery(BOOK_STORE, (q, store) => {
+            const baseBook = store.join(
+                baseBookModel,
+                ctx => dsl.and(
+                    ctx.source.id.eq(ctx.target.book.storeId),
+                    ctx.target.rank.eq(1)
+                )
+            );
+            return q.select(
+                baseBook.book.fetch(SIMPLE_BOOK_VIEW),
+                store.fetch(SIMPLE_STORE_VIEW)
+            )
+        });
+        expectCode(sql(q), `
+            with
+                tb_2_(c1, c2, c3, c4, c5) as (
+                    select 
+                        tb_3_.ID,
+                        tb_3_.NAME,
+                        tb_3_.EDITION,
+                        tb_3_.STORE_ID,
+                        row_number() over(order by tb_3_.EDITION desc)
+                    from BOOK tb_3_
+                )
+            select 
+                tb_2_.c1,
+                tb_2_.c2,
+                tb_2_.c3,
+                tb_1_.ID,
+                tb_1_.NAME,
+                tb_1_.VERSION
+            from BOOK_STORE tb_1_
+            inner join tb_2_ on 
+                tb_1_.ID = tb_2_.c4
+            and
+                tb_2_.c5 = ?
+        `);
+    });
 });

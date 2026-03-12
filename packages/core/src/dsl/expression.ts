@@ -51,14 +51,14 @@ type AnyExpression<T, TAsNumber extends AsNumberBound<T> = ""> = {
     desc(nulls?: OrderNullsType): ExpressionOrder;
 
     eq(
-        value: NonNull<T> | AnyExpression<NonNull<T>, TAsNumber>
+        value: RHSType<T, TAsNumber>
     ): AnyExpression<boolean>;
     
     ne(
-        value: NonNull<T> | AnyExpression<NonNull<T>, TAsNumber>
+        value: RHSType<T, TAsNumber>
     ): AnyExpression<boolean>;
 
-    in<Values extends (NonNull<T> | Expression<NonNull<T>, TAsNumber>)[]>(
+    in<Values extends NonNullRHSType<T, TAsNumber>[]>(
         ...values: HasSubqueryInArray<Values> extends true 
             ? [SubqueryError]
             : Values
@@ -68,7 +68,7 @@ type AnyExpression<T, TAsNumber extends AsNumberBound<T> = ""> = {
         subQuery: ExpressionSubQuery<Expression<NonNull<T>, TAsNumber>>
     ): AnyExpression<boolean>;
 
-    notIn<Values extends (NonNull<T> | Expression<NonNull<T>, TAsNumber>)[]>(
+    notIn<Values extends NonNullRHSType<T, TAsNumber>[]>(
         ...values: HasSubqueryInArray<Values> extends true 
             ? [SubqueryError]
             : Values
@@ -109,6 +109,35 @@ type AnyExpression<T, TAsNumber extends AsNumberBound<T> = ""> = {
         : object
 );
 
+type RHSType<T, TAsNumber extends AsNumberBound<T>> =
+    NonNull<T> | AnyExpression<NonNull<T>, TAsNumber> | AnyExpression<Nullable<T>, TAsNumber> 
+        | (
+            TAsNumber extends "AS_NUMBER"
+                ? number 
+                    | AnyExpression<NonNull<number>, any> 
+                    | AnyExpression<Nullable<number>, any>
+                : never
+        )
+        | (
+            T extends number
+                ? AnyExpression<NonNull<string>, "AS_NUMBER">
+                    | AnyExpression<Nullable<string>, "AS_NUMBER">
+                : never
+        );
+
+type NonNullRHSType<T, TAsNumber extends AsNumberBound<T>> =
+    NonNull<T> | AnyExpression<NonNull<T>, TAsNumber> 
+        | (
+            TAsNumber extends "AS_NUMBER"
+                ? number | AnyExpression<NonNull<number>, any>
+                : never
+        )
+        | (
+            T extends number
+                ? AnyExpression<NonNull<string>, "AS_NUMBER">
+                : never
+        );
+
 type CoalesceArgs<T> =
     [
         ...AnyExpression<Nullable<T>>[],
@@ -143,24 +172,24 @@ type CmpExpression<
     }
     
     lt(
-        value: NonNull<T> | CmpExpression<T>
+        value: RHSType<T, TAsNumber>
     ): AnyExpression<boolean>;
     
     le(
-        value: NonNull<T> | CmpExpression<T>
+        value: RHSType<T, TAsNumber>
     ): AnyExpression<boolean>;
     
     gt(
-        value: NonNull<T> | CmpExpression<T>
+        value: RHSType<T, TAsNumber>
     ): AnyExpression<boolean>;
     
     ge(
-        value: NonNull<T> | CmpExpression<T>
+        value: RHSType<T, TAsNumber>
     ): AnyExpression<boolean>;
 
     between(
-        min: NonNull<T> | CmpExpression<T>,
-        max: NonNull<T> | CmpExpression<T>
+        min: RHSType<T, TAsNumber>,
+        max: RHSType<T, TAsNumber>
     ): AnyExpression<boolean>;
     
     ltIf(
@@ -195,7 +224,7 @@ type MergeNullableType<
 
 type NumExpression<
     T extends Nullable<string | number>
-> = CmpExpression<T, T extends string ? "AS_NUMBER" : ""> & {
+> = CmpExpression<T, NonNull<T> extends string ? "AS_NUMBER" : ""> & {
 
     __type(): { 
         selectionLike: true;
