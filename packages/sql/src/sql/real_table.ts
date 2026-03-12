@@ -224,6 +224,6 @@ export class RealTable {
         }
         this._filterPred = predicate as ast.AbstractPred | undefined;
         this._filterPredResolved = true;
-        return undefined;
+        return this._filterPred;
     }
 }

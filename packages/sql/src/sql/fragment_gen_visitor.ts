@@ -289,7 +289,6 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
 
     visitFetchedView(fetchedView: ast.FetchedViewContract): void {
         const table = fetchedView.table;
-        
         for (const field of fetchedView.view.mapper.fields) {
             if (field.columnIndex == null) {
                 continue;

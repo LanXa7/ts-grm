@@ -15,6 +15,8 @@ export class Composite extends Fragment {
 
     protected _fragments: Array<Fragment | string> | undefined = undefined;
 
+    protected _isDirty = false;
+
     get fragments(): ReadonlyArray<Fragment | string> | undefined {
         return this._fragments;
     }
@@ -25,11 +27,8 @@ export class Composite extends Fragment {
             this._fragments = fragments = [];
         }
         fragments.push(fragment);
+        this._isDirty = true;
         return this;
-    }
-
-    protected get isDirty(): boolean {
-        return this._fragments != null;
     }
 
     separator() {
@@ -72,7 +71,7 @@ export class Scope extends Composite {
     }
 
     separator(): this {
-        if (this.isDirty) {
+        if (this._isDirty) {
             switch (this.kind) {
                 case "AND":
                     this.add(Separator.AND);
@@ -97,6 +96,7 @@ export class Scope extends Composite {
                     this.add(Separator.COMMA);
                     break;
             }
+            this._isDirty = false;
         }
         return this;
     }

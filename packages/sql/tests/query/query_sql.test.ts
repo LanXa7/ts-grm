@@ -591,6 +591,31 @@ describe("QuerySqlTest", () => {
                 baseStore.store.fetch(SIMPLE_STORE_VIEW)
             );
         });
-        console.log(sql(q));
+        expectCode(sql(q), `
+            select 
+                tb_1_.c1,
+                tb_1_.c2,
+                tb_1_.c3,
+                tb_2_.c1,
+                tb_2_.c2,
+                tb_2_.c3
+            from (
+                select 
+                    tb_3_.ID c1,
+                    tb_3_.NAME c2,
+                    tb_3_.EDITION c3,
+                    row_number() over(order by tb_3_.PRICE desc) c4
+                from BOOK tb_3_
+            ) tb_1_
+            inner join (
+                select 
+                    tb_4_.ID c1,
+                    tb_4_.NAME c2,
+                    tb_4_.VERSION c3,
+                    row_number() over(order by tb_4_.NAME desc) c4
+                from BOOK_STORE tb_4_
+            ) tb_2_ on 
+                tb_1_.c4 = tb_2_.c4
+        `);
     });
 });
