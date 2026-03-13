@@ -4,7 +4,7 @@ export class BaseQueryMetadata {
 
     private readonly _aliasMap = new Map<string, string>();
 
-    private readonly _columnMap = new Map<string, string | Array<ExportedColumn>>();
+    private readonly _selections: Array<ExportedSelection> = [];
 
     constructor(
         readonly isCte: boolean,
@@ -21,28 +21,22 @@ export class BaseQueryMetadata {
             return alias;
         }
         alias = `c${this._aliasMap.size + 1}`;
-        if (columnName == null) {
-            this._columnMap.set(exportedName, alias);
-        } else {
-            let exportedColumns = this._columnMap.get(exportedName);
-            if (!Array.isArray(exportedColumns)) {
-                exportedColumns = [];
-                this._columnMap.set(exportedName, exportedColumns);
-            }
-            exportedColumns.push({columnName, alias});
-        }
         this._aliasMap.set(key, alias);
+        this._selections.push({
+            exportedName,
+            columnName,
+            alias
+        });
         return alias;
     }
 
-    exportedData(
-        exportedName: string
-    ): string | ReadonlyArray<ExportedColumn> | undefined {
-        return this._columnMap.get(exportedName);
+    get selections(): ReadonlyArray<ExportedSelection> {
+        return this._selections;
     }
 }
 
-export type ExportedColumn = {
-    readonly columnName: string;
+export type ExportedSelection = {
+    readonly exportedName: string;
+    readonly columnName: string | undefined;
     readonly alias: string;
-};
+}

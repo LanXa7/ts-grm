@@ -115,8 +115,8 @@ describe("QuerySqlTest", () => {
                     tb_2_.ID c1,
                     tb_2_.NAME c2,
                     tb_2_.EDITION c3,
-                    tb_2_.PRICE c5,
-                    row_number() over(order by tb_2_.PRICE desc) c4
+                    row_number() over(order by tb_2_.PRICE desc) c4,
+                    tb_2_.PRICE c5
                 from BOOK tb_2_
                 where 
                     tb_2_.STORE_ID = ?
@@ -125,8 +125,8 @@ describe("QuerySqlTest", () => {
                     tb_3_.ID c1,
                     tb_3_.NAME c2,
                     tb_3_.EDITION c3,
-                    tb_3_.PRICE c5,
-                    row_number() over(order by tb_3_.PRICE desc) c4
+                    row_number() over(order by tb_3_.PRICE desc) c4,
+                    tb_3_.PRICE c5
                 from BOOK tb_3_
                 where 
                     lower(tb_3_.NAME) like ?
@@ -164,13 +164,13 @@ describe("QuerySqlTest", () => {
         });
         expectCode(sql(q), `
             with
-                tb_1_(c1, c2, c3, c5, c4) as (
+                tb_1_(c1, c2, c3, c4, c5) as (
                     select 
                         tb_2_.ID,
                         tb_2_.NAME,
                         tb_2_.EDITION,
-                        tb_2_.PRICE,
-                        row_number() over(order by tb_2_.PRICE desc)
+                        row_number() over(order by tb_2_.PRICE desc),
+                        tb_2_.PRICE
                     from BOOK tb_2_
                     where 
                         tb_2_.STORE_ID = ?
@@ -179,8 +179,8 @@ describe("QuerySqlTest", () => {
                         tb_3_.ID,
                         tb_3_.NAME,
                         tb_3_.EDITION,
-                        tb_3_.PRICE,
-                        row_number() over(order by tb_3_.PRICE desc)
+                        row_number() over(order by tb_3_.PRICE desc),
+                        tb_3_.PRICE
                     from BOOK tb_3_
                     where 
                         lower(tb_3_.NAME) like ?
@@ -652,18 +652,18 @@ describe("QuerySqlTest", () => {
         });
         expectCode(sql(q), `
             with
-                tb_1_(c1, c3, c2) as (
+                tb_1_(c1, c2, c3) as (
                     select 
                         tb_3_.ID,
-                        tb_3_.NAME,
-                        row_number() over(order by tb_3_.EDITION desc)
+                        row_number() over(order by tb_3_.EDITION desc),
+                        tb_3_.NAME
                     from BOOK tb_3_
                 ),
-                tb_2_(c1, c3, c2) as (
+                tb_2_(c1, c2, c3) as (
                     select 
                         tb_4_.ID,
-                        tb_4_.NAME,
-                        row_number() over(order by tb_4_.VERSION desc)
+                        row_number() over(order by tb_4_.VERSION desc),
+                        tb_4_.NAME
                     from BOOK_STORE tb_4_
                 )
             select 
@@ -792,7 +792,32 @@ describe("QuerySqlTest", () => {
                 baseBook.book.store().fetch(SIMPLE_STORE_VIEW)
             );
         });
-        console.log(sql(q));
+        expectCode(sql(q), `
+            with
+                tb_1_(c1, c2, c3, c4, c5) as (
+                    select 
+                        tb_3_.ID,
+                        tb_3_.NAME,
+                        tb_3_.EDITION,
+                        row_number() over(order by tb_3_.EDITION desc),
+                        tb_3_.STORE_ID
+                    from BOOK tb_3_
+                )
+            select 
+                tb_1_.c1,
+                tb_1_.c2,
+                tb_1_.c3,
+                tb_2_.ID,
+                tb_2_.NAME,
+                tb_2_.VERSION
+            from tb_1_
+            inner join BOOK_STORE tb_2_ on 
+                tb_1_.c5 = tb_2_.ID
+            where 
+                    tb_1_.c4 = ?
+                and
+                    tb_2_.VERSION = ?
+        `);
     });
 
     it("exportedTableJoinEntityTable", () => {
@@ -816,6 +841,31 @@ describe("QuerySqlTest", () => {
                 store.fetch(SIMPLE_STORE_VIEW)
             );
         });
-        console.log(sql(q));
+        expectCode(sql(q), `
+            with
+                tb_1_(c1, c2, c3, c4, c5) as (
+                    select 
+                        tb_3_.ID,
+                        tb_3_.NAME,
+                        tb_3_.EDITION,
+                        row_number() over(order by tb_3_.EDITION desc),
+                        tb_3_.STORE_ID
+                    from BOOK tb_3_
+                )
+            select 
+                tb_1_.c1,
+                tb_1_.c2,
+                tb_1_.c3,
+                tb_2_.ID,
+                tb_2_.NAME,
+                tb_2_.VERSION
+            from tb_1_
+            inner join BOOK_STORE tb_2_ on 
+                tb_1_.c5 = tb_2_.ID
+            where 
+                    tb_1_.c4 = ?
+                and
+                    tb_2_.VERSION = ?
+        `);
     });
 });

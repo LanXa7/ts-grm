@@ -339,17 +339,9 @@ export class Source extends Composite {
             withScope.add(cteTable.alias);
             const metadata = cteTable.baseQueryMetadata!;
             const aliasScope = new Scope("VALUES", false);
-            for (const key in cteTable.symbol.__args!) {
-                const exportedData = metadata.exportedData(key);
-                if (typeof exportedData === "string") {
-                    aliasScope.separator();
-                    aliasScope.add(exportedData);
-                } else {
-                    for (const exportedColumn of exportedData!) {
-                        aliasScope.separator();
-                        aliasScope.add(exportedColumn.alias);
-                    }
-                }
+            for (const selection of metadata.selections) {
+                aliasScope.separator();
+                aliasScope.add(selection.alias);
             }
             withScope.add(aliasScope);
             withScope.add(" as ");

@@ -486,25 +486,20 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
                 }
                 break;
             case "BASE":
-                for (const key in projection.args) {
-                    const exportedData = this._baseQueryMetadata!.exportedData(key)!;
-                    const selection = projection.args[key];
-                    if (typeof exportedData === "string") {
-                        this._compositeStack.current.separator();
-                        const expr = selection as any as ast.ShadowExprContract;
+                for (const selection of this._baseQueryMetadata!.selections) {
+                    this._compositeStack.current.separator();
+                    if (selection.columnName == null) {
+                        const expr = projection.args[selection.exportedName] as any as ast.ShadowExprContract;
                         expr.accept(this);
                         if (!this._baseQueryMetadata!.isCte) {
-                            this._compositeStack.current.add(' ').add(exportedData);
+                            this._compositeStack.current.add(" ").add(selection.alias);
                         }
-                    } else if (exportedData != null) {
-                        for (const exportedColumn of exportedData) {
-                            this._compositeStack.current.separator();
-                            const table = selection as metadata.AbstractEntityTable;
-                            const realTable = this._toRealTable(table);
-                            this._compositeStack.current.add(new Alias(realTable)).add(".").add(exportedColumn.columnName);
-                            if (!this._baseQueryMetadata!.isCte) {
-                                this._compositeStack.current.add(" ").add(exportedColumn.alias);
-                            }
+                    } else {
+                        const table = projection.args[selection.exportedName] as metadata.AbstractEntityTable;
+                        const realTable = this._toRealTable(table);
+                        this._compositeStack.current.add(new Alias(realTable)).add(".").add(selection.columnName);
+                        if (!this._baseQueryMetadata!.isCte) {
+                            this._compositeStack.current.add(" ").add(selection.alias);
                         }
                     }
                 }
