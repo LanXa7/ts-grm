@@ -774,4 +774,48 @@ describe("QuerySqlTest", () => {
                 tb_2_.c5 = ?
         `);
     });
+
+    it("exportedTableAssociateEntityTable", () => {
+        const baseBookModel = dsl.cteModel(
+            dsl.baseQuery(BOOK, (q, book) => {
+                return q.select({
+                    book,
+                    rank: dsl.native.num `row_number() over(order by ${book.edition} desc)`
+                })
+            })
+        );
+        const q = sqlClient.createQuery(baseBookModel, (q, baseBook) => {
+            q.where(baseBook.rank.eq(1));
+            q.where(baseBook.book.store().version.eq(1));
+            return q.select(
+                baseBook.book.fetch(SIMPLE_BOOK_VIEW),
+                baseBook.book.store().fetch(SIMPLE_STORE_VIEW)
+            );
+        });
+        console.log(sql(q));
+    });
+
+    it("exportedTableJoinEntityTable", () => {
+        const baseBookModel = dsl.cteModel(
+            dsl.baseQuery(BOOK, (q, book) => {
+                return q.select({
+                    book,
+                    rank: dsl.native.num `row_number() over(order by ${book.edition} desc)`
+                })
+            })
+        );
+        const q = sqlClient.createQuery(baseBookModel, (q, baseBook) => {
+            const store = baseBook.book.join(
+                BOOK_STORE,
+                ctx => ctx.source.storeId.eq(ctx.target.id)
+            ).$acceptRisk();
+            q.where(baseBook.rank.eq(1));
+            q.where(store.version.eq(1));
+            return q.select(
+                baseBook.book.fetch(SIMPLE_BOOK_VIEW),
+                store.fetch(SIMPLE_STORE_VIEW)
+            );
+        });
+        console.log(sql(q));
+    });
 });

@@ -223,19 +223,25 @@ export class MiddleAlias extends Fragment {
     }
 }
 
-export class ShadowColumn extends Fragment {
-    
+export class Column extends Fragment {
+
+    private readonly _alias: string;
+
     constructor(
-        readonly table: RealTable, 
-        readonly exportedName: string,
-        readonly name: string
+        readonly table: RealTable,
+        readonly exportedName: string | undefined,
+        name: string
     ) {
         super();
+        if (exportedName != null) {
+            this._alias = this.table.baseQueryMetadata.alias(exportedName, name);
+        } else {
+            this._alias = name;
+        }
     }
 
     into(builder: SqlBuilder): void {
-        const alias = this.table.baseQueryMetadata.alias(this.exportedName, this.name);
-        builder.sql(this.table.alias).sql(".").sql(alias);
+        builder.sql(this.table.alias).sql(".").sql(this._alias);
     }
 }
 

@@ -1,5 +1,5 @@
 import { metadata } from "@ts-grm/core";
-import { Alias, Composite, MiddleAlias, Scope } from "./fragment";
+import { Alias, Column, Composite, MiddleAlias, Scope } from "./fragment";
 import { RealTable } from "./real_table";
 import { FragmentGenGenVisitor } from "./fragment_gen_visitor";
 import { SqlClientImplementor } from "@/sql_client";
@@ -7,15 +7,16 @@ import { SqlClientImplementor } from "@/sql_client";
 export class TableFragmentCreator {
 
     constructor(
-        private readonly sqlClient: SqlClientImplementor,
-        private readonly cloneVisitor: () => FragmentGenGenVisitor
+        private readonly _sqlClient: SqlClientImplementor,
+        private readonly _crateColumn: (realTable: RealTable, columName: string) => Column,
+        private readonly _cloneVisitor: () => FragmentGenGenVisitor
     ) {
     }
 
     createDefinition(table: RealTable) {
         const composite = Composite.of(
             table.symbol.__baseModel!.__toQuery(), 
-            this.sqlClient,
+            this._sqlClient,
             table.baseQueryMetadata
         );
         const wrapper = new Scope("VALUES");
@@ -62,7 +63,7 @@ export class TableFragmentCreator {
         if (table.symbol.__entity != null) {
             const entityTable = table.symbol as metadata.AbstractEntityTable;
             composite
-                .add(entityTable.__entity.toTableName(this.sqlClient.options.strategy))
+                .add(entityTable.__entity.toTableName(this._sqlClient.options.strategy))
                 .add(" ")
                 .add(new Alias(table));
         } else {
@@ -80,7 +81,7 @@ export class TableFragmentCreator {
         table: RealTable,
         composite: Composite
     ) {
-        const middleTable = table.joinProp!.toStorage(this.sqlClient.options.strategy)! as metadata.MiddleTable;
+        const middleTable = table.joinProp!.toStorage(this._sqlClient.options.strategy)! as metadata.MiddleTable;
         composite
             .add("\n")
             .add(table.joinType!.toLowerCase())
@@ -93,9 +94,12 @@ export class TableFragmentCreator {
         for (const column of middleTable.toThisColumns) {
             thisConditionScope
                 .separator()
-                .add(new Alias(table.parent!))
-                .add(".")
-                .add(column.referencedColumnName!)
+                .add(
+                    this._crateColumn(
+                        table.parent!,
+                        column.referencedColumnName!
+                    )
+                )
                 .add(" = ")
                 .add(new MiddleAlias(table))
                 .add(".")
@@ -136,13 +140,17 @@ export class TableFragmentCreator {
         this._addTable(table, composite);
         composite.add(" on ");
         const storage = (reverse ? table.joinProp!.mappedByProp! : table.joinProp!)
-            .toStorage(this.sqlClient.options.strategy) as metadata.PropStorage;
+            .toStorage(this._sqlClient.options.strategy) as metadata.PropStorage;
         const conditionScope = new Scope("AND");
         if (storage.kind === "COLUMN") {
             conditionScope
-                .add(new Alias(table.parent!))
-                .add(".")
-                .add(reverse ? storage.referencedColumnName! : storage.name)
+                .separator()
+                .add(
+                    this._crateColumn(
+                        table.parent!, 
+                        reverse ? storage.referencedColumnName! : storage.name
+                    )
+                )
                 .add(" = ")
                 .add(new Alias(table))
                 .add(".")
@@ -151,9 +159,12 @@ export class TableFragmentCreator {
             for (const column of storage) {
                 conditionScope
                     .separator()
-                    .add(new Alias(table.parent!))
-                    .add(".")
-                    .add(reverse ? column.referencedColumnName! : column.name)
+                    .add(
+                        this._crateColumn(
+                            table.parent!, 
+                            reverse ? column.referencedColumnName! : column.name
+                        )
+                    )
                     .add(" = ")
                     .add(new Alias(table))
                     .add(".")
@@ -170,7 +181,7 @@ export class TableFragmentCreator {
             return;
         }
         scope.separator();
-        const visitor = this.cloneVisitor();
+        const visitor = this._cloneVisitor();
         pred.accept(visitor);
         const composite = visitor.toResult();
         if (composite.fragments!.length === 1) {

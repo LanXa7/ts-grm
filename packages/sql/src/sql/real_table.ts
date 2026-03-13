@@ -32,6 +32,8 @@ export class RealTable {
 
     private _baseQueryMetadata: BaseQueryMetadata | undefined = undefined;
 
+    private _exportedMap: Map<string, RealTable> | undefined = undefined;
+
     private _children: ReadonlyArray<RealTable> | undefined = undefined;
 
     cteDefinitionFragment: Fragment | undefined = undefined;
@@ -39,7 +41,8 @@ export class RealTable {
     fragment: Fragment | undefined = undefined;
 
     constructor(
-        readonly symbol: metadata.AbstractTable
+        readonly symbol: metadata.AbstractTable,
+        readonly shadow: RealTable | undefined
     ) {
         if (symbol.__joinOperation != undefined) {
             this._joinType = symbol.__joinOperation?.joinType;
@@ -105,7 +108,7 @@ export class RealTable {
             if (laxChildMap == null) {
                 this._laxChildMap = laxChildMap = new Map();
             }
-            child = new RealTable(symbol);
+            child = new RealTable(symbol, undefined);
             child._parent = this;
             restrictChildMap.set(restrictKey, child);
             laxChildMap.set(laxKey, child);
@@ -114,13 +117,41 @@ export class RealTable {
         return child;
     }
 
+    export(table: metadata.AbstractTable): RealTable {
+        if (table.__shadow !== this.symbol) {
+            throw new err.ArgumentError("table is not exported table of current base table");
+        }
+        let exportedMap = this._exportedMap;
+        let realTable: RealTable | undefined = undefined;
+        if (exportedMap != null) {
+            realTable = exportedMap.get(table.__anchor!.exportedName);
+            if (realTable != null) {
+                return realTable;
+            }
+        } else {
+            this._exportedMap = exportedMap = new Map();
+        }
+        realTable = new RealTable(table, this);
+        exportedMap.set(table.__anchor!.exportedName, realTable);
+        this._children = undefined;
+        return realTable;
+    }
+
     get children(): ReadonlyArray<RealTable> {
         let children = this._children;
         if (children == null) {
-            children = this._laxChildMap == null 
+            const arr = this._laxChildMap == null 
                 ? []
                 : Array.from(this._laxChildMap.values());
-            this._children = children;
+            if (this._exportedMap != null) {
+                for (const exported of this._exportedMap.values()) {
+                    const laxChildMap = exported._laxChildMap;
+                    if (laxChildMap != null) {
+                        arr.push(...Array.from(laxChildMap.values()));
+                    }
+                }
+            }
+            this._children = children = arr;
         }
         return children;
     }
@@ -170,10 +201,8 @@ export class RealTable {
         }
         this._alias = builder.allocateTableAlias();
         tables.add(this);
-        if (this._restrictChildMap != null) {
-            for (const child of this._restrictChildMap.values()) {
-                child.collectTables(builder, tables);
-            }
+        for (const child of this.children) {
+            child.collectTables(builder, tables);
         }
     }
 

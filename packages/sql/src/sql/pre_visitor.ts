@@ -60,11 +60,9 @@ export class PreVisitor extends ast.AbstractVisitor {
         if (expr.table.__isPrev) {
             return;
         }
-        const shadow = expr.table.__shadow;
-        if (shadow == null) {
-            this._toRealTable(expr.table);
-        } else {
-            this._toRealTable(shadow).baseQueryMetadata.alias(
+        const shadow = this._toRealTable(expr.table).shadow;
+        if (shadow != null) {
+            shadow.baseQueryMetadata.alias(
                 expr.table.__anchor!.exportedName, 
                 (expr.prop.toStorage(this._strategy) as any as metadata.Column).name
             );
@@ -72,11 +70,9 @@ export class PreVisitor extends ast.AbstractVisitor {
     }
 
     visitFetchedView(view: ast.FetchedViewContract): void {
-        const shadow = view.table.__shadow;
-        if (shadow == null) {
-            this._toRealTable(view.table); 
-        } else {
-            const metadata = this._toRealTable(shadow).baseQueryMetadata;
+        const shadow = this._toRealTable(view.table).shadow;
+        if (shadow != null) {
+            const metadata = shadow.baseQueryMetadata;
             for (const field of view.view.mapper.fields) {
                 if (field.columnIndex == null) {
                     continue;
@@ -120,15 +116,24 @@ export class PreVisitor extends ast.AbstractVisitor {
                     throw new err.ArgumentError("The argument cannot be table with shadow anchor does not have shadow");
                 }
             }
-            const joinOperation = table.__joinOperation;
-            if (joinOperation == null) {
-                realTable = new RealTable(table);
+            if (table.__shadow != null) {
+                const shadowRealTable = this._toRealTable(table.__shadow);
+                this._tableMap.set(table.__shadow, shadowRealTable);
+                if (this._filterProcessingTables != null) {
+                    this._filterProcessingTables.push(shadowRealTable);
+                }
+                realTable = shadowRealTable.export(table);
             } else {
-                const parentRealTable = this._toRealTable(joinOperation.parent);
-                realTable = parentRealTable.child(
-                    table as metadata.AbstractEntityTable, 
-                    this._joinMergeScopeStack.currentOrUndefined
-                );
+                const joinOperation = table.__joinOperation;
+                if (joinOperation == null) {
+                    realTable = new RealTable(table, undefined);
+                } else {
+                    const parentRealTable = this._toRealTable(joinOperation.parent);   
+                    realTable = parentRealTable.child(
+                        table as metadata.AbstractEntityTable, 
+                        this._joinMergeScopeStack.currentOrUndefined
+                    );
+                }
             }
             this._tableMap.set(table, realTable);
             if (this._filterProcessingTables != null) {

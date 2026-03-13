@@ -1,5 +1,5 @@
 import { ast, err, metadata } from "@ts-grm/core";
-import { Alias, Composite, Query, Scope, ShadowColumn, ShadowExpr, Source, Value } from "./fragment";
+import { Alias, Column, Composite, Query, Scope, ShadowExpr, Source, Value } from "./fragment";
 import { Stack } from "./stack";
 import { Precedence } from "./precedence";
 import { NodeRender, NodeRenderContext } from "@/driver/node_render";
@@ -91,6 +91,7 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
         }
         this._tableFragmentCreator = new TableFragmentCreator(
             this.sqlClient,
+            (realTable, columnName) => this._createColumn(realTable, columnName),
             () => this._cloneVisitor()
         );
         // No disposing to record the root result
@@ -295,26 +296,15 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
             }
             const column = field.prop.toStorage(this._strategy) as metadata.Column;
             this._compositeStack.current.separator();
-            if (table.__shadow != null) {
-                const realTable = this._toRealTable(table.__shadow!);
-                this._compositeStack.current.add(new ShadowColumn(realTable, table.__anchor!.exportedName, column.name));
-            } else {
-                const realTable = this._toRealTable(table);
-                this._compositeStack.current.add(new Alias(realTable)).add(".").add(column.name);
-            }
+            const realTable = this._toRealTable(table);
+            this._compositeStack.current.add(this._createColumn(realTable, column.name));
         }
     }
 
     visitTablePropExpr(expr: ast.PropExprContract): void {
-        const shadow = expr.table.__shadow;
         const column = expr.prop.toStorage(this._strategy) as metadata.Column;
-        if (shadow != null) {
-            const shadowRealTable = this._toRealTable(shadow);
-            this._compositeStack.current.add(new ShadowColumn(shadowRealTable, expr.table.__anchor!.exportedName!, column.name));
-        } else {
-            const realTable = this._toRealTable(expr.table);
-            this._compositeStack.current.add(new Alias(realTable)).add(".").add(column.name);
-        }
+        const realTable = this._toRealTable(expr.table);
+        this._compositeStack.current.add(this._createColumn(realTable, column.name));
     }
 
     visitCoalesceExpr(expr: ast.CoalesceExprContract): void {
@@ -523,12 +513,27 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
     }
 
     private _toRealTable(
-        table: metadata.AbstractEntityTable | metadata.TypedBaseTable
+        table: metadata.AbstractTable
     ): RealTable {
         if (table.__isPrev) {
             return this._baseQueryMetadata!.realTable;
         }
         return this._tableMap.get(table) ?? err.makeErr("No mapped real table");
+    }
+
+    private _createColumn(
+        realTable: RealTable, 
+        columnName: string
+    ): Column {
+        const shadow = realTable.shadow;
+        if (shadow != null) {
+            const exportedName = realTable.symbol.__anchor!.exportedName;
+            if (shadow.symbol.__isPrev) {
+                return new Column(this._baseQueryMetadata!.realTable, exportedName, columnName);
+            }
+            return new Column(shadow, exportedName, columnName);
+        }
+        return new Column(realTable, undefined, columnName);
     }
 
     toResult(): Composite {

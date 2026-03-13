@@ -12,27 +12,27 @@ implements metadata.BaseQueryImplementor<TProjection> {
     };
 
     unionAllRecursively<
-            const TModels extends AtLeastOne<AnyModel | BaseModel<any>>,
-            const TPrev extends BaseTable<BaseQueryMapOf<TProjection>>
-        >(
-            ...args: [
-                ...models: TModels,
-                fnOptions: {
-                    readonly join: (
-                        prev: TPrev, 
-                        ...tables: {
-                            [K in keyof TModels]: Table<TModels[K]>
-                        } extends infer T ? T extends any[] ? T : never : never
-                    ) => Predicate,
-                    readonly query: (
-                        q: RecursiveMutableBaseQuery<TProjection>,
-                        ...tables: {
-                            [K in keyof TModels]: Table<TModels[K]>
-                        } extends infer T ? T extends any[] ? T : never : never
-                    ) => TProjection
-                }
-            ]
-        ): BaseQuery<TProjection> {
+        const TModels extends AtLeastOne<AnyModel | BaseModel<any>>,
+        const TPrev extends BaseTable<BaseQueryMapOf<TProjection>>
+    >(
+        ...args: [
+            ...models: TModels,
+            fnOptions: {
+                readonly join: (
+                    prev: TPrev, 
+                    ...tables: {
+                        [K in keyof TModels]: Table<TModels[K]>
+                    } extends infer T ? T extends any[] ? T : never : never
+                ) => Predicate,
+                readonly query: (
+                    q: RecursiveMutableBaseQuery<TProjection>,
+                    ...tables: {
+                        [K in keyof TModels]: Table<TModels[K]>
+                    } extends infer T ? T extends any[] ? T : never : never
+                ) => TProjection
+            }
+        ]
+    ): BaseQuery<TProjection> {
         const prev = metadata.createTypedBaseTable(this.toModel(true), "PREV") as any as BaseTable<BaseQueryMapOf<TProjection>>;
         const tables = toTables(args);
         const options = args[args.length - 1] as any;
