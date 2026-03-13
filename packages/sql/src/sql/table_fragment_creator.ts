@@ -8,7 +8,7 @@ export class TableFragmentCreator {
 
     constructor(
         private readonly _sqlClient: SqlClientImplementor,
-        private readonly _crateColumn: (realTable: RealTable, columName: string) => Column,
+        private readonly _crateColumn: (realTable: RealTable, columnName: string) => Column,
         private readonly _cloneVisitor: () => FragmentGenGenVisitor
     ) {
     }

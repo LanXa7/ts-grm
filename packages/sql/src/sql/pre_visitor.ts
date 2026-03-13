@@ -151,7 +151,51 @@ export class PreVisitor extends ast.AbstractVisitor {
             const arr = this._filterProcessingTables;
             this._filterProcessingTables = [];
             for (const table of arr) {
-                table.filterPred?.accept(this);
+                this._processFilter(table);
+            }
+        }
+    }
+
+    private _processFilter(table: RealTable) {
+        table.filterPred?.accept(this);
+        if (table.joinProp != null && table.parent!.shadow != null) {
+            switch (table.joinProp.storageType) {
+                case "MIDDLE_TABLE":
+                    this._processMiddleTable(table);
+                    break;
+                case "NONE":
+                    this._processForeignKey(table, true);
+                    break;
+                default:
+                    this._processForeignKey(table, false);
+                    break;
+            }
+        } 
+    }
+
+    private _processMiddleTable(table: RealTable) {
+        const middleTable = table.joinProp!.toStorage(this._strategy)! as metadata.MiddleTable;
+        const exportedName = table.parent!.symbol.__anchor!.exportedName;
+        for (const column of middleTable.toThisColumns) {
+            table.parent!.shadow!.baseQueryMetadata.alias(exportedName, column.referencedColumnName!);
+        }
+    }
+
+    private _processForeignKey(table: RealTable, reverse: boolean) {
+        const storage = (reverse ? table.joinProp!.mappedByProp! : table.joinProp!)
+            .toStorage(this._strategy) as metadata.PropStorage;
+        const exportedName = table.parent!.symbol.__anchor!.exportedName;
+        if (storage.kind === "COLUMN") {
+            table.parent!.shadow!.baseQueryMetadata.alias(
+                exportedName, 
+                reverse ? storage.referencedColumnName! : storage.name
+            );
+        } else if (storage.kind === "COLUMNS") {
+            for (const column of storage) {
+                table.parent!.shadow!.baseQueryMetadata.alias(
+                    exportedName, 
+                    reverse ? column.referencedColumnName! : column.name
+                );
             }
         }
     }
