@@ -121,19 +121,19 @@ describe("EntityTest", () => {
         ]);
     });
 
-    it("entityConfigurer", () => {
+    it("entityConfigurator", () => {
         const bookEntity = Entity.of(BOOK);
         expect(bookEntity.toTableName(UPPER_SNAKE_CASE_DATABASE_NAMING_STRATEGY)).toEqual("BOOK");
-        expect(bookEntity.uniqueContraints.length).toEqual(1);
-        expect(bookEntity.uniqueContraints[0]!.map(c => c.name)).toEqual(["name", "edition"]);
+        expect(bookEntity.uniqueConstraints.length).toEqual(1);
+        expect(bookEntity.uniqueConstraints[0]!.map(c => c.name)).toEqual(["name", "edition"]);
 
         const authorEntity = Entity.of(AUTHOR);
-        expect(authorEntity.uniqueContraints.length).toEqual(1);
-        expect(authorEntity.uniqueContraints[0]!.map(c => c.name)).toEqual(["firstName", "lastName"]);
+        expect(authorEntity.uniqueConstraints.length).toEqual(1);
+        expect(authorEntity.uniqueConstraints[0]!.map(c => c.name)).toEqual(["firstName", "lastName"]);
 
         const treeNodeEntity = Entity.of(TREE_NODE);
-        expect(treeNodeEntity.uniqueContraints.length).toEqual(1);
-        expect(treeNodeEntity.uniqueContraints[0]!.map(c => c.name)).toEqual(["name", "parentNode"]);
+        expect(treeNodeEntity.uniqueConstraints.length).toEqual(1);
+        expect(treeNodeEntity.uniqueConstraints[0]!.map(c => c.name)).toEqual(["name", "parentNode"]);
     });
 
     it("storage", () => {

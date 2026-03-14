@@ -1,4 +1,4 @@
-import { model } from "@/schema/model";
+import { DV_MODEL_NAME, model } from "@/schema/model";
 import { prop } from "@/schema/prop";
 
 export const BOOK_STORE = model("BookStore", "id", class {
@@ -24,7 +24,10 @@ export const BOOK = model("Book", "id", class {
         joinTargetColumns: ["author_id"]
     }).orderBy("name.firstName", "name.lastName")
 }, ctx => {
-    ctx.tableName("BOOK").unique("name", "edition");
+    ctx.table({
+        discriminator: "TYPE",
+        discriminatorValue: DV_MODEL_NAME
+    }).unique("name", "edition");
 });
 
 export const PAPER_BOOK = model.extends(BOOK)(
@@ -34,21 +37,30 @@ export const PAPER_BOOK = model.extends(BOOK)(
             width: prop.i32(),
             height: prop.i32()
         })
-    }
+    },
+    ctx => ctx.table({
+        discriminatorValue: DV_MODEL_NAME
+    })
 );
 
 export const ELECTRONIC_BOOK = model.extends(BOOK)(
     "ElectronicBook", 
     class {
         address = prop.str();
-    }
+    },
+    ctx => ctx.table({
+        discriminatorValue: DV_MODEL_NAME
+    })
 );
 
 export const PDF_ELECTRONIC_BOOK = model.extends(ELECTRONIC_BOOK)(
     "PdfElectronicBook",
     class {
         pdfVersion = prop.str().nullable()
-    }
+    },
+    ctx => ctx.table({
+        discriminatorValue: DV_MODEL_NAME
+    })
 );
 
 export const AUTHOR = model("Author", "id", class {

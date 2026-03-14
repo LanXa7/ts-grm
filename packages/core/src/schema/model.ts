@@ -1,6 +1,7 @@
 import { AssociatedProp, ManyToManyProp, ManyToOneProp, OneToOneProp, ScalarProp } from "@/schema/prop";
 import { FlattenMembers } from "@/utils";
 import { ModelContextImpl, ModelImpl } from "@/impl/model_impl";
+import { DatabaseIdentifier } from "./database_identifier";
 
 export const model: ModelCreator = modelImpl();
 
@@ -14,11 +15,11 @@ function modelImpl(): ModelCreator {
         name: TName,
         idKey: TIdKey,
         ctor: TCtor,
-        configurer?: (ctx: ModelContext<TCtor>) => void
+        configurator?: (ctx: ModelContext<TCtor>) => void
     ): Model<TName, TIdKey, TCtor, CtorMembers<TCtor>, never> {
         const ctx = new ModelContextImpl<TCtor>();
-        if (configurer != null) {
-            configurer(ctx);
+        if (configurator != null) {
+            configurator(ctx);
         }
         return new ModelImpl(name, idKey, ctor, undefined, ctx.toModelOptions());
     }
@@ -34,7 +35,7 @@ function modelImpl(): ModelCreator {
         >(
             name: TName,
             ctor: TCtor,
-            configurer?: (ctx: ModelContext<TCtor>) => void
+            configurator?: (ctx: ModelContext<TCtor>) => void
         ): Model<
             TName, 
             SuperIdKey<TSuperModel>, 
@@ -43,8 +44,8 @@ function modelImpl(): ModelCreator {
             ModelName<TSuperModel> | ModelSuperNames<TSuperModel>
         > => {
             const ctx = new ModelContextImpl<TCtor>();
-            if (configurer != null) {
-                configurer(ctx);
+            if (configurator != null) {
+                configurator(ctx);
             }
             return new ModelImpl<
                 TName, 
@@ -75,7 +76,7 @@ type ModelCreator = {
         name: TName,
         idKey: TIdKey,
         ctor: TCtor,
-        configurer?: (ctx: ModelContext<TCtor>) => void
+        configurator?: (ctx: ModelContext<TCtor>) => void
     ): Model<TName, TIdKey, TCtor, CtorMembers<TCtor>, never>;
 
     extends<
@@ -95,7 +96,7 @@ type InheritanceModelCreator<
     >(
         name: OtherString<TName, ModelName<TSuperModel> | ModelSuperNames<TSuperModel>>,
         ctor: TCtor,
-        configurer?: (ctx: ModelContext<TCtor>) => void
+        configurator?: (ctx: ModelContext<TCtor>) => void
     ): Model<
         TName, 
         SuperIdKey<TSuperModel>, 
@@ -128,7 +129,7 @@ export interface ModelContext<TCtor extends Ctor> {
     
     __type(): { modelContext: TCtor | true };
 
-    tableName(name: string): this;
+    table(options: TableOptions): this;
 
     unique(...paths : UniqueKeys<CtorMembers<TCtor>>[]): this;
 }
@@ -218,6 +219,29 @@ type MappedByKeysImpl<TModelMembers, TExpectedProp extends AssociatedProp<any, a
                     : never
         }[keyof TModelMembers] :
         never;
+
+export type TableOptions = 
+    DatabaseIdentifier<string> | {
+        readonly name?: DatabaseIdentifier<string> | typeof INHERIT_SUPER_TABLE;
+        readonly discriminatorValue?: 
+            typeof DV_ABSTRACT
+            | typeof DV_MODEL_NAME
+            | string
+            | number;
+        readonly discriminator?: string | {
+            readonly name: string;
+            readonly type?: "string" | "number"
+        };
+    };
+
+export const INHERIT_SUPER_TABLE = Symbol("<inherit>");
+
+export type SpecialDiscriminatorValueType = 
+    typeof DV_ABSTRACT | typeof DV_MODEL_NAME;
+
+export const DV_ABSTRACT = Symbol("<abstract>");
+
+export const DV_MODEL_NAME = Symbol("<modelName>");
 
 export type UniqueKeys<TMembers extends object> =
     UniqueKeysImpl<FlattenMembers<TMembers>>;

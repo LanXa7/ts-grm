@@ -1,5 +1,5 @@
 import { ModelError, PropError } from "@/error/metadata_error";
-import { AnyModel, Ctor } from "@/schema/model";
+import { DV_ABSTRACT, DV_MODEL_NAME, AnyModel, Ctor, INHERIT_SUPER_TABLE, TableOptions } from "@/schema/model";
 import { EntityProp } from "./entity_prop";
 import { ModelImpl, ModelOptions } from "@/impl/model_impl";
 import { dedent, makeErr } from "@/error/util";
@@ -8,12 +8,11 @@ import { AbstractEntityTable, createEntityTableClass, EntityTableCtor, JoinOpera
 import { StateError } from "@/error/common";
 import { ShadowAnchor } from "./shadow_anchor";
 import { DatabaseNamingStrategy } from "./strategy";
+import { Mutable } from "@/utils";
 
 export class Entity {
 
     readonly superEntity: Entity | undefined;
-
-    private readonly _explicitTableName: string | undefined;
 
     private _phase = 0;
 
@@ -26,6 +25,8 @@ export class Entity {
     private _expandedPropMap: ReadonlyMap<string, EntityProp> | undefined = undefined;
 
     private _uniqueConstraintArr: ReadonlyArray<ReadonlyArray<EntityProp>> | undefined = undefined;
+
+    private _tableSettings: TableSettings;
 
     private _tableCtor: EntityTableCtor | undefined;
 
@@ -45,7 +46,7 @@ export class Entity {
         private _options: ModelOptions
     ) {
         if (Entity._nextIdentity >= Number.MAX_SAFE_INTEGER) {
-            throw new StateError(`The applicaion ha`);
+            throw new StateError(`The application has run so long`);
         }
         if (!isValidModelName(name)) {
             throw new ModelError(
@@ -57,7 +58,8 @@ export class Entity {
         this.superEntity = superModel !== undefined
             ? Entity.of(superModel)
             : undefined;
-        this._explicitTableName = _options.tableName;
+        
+        this._tableSettings = this._createTableSettings(_options.tableOptions);
         this._identity = ++Entity._nextIdentity;
     }
 
@@ -89,7 +91,7 @@ export class Entity {
             makeErr(`The expandedPropMap of ${this.name} is not initialized`);
     }
 
-    get uniqueContraints(): ReadonlyArray<ReadonlyArray<EntityProp>> {
+    get uniqueConstraints(): ReadonlyArray<ReadonlyArray<EntityProp>> {
         this.resolve(2);
         return this._uniqueConstraintArr ?? 
             makeErr(`The uniqueConstraintArr of ${this.name} is not initialized`);
@@ -105,7 +107,7 @@ export class Entity {
     }
 
     toTableName(strategy: DatabaseNamingStrategy): string {
-        return this._explicitTableName ?? strategy.tableName(this);
+        return this._tableSettings.explicitName ?? strategy.tableName(this);
     }
 
     resolve(phase: number): this {
@@ -285,7 +287,7 @@ export class Entity {
 
     private _uniqueConstraints(): ReadonlyArray<ReadonlyArray<EntityProp>> {
         const constraints: Array<ReadonlyArray<EntityProp>> = [];
-        for (const constraint of this._options._uniqueConstraints) {
+        for (const constraint of this._options.uniqueConstraints) {
             const props: Array<EntityProp> = [];
             for (const propPath of constraint) {
                 const prop = this._expandedPropMap?.get(propPath);
@@ -294,7 +296,7 @@ export class Entity {
                         this.name, 
                         `Illegal property path "${
                             propPath
-                        }" in unique contraint, it does not exists`
+                        }" in unique constraint, it does not exists`
                     );
                 }
                 if (prop.referenceProp != null) {
@@ -302,7 +304,7 @@ export class Entity {
                         this.name, 
                         `Illegal property path "${
                             propPath
-                        }" in unique contraint, it cannot be associated key, please use "${
+                        }" in unique constraint, it cannot be associated key, please use "${
                             prop.referenceProp.name
                         }"`
                     );
@@ -312,7 +314,7 @@ export class Entity {
                         this.name, 
                         `Illegal property path "${
                             propPath
-                        }" in unique contraint, it is neither scalar nor reference based on foreign key`
+                        }" in unique constraint, it is neither scalar nor reference based on foreign key`
                     );
                 }
                 props.push(prop);
@@ -340,7 +342,127 @@ export class Entity {
             name: this.name
         }
     }
+
+    private _createTableSettings(
+        options: TableOptions | undefined
+    ): TableSettings {
+
+        if (this.superEntity != null) {
+            if (this.superEntity._tableSettings.discriminator == null) {
+                throw new ModelError(
+                    this.superEntity.name,
+                    dedent `the "discriminator" of table options must be specified 
+                    because there is a derived model "${this.name}"`  
+                );
+            }
+            if (typeof options !== "object") {
+                throw new ModelError(
+                    this.name,
+                    dedent `the table options must be specified as object
+                    because there is a super model "${this.superEntity.name}"`  
+                );
+            }
+        }
+        
+        const settings: Mutable<TableSettings> = {
+            superSettings: this.superEntity?._tableSettings,
+            explicitName: undefined,
+            sharedTable: false,
+            discriminatorValue: undefined,
+            discriminator: undefined
+        };
+        if (options == null) {
+            return settings;
+        }
+        if (typeof options === "string") {
+            settings.explicitName = options != "" ? options : undefined;
+            return settings;
+        }
+
+        if (options.name != null) {
+            if (options.name === INHERIT_SUPER_TABLE) {
+                settings.sharedTable = true;
+            } else {
+                settings.explicitName = options.name != "" ? options.name : undefined;
+            }
+        }
+        if (options.discriminator != null) {
+            const type = typeof options.discriminator === "string"
+                ? "string"
+                : options.discriminator.type ?? "string";
+            if (this.superEntity != null && type !== this.superEntity._tableSettings.discriminator!.type) {
+                throw new ModelError(
+                    this.name,
+                    dedent `the "discriminator.type" of table options must be specified 
+                    as "${type}" but the "discriminator.type" of the super model 
+                    "${this.superEntity.name}" is 
+                    "${this.superEntity._tableSettings.discriminator?.type}".`  
+                );
+            }
+            let name = typeof options.discriminator === "string"
+                ? options.discriminator
+                : options.discriminator.name;
+            if (name == null || name === "") {
+                if (this.superEntity == null) {
+                    throw new ModelError(
+                        this.name,
+                        dedent `the "discriminator.name" of table options must be specified 
+                        as non-empty text because there is super model".`  
+                    );
+                }
+                name = this.superEntity._tableSettings.discriminator!.name;
+            }
+            settings.discriminator = { name, type };
+        } else if (this.superEntity != null) {
+            settings.discriminator = this.superEntity._tableSettings.discriminator;
+        }
+
+        if (settings.discriminator != null) {
+            let discriminatorValue = typeof options === "string"
+                ? null
+                : options?.discriminatorValue;
+            if (discriminatorValue == null || discriminatorValue === "") {
+                throw new ModelError(
+                    this.name,
+                    dedent `the "discriminatorValue" of table options must be specified 
+                    because the current model requires polymorphism". 
+                    Even if the model is intended to be abstract, 
+                    it must be explicitly specified using the imported constant from
+                    "import { DV_ABSTRACT } from '@ts-grm/core'";`  
+                );
+            }
+            if (discriminatorValue !== DV_ABSTRACT) {
+                if (discriminatorValue === DV_MODEL_NAME) {
+                    discriminatorValue = this.name;
+                }
+                if (typeof discriminatorValue !== settings.discriminator.type) {
+                    throw new ModelError(
+                        this.name,
+                        dedent `the "discriminatorValue" of table options is specified 
+                        as ${
+                            typeof discriminatorValue === "string"
+                                ? `"${discriminatorValue}"`
+                                : discriminatorValue
+                        } but the "discriminator.type" is "${settings.discriminator.type}"`  
+                    );
+                }
+                settings.discriminatorValue = discriminatorValue;
+            }
+        }
+        return settings;
+    }
 }
+
+export type TableSettings = {
+    readonly superSettings: TableSettings | undefined;
+    readonly explicitName: string | undefined;
+    readonly sharedTable: boolean;
+    readonly discriminator: {
+        readonly name: string;
+        readonly type: "string" | "number"
+    } | undefined;
+    readonly discriminatorValue: string | number | undefined;
+};
 
 const PASCAL_CASE_REGEX = /^[A-Z][A-Za-z\d]*$/;
 function isValidModelName(name: string): boolean {

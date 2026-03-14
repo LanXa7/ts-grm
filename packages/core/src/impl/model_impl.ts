@@ -1,6 +1,6 @@
 import { ArgumentError } from "@/error/common";
 import { Entity } from "@/impl/entity";
-import { AnyModel, Ctor, CtorMembers, Model, ModelContext, UniqueKeys } from "@/schema/model";
+import { AnyModel, Ctor, CtorMembers, Model, ModelContext, TableOptions, UniqueKeys } from "@/schema/model";
 import { ModelContract } from "./model_contract";
 
 export class ModelImpl<
@@ -55,26 +55,24 @@ export class ModelImpl<
 }
 
 export type ModelOptions = {
-    readonly tableName: string | undefined;
-    readonly _uniqueConstraints: ReadonlyArray<ReadonlyArray<string>>;
+    readonly tableOptions: TableOptions | undefined;
+    readonly uniqueConstraints: ReadonlyArray<ReadonlyArray<string>>;
 };
 
 export class ModelContextImpl<TCtor extends Ctor> implements ModelContext<TCtor> {
 
-    private _tableName: string | undefined = undefined;
+    private _tableOptions: TableOptions | undefined = undefined;
 
     private readonly _uniqueConstraints: Array<ReadonlyArray<string>> = [];
 
-    private readonly _unqueKeySet = new Set<string>();
+    private readonly _uniqueKeySet = new Set<string>();
     
     __type(): { modelContext: TCtor | true } {
         return { modelContext: true };
     }
 
-    tableName(name: string): this {
-        if (name != "") {
-            this._tableName = name;
-        }
+    table(options: TableOptions): this {
+        this._tableOptions = options;
         return this;
     }
 
@@ -91,16 +89,16 @@ export class ModelContextImpl<TCtor extends Ctor> implements ModelContext<TCtor>
             }
         }
         const key = arr.join(",");
-        if (this._unqueKeySet.has(key)) {
+        if (this._uniqueKeySet.has(key)) {
             throw new ArgumentError(`Duplicated unique constraints [${paths.join(", ")}]`);
         }
-        this._unqueKeySet.add(key);
+        this._uniqueKeySet.add(key);
     }
 
     toModelOptions(): ModelOptions {
         return {
-            tableName: this._tableName,
-            _uniqueConstraints: this._uniqueConstraints
+            tableOptions: this._tableOptions,
+            uniqueConstraints: this._uniqueConstraints
         };
     }
 }
