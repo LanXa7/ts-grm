@@ -6,7 +6,7 @@ export { dsl } from "./dsl";
 
 export { suppressUnused } from "./utils";
 export { ExpressionOrder } from "./dsl";
-export { DV_ABSTRACT, DV_MODEL_NAME } from "./schema/model";
+export { TB_INHERIT, DV_ABSTRACT, DV_MODEL_NAME } from "./schema/model";
 export * as metadata from "./impl";
 export * as ast from "./impl/ast";
 export type { OrderNullsType } from "./schema/order";
