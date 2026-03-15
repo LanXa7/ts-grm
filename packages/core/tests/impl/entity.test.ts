@@ -1,5 +1,5 @@
 import { Entity } from "@/impl/entity";
-import { PAPER_BOOK, ORDER_ITEM, BOOK, AUTHOR, TREE_NODE, BOOK_STORE } from "../model/model";
+import { PAPER_BOOK, ORDER_ITEM, BOOK, AUTHOR, TREE_NODE, BOOK_STORE, ELECTRONIC_BOOK, PDF_ELECTRONIC_BOOK, ORDER, VIP_ORDER } from "../model/model";
 import { describe, expect, it, JestAssertion } from "vitest";
 import { makeErr } from "@/error/util";
 import { Column, PropStorage, UPPER_SNAKE_CASE_DATABASE_NAMING_STRATEGY } from "@/impl";
@@ -39,7 +39,7 @@ describe("EntityTest", () => {
         expect(
             [...paperBookEntity.declaredPropMap.keys()].sort()
         ).toEqual(
-            ["size"].sort()
+            ["id", "size"].sort()
         );
         expect(
             [...paperBookEntity.allPropMap.keys()].sort()
@@ -306,5 +306,106 @@ describe("EntityTest", () => {
                 },
             ]
         });
+    });
+
+    it("inheritance", () => {
+
+        const strategy = UPPER_SNAKE_CASE_DATABASE_NAMING_STRATEGY;
+
+        const bookEntity = Entity.of(BOOK);
+        const paperBookEntity = Entity.of(PAPER_BOOK);
+        const electronicBookEntity = Entity.of(ELECTRONIC_BOOK);
+        const pdfElectronicBookEntity = Entity.of(PDF_ELECTRONIC_BOOK);
+        const orderEntity = Entity.of(ORDER);
+        const vipOrderEntity = Entity.of(VIP_ORDER);
+
+        expect(bookEntity.toTableName(strategy)).toEqual("BOOK");
+        expect(paperBookEntity.toTableName(strategy)).toEqual("THE_PAPER_BOOK");
+        expect(electronicBookEntity.toTableName(strategy)).toEqual("ELECTRONIC_BOOK");
+        expect(pdfElectronicBookEntity.toTableName(strategy)).toEqual("PDF_ELECTRONIC_BOOK");
+        expect(orderEntity.toTableName(strategy)).toEqual("ORDER");
+        expect(vipOrderEntity.toTableName(strategy)).toEqual("VIP_ORDER");
+
+        const bookId = bookEntity.idProp;
+        const paperBookId = paperBookEntity.idProp;
+        const electronicBookId = electronicBookEntity.idProp;
+        const pdfElectronicBookId = pdfElectronicBookEntity.idProp;
+        const orderId = orderEntity.idProp;
+        const vipOrderId = vipOrderEntity.idProp;
+
+        expect(bookId.declaringEntity).toBe(bookEntity);
+        expect(paperBookId.declaringEntity).toBe(paperBookEntity);
+        expect(electronicBookId.declaringEntity).toBe(electronicBookEntity);
+        expect(pdfElectronicBookId.declaringEntity).toBe(pdfElectronicBookEntity);
+        expect(orderId.declaringEntity).toBe(orderEntity);
+        expect(vipOrderId.declaringEntity).toBe(vipOrderEntity);
+
+        expect(bookId.toStorage(strategy) as Column).toEqual({
+            kind: "COLUMN",
+            name: "ID"
+        });
+        expect(paperBookId.toStorage(strategy) as Column).toEqual({
+            kind: "COLUMN",
+            name: "ID"
+        });
+        expect(electronicBookId.toStorage(strategy) as Column).toEqual({
+            kind: "COLUMN",
+            name: "ELECTRONIC_BOOK"
+        });
+        expect(pdfElectronicBookId.toStorage(strategy) as Column).toEqual({
+            kind: "COLUMN",
+            name: "ELECTRONIC_BOOK"
+        });
+        expectStorage(orderId.toStorage(strategy)).toEqual({
+            kind: "COLUMNS",
+            arr: [
+                {
+                    kind: 'COLUMN',
+                    name: 'X',
+                    referencedProp: undefined,
+                    referencedColumnName: undefined
+                },
+                {
+                    kind: 'COLUMN',
+                    name: 'A',
+                    referencedProp: undefined,
+                    referencedColumnName: undefined
+                },
+                {
+                    kind: 'COLUMN',
+                    name: 'B',
+                    referencedProp: undefined,
+                    referencedColumnName: undefined
+                }
+            ]
+        });
+        expectStorage(vipOrderId.toStorage(strategy)).toEqual({
+            kind: "COLUMNS",
+            arr: [
+                {
+                    kind: 'COLUMN',
+                    name: 'ID_X',
+                    referencedProp: undefined,
+                    referencedColumnName: undefined
+                },
+                {
+                    kind: 'COLUMN',
+                    name: 'ID_Y_A',
+                    referencedProp: undefined,
+                    referencedColumnName: undefined
+                },
+                {
+                    kind: 'COLUMN',
+                    name: 'ID_Y_B',
+                    referencedProp: undefined,
+                    referencedColumnName: undefined
+                }
+            ]
+        });
+
+        expect(paperBookEntity.tableIdentity === bookEntity.tableIdentity).toEqual(false);
+        expect(electronicBookEntity.tableIdentity === bookEntity.tableIdentity).toEqual(false);
+        expect(pdfElectronicBookEntity.tableIdentity === electronicBookEntity.tableIdentity).toEqual(false); 
+        expect(vipOrderEntity.tableIdentity === orderEntity.tableIdentity).toEqual(false);    
     });
 });

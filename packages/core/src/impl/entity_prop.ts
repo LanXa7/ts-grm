@@ -48,6 +48,8 @@ export class EntityProp {
 
     private _storage: PropStorage | undefined = undefined;
 
+    private _override = false;
+
     constructor(
         readonly declaringEntity: Entity,
         readonly name: string,
@@ -449,6 +451,17 @@ export class EntityProp {
         };
     }
 
+    get subPath(): string {
+        if (this.parentProp == null) {
+            return "";
+        }
+        const parentSubPath = this.parentProp.subPath;
+        if (parentSubPath === "") {
+            return this.name;
+        }
+        return `${parentSubPath}.${this.name}`;
+    }
+
     toString(): string {
         return this.parentProp != null
             ? `${this.parentProp.toString()}.${this.name}`
@@ -475,6 +488,60 @@ export class EntityProp {
             newMap.set(key, newValue);
         }
         return newMap;
+    }
+
+    // @ts-ignore
+    private _redirectAsIdProp(
+        declaringEntity: Entity,
+        idMapping: string | Record<string, string> | undefined
+    ): EntityProp {
+        return EntityProp._redirectIdProp(this, declaringEntity, idMapping);
+    }
+
+    private static _redirectIdProp(
+        prop: EntityProp,
+        declaringEntity: Entity,
+        idMapping: string | Record<string, string> | undefined
+    ): EntityProp {
+        const newProp = prop._clone();
+        newProp._override = true;
+        (newProp as any).declaringEntity = declaringEntity;
+        if (newProp._props == null) {
+            if (idMapping != null) {
+                newProp._storage = newProp._baseStorage = {
+                    kind: "COLUMN",
+                    name: prop.parentProp == null 
+                        ? (idMapping as string) ?? ""
+                        : (idMapping as Record<string, string>)[prop.subPath]
+                            ?? makeErr(`The column of ${prop.toString()} must be overridden too`),
+                    referencedProp: undefined,
+                    referencedColumnName: undefined
+                };
+            }
+        } else {
+            const newMap = new Map<string, EntityProp>();
+            const columns: Array<Column> = [];
+            for (const subProp of newProp._props.values()) {
+                const newSubProp = EntityProp._redirectIdProp(subProp, declaringEntity, idMapping);
+                newMap.set(newSubProp.name, newSubProp);
+                if (idMapping != null) {
+                    const subStorage = newSubProp._baseStorage!;
+                    if (subStorage.kind === "COLUMN") {
+                        columns.push(subStorage);
+                    } else {
+                        columns.push(...subStorage as Columns);
+                    }
+                }
+            }
+            (columns as any).kind = "COLUMNS";
+            newProp._storage = newProp._baseStorage = columns as any as Columns;
+            newProp._props = newMap;
+        }
+        return newProp;
+    }
+
+    get isOverride(): boolean {
+        return this._override;
     }
 
     get storageType(): StorageType {
@@ -547,16 +614,23 @@ export class EntityProp {
             if (this.referenceKeyProp == null && this.referenceProp == null) {
                 const arr: Array<Column> = [];
                 const baseColumns = baseStorage as Columns;
-                let index = 0;
                 for (const prop of this._props!.values()) {
-                    arr.push(
-                        fixColumn(
-                            baseColumns[index]!,
-                            () => strategy.columnName(prop),
-                            () => (baseColumns[index]!.referencedProp?.toStorage(strategy) as Column).name
-                        )
-                    )
-                    index++;
+                    if (prop._props != null) {
+                        const storage = prop._createStorage(prop._getBaseStorage()!, strategy);
+                        if (storage.kind === "COLUMN") {
+                            arr.push(storage);
+                        } else {
+                            arr.push(...storage as Columns);
+                        }
+                    } else {
+                        arr.push(
+                            fixColumn(
+                                baseColumns[arr.length]!,
+                                () => strategy.columnName(prop),
+                                () => (baseColumns[arr.length]!.referencedProp?.toStorage(strategy) as Column).name
+                            )
+                        );
+                    }
                 }
                 columns = arr;
             } else {
@@ -661,7 +735,7 @@ export class EntityProp {
         } else if (this._props != null) {
             for (const subProp of this._props.values()) {
                 const subStorage = subProp._getBaseStorage() as Column | Columns;
-                if (Array.isArray(subStorage)) {
+                if (subStorage.kind === "COLUMNS") {
                     columns.push(...subStorage);
                 } else {
                     columns.push(subStorage as Column);

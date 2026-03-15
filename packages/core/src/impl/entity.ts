@@ -1,5 +1,5 @@
 import { ModelError, PropError } from "@/error/metadata_error";
-import { DV_ABSTRACT, DV_MODEL_NAME, AnyModel, Ctor, INHERIT_SUPER_TABLE, TableOptions } from "@/schema/model";
+import { DV_ABSTRACT, DV_MODEL_NAME, AnyModel, Ctor, TB_INHERIT, TableOptions } from "@/schema/model";
 import { EntityProp } from "./entity_prop";
 import { ModelImpl, ModelOptions } from "@/impl/model_impl";
 import { dedent, makeErr } from "@/error/util";
@@ -32,7 +32,9 @@ export class Entity {
 
     private static _nextIdentity = 0;
 
-    private _identity : number;
+    readonly identity : number;
+
+    readonly tableIdentity: number;
 
     static of(model: AnyModel): Entity {
         return (model as ModelImpl<any, any, any, any, any>).toEntity()
@@ -60,7 +62,10 @@ export class Entity {
             : undefined;
         
         this._tableSettings = this._createTableSettings(_options.tableOptions);
-        this._identity = ++Entity._nextIdentity;
+        this.identity = ++Entity._nextIdentity;
+        this.tableIdentity = this._tableSettings.sharedTable
+            ? this.superEntity!.tableIdentity
+            : this.identity;
     }
 
     get idKey(): string {
@@ -97,17 +102,17 @@ export class Entity {
             makeErr(`The uniqueConstraintArr of ${this.name} is not initialized`);
     }
 
-    get identity(): number {
-        return this._identity;
-    }
-
     prop(name: string): EntityProp {
         return this.expandedPropMap.get(name) ?? 
             makeErr(`There is no property "${name}" in the model "${this.name}"`);
     }
 
     toTableName(strategy: DatabaseNamingStrategy): string {
-        return this._tableSettings.explicitName ?? strategy.tableName(this);
+        return this._tableSettings.explicitName ?? (
+            this._tableSettings.sharedTable 
+                ? this.superEntity!.toTableName(strategy)
+                : strategy.tableName(this)
+        );
     }
 
     resolve(phase: number): this {
@@ -159,7 +164,7 @@ export class Entity {
                 throw new PropError(
                     this.name,
                     propName,
-                    dedent `Must fllow CamelCase naming convention:
+                    dedent `Must follow CamelCase naming convention:
                     "${CAMEL_CASE_REGEX.source}"`
                 );
             }
@@ -176,6 +181,16 @@ export class Entity {
             );
         }
         this._collectReferenceKeyProps(declaredPropMap);
+        if (this.superEntity != null) {
+            const tableOptions = this._options.tableOptions;
+            const idMapping = !this._tableSettings.sharedTable 
+            && typeof tableOptions === "object"
+            && typeof tableOptions.name === "object"
+                ? tableOptions.name.idMapping
+                : undefined;
+            const newIdProp = (this.superEntity._idProp as any)._redirectAsIdProp(this, idMapping);
+            declaredPropMap.set(newIdProp.name, newIdProp);
+        }
         return declaredPropMap;
     }
 
@@ -222,10 +237,7 @@ export class Entity {
     }
 
     private _findIdProp(): EntityProp {
-        if (this.superEntity !== undefined) {
-            return this.superEntity.idProp;
-        }
-        const idProp = this.declaredPropMap.get(this._idKey ?? "");
+        const idProp = this.declaredPropMap.get(this._idKey ?? this.superEntity!.idProp.name);
         if (idProp === undefined) {
             throw new ModelError(
                 this.name,
@@ -242,14 +254,16 @@ export class Entity {
         }
         const allPropMap = new Map<string, EntityProp>(this.superEntity.allPropMap);
         for (const prop of this.declaredPropMap.values()) {
-            const superProp = this.superEntity.allPropMap.get(prop.name);
-            if (superProp !== undefined) {
-                throw new PropError(
-                    this.name,
-                    prop.name,
-                    dedent`A property with the same name has 
-                    already been defined in super-entity "${this.superEntity.name}"`
-                );
+            if (!prop.isOverride) {
+                const superProp = this.superEntity.allPropMap.get(prop.name);
+                if (superProp !== undefined) {
+                    throw new PropError(
+                        this.name,
+                        prop.name,
+                        dedent`A property with the same name has 
+                        already been defined in super-entity "${this.superEntity.name}"`
+                    );
+                }
             }
             allPropMap.set(prop.name, prop);
         }
@@ -344,7 +358,7 @@ export class Entity {
     }
 
     private _createTableSettings(
-        options: TableOptions | undefined
+        options: TableOptions<AnyModel | never> | undefined
     ): TableSettings {
 
         if (this.superEntity != null) {
@@ -380,10 +394,13 @@ export class Entity {
         }
 
         if (options.name != null) {
-            if (options.name === INHERIT_SUPER_TABLE) {
+            if (options.name === TB_INHERIT) {
                 settings.sharedTable = true;
             } else {
-                settings.explicitName = options.name != "" ? options.name : undefined;
+                settings.explicitName = 
+                    typeof options.name === "string"
+                        ? options.name != "" ? options.name : undefined
+                        : options.name.value != "" ? options.name.value : undefined;
             }
         }
         if (options.discriminator != null) {

@@ -1,4 +1,4 @@
-import { AssociatedProp, ManyToManyProp, ManyToOneProp, OneToOneProp, ScalarProp } from "@/schema/prop";
+import { AssociatedProp, EmbeddedProp, ManyToManyProp, ManyToOneProp, OneToOneProp, ScalarProp } from "@/schema/prop";
 import { FlattenMembers } from "@/utils";
 import { ModelContextImpl, ModelImpl } from "@/impl/model_impl";
 import { DatabaseIdentifier } from "./database_identifier";
@@ -15,9 +15,9 @@ function modelImpl(): ModelCreator {
         name: TName,
         idKey: TIdKey,
         ctor: TCtor,
-        configurator?: (ctx: ModelContext<TCtor>) => void
+        configurator?: (ctx: ModelContext<TCtor, never>) => void
     ): Model<TName, TIdKey, TCtor, CtorMembers<TCtor>, never> {
-        const ctx = new ModelContextImpl<TCtor>();
+        const ctx = new ModelContextImpl<TCtor, never>();
         if (configurator != null) {
             configurator(ctx);
         }
@@ -35,7 +35,7 @@ function modelImpl(): ModelCreator {
         >(
             name: TName,
             ctor: TCtor,
-            configurator?: (ctx: ModelContext<TCtor>) => void
+            configurator?: (ctx: ModelContext<TCtor, TSuperModel>) => void
         ): Model<
             TName, 
             SuperIdKey<TSuperModel>, 
@@ -43,7 +43,7 @@ function modelImpl(): ModelCreator {
             MakeAllModelMembers<TCtor, TSuperModel>,
             ModelName<TSuperModel> | ModelSuperNames<TSuperModel>
         > => {
-            const ctx = new ModelContextImpl<TCtor>();
+            const ctx = new ModelContextImpl<TCtor, TSuperModel>();
             if (configurator != null) {
                 configurator(ctx);
             }
@@ -76,7 +76,7 @@ type ModelCreator = {
         name: TName,
         idKey: TIdKey,
         ctor: TCtor,
-        configurator?: (ctx: ModelContext<TCtor>) => void
+        configurator?: (ctx: ModelContext<TCtor, never>) => void
     ): Model<TName, TIdKey, TCtor, CtorMembers<TCtor>, never>;
 
     extends<
@@ -96,7 +96,7 @@ type InheritanceModelCreator<
     >(
         name: OtherString<TName, ModelName<TSuperModel> | ModelSuperNames<TSuperModel>>,
         ctor: TCtor,
-        configurator?: (ctx: ModelContext<TCtor>) => void
+        configurator?: (ctx: ModelContext<TCtor, TSuperModel>) => void
     ): Model<
         TName, 
         SuperIdKey<TSuperModel>, 
@@ -125,11 +125,11 @@ export interface Model<
 
 export type AnyModel = Model<any, any, any, any, any>;
 
-export interface ModelContext<TCtor extends Ctor> {
+export interface ModelContext<TCtor extends Ctor, TSuperModel extends AnyModel | never> {
     
     __type(): { modelContext: TCtor | true };
 
-    table(options: TableOptions): this;
+    table(options: TableOptions<TSuperModel>): this;
 
     unique(...paths : UniqueKeys<CtorMembers<TCtor>>[]): this;
 }
@@ -220,9 +220,11 @@ type MappedByKeysImpl<TModelMembers, TExpectedProp extends AssociatedProp<any, a
         }[keyof TModelMembers] :
         never;
 
-export type TableOptions = 
+export type TableOptions<TSuperModel extends AnyModel | never> = 
     DatabaseIdentifier<string> | {
-        readonly name?: DatabaseIdentifier<string> | typeof INHERIT_SUPER_TABLE;
+        readonly name?: typeof TB_INHERIT
+            | DatabaseIdentifier<string>
+            | IdRemappedTable<TSuperModel>;
         readonly discriminatorValue?: 
             typeof DV_ABSTRACT
             | typeof DV_MODEL_NAME
@@ -234,10 +236,17 @@ export type TableOptions =
         };
     };
 
-export const INHERIT_SUPER_TABLE = Symbol("<inherit>");
+export type IdRemappedTable<TSuperModel extends AnyModel | never> = 
+    TSuperModel extends AnyModel
+        ? {
+            readonly value?: DatabaseIdentifier<string>;
+            readonly idMapping?: AllModelMembers<TSuperModel>[ModelIdKey<TSuperModel>] extends EmbeddedProp<any, any, infer R>
+                ? { readonly [K in keyof R]: DatabaseIdentifier<string> }
+                : DatabaseIdentifier<string>
+        }
+        : never;
 
-export type SpecialDiscriminatorValueType = 
-    typeof DV_ABSTRACT | typeof DV_MODEL_NAME;
+export const TB_INHERIT = Symbol("<inherit>");
 
 export const DV_ABSTRACT = Symbol("<abstract>");
 

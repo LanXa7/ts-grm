@@ -39,6 +39,7 @@ export const PAPER_BOOK = model.extends(BOOK)(
         })
     },
     ctx => ctx.table({
+        name: "THE_PAPER_BOOK",
         discriminatorValue: DV_MODEL_NAME
     })
 );
@@ -49,6 +50,9 @@ export const ELECTRONIC_BOOK = model.extends(BOOK)(
         address = prop.str();
     },
     ctx => ctx.table({
+        name: {
+            idMapping: "ELECTRONIC_BOOK"
+        },
         discriminatorValue: DV_MODEL_NAME
     })
 );
@@ -107,6 +111,29 @@ export const ORDER = model("Order", "id", class {
             ]
         }
     })
+}, ctx => {
+    ctx.table({
+        discriminator: {
+            name: "TYPE",
+            type: "number"
+        },
+        discriminatorValue: 1
+    });
+});
+
+export const VIP_ORDER = model.extends(ORDER)("VipOrder", class {
+    vipLevel = prop.num();
+}, ctx => {
+    ctx.table({
+        name: {
+            idMapping: {
+                "x": "ID_X",
+                "y.a": "ID_Y_A",
+                "y.b": "ID_Y_B"
+            }
+        },
+        discriminatorValue: 2
+    });
 });
 
 export const ORDER_ITEM = model("OrderItem", "id", class {

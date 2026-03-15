@@ -55,13 +55,14 @@ export class ModelImpl<
 }
 
 export type ModelOptions = {
-    readonly tableOptions: TableOptions | undefined;
+    readonly tableOptions: TableOptions<AnyModel | never> | undefined;
     readonly uniqueConstraints: ReadonlyArray<ReadonlyArray<string>>;
 };
 
-export class ModelContextImpl<TCtor extends Ctor> implements ModelContext<TCtor> {
+export class ModelContextImpl<TCtor extends Ctor, TSuperModel extends AnyModel | never> 
+implements ModelContext<TCtor, TSuperModel> {
 
-    private _tableOptions: TableOptions | undefined = undefined;
+    private _tableOptions: TableOptions<TSuperModel> | undefined = undefined;
 
     private readonly _uniqueConstraints: Array<ReadonlyArray<string>> = [];
 
@@ -71,7 +72,7 @@ export class ModelContextImpl<TCtor extends Ctor> implements ModelContext<TCtor>
         return { modelContext: true };
     }
 
-    table(options: TableOptions): this {
+    table(options: TableOptions<TSuperModel>): this {
         this._tableOptions = options;
         return this;
     }
