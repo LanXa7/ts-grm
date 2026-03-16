@@ -1,6 +1,6 @@
 import { AnyModel } from "@/schema/model";
 import { ExpressionLike, Predicate } from "./expression";
-import { BaseTable, Table, TableLike } from "./table";
+import { BaseTable, EntityTableLike, Table } from "./table";
 import { AtLeastOne, ExpressionOrder } from "./utils";
 import { getQueryFactory } from "@/impl/ast/query_factory";
 import { BaseQueryImplementor } from "@/impl/base_query_implementor";
@@ -125,7 +125,7 @@ export type BaseQueryProjection<TSelections extends BaseQuerySelectMapArgs> = {
 };
 
 export type BaseQuerySelectMapArgs = {
-    readonly [key: string]: ExpressionLike | TableLike;
+    readonly [key: string]: ExpressionLike | EntityTableLike;
 };
 
 export type BaseQueryMapOf<T> =

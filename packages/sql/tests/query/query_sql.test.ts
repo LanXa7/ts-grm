@@ -639,7 +639,10 @@ describe("QuerySqlTest", () => {
         const q = sqlClient.createQuery(baseBookModel, (q, baseBook) => {
             const baseStore = baseBook.join(
                 baseStoreModel, 
-                ctx => ctx.source.book.name.eq(ctx.target.store.name)
+                {
+                    joinType: "LEFT",
+                    filter: ctx => ctx.source.book.name.eq(ctx.target.store.name)
+                }
             );
             q.where(
                 baseBook.rank.le(3),
@@ -670,7 +673,7 @@ describe("QuerySqlTest", () => {
                 tb_1_.c1,
                 tb_2_.c1
             from tb_1_
-            inner join tb_2_ on 
+            left join tb_2_ on 
                 tb_1_.c3 = tb_2_.c3
             where 
                     tb_1_.c2 <= ?

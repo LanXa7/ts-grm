@@ -1,4 +1,4 @@
-import { AllModelMembers, AnyModel, CtorMembers, ModelCtor } from "@/schema/model";
+import { AllModelMembers, AnyModel, CtorMembers, DerivedModel, ModelCtor } from "@/schema/model";
 import { CollectionProp, EmbeddedProp, I64Prop, NullityType, ReferenceProp, DirectTypeOf, ScalarProp, CombinedNullity } from "@/schema/prop";
 import { Expression, MakeType, Predicate } from "./expression";
 import { FilterNever } from "@/utils";
@@ -9,6 +9,14 @@ import { BaseQuerySelectMapArgs, BaseModel, BaseQueryMapOf } from "./base_query"
 export type TableLike = {
 
     __type(): { tableLike: true; };
+};
+
+export type EntityTableLike = {
+
+    __type(): {
+        tableLike: true;
+        entityTableLike: true;
+    };
 };
 
 export type ModelLike = AnyModel | BaseModel<any>;
@@ -23,7 +31,7 @@ export type Table<T extends ModelLike, TRiskAccepted extends boolean = false> =
 export type EntityTable<TModel extends AnyModel, TRiskAccepted extends boolean = false> = 
     EntityTableMembers<TModel, AllModelMembers<TModel>, "NONNULL", TRiskAccepted>;
 
-type EntityTableMembers<
+export type EntityTableMembers<
     TModel extends AnyModel, 
     TMembers extends object, 
     TNullity extends NullityType, 
@@ -31,17 +39,26 @@ type EntityTableMembers<
 > = DslMembers<TModel, TMembers, TNullity, TRiskAccepted>
     & WeakJoinAction<TModel, TRiskAccepted> 
     & { 
+        __type(): {
+            tableLike: true;
+            entityTableLike: true;
+            entityTable: TModel | true;
+        };
+
         fetch<X>(
             view: View<TModel, X>
         ): FetchedView<
             TModel, 
             TNullity extends "NULLABLE" ? X | null | undefined : X
-        >; 
-    } & {
-        __type(): {
-            tableLike: true;
-            entityTable: TModel | true;
-        }
+        >;
+
+        is<TDerivedModel extends AnyModel>(
+            derivedModel: DerivedModel<TDerivedModel, TModel>
+        ): Predicate;
+
+        as<TDerivedModel extends AnyModel>(
+            derivedModel: DerivedModel<TDerivedModel, TModel>
+        ): EntityTableMembers<TModel, AllModelMembers<TDerivedModel>, "NULLABLE", TRiskAccepted>;
     };
 
 type DslMembers<
@@ -54,17 +71,15 @@ type DslMembers<
         [K in keyof TMembers]:
             TMembers[K] extends I64Prop<infer R, infer Nullity>
                 ? Expression<
-                    MakeType<R, Nullity>,
+                    MakeType<R, CombinedNullity<TNullity, Nullity>>,
                     R extends string ? "AS_NUMBER" : ""
                 >
             : TMembers[K] extends ScalarProp<infer R, infer Nullity>
                 ? Expression<MakeType<R, CombinedNullity<TNullity, Nullity>>>
             : TMembers[K] extends EmbeddedProp<infer R, infer Nullity, any>
                 ? () => DslMembers<TModel, R, CombinedNullity<TNullity, Nullity>, TRiskAccepted>
-            : TMembers[K] extends ReferenceProp<infer TTargetModel, infer Nullity, any, any>
-                ? Nullity extends "NONNULL" 
-                    ? NonNullReferenceJoinAction<TModel, TTargetModel, CtorMembers<ModelCtor<TTargetModel>>, TRiskAccepted>
-                    : ReferenceJoinAction<TModel, TTargetModel, CtorMembers<ModelCtor<TTargetModel>>, TRiskAccepted>
+            : TMembers[K] extends ReferenceProp<infer TTargetModel, any, any, any>
+                ? ReferenceJoinAction<TModel, TTargetModel, CtorMembers<ModelCtor<TTargetModel>>, TRiskAccepted>
             : TMembers[K] extends CollectionProp<infer TTargetModel>
                 ? CollectionJoinAction<TModel, TTargetModel, CtorMembers<ModelCtor<TTargetModel>>, TRiskAccepted>
             : never
@@ -99,38 +114,6 @@ type ReferenceKeyMembers<TModel extends AnyModel, TMembers, TNullity extends Nul
 };
 
 export type JoinType = "INNER" | "LEFT";
-
-type NonNullReferenceJoinAction<
-    TParentModel extends AnyModel, 
-    TModel extends AnyModel, 
-    TMembers extends object, 
-    TRiskAccepted extends boolean
-> = {
-
-    (): EntityTableMembers<TModel, TMembers, "NONNULL", TRiskAccepted>;
-    
-    (
-        joinType: JoinType
-    ): EntityTableMembers<TModel, TMembers, "NONNULL", TRiskAccepted>;
-    
-    (
-        options: {
-            joinType?: JoinType,
-        }
-    ): EntityTableMembers<TModel, TMembers, "NONNULL", TRiskAccepted>;
-
-    <TJoinType extends JoinType = "INNER">(
-        options: {
-            joinType?: TJoinType,
-            filter: FilterType<TParentModel, TModel>
-        }
-    ): EntityTableMembers<
-        TModel, 
-        TMembers, 
-        TJoinType extends "LEFT" ? "NULLABLE" : "NONNULL", 
-        TRiskAccepted
-    >;
-};
 
 type ReferenceJoinAction<
     TParentModel extends AnyModel, 
@@ -276,7 +259,12 @@ type WeakJoinAction<
             readonly joinType?: TJoinType,
             readonly filter: FilterType<TModel, TTargetModel>
         }
-    ): BaseTable<BaseQueryMapOf<TTargetModel>, TRiskAccepted>;
+    ): BaseTable<
+        TJoinType extends "LEFT"
+            ? NullableBaseQuerySelectMapOf<BaseQueryMapOf<TTargetModel>>
+            : BaseQueryMapOf<TTargetModel>, 
+        TRiskAccepted
+    >;
 };
 
 export type FilterType<
@@ -302,13 +290,27 @@ export type BaseTable<
         baseTable: true; 
     };
 } & {
-    [K in keyof TMap]: 
-        TMap[K] extends EntityTable<any, any>
+    readonly [K in keyof TMap]: 
+        TMap[K] extends EntityTableMembers<any, any, any, any>
             ? MakeRiskAcceptedTable<TMap[K], TRiskAccepted>
             : TMap[K];
 } & WeakJoinAction<BaseModel<TMap>, TRiskAccepted>;
 
+export type NullableBaseQuerySelectMapOf<
+    TMap extends BaseQuerySelectMapArgs
+> = {
+    readonly [K in keyof TMap]: 
+        TMap[K] extends Expression<infer R, infer AsNumber> 
+            ? Expression<R | null | undefined, AsNumber>
+        : NullableEntityTableOf<TMap[K]>;
+};
+
 type MakeRiskAcceptedTable<TEntityTable, TRiskAccepted extends boolean = false> =
     TEntityTable extends EntityTable<infer M extends AnyModel, any>
         ? EntityTable<M, TRiskAccepted>
+        : never;
+
+export type NullableEntityTableOf<TEntityTable> =
+    TEntityTable extends EntityTableMembers<infer Model, infer _ extends object, any, infer RiskAccepted>
+        ? EntityTableMembers<Model, AllModelMembers<Model>, "NULLABLE", RiskAccepted>
         : never;

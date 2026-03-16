@@ -1,5 +1,5 @@
 import { AtLeastOne } from "../dsl/utils";
-import { AllModelMembers, AnyModel, Extends, IsDerivedModelOf, ModelName, ModelSuperNames } from "@/schema/model";
+import { AllModelMembers, AnyModel, DerivedModel, Extends, ModelName, ModelSuperNames } from "@/schema/model";
 import { CollectionProp, EmbeddedProp, NullityOf, ReferenceProp, DirectTypeOf, ScalarProp, NullityType, AssociatedProp, Prop } from "@/schema/prop";
 import { Prettify, UnionToIntersection } from "@/utils";
 import { ModelOrder } from "./order";
@@ -617,13 +617,6 @@ type InstanceOf<
         ""
     >;
 };
-
-type DerivedModel<
-    TDerivedModel extends AnyModel,
-    TSuperModel extends AnyModel
-> = IsDerivedModelOf<TDerivedModel, TSuperModel> extends true
-    ? TDerivedModel :
-    never;
 
 type DerivedFields<
     TDerivedModel extends AnyModel,

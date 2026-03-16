@@ -51,5 +51,7 @@ export type  {
     RowTypeOf,
     ModelLike,
     FilterType,
-    FilterContextType
+    FilterContextType,
+    NullableEntityTableOf,
+    NullableBaseQuerySelectMapOf
 } from "./dsl";

@@ -299,3 +299,10 @@ export type IsDerivedModelOf<
             : ModelName<TModel2> extends ModelSuperNames<TModel1>
                 ? true
                 : false;
+
+export type DerivedModel<
+    TDerivedModel extends AnyModel,
+    TSuperModel extends AnyModel
+> = IsDerivedModelOf<TDerivedModel, TSuperModel> extends true
+    ? TDerivedModel :
+    never;

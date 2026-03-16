@@ -4,7 +4,7 @@ import { SqlClient } from "@/dsl/sql_client";
 import { TupleSubQuery } from "../../src/dsl/sub_query";
 import { tuple } from "../../src/dsl/tuple";
 import { dto } from "@/schema/dto";
-import { AUTHOR, BOOK, TREE_NODE } from "tests/model/model";
+import { AUTHOR, BOOK, BOOK_STORE, TREE_NODE } from "tests/model/model";
 import { expectTypeOf, describe, it } from "vitest";
 
 describe("QueryTest", () => {
@@ -245,6 +245,45 @@ describe("QueryTest", () => {
         expectTypeOf<typeof rows[0]>().toEqualTypeOf<[
             { id: number; name: string; parentNodeId: number | null },
             number
+        ]>();
+    });
+
+    it("TestCteLeftJoin", async () => {
+        const baseStoreModel = dsl.cteModel(
+            dsl.baseQuery(BOOK_STORE, (q, store) => {
+                return q.select({
+                    store,
+                    rank: dsl.native.num `row_number() over(order by ${store.version} desc)`
+                })
+            })
+        );
+        const baseBookModel = dsl.cteModel(
+            dsl.baseQuery(BOOK, (q, book) => {
+                return q.select({
+                    book,
+                    rank: dsl.native.num `row_number() over(order by ${book.edition} desc)`
+                })
+            })
+        );
+        const rows = await sqlClient().createQuery(baseBookModel, (q, baseBook) => {
+            const baseStore = baseBook.join(
+                baseStoreModel, 
+                {
+                    joinType: "LEFT",
+                    filter: ctx => ctx.source.book.name.eq(ctx.target.store.name)
+                }
+            );
+            q.where(
+                baseBook.rank.le(3),
+                baseStore.rank.le(3)
+            );
+            return q.select(
+                baseBook.book.id,
+                baseStore.store.id
+            );
+        }).fetchList();
+        expectTypeOf<typeof rows[0]>().toEqualTypeOf<[
+            number, string | null | undefined
         ]>();
     });
 });
