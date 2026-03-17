@@ -26,6 +26,8 @@ export interface AbstractTable {
 
     readonly __isPrev: boolean;
 
+    readonly __isNullable: boolean;
+
     join(
         model: ModelLike,
         options: JoinFilter | {
@@ -50,6 +52,7 @@ export function createJoinedTable(
             parent, 
             joinType, 
             joinProp: undefined, 
+            castToEntity: undefined,
             weakJoinModel: model as any as ModelContract,
             filter
         });
@@ -58,6 +61,7 @@ export function createJoinedTable(
         parent,
         joinType,
         joinProp: undefined,
+        castToEntity: undefined,
         weakJoinModel: model as any as ModelContract,
         filter
     });

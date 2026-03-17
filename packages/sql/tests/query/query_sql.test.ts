@@ -1,31 +1,11 @@
-import { SqliteDriver } from "@/driver/sqlite_driver";
-import { newSqlClient } from "@/sql_client";
 import { AUTHOR, BOOK, BOOK_STORE, TREE_NODE } from "../model/model";
 import { describe, it } from "vitest";
-import { dsl, dto, FilterType, RootQuery } from "@ts-grm/core";
-import { Composite } from "@/sql/fragment";
-import { SqlBuilder } from "@/sql/sql_builder";
+import { dsl, dto, FilterType } from "@ts-grm/core";
 import { expectCode } from "../utils";
+import { SIMPLE_BOOK_VIEW, SIMPLE_STORE_VIEW, sql, sqlClient } from "./utils";
 
 describe("QuerySqlTest", () => {
 
-    const sqlClient = newSqlClient(new SqliteDriver(), {
-        sqlLogger: {
-            pretty: true
-        }
-    });
-
-    function sql(q: RootQuery<any>): string {
-        const composite = Composite.of(q, sqlClient, undefined);
-        const builder = SqlBuilder.of(sqlClient);
-        composite.into(builder);
-        const [sql] = builder.build();
-        return sql;
-    }
-
-    const SIMPLE_BOOK_VIEW = dto.view(BOOK, $ => $.id.name.edition);
-
-    const SIMPLE_STORE_VIEW = dto.view(BOOK_STORE, $ => $.id.name.version);
     
     it("where", () => {
         const q = sqlClient.createQuery(BOOK, (q, book) => {

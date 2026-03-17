@@ -225,6 +225,10 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
         pred.subQuery.accept(this);
     }
 
+    visitConstantPred(pred: ast.ConstantPred): void {
+        this._compositeStack.current.add(pred.value ? "1 = 1" : "1 = 0");
+    }
+
     visitCmpPred(pred: ast.CmpPred): void {
         using _ = this._precedenceStack.with(Precedence.COMPARISON);
         pred.leftExpr.accept(this);
@@ -233,11 +237,7 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
     }
 
     visitInCollectionPred(pred: ast.InCollectionPred<any>): void {
-        if (pred.values.length === 0) {
-            this._compositeStack.current.add(pred.neg ? "1 = 1" : "1 = 0");
-        } else {
-            this._nodeRender.renderInCollectionPred(pred, this._nodeRenderContext);
-        }
+        this._nodeRender.renderInCollectionPred(pred, this._nodeRenderContext);
     }
 
     visitInSubQueryPred(pred: ast.InSubQueryPred): void {
@@ -296,7 +296,7 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
             }
             const column = field.prop.toStorage(this._strategy) as metadata.Column;
             this._compositeStack.current.separator();
-            const realTable = this._toRealTable(table);
+            const realTable = this._toRealTable(table.__to(field.prop.declaringEntity));
             this._compositeStack.current.add(this._createColumn(realTable, column.name));
         }
     }
@@ -305,6 +305,30 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
         const column = expr.prop.toStorage(this._strategy) as metadata.Column;
         const realTable = this._toRealTable(expr.table);
         this._compositeStack.current.add(this._createColumn(realTable, column.name));
+    }
+
+    visitIsPred(pred: ast.IsPred): void {
+        const discriminator = pred.table.__entity.tableSettings.discriminator!;
+        const derivedEntity = pred.derivedEntity;
+        const columnName = discriminator.name;
+        const realTable = this._toRealTable(pred.table);
+        using _ = this._precedenceStack.with(Precedence.COMPARISON);
+        this._compositeStack.current.add(this._createColumn(realTable, columnName));
+        this._compositeStack.current.add(pred.neg ? " not in": " in");
+        using __ = this._compositeStack.with(new Scope("VALUES", false));
+        if (discriminator.type === "string") {
+            this._compositeStack.current.add(`'${derivedEntity.tableSettings.discriminatorValue}'`);
+            for (const descendant of derivedEntity.descendants) {
+                this._compositeStack.current.separator();
+                this._compositeStack.current.add(`'${descendant.tableSettings.discriminatorValue}'`);
+            }
+        } else {
+            this._compositeStack.current.add(derivedEntity.tableSettings.discriminatorValue!.toString());
+            for (const descendant of derivedEntity.descendants) {
+                this._compositeStack.current.separator();
+                this._compositeStack.current.add(descendant.tableSettings.discriminatorValue!.toString());
+            }
+        }
     }
 
     visitCoalesceExpr(expr: ast.CoalesceExprContract): void {

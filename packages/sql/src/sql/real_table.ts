@@ -3,6 +3,7 @@ import { JoinMergeScope } from "./join_merge_scope";
 import { SqlBuilder } from "./sql_builder";
 import { BaseQueryMetadata } from "./base_query_metadata";
 import { Fragment } from "./fragment";
+import { CastMergeScope } from "./cast_merge_scope";
 
 export class RealTable {
 
@@ -19,6 +20,8 @@ export class RealTable {
     private _joinType: JoinType | undefined;
 
     private _joinProp: metadata.EntityProp | undefined = undefined;
+
+    private _castToEntity: metadata.Entity | undefined = undefined;
 
     private _filters: Set<metadata.JoinFilter> | undefined = undefined;
 
@@ -42,11 +45,14 @@ export class RealTable {
 
     constructor(
         readonly symbol: metadata.AbstractTable,
-        readonly shadow: RealTable | undefined
+        readonly shadow: RealTable | undefined,
+        private _castMergeScope: CastMergeScope | undefined
     ) {
-        if (symbol.__joinOperation != undefined) {
-            this._joinType = symbol.__joinOperation?.joinType;
-            this._joinProp = symbol.__joinOperation?.joinProp;
+        if (symbol.__joinOperation != null) {
+            this._joinType = symbol.__joinOperation.joinType;
+            this._joinProp = symbol.__joinOperation.joinProp;
+            this._castToEntity = symbol.__joinOperation.castToEntity;
+            this._parent = _castMergeScope?.table;
             if (symbol.__joinOperation?.filter != null) {
                 let filters = this._filters;
                 if (filters == null) {
@@ -57,6 +63,7 @@ export class RealTable {
         } else {
             this._joinType = undefined;
             this._joinProp = undefined;
+            this._castToEntity = undefined;
             this._filters = undefined;
         }
     }
@@ -73,6 +80,10 @@ export class RealTable {
         return this._joinProp;
     }
 
+    get castToEntity(): metadata.Entity | undefined {
+        return this._castToEntity;
+    }
+
     get filters(): ReadonlySet<metadata.JoinFilter> | undefined {
         return this._filters;
     }
@@ -84,6 +95,9 @@ export class RealTable {
         const joinOperation = symbol.__joinOperation;
         if (joinOperation == null) {
             throw new err.ArgumentError(`symbol.joinOperation cannot be null`);
+        }
+        if (joinOperation.castToEntity != null) {
+            return this._to(symbol);
         }
         const restrictKey = RealTable._restrictKeyOf(symbol, undefined);
         let restrictChildMap = this._restrictChildMap;
@@ -108,13 +122,23 @@ export class RealTable {
             if (laxChildMap == null) {
                 this._laxChildMap = laxChildMap = new Map();
             }
-            child = new RealTable(symbol, undefined);
+            child = new RealTable(symbol, undefined, undefined);
             child._parent = this;
             restrictChildMap.set(restrictKey, child);
             laxChildMap.set(laxKey, child);
             this._children = undefined;
         }
         return child;
+    }
+
+    private _to(
+        symbol: metadata.AbstractEntityTable
+    ): RealTable {
+        let scope = this._castMergeScope;
+        if (scope == null) {
+            this._castMergeScope = scope = new CastMergeScope(this);
+        }
+        return scope.get(symbol);
     }
 
     export(table: metadata.AbstractTable): RealTable {
@@ -131,7 +155,7 @@ export class RealTable {
         } else {
             this._exportedMap = exportedMap = new Map();
         }
-        realTable = new RealTable(table, this);
+        realTable = new RealTable(table, this, undefined);
         exportedMap.set(table.__anchor!.exportedName, realTable);
         this._children = undefined;
         return realTable;
@@ -140,9 +164,15 @@ export class RealTable {
     get children(): ReadonlyArray<RealTable> {
         let children = this._children;
         if (children == null) {
-            const arr = this._laxChildMap == null 
-                ? []
-                : Array.from(this._laxChildMap.values());
+            const arr: Array<RealTable> = [];
+            if (this._castMergeScope?.table == this) {
+                arr.push(...this._castMergeScope.tables);
+            }
+            if (this._laxChildMap != null) {
+                for (const table of this._laxChildMap.values()) {
+                    arr.push(table);
+                }
+            }
             if (this._exportedMap != null) {
                 for (const exported of this._exportedMap.values()) {
                     const laxChildMap = exported._laxChildMap;

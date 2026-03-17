@@ -21,6 +21,8 @@ export class ModelImpl<
 
     private _entity: Entity | undefined;
 
+    private _derivedModels: Set<AnyModelImpl> | undefined;
+
     __type(): {
         model: [TName, TIdKey, TCtor, TAllMembers, TSuperNames] | true
     } {
@@ -33,7 +35,16 @@ export class ModelImpl<
         readonly ctor: TCtor,
         readonly superModel: AnyModel | undefined,
         readonly options: ModelOptions
-    ) {}
+    ) {
+        if (superModel != null) {
+            const superImpl = superModel as ModelImpl<any, any, any, any, any>;
+            let derivedModels = superImpl._derivedModels;
+            if (derivedModels == null) {
+                superImpl._derivedModels = derivedModels = new Set();
+            }
+            derivedModels.add(this);
+        }
+    }
 
     toEntity(): Entity {
         return this.toUnresolvedEntity().resolve(2);
@@ -46,13 +57,19 @@ export class ModelImpl<
                 this.name,
                 this.idKey,
                 this.ctor,
-                this.superModel,
+                this,
                 this.options
             );
         }
         return entity;
     }
+
+    get derivedModels(): ReadonlySet<AnyModelImpl> | undefined {
+        return this._derivedModels as any;
+    }
 }
+
+export type AnyModelImpl = ModelImpl<any, any, any, any, any>;
 
 export type ModelOptions = {
     readonly tableOptions: TableOptions<AnyModel | never> | undefined;

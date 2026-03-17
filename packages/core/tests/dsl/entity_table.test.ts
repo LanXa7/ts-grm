@@ -270,7 +270,7 @@ describe("RuntimeTableTest", () => {
                                 }
                                 return expr;
                             }
-                        }
+                        };
                     }
                     return embedded;
                 }
@@ -410,11 +410,11 @@ describe("RuntimeTableTest", () => {
                                             }
                                             return expr;
                                         }
-                                    }
+                                    };
                                 }
                                 return embedded;
                             }
-                        }
+                        };
                     }
                     return embedded;
                 }

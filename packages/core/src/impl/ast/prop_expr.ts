@@ -19,6 +19,7 @@ export function createTableProp(table: AbstractEntityTable, prop: EntityProp) {
             }" which is not scalar property`
         );
     }
+    const directTable = table.__to(prop.declaringEntity);
     switch (prop.scalarType) {
         case "I8":
         case "I16":
@@ -27,11 +28,11 @@ export function createTableProp(table: AbstractEntityTable, prop: EntityProp) {
         case "NUM":
         case "F32":
         case "F64":
-            return new PropNumExpr(table, prop);
+            return new PropNumExpr(directTable, prop);
         case "STR":
-            return new PropStrExpr(table, prop);
+            return new PropStrExpr(directTable, prop);
         case "DATE":
-            return new PropDtExpr(table, prop);
+            return new PropDtExpr(directTable, prop);
         default:
             throw new ArgumentError(
             `Cannot create table prop for "${

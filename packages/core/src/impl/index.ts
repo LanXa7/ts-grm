@@ -1,4 +1,5 @@
 export { Entity } from "./entity";
+export type { TableSettings } from "./entity";
 export { EntityProp } from "./entity_prop";
 export { AbstractEntityTable } from "./entity_table";
 export { createTypedBaseTable } from "./base_table";

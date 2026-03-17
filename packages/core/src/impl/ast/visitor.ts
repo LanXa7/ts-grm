@@ -5,7 +5,7 @@ import type { DtDiffExpr, DtPlusExpr } from "./dt_expr";
 import { AbstractExpr } from "./expr";
 import { NativeExprContract } from "./native_expr";
 import type { BinaryNumExpr, UnaryMinusExpr } from "./num_expr";
-import type { BetweenPred, CmpPred, CompoundPred, InCollectionPred, InSubQueryPred, LikePred, NullityPred } from "./pred";
+import type { BetweenPred, CmpPred, CompoundPred, ConstantPred, InCollectionPred, InSubQueryPred, LikePred, NullityPred } from "./pred";
 import type { PropExprContract } from "./prop_expr";
 import { AtomQueryContract, MergedQueryContract } from "./query";
 import { ShadowExprContract } from "./shadow_expr";
@@ -13,6 +13,7 @@ import type { ConcatExpr, LeftExpr, LengthExpr, LowerExpr, PadExpr, PositionExpr
 import { ExistsPred, SubQueryExprContract } from "./sub_query_expr";
 import { TupleCmpPred, TupleContract, TupleInCollectionPred, TupleInSubQueryPred } from "./tuple";
 import { Node } from "./node";
+import { IsPred } from "./is_pred";
 
 export interface Visitor {
 
@@ -27,6 +28,8 @@ export interface Visitor {
     visitTupleInCollectionPred(pred: TupleInCollectionPred): void;
 
     visitTupleInSubQueryPred(pred: TupleInSubQueryPred): void;
+
+    visitConstantPred(pred: ConstantPred): void;
 
     visitCmpPred(pred: CmpPred): void;
 
@@ -47,6 +50,8 @@ export interface Visitor {
     visitFetchedView(view: FetchedViewContract): void;
 
     visitTablePropExpr(expr: PropExprContract): void;
+
+    visitIsPred(pred: IsPred): void;
 
     visitNativeExpr(expr: NativeExprContract): void;
 
@@ -141,6 +146,9 @@ export abstract class AbstractVisitor implements Visitor {
         pred.subQuery.accept(this);
     }
 
+    visitConstantPred(_: ConstantPred): void {
+    }
+
     visitCmpPred(pred: CmpPred): void {
         pred.leftExpr.accept(this);
         pred.rightExpr.accept(this);
@@ -180,11 +188,12 @@ export abstract class AbstractVisitor implements Visitor {
     }
 
     visitFetchedView(_: FetchedViewContract): void {
-
     }
 
     visitTablePropExpr(_: PropExprContract): void {
+    }
 
+    visitIsPred(_: IsPred): void {
     }
 
     visitCoalesceExpr(expr: CoalesceExprContract): void {

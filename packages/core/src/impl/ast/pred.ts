@@ -8,6 +8,27 @@ export abstract class AbstractPred extends AbstractExpr<boolean> {
     abstract negative(): AbstractPred;
 }
 
+export class ConstantPred extends AbstractPred {
+
+    static TRUE = new ConstantPred(true);
+
+    static FALSE = new ConstantPred(false);
+
+    private constructor(
+        readonly value: boolean
+    ) {
+        super();
+    }
+
+    accept(visitor: Visitor): void {
+        visitor.visitConstantPred(this);
+    }
+
+    negative(): ConstantPred {
+        return this.value ? ConstantPred.FALSE : ConstantPred.TRUE;
+    }
+}
+
 export class CmpPred extends AbstractPred {
 
     constructor(

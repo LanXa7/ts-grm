@@ -326,6 +326,31 @@ describe("EntityTest", () => {
         expect(orderEntity.toTableName(strategy)).toEqual("ORDER");
         expect(vipOrderEntity.toTableName(strategy)).toEqual("VIP_ORDER");
 
+        expect(Array.from(bookEntity.ancestors).map(it => it.name)).toEqual(
+            []
+        );
+        expect(Array.from(bookEntity.descendants).map(it => it.name)).toEqual(
+            ['PaperBook', 'ElectronicBook', 'PdfElectronicBook']
+        );
+        expect(Array.from(paperBookEntity.ancestors).map(it => it.name)).toEqual(
+            ['Book']
+        );
+        expect(Array.from(paperBookEntity.descendants).map(it => it.name)).toEqual(
+            []
+        );
+        expect(Array.from(electronicBookEntity.ancestors).map(it => it.name)).toEqual(
+            ['Book']
+        );
+        expect(Array.from(electronicBookEntity.descendants).map(it => it.name)).toEqual(
+            ['PdfElectronicBook']
+        );
+        expect(Array.from(pdfElectronicBookEntity.ancestors).map(it => it.name)).toEqual(
+            ['ElectronicBook', 'Book']
+        );
+        expect(Array.from(pdfElectronicBookEntity.descendants).map(it => it.name)).toEqual(
+            []
+        );
+
         const bookId = bookEntity.idProp;
         const paperBookId = paperBookEntity.idProp;
         const electronicBookId = electronicBookEntity.idProp;
@@ -403,9 +428,9 @@ describe("EntityTest", () => {
             ]
         });
 
-        expect(paperBookEntity.tableIdentity === bookEntity.tableIdentity).toEqual(false);
-        expect(electronicBookEntity.tableIdentity === bookEntity.tableIdentity).toEqual(false);
-        expect(pdfElectronicBookEntity.tableIdentity === electronicBookEntity.tableIdentity).toEqual(false); 
-        expect(vipOrderEntity.tableIdentity === orderEntity.tableIdentity).toEqual(false);    
+        expect(paperBookEntity.tableEntity === bookEntity.tableEntity).toEqual(false);
+        expect(electronicBookEntity.tableEntity === bookEntity.tableEntity).toEqual(false);
+        expect(pdfElectronicBookEntity.tableEntity === electronicBookEntity.tableEntity).toEqual(false); 
+        expect(vipOrderEntity.tableEntity === orderEntity.tableEntity).toEqual(false);    
     });
 });

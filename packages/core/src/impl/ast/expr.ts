@@ -56,14 +56,18 @@ export abstract class AbstractExpr<T> extends AbstractSelection implements Node 
     ): AbstractPred {
         validateInValues(values);
         const factory = getInternalFactory();
-        if (values.length === 1) {
-            return factory.createCmpPred(
-                "=", 
-                this, 
-                values[0] instanceof AbstractExpr ? values[0] : factory.createLiteral(values[0])
-            );
+        switch (values.length) {
+            case 0:
+                return factory.createConstantPred(false);
+            case 1:
+                return factory.createCmpPred(
+                    "=", 
+                    this, 
+                    values[0] instanceof AbstractExpr ? values[0] : factory.createLiteral(values[0])
+                );
+            default:
+                return factory.createInCollectionPred(this, values, false);
         }
-        return factory.createInCollectionPred(this, values, false);
     }
 
     inSubQuery(
@@ -81,14 +85,18 @@ export abstract class AbstractExpr<T> extends AbstractSelection implements Node 
     ): AbstractPred {
         validateInValues(values);
         const factory = getInternalFactory();
-        if (values.length === 1) {
-            return factory.createCmpPred(
-                "<>", 
-                this, 
-                values[0] instanceof AbstractExpr ? values[0] : factory.createLiteral(values[0])
-            );
+        switch (values.length) {
+            case 0:
+                return factory.createConstantPred(true);
+            case 1:
+                return factory.createCmpPred(
+                    "<>", 
+                    this, 
+                    values[0] instanceof AbstractExpr ? values[0] : factory.createLiteral(values[0])
+                );
+            default:
+                return factory.createInCollectionPred(this, values, true);
         }
-        return factory.createInCollectionPred(this, values, true);
     }
 
     notInSubQuery(

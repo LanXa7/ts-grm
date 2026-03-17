@@ -69,16 +69,20 @@ export class PreVisitor extends ast.AbstractVisitor {
         }
     }
 
+    visitIsPred(pred: ast.IsPred): void {
+        this._toRealTable(pred.table);
+    }
+
     visitFetchedView(view: ast.FetchedViewContract): void {
         const shadow = this._toRealTable(view.table).shadow;
-        if (shadow != null) {
-            const metadata = shadow.baseQueryMetadata;
-            for (const field of view.view.mapper.fields) {
-                if (field.columnIndex == null) {
-                    continue;
-                }
+        for (const field of view.view.mapper.fields) {
+            if (field.columnIndex == null) {
+                continue;
+            }
+            this._toRealTable(view.table.__to(field.prop.declaringEntity));
+            if (shadow != null) {
                 const column = field.prop.toStorage(this._strategy) as metadata.Column;
-                metadata.alias(view.table.__anchor!.exportedName, column.name);
+                shadow.baseQueryMetadata.alias(view.table.__anchor!.exportedName, column.name);
             }
         }
     }
@@ -126,7 +130,7 @@ export class PreVisitor extends ast.AbstractVisitor {
             } else {
                 const joinOperation = table.__joinOperation;
                 if (joinOperation == null) {
-                    realTable = new RealTable(table, undefined);
+                    realTable = new RealTable(table, undefined, undefined);
                 } else {
                     const parentRealTable = this._toRealTable(joinOperation.parent);   
                     realTable = parentRealTable.child(

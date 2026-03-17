@@ -9,6 +9,7 @@ export type { DtDiffExpr, DtPlusExpr } from "./dt_expr";
 export type { BinaryNumExpr, UnaryMinusExpr } from "./num_expr";
 export type { NativeExprContract } from "./native_expr";
 export type { 
+    ConstantPred,
     CmpPred, 
     CompoundPred, 
     InCollectionPred, 
@@ -17,6 +18,7 @@ export type {
     NullityPred,
     BetweenPred
 } from "./pred";
+export type { IsPred } from "./is_pred";
 export type { PropExprContract } from "./prop_expr";
 export type { CoalesceExprContract } from "./coalesce_expr";
 export type { AggregateExpr } from "./aggregate_expr";
@@ -65,7 +67,7 @@ export type { QueryFactory, MergedQueryKind } from "./query_factory";
 export { setQueryFactory } from "./query_factory";
 
 import { getInternalFactory, InternalFactory, setInternalFactory } from "@/impl/ast/internal_factory";
-import { BetweenPred, CmpOp, CmpPred, InCollectionPred, InSubQueryPred, NullityPred } from "@/impl/ast/pred";
+import { BetweenPred, CmpOp, CmpPred, ConstantPred, InCollectionPred, InSubQueryPred, NullityPred } from "@/impl/ast/pred";
 import { AbstractExpr, QueryContract } from "@/impl/ast";
 import { CoalesceCmpExpr, CoalesceDtExpr, CoalesceExpr, CoalesceNumExpr, CoalesceStrExpr } from "@/impl/ast/coalesce_expr";
 import { AbstractCmpExpr } from "@/impl/ast/expr";
@@ -84,6 +86,12 @@ class InternalFactoryImpl implements InternalFactory {
         desc: boolean
     ): ExpressionOrder {
         return new ExpressionOrder(expr, desc, "UNSPECIFIED");    
+    }
+
+    createConstantPred(
+        value: boolean
+    ): ConstantPred {
+        return value ? ConstantPred.TRUE : ConstantPred.FALSE;    
     }
 
     createCmpPred<T>(

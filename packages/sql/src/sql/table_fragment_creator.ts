@@ -6,11 +6,14 @@ import { SqlClientImplementor } from "@/sql_client";
 
 export class TableFragmentCreator {
 
+    private readonly _strategy: metadata.DatabaseNamingStrategy;
+
     constructor(
         private readonly _sqlClient: SqlClientImplementor,
         private readonly _crateColumn: (realTable: RealTable, columnName: string) => Column,
         private readonly _cloneVisitor: () => FragmentGenGenVisitor
     ) {
+        this._strategy = _sqlClient.options.strategy;
     }
 
     createDefinition(table: RealTable) {
@@ -42,6 +45,8 @@ export class TableFragmentCreator {
                     this._addJoinByForeignKey(table, false, composite);
                     break;
             }
+        } else if (table.castToEntity != null) {
+            this._addJoinByInheritance(table, composite);
         } else {
             composite
                 .add("\n")
@@ -63,7 +68,7 @@ export class TableFragmentCreator {
         if (table.symbol.__entity != null) {
             const entityTable = table.symbol as metadata.AbstractEntityTable;
             composite
-                .add(entityTable.__entity.toTableName(this._sqlClient.options.strategy))
+                .add(entityTable.__entity.toTableName(this._strategy))
                 .add(" ")
                 .add(new Alias(table));
         } else {
@@ -81,7 +86,7 @@ export class TableFragmentCreator {
         table: RealTable,
         composite: Composite
     ) {
-        const middleTable = table.joinProp!.toStorage(this._sqlClient.options.strategy)! as metadata.MiddleTable;
+        const middleTable = table.joinProp!.toStorage(this._strategy)! as metadata.MiddleTable;
         composite
             .add("\n")
             .add(table.joinType!.toLowerCase())
@@ -140,7 +145,7 @@ export class TableFragmentCreator {
         this._addTable(table, composite);
         composite.add(" on ");
         const storage = (reverse ? table.joinProp!.mappedByProp! : table.joinProp!)
-            .toStorage(this._sqlClient.options.strategy) as metadata.PropStorage;
+            .toStorage(this._strategy) as metadata.PropStorage;
         const conditionScope = new Scope("AND");
         if (storage.kind === "COLUMN") {
             conditionScope
@@ -172,6 +177,64 @@ export class TableFragmentCreator {
             }
         }
         this._addJoinFilter(table, conditionScope);
+        composite.add(conditionScope);
+    }
+
+    private _addJoinByInheritance(
+        table: RealTable,
+        composite: Composite
+    ) {
+        composite
+            .add("\n")
+            .add(table.joinType!.toLowerCase())
+            .add(" join ");
+        this._addTable(table, composite);
+        composite.add(" on ");
+        const conditionScope = new Scope("AND");
+        if (table.symbol.__entity!.ancestors.has(table.parent!.symbol.__entity!)) {
+            const tableSettings = table.parent!.symbol.__entity!.tableSettings;
+            conditionScope
+                .add(
+                    this._crateColumn(
+                        table.parent!, 
+                        tableSettings.discriminator!.name
+                    )
+                )
+                .add(" = ");
+            if (tableSettings.discriminator!.type === "string") {
+                conditionScope.add(`'${tableSettings.discriminatorValue}'`);
+            } else {
+                conditionScope.add(tableSettings.discriminatorValue!.toString());
+            }
+        }
+        const parentStorage = table.parent!.symbol.__entity!.idProp.toStorage(this._strategy)!;
+        const storage = table.symbol.__entity!.idProp.toStorage(this._strategy)!;
+        switch (parentStorage.kind) {
+            case "COLUMN":
+                conditionScope
+                    .separator()
+                    .add(
+                        this._crateColumn(table.parent!, parentStorage.name)
+                    )
+                    .add(" = ")
+                    .add(
+                        this._crateColumn(table!, (storage as metadata.Column).name)
+                    );
+                break;
+            case "COLUMNS":
+                for (let i = 0; i < parentStorage.length; i++) {
+                    conditionScope
+                        .separator()
+                        .add(
+                            this._crateColumn(table.parent!, parentStorage[i]!.name)
+                        )
+                        .add(" = ")
+                        .add(
+                            this._crateColumn(table!, (storage as metadata.Columns)[i]!.name)
+                        );
+                }
+                break;
+        }
         composite.add(conditionScope);
     }
 

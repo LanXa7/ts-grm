@@ -1,4 +1,4 @@
-import {model, prop} from "@ts-grm/core";
+import {DV_MODEL_NAME, model, prop} from "@ts-grm/core";
 
 export const BOOK_STORE = model("BookStore", "id", class {
     id = prop.i64().asString()
@@ -8,20 +8,28 @@ export const BOOK_STORE = model("BookStore", "id", class {
         .orderBy("name", { path: "edition", desc: true })
 });
 
-export const BOOK = model("Book", "id", class {
-    id = prop.i64()
-    name = prop.str()
-    edition = prop.i32()
-    price = prop.num()
-    store = prop.m2o(BOOK_STORE)
-        .joinColumns({cascade: "DELETE"})
-        .nullable()
-    authors = prop.m2m(AUTHOR).joinTable({
-        name: "book_author_mapping",
-        joinThisColumns: ["book_id"],
-        joinTargetColumns: ["author_id"]
-    }).orderBy("name.firstName", "name.lastName")
-});
+export const BOOK = model("Book", "id", 
+    class {
+        id = prop.i64()
+        name = prop.str()
+        edition = prop.i32()
+        price = prop.num()
+        store = prop.m2o(BOOK_STORE)
+            .joinColumns({cascade: "DELETE"})
+            .nullable()
+        authors = prop.m2m(AUTHOR).joinTable({
+            name: "book_author_mapping",
+            joinThisColumns: ["book_id"],
+            joinTargetColumns: ["author_id"]
+        }).orderBy("name.firstName", "name.lastName")
+    }, 
+    ctx => {
+        ctx.table({
+            discriminator: "TYPE",
+            discriminatorValue: DV_MODEL_NAME
+        });
+    }
+);
 
 export const PAPER_BOOK = model.extends(BOOK)(
     "PaperBook", 
@@ -30,6 +38,15 @@ export const PAPER_BOOK = model.extends(BOOK)(
             width: prop.i32(),
             height: prop.i32()
         })
+    },
+    ctx => {
+        ctx.table({
+            discriminator: "PB_TYPE",
+            discriminatorValue: DV_MODEL_NAME,
+            name: {
+                idMapping: "PB_ID"
+            },
+        });
     }
 );
 
@@ -37,6 +54,15 @@ export const ELECTRONIC_BOOK = model.extends(BOOK)(
     "ElectronicBook", 
     class {
         address = prop.str();
+    },
+    ctx => {
+        ctx.table({
+            discriminator: "EB_TYPE",
+            discriminatorValue: DV_MODEL_NAME,
+            name: {
+                idMapping: "EB_ID"
+            },
+        });
     }
 );
 
@@ -44,6 +70,15 @@ export const PDF_ELECTRONIC_BOOK = model.extends(ELECTRONIC_BOOK)(
     "PdfElectronicBook",
     class {
         pdfVersion = prop.str().nullable()
+    },
+    ctx => {
+        ctx.table({
+            discriminator: "PEB_TYPE",
+            discriminatorValue: DV_MODEL_NAME,
+            name: {
+                idMapping: "PEB_ID"
+            },
+        });
     }
 );
 

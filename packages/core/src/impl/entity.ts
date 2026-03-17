@@ -1,7 +1,7 @@
 import { ModelError, PropError } from "@/error/metadata_error";
 import { DV_ABSTRACT, DV_MODEL_NAME, AnyModel, Ctor, TB_INHERIT, TableOptions } from "@/schema/model";
 import { EntityProp } from "./entity_prop";
-import { ModelImpl, ModelOptions } from "@/impl/model_impl";
+import { AnyModelImpl, ModelImpl, ModelOptions } from "@/impl/model_impl";
 import { dedent, makeErr } from "@/error/util";
 import { capitalize } from "./util";
 import { AbstractEntityTable, createEntityTableClass, EntityTableCtor, JoinOperation } from "./entity_table";
@@ -26,15 +26,19 @@ export class Entity {
 
     private _uniqueConstraintArr: ReadonlyArray<ReadonlyArray<EntityProp>> | undefined = undefined;
 
-    private _tableSettings: TableSettings;
+    readonly tableSettings: TableSettings;
 
     private _tableCtor: EntityTableCtor | undefined;
+
+    readonly ancestors: ReadonlySet<Entity>;
+
+    private _descendants: Set<Entity> | undefined = undefined;
 
     private static _nextIdentity = 0;
 
     readonly identity : number;
 
-    readonly tableIdentity: number;
+    readonly tableEntity: Entity;
 
     static of(model: AnyModel): Entity {
         return (model as ModelImpl<any, any, any, any, any>).toEntity()
@@ -42,10 +46,10 @@ export class Entity {
 
     constructor(
         readonly name: string, 
-        private _idKey: string | undefined, 
-        private _ctor: Ctor, 
-        superModel: AnyModel | undefined,
-        private _options: ModelOptions
+        private readonly _idKey: string | undefined, 
+        private readonly _ctor: Ctor, 
+        private readonly _model: AnyModel | undefined,
+        private readonly _options: ModelOptions
     ) {
         if (Entity._nextIdentity >= Number.MAX_SAFE_INTEGER) {
             throw new StateError(`The application has run so long`);
@@ -57,15 +61,26 @@ export class Entity {
                 "${CAMEL_CASE_REGEX.source}"`
             )
         }
+        const superModel = (_model as ModelImpl<any, any, any, any, any>).superModel;
         this.superEntity = superModel !== undefined
             ? Entity.of(superModel)
             : undefined;
         
-        this._tableSettings = this._createTableSettings(_options.tableOptions);
+        this.tableSettings = this._createTableSettings(_options.tableOptions);
         this.identity = ++Entity._nextIdentity;
-        this.tableIdentity = this._tableSettings.sharedTable
-            ? this.superEntity!.tableIdentity
-            : this.identity;
+        this.tableEntity = this.tableSettings.sharedTable
+            ? this.superEntity!.tableEntity
+            : this;
+        if (this.superEntity == null) {
+            this.ancestors = new Set();
+        } else {
+            const ancestors = new Set<Entity>();
+            ancestors.add(this.superEntity);
+            for (const ancestor of this.superEntity.ancestors) {
+                ancestors.add(ancestor);
+            }
+            this.ancestors = ancestors;
+        }
     }
 
     get idKey(): string {
@@ -108,8 +123,8 @@ export class Entity {
     }
 
     toTableName(strategy: DatabaseNamingStrategy): string {
-        return this._tableSettings.explicitName ?? (
-            this._tableSettings.sharedTable 
+        return this.tableSettings.explicitName ?? (
+            this.tableSettings.sharedTable 
                 ? this.superEntity!.toTableName(strategy)
                 : strategy.tableName(this)
         );
@@ -183,7 +198,7 @@ export class Entity {
         this._collectReferenceKeyProps(declaredPropMap);
         if (this.superEntity != null) {
             const tableOptions = this._options.tableOptions;
-            const idMapping = !this._tableSettings.sharedTable 
+            const idMapping = !this.tableSettings.sharedTable 
             && typeof tableOptions === "object"
             && typeof tableOptions.name === "object"
                 ? tableOptions.name.idMapping
@@ -283,14 +298,13 @@ export class Entity {
 
     private _addExpandedReferencedTargetKeyProps() {
         for (const prop of this.allPropMap.values()) {
-            if (prop.associationType != null) {
+            if (prop.associationType != null || prop.referenceProp == null) {
                 continue;
             }
-            const targetKeyProp = prop.targetKeyProp;
-            if (targetKeyProp != null && targetKeyProp.props !== undefined) {
+            if (prop.props !== undefined) {
                 const map = new Map<string, EntityProp>();
-                targetKeyProp.collectDeeperProps(map);
-                const offset = targetKeyProp.name.length;
+                prop.collectDeeperProps(map);
+                const offset = prop.name.length;
                 for (const [key, value] of map.entries()) {
                     const newKey = `${prop.name}${key.substring(offset)}`;
                     (this._expandedPropMap as Map<string, EntityProp>).set(newKey, value);
@@ -338,11 +352,30 @@ export class Entity {
         return constraints;
     }
 
-    table(options: JoinOperation | ShadowAnchor | undefined): AbstractEntityTable {
-        return new (this._tableClass())(this, options);
+    get descendants(): ReadonlySet<Entity> {
+        let descendants = this._descendants;
+        if (descendants == null) {
+            descendants = new Set();
+            const derivedModels = (this._model as AnyModelImpl).derivedModels;
+            if (derivedModels != null) {
+                for (const derivedModel of derivedModels) {
+                    const derivedEntity = Entity.of(derivedModel);
+                    descendants.add(derivedEntity);
+                    for (const deeperDerivedEntity of derivedEntity.descendants) {
+                        descendants.add(deeperDerivedEntity);
+                    }
+                }
+            }
+            this._descendants = descendants;
+        }
+        return descendants;
     }
 
-    private _tableClass(): EntityTableCtor {
+    table(options: JoinOperation | ShadowAnchor | undefined): AbstractEntityTable {
+        return new (this.tableClass())(this, options);
+    }
+
+    tableClass(): EntityTableCtor {
         let ctor = this._tableCtor;
         if (ctor == null) {
             this._tableCtor = ctor = createEntityTableClass(this);
@@ -362,7 +395,7 @@ export class Entity {
     ): TableSettings {
 
         if (this.superEntity != null) {
-            if (this.superEntity._tableSettings.discriminator == null) {
+            if (this.superEntity.tableSettings.discriminator == null) {
                 throw new ModelError(
                     this.superEntity.name,
                     dedent `the "discriminator" of table options must be specified 
@@ -379,7 +412,7 @@ export class Entity {
         }
         
         const settings: Mutable<TableSettings> = {
-            superSettings: this.superEntity?._tableSettings,
+            superSettings: this.superEntity?.tableSettings,
             explicitName: undefined,
             sharedTable: false,
             discriminatorValue: undefined,
@@ -407,13 +440,13 @@ export class Entity {
             const type = typeof options.discriminator === "string"
                 ? "string"
                 : options.discriminator.type ?? "string";
-            if (this.superEntity != null && type !== this.superEntity._tableSettings.discriminator!.type) {
+            if (this.superEntity != null && type !== this.superEntity.tableSettings.discriminator!.type) {
                 throw new ModelError(
                     this.name,
                     dedent `the "discriminator.type" of table options must be specified 
                     as "${type}" but the "discriminator.type" of the super model 
                     "${this.superEntity.name}" is 
-                    "${this.superEntity._tableSettings.discriminator?.type}".`  
+                    "${this.superEntity.tableSettings.discriminator?.type}".`  
                 );
             }
             let name = typeof options.discriminator === "string"
@@ -427,11 +460,11 @@ export class Entity {
                         as non-empty text because there is super model".`  
                     );
                 }
-                name = this.superEntity._tableSettings.discriminator!.name;
+                name = this.superEntity.tableSettings.discriminator!.name;
             }
             settings.discriminator = { name, type };
         } else if (this.superEntity != null) {
-            settings.discriminator = this.superEntity._tableSettings.discriminator;
+            settings.discriminator = this.superEntity.tableSettings.discriminator;
         }
 
         if (settings.discriminator != null) {

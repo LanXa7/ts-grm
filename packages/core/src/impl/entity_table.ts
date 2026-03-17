@@ -11,10 +11,13 @@ import { FetchedView } from "@/dsl/root_query";
 import { View } from "@/schema/dto";
 import { FetchedViewImpl } from "./fetched_view_impl";
 import { TypedBaseTable } from "./base_table";
-import { StateError } from "@/error/common";
+import { ArgumentError, StateError } from "@/error/common";
 import { ModelContract } from "./model_contract";
 import { BaseQuerySelectMapArgs } from "@/dsl";
 import { BaseModelImplementor } from "./base_query_implementor";
+import { AnyModel } from "@/schema/model";
+import { AbstractPred, ConstantPred } from "./ast/pred";
+import { IsPred } from "./ast/is_pred";
 
 export abstract class AbstractEntityTable implements AbstractTable {
 
@@ -24,24 +27,31 @@ export abstract class AbstractEntityTable implements AbstractTable {
 
     private _shadow: TypedBaseTable | undefined = undefined;
 
+    private _nullable: boolean;
+
     constructor(
         readonly __entity: Entity,
         options: JoinOperation | ShadowAnchor | undefined
     ) {
         let joinOperation: JoinOperation | undefined;
         let anchor: ShadowAnchor | undefined;
+        let nullable: boolean;
         if (options == null) {
             joinOperation = undefined;
             anchor = undefined;
+            nullable = false;
         } else if ((options as any).parent) {
             joinOperation = options as JoinOperation;
             anchor = undefined;
+            nullable = joinOperation.joinType === "LEFT";
         } else {
             joinOperation = undefined;
             anchor = options as ShadowAnchor;
+            nullable = false;
         }
         this.__joinOperation = joinOperation;
         this.__anchor = anchor;
+        this._nullable = nullable;
     }
 
     __type(): {
@@ -69,6 +79,48 @@ export abstract class AbstractEntityTable implements AbstractTable {
         return new FetchedViewImpl(this, view);
     }
 
+    is(derivedModel: AnyModel): AbstractPred {
+        const derivedEntity = Entity.of(derivedModel);
+        if (derivedEntity === this.__entity || this.__entity.ancestors.has(derivedEntity)) {
+            return ConstantPred.TRUE;
+        }
+        if (!derivedEntity.ancestors.has(this.__entity)) {
+            return ConstantPred.FALSE;
+        }
+        return new IsPred(this, derivedEntity, false);
+    }
+
+    as(derivedModel: AnyModel): AbstractEntityTable {
+        return this.__to(Entity.of(derivedModel));
+    }
+
+    __to(castTo: Entity): AbstractEntityTable {
+        const srcEntity = this.__entity.tableEntity;
+        const dstEntity = castTo.tableEntity;
+        if (srcEntity === dstEntity) {
+            return this;
+        }
+        const isDerived = dstEntity.ancestors.has(srcEntity);
+        const isSuper = srcEntity.ancestors.has(dstEntity);
+        if (!isSuper && !isDerived) {
+            throw new ArgumentError(
+                `The model "${
+                    castTo.name
+                }" represented by the parameter is not in the same inheritance chain as the current model "${
+                    this.__entity.name
+                }"`
+            );
+        }
+        return dstEntity.table({
+            parent: this,
+            joinType: isDerived || this._nullable ? "LEFT" : "INNER",
+            joinProp: undefined,
+            castToEntity: castTo,
+            weakJoinModel: undefined,
+            filter: undefined
+        });
+    }
+
     get __shadow(): TypedBaseTable | undefined {
         return this._shadow;
     }
@@ -86,6 +138,7 @@ export abstract class AbstractEntityTable implements AbstractTable {
         }
         const cloned = Object.assign(Object.create(Object.getPrototypeOf(this)), this) as AbstractEntityTable;
         cloned._shadow = shadow;
+        cloned._nullable = shadow.__isNullable;
         return cloned;
     }
 
@@ -104,12 +157,17 @@ export abstract class AbstractEntityTable implements AbstractTable {
     get __isPrev(): boolean {
         return false;
     }
+
+    get __isNullable(): boolean {
+        return this._nullable;
+    }
 }
 
 export type JoinOperation = {
     readonly parent: AbstractTable;
     readonly joinType: JoinType;
     readonly joinProp: EntityProp | undefined;
+    readonly castToEntity: Entity | undefined;
     readonly weakJoinModel: ModelContract | undefined;
     readonly filter: JoinFilter | undefined;
 };
@@ -134,7 +192,7 @@ export function createEntityTableClass(
 
     const superClass = 
         entity.superEntity != null 
-            ? entity.superEntity.table.constructor 
+            ? entity.superEntity.tableClass()
             : AbstractEntityTable;
     
     const writer = new CodeWriter();
@@ -288,7 +346,7 @@ function writeEmbeddedProp(prop: EntityProp, writer: CodeWriter) {
                 for (const subProp of prop.props!.values()) {
                     writeProp(subProp, writer);
                 }
-            });
+            }).code(";");
         }).newLine();
         writer.code("return embedded").newLine(";");
     }).newLine();
