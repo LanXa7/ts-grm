@@ -1,12 +1,12 @@
 import { describe, it } from "vitest";
-import { SIMPLE_BOOK_VIEW, SIMPLE_PAPER_BOOK_VIEW, sql, sqlClient } from "./utils";
-import { BOOK, ELECTRONIC_BOOK, PAPER_BOOK } from "../model/model";
+import { SIMPLE_BOOK_VIEW, SIMPLE_PAPER_BOOK_VIEW, SIMPLE_PHYSICAL_BOOK_STORE_VIEW, SIMPLE_STORE_VIEW, sql, sqlClient } from "./utils";
+import { BOOK, BOOK_STORE, ELECTRONIC_BOOK, PAPER_BOOK, PHYSICAL_BOOK_STORE } from "../model/model";
 import { dsl } from "@ts-grm/core";
 import { expectCode } from "../utils";
 
 describe("InheritanceSqlTest", () => {
 
-    it("superProps", () => {
+    it("superPropsOfMultipleTables", () => {
         const q = sqlClient.createQuery(PAPER_BOOK, (q, book) => {
             q.where(
                 book.size().width.gt(100),
@@ -35,7 +35,7 @@ describe("InheritanceSqlTest", () => {
         `);
     });
     
-    it("is", () => {
+    it("isFunctionOfMultipleTables", () => {
         const q = sqlClient.createQuery(BOOK, (q, book) => {
             q.where(
                 dsl.or(
@@ -58,7 +58,7 @@ describe("InheritanceSqlTest", () => {
         `);
     });
 
-    it("as", () => {
+    it("asFunctionOfMultipleTables", () => {
         const q = sqlClient.createQuery(BOOK, (q, book) => {
             q.where(
                 dsl.or(
@@ -82,6 +82,81 @@ describe("InheritanceSqlTest", () => {
                     lower(tb_1_.NAME) like ?
                 or
                     tb_2_.ADDRESS like ?
+        `);
+    });
+
+    it("superPropsOfSingleTables", () => {
+        const q = sqlClient.createQuery(PHYSICAL_BOOK_STORE, (q, store) => {
+            q.where(
+                store.city.eq("ChengDu"),
+                store.name.ilike("room")
+            );
+            return q.select(
+                store.fetch(SIMPLE_PHYSICAL_BOOK_STORE_VIEW)
+            )
+        });
+        expectCode(sql(q), `
+            select 
+                tb_1_.ID,
+                tb_1_.NAME,
+                tb_1_.VERSION,
+                tb_1_.CITY,
+                tb_1_.STREET
+            from BOOK_STORE tb_1_
+            where 
+                    tb_1_.CITY = ?
+                and
+                    lower(tb_1_.NAME) like ?
+        `);
+    });
+
+    it("isFunctionOfSingleTable", () => {
+        const q = sqlClient.createQuery(BOOK_STORE, (q, store) => {
+            q.where(
+                dsl.or(
+                    store.name.ilike("room"),
+                    store.is(PHYSICAL_BOOK_STORE)
+                )
+            );
+            return q.select(
+                store.fetch(SIMPLE_STORE_VIEW)
+            );
+        });
+        expectCode(sql(q), `
+            select 
+                tb_1_.ID,
+                tb_1_.NAME,
+                tb_1_.VERSION
+            from BOOK_STORE tb_1_
+            where 
+                    lower(tb_1_.NAME) like ?
+                or
+                    tb_1_.TYPE = 'PhysicalBookStore'
+        `);
+    });
+
+    it("asFunctionOfSingleTable", () => {
+        const q = sqlClient.createQuery(BOOK_STORE, (q, store) => {
+            q.where(
+                dsl.or(
+                    store.name.ilike("room"),
+                    store.as(PHYSICAL_BOOK_STORE).city.eq("ChengDu")
+                )
+            );
+            return q.select(
+                store.fetch(SIMPLE_STORE_VIEW)
+            );
+        });
+        expectCode(sql(q), `
+            select 
+                tb_1_.ID,
+                tb_1_.NAME,
+                tb_1_.VERSION
+            from BOOK_STORE tb_1_
+            where 
+                    lower(tb_1_.NAME) like ?
+                or
+                    tb_1_.CITY = ?
         `);
     });
 });

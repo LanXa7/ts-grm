@@ -112,7 +112,7 @@ export class PreVisitor extends ast.AbstractVisitor {
     private _toRealTable(
         table: metadata.AbstractTable
     ): RealTable {
-        let realTable = this._tableMap.get(table);
+        let realTable = this._tableMap.get(table.__prototype);
         if (realTable == null) {
             if (table.__shadow == null) {
                 const anchor = (table as metadata.AbstractEntityTable).__anchor;
@@ -122,7 +122,7 @@ export class PreVisitor extends ast.AbstractVisitor {
             }
             if (table.__shadow != null) {
                 const shadowRealTable = this._toRealTable(table.__shadow);
-                this._tableMap.set(table.__shadow, shadowRealTable);
+                this._tableMap.set(table.__shadow.__prototype, shadowRealTable);
                 if (this._filterProcessingTables != null) {
                     this._filterProcessingTables.push(shadowRealTable);
                 }
@@ -139,7 +139,7 @@ export class PreVisitor extends ast.AbstractVisitor {
                     );
                 }
             }
-            this._tableMap.set(table, realTable);
+            this._tableMap.set(table.__prototype, realTable);
             if (this._filterProcessingTables != null) {
                 this._filterProcessingTables.push(realTable);
             }

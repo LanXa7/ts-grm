@@ -28,6 +28,8 @@ export interface AbstractTable {
 
     readonly __isNullable: boolean;
 
+    readonly __prototype: AbstractTable;
+
     join(
         model: ModelLike,
         options: JoinFilter | {

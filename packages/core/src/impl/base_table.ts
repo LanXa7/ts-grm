@@ -92,6 +92,8 @@ const typedBaseTableHandler: ProxyHandler<BaseTableTarget> = {
                 return () => {
                     return { tableLike: true, baseTable: true };
                 };
+            case "__prototype":
+                return target.self;
             case "__isNullable":
                 return target.__joinOperation?.joinType === "LEFT";
             case "__unwrap":

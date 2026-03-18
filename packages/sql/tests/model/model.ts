@@ -1,12 +1,45 @@
-import {DV_MODEL_NAME, model, prop} from "@ts-grm/core";
+import {DV_ABSTRACT, DV_MODEL_NAME, model, prop, TB_INHERIT} from "@ts-grm/core";
 
-export const BOOK_STORE = model("BookStore", "id", class {
-    id = prop.i64().asString()
-    name = prop.str()
-    version = prop.i32()
-    books = prop.o2m(BOOK).mappedBy("store")
-        .orderBy("name", { path: "edition", desc: true })
-});
+export const BOOK_STORE = model(
+    "BookStore", 
+    "id", 
+    class {
+        id = prop.i64().asString()
+        name = prop.str()
+        version = prop.i32()
+        books = prop.o2m(BOOK).mappedBy("store")
+            .orderBy("name", { path: "edition", desc: true })
+    },
+    ctx => {
+        ctx.table({
+            discriminator: "TYPE",
+            discriminatorValue: DV_ABSTRACT
+        });
+    }
+);
+
+export const PHYSICAL_BOOK_STORE = model.extends(BOOK_STORE)(
+    "PhysicalBookStore", 
+    class {
+        city = prop.str();
+        street = prop.str();
+    },
+    ctx => ctx.table({
+        name: TB_INHERIT,
+        discriminatorValue: DV_MODEL_NAME
+    })
+);
+
+export const ONLINE_BOOK_STORE = model.extends(BOOK_STORE)(
+    "OnlineBookStore", 
+    class {
+        url = prop.str()
+    },
+    ctx => ctx.table({
+        name: TB_INHERIT,
+        discriminatorValue: DV_MODEL_NAME
+    })
+);
 
 export const BOOK = model("Book", "id", 
     class {

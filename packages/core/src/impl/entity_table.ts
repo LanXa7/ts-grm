@@ -21,39 +21,63 @@ import { IsPred } from "./ast/is_pred";
 
 export abstract class AbstractEntityTable implements AbstractTable {
 
+    readonly __prototype: AbstractEntityTable;
+
     readonly __joinOperation: JoinOperation | undefined;
 
     readonly __anchor: ShadowAnchor | undefined;
 
-    private _shadow: TypedBaseTable | undefined = undefined;
-
-    private _nullable: boolean;
-
-    private _castMap: Map<string, AbstractEntityTable> | undefined = undefined;
+    private readonly _mutableData: MutableData;
 
     constructor(
         readonly __entity: Entity,
-        options: JoinOperation | ShadowAnchor | undefined
+        options: JoinOperation | ShadowAnchor | AbstractEntityTable | undefined
     ) {
+        let prototype: AbstractEntityTable;
         let joinOperation: JoinOperation | undefined;
         let anchor: ShadowAnchor | undefined;
-        let nullable: boolean;
+        let mutableData: MutableData;
         if (options == null) {
+            prototype = this;
             joinOperation = undefined;
             anchor = undefined;
-            nullable = false;
+            mutableData = {
+                shadow: undefined,
+                nullable: false,
+                castMap: undefined
+            };
         } else if ((options as any).parent) {
+            prototype = this;
             joinOperation = options as JoinOperation;
             anchor = undefined;
-            nullable = joinOperation.joinType === "LEFT";
-        } else {
+            mutableData = {
+                shadow: undefined,
+                nullable: joinOperation.joinType === "LEFT",
+                castMap: undefined
+            };
+        } else if ((options as any).original) {
+            prototype = this;
             joinOperation = undefined;
             anchor = options as ShadowAnchor;
-            nullable = false;
+            mutableData = {
+                shadow: undefined,
+                nullable: false,
+                castMap: undefined
+            };
+        } else {
+            prototype = options as AbstractEntityTable;
+            joinOperation = prototype.__joinOperation;
+            anchor = prototype.__anchor;
+            mutableData = {
+                shadow: undefined,
+                nullable: prototype.__isNullable,
+                castMap: undefined
+            };
         }
+        this.__prototype = prototype;
         this.__joinOperation = joinOperation;
         this.__anchor = anchor;
-        this._nullable = nullable;
+        this._mutableData = mutableData;
     }
 
     __type(): {
@@ -97,49 +121,57 @@ export abstract class AbstractEntityTable implements AbstractTable {
     }
 
     __to(castTo: Entity): AbstractEntityTable {
-        const srcEntity = this.__entity.tableEntity;
-        const dstEntity = castTo.tableEntity;
-        if (srcEntity === dstEntity) {
+        if (this.__entity === castTo) {
             return this;
         }
-        const isDerived = dstEntity.ancestors.has(srcEntity);
-        const key = `${castTo.identity}\x1F${isDerived || this._nullable ? "n" : ""}`;
-        let castMap = this._castMap;
+        const isSuper = this.__entity.ancestors.has(castTo);
+        if (this.__entity.tableEntity === castTo.tableEntity) {
+            if (isSuper) {
+                return this;
+            }
+        }
+        const data = this._mutableData;
+        const isDerived = castTo.ancestors.has(this.__entity);
+        const key = `${castTo.identity}\x1F${isDerived || data.nullable ? "n" : ""}`;
+        let castMap = data.castMap;
         let table = castMap?.get(key);
         if (table != null) {
             return table;
         }
         if (castMap == null) {
-            this._castMap = castMap = new Map();
+            data.castMap = castMap = new Map();
         }
-        const isSuper = srcEntity.ancestors.has(dstEntity);
-        if (!isSuper && !isDerived) {
-            throw new ArgumentError(
-                `The model "${
-                    castTo.name
-                }" represented by the parameter is not in the same inheritance chain as the current model "${
-                    this.__entity.name
-                }"`
-            );
+        if (this.__entity.tableEntity === castTo.tableEntity) {
+            table = castTo.table(this);
+        } else {
+            if (!isSuper && !isDerived) {
+                throw new ArgumentError(
+                    `The model "${
+                        castTo.name
+                    }" represented by the parameter is not in the same inheritance chain as the current model "${
+                        this.__entity.name
+                    }"`
+                );
+            }
+            table = castTo.table({
+                parent: this,
+                joinType: isDerived || data.nullable ? "LEFT" : "INNER",
+                joinProp: undefined,
+                castToEntity: castTo,
+                weakJoinModel: undefined,
+                filter: undefined
+            });
         }
-        table = dstEntity.table({
-            parent: this,
-            joinType: isDerived || this._nullable ? "LEFT" : "INNER",
-            joinProp: undefined,
-            castToEntity: castTo,
-            weakJoinModel: undefined,
-            filter: undefined
-        });
         castMap.set(key, table);
         return table;
     }
 
     get __shadow(): TypedBaseTable | undefined {
-        return this._shadow;
+        return this._mutableData.shadow;
     }
 
     __forShadow(shadow: TypedBaseTable): AbstractEntityTable {
-        if (this._shadow === shadow) {
+        if (this._mutableData.shadow === shadow) {
             return this;
         }
         if (shadow.__baseModel !== this.__anchor?.baseModel) {
@@ -150,8 +182,8 @@ export abstract class AbstractEntityTable implements AbstractTable {
             );
         }
         const cloned = Object.assign(Object.create(Object.getPrototypeOf(this)), this) as AbstractEntityTable;
-        cloned._shadow = shadow;
-        cloned._nullable = shadow.__isNullable;
+        cloned._mutableData.shadow = shadow;
+        cloned._mutableData.nullable = shadow.__isNullable;
         return cloned;
     }
 
@@ -172,7 +204,7 @@ export abstract class AbstractEntityTable implements AbstractTable {
     }
 
     get __isNullable(): boolean {
-        return this._nullable;
+        return this._mutableData.nullable;
     }
 }
 
@@ -196,7 +228,7 @@ export type JoinFilterContext = {
 
 export type EntityTableCtor = new(
     entity: Entity,
-    joinOperation: JoinOperation | ShadowAnchor | undefined
+    joinOperation: JoinOperation | ShadowAnchor | AbstractEntityTable | undefined
 ) => AbstractEntityTable;
 
 export function createEntityTableClass(
@@ -391,4 +423,13 @@ function writePropPath(prop: EntityProp, separator: string, writer: CodeWriter) 
         writer.code(separator);
         writer.code(prop.name);
     }
+}
+
+interface MutableData {
+
+    shadow: TypedBaseTable | undefined;
+
+    nullable: boolean;
+
+    castMap: Map<string, AbstractEntityTable> | undefined;
 }

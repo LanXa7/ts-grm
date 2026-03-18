@@ -391,7 +391,7 @@ export class Entity {
         return discriminatorValues;
     }
 
-    table(options: JoinOperation | ShadowAnchor | undefined): AbstractEntityTable {
+    table(options: JoinOperation | ShadowAnchor | AbstractEntityTable | undefined): AbstractEntityTable {
         return new (this.tableClass())(this, options);
     }
 
