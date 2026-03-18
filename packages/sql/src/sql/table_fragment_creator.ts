@@ -3,6 +3,7 @@ import { Alias, Column, Composite, MiddleAlias, Scope } from "./fragment";
 import { RealTable } from "./real_table";
 import { FragmentGenGenVisitor } from "./fragment_gen_visitor";
 import { SqlClientImplementor } from "@/sql_client";
+import { addTypeMatch } from "./utils";
 
 export class TableFragmentCreator {
 
@@ -10,7 +11,7 @@ export class TableFragmentCreator {
 
     constructor(
         private readonly _sqlClient: SqlClientImplementor,
-        private readonly _crateColumn: (realTable: RealTable, columnName: string) => Column,
+        private readonly _createColumn: (realTable: RealTable, columnName: string) => Column,
         private readonly _cloneVisitor: () => FragmentGenGenVisitor
     ) {
         this._strategy = _sqlClient.options.strategy;
@@ -100,7 +101,7 @@ export class TableFragmentCreator {
             thisConditionScope
                 .separator()
                 .add(
-                    this._crateColumn(
+                    this._createColumn(
                         table.parent!,
                         column.referencedColumnName!
                     )
@@ -151,7 +152,7 @@ export class TableFragmentCreator {
             conditionScope
                 .separator()
                 .add(
-                    this._crateColumn(
+                    this._createColumn(
                         table.parent!, 
                         reverse ? storage.referencedColumnName! : storage.name
                     )
@@ -165,7 +166,7 @@ export class TableFragmentCreator {
                 conditionScope
                     .separator()
                     .add(
-                        this._crateColumn(
+                        this._createColumn(
                             table.parent!, 
                             reverse ? column.referencedColumnName! : column.name
                         )
@@ -192,20 +193,7 @@ export class TableFragmentCreator {
         composite.add(" on ");
         const conditionScope = new Scope("AND");
         if (table.symbol.__entity!.ancestors.has(table.parent!.symbol.__entity!)) {
-            const tableSettings = table.parent!.symbol.__entity!.tableSettings;
-            conditionScope
-                .add(
-                    this._crateColumn(
-                        table.parent!, 
-                        tableSettings.discriminator!.name
-                    )
-                )
-                .add(" = ");
-            if (tableSettings.discriminator!.type === "string") {
-                conditionScope.add(`'${tableSettings.discriminatorValue}'`);
-            } else {
-                conditionScope.add(tableSettings.discriminatorValue!.toString());
-            }
+            addTypeMatch(table.parent!, table.symbol.__entity!, this._createColumn, false, conditionScope);
         }
         const parentStorage = table.parent!.symbol.__entity!.idProp.toStorage(this._strategy)!;
         const storage = table.symbol.__entity!.idProp.toStorage(this._strategy)!;
@@ -214,11 +202,11 @@ export class TableFragmentCreator {
                 conditionScope
                     .separator()
                     .add(
-                        this._crateColumn(table.parent!, parentStorage.name)
+                        this._createColumn(table.parent!, parentStorage.name)
                     )
                     .add(" = ")
                     .add(
-                        this._crateColumn(table!, (storage as metadata.Column).name)
+                        this._createColumn(table!, (storage as metadata.Column).name)
                     );
                 break;
             case "COLUMNS":
@@ -226,11 +214,11 @@ export class TableFragmentCreator {
                     conditionScope
                         .separator()
                         .add(
-                            this._crateColumn(table.parent!, parentStorage[i]!.name)
+                            this._createColumn(table.parent!, parentStorage[i]!.name)
                         )
                         .add(" = ")
                         .add(
-                            this._crateColumn(table!, (storage as metadata.Columns)[i]!.name)
+                            this._createColumn(table!, (storage as metadata.Columns)[i]!.name)
                         );
                 }
                 break;

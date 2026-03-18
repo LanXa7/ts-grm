@@ -48,6 +48,6 @@ export class CastMergeScope {
         entity: metadata.Entity,
         nullable: boolean
     ): string {
-        return `${entity.tableEntity.identity}\x1F${nullable ? "" : "n"}`;
+        return `${entity.tableEntity.identity}\x1F${nullable ? "n" : ""}`;
     }
 }

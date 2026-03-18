@@ -34,6 +34,8 @@ export class Entity {
 
     private _descendants: Set<Entity> | undefined = undefined;
 
+    private _discriminatorValues: ReadonlyArray<string | number> | undefined = undefined;
+
     private static _nextIdentity = 0;
 
     readonly identity : number;
@@ -369,6 +371,24 @@ export class Entity {
             this._descendants = descendants;
         }
         return descendants;
+    }
+
+    get discriminatorValues(): ReadonlyArray<string | number> {
+        let discriminatorValues = this._discriminatorValues;
+        if (discriminatorValues != null) {
+            return discriminatorValues;
+        }
+        const arr: Array<string | number> = [];
+        if (this.tableSettings.discriminatorValue != null) {
+            arr.push(this.tableSettings.discriminatorValue);
+        }
+        for (const descendant of this.descendants) {
+            if (descendant.tableSettings.discriminatorValue != null) {
+                arr.push(descendant.tableSettings.discriminatorValue);
+            }
+        }
+        this._discriminatorValues = discriminatorValues = arr;
+        return discriminatorValues;
     }
 
     table(options: JoinOperation | ShadowAnchor | undefined): AbstractEntityTable {

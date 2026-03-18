@@ -7,6 +7,7 @@ import { RealTable } from "./real_table";
 import { SqlClientImplementor } from "@/sql_client";
 import { BaseQueryMetadata } from "./base_query_metadata";
 import { TableFragmentCreator } from "./table_fragment_creator";
+import { addTypeMatch } from "./utils";
 
 export class FragmentGenGenVisitor extends ast.AbstractVisitor {
 
@@ -308,27 +309,9 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
     }
 
     visitIsPred(pred: ast.IsPred): void {
-        const discriminator = pred.table.__entity.tableSettings.discriminator!;
-        const derivedEntity = pred.derivedEntity;
-        const columnName = discriminator.name;
         const realTable = this._toRealTable(pred.table);
         using _ = this._precedenceStack.with(Precedence.COMPARISON);
-        this._compositeStack.current.add(this._createColumn(realTable, columnName));
-        this._compositeStack.current.add(pred.neg ? " not in": " in");
-        using __ = this._compositeStack.with(new Scope("VALUES", false));
-        if (discriminator.type === "string") {
-            this._compositeStack.current.add(`'${derivedEntity.tableSettings.discriminatorValue}'`);
-            for (const descendant of derivedEntity.descendants) {
-                this._compositeStack.current.separator();
-                this._compositeStack.current.add(`'${descendant.tableSettings.discriminatorValue}'`);
-            }
-        } else {
-            this._compositeStack.current.add(derivedEntity.tableSettings.discriminatorValue!.toString());
-            for (const descendant of derivedEntity.descendants) {
-                this._compositeStack.current.separator();
-                this._compositeStack.current.add(descendant.tableSettings.discriminatorValue!.toString());
-            }
-        }
+        addTypeMatch(realTable, pred.derivedEntity, this._createColumn, pred.neg, this._compositeStack.current);
     }
 
     visitCoalesceExpr(expr: ast.CoalesceExprContract): void {

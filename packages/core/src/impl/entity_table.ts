@@ -29,6 +29,8 @@ export abstract class AbstractEntityTable implements AbstractTable {
 
     private _nullable: boolean;
 
+    private _castMap: Map<string, AbstractEntityTable> | undefined = undefined;
+
     constructor(
         readonly __entity: Entity,
         options: JoinOperation | ShadowAnchor | undefined
@@ -101,6 +103,15 @@ export abstract class AbstractEntityTable implements AbstractTable {
             return this;
         }
         const isDerived = dstEntity.ancestors.has(srcEntity);
+        const key = `${castTo.identity}\x1F${isDerived || this._nullable ? "n" : ""}`;
+        let castMap = this._castMap;
+        let table = castMap?.get(key);
+        if (table != null) {
+            return table;
+        }
+        if (castMap == null) {
+            this._castMap = castMap = new Map();
+        }
         const isSuper = srcEntity.ancestors.has(dstEntity);
         if (!isSuper && !isDerived) {
             throw new ArgumentError(
@@ -111,7 +122,7 @@ export abstract class AbstractEntityTable implements AbstractTable {
                 }"`
             );
         }
-        return dstEntity.table({
+        table = dstEntity.table({
             parent: this,
             joinType: isDerived || this._nullable ? "LEFT" : "INNER",
             joinProp: undefined,
@@ -119,6 +130,8 @@ export abstract class AbstractEntityTable implements AbstractTable {
             weakJoinModel: undefined,
             filter: undefined
         });
+        castMap.set(key, table);
+        return table;
     }
 
     get __shadow(): TypedBaseTable | undefined {
