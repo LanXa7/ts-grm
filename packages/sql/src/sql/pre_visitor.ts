@@ -70,7 +70,13 @@ export class PreVisitor extends ast.AbstractVisitor {
     }
 
     visitIsPred(pred: ast.IsPred): void {
-        this._toRealTable(pred.table);
+        const shadow = this._toRealTable(pred.table).shadow;
+        if (shadow != null) {
+            shadow.baseQueryMetadata.alias(
+                pred.table.__anchor!.exportedName, 
+                pred.table.__entity.tableSettings.discriminator!.name
+            )
+        }
     }
 
     visitFetchedView(view: ast.FetchedViewContract): void {
@@ -162,7 +168,10 @@ export class PreVisitor extends ast.AbstractVisitor {
 
     private _processFilter(table: RealTable) {
         table.filterPred?.accept(this);
-        if (table.joinProp != null && table.parent!.shadow != null) {
+        if (table.parent?.shadow == null) {
+            return;
+        }
+        if (table.joinProp != null) {
             switch (table.joinProp.storageType) {
                 case "MIDDLE_TABLE":
                     this._processMiddleTable(table);
@@ -174,7 +183,9 @@ export class PreVisitor extends ast.AbstractVisitor {
                     this._processForeignKey(table, false);
                     break;
             }
-        } 
+        } else if (table.castToEntity != null) {
+            this._processInheritance(table);
+        }
     }
 
     private _processMiddleTable(table: RealTable) {
@@ -202,5 +213,14 @@ export class PreVisitor extends ast.AbstractVisitor {
                 );
             }
         }
+    }
+
+    private _processInheritance(table: RealTable) {
+        const parentTable = table.parent!;
+        const exportedName = parentTable.symbol.__anchor!.exportedName;
+        parentTable.shadow!.baseQueryMetadata.alias(
+            exportedName, 
+            parentTable.symbol.__entity!.tableSettings.discriminator!.name
+        );
     }
 }

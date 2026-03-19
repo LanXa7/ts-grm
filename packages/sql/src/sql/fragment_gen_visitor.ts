@@ -304,14 +304,20 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
 
     visitTablePropExpr(expr: ast.PropExprContract): void {
         const column = expr.prop.toStorage(this._strategy) as metadata.Column;
-        const realTable = this._toRealTable(expr.table);
+        const realTable = this._toRealTable(expr.table.__to(expr.prop.declaringEntity));
         this._compositeStack.current.add(this._createColumn(realTable, column.name));
     }
 
     visitIsPred(pred: ast.IsPred): void {
         const realTable = this._toRealTable(pred.table);
         using _ = this._precedenceStack.with(Precedence.COMPARISON);
-        addTypeMatch(realTable, pred.derivedEntity, this._createColumn, pred.neg, this._compositeStack.current);
+        addTypeMatch(
+            realTable, 
+            pred.derivedEntity, 
+            (realTable, columnName) => this._createColumn(realTable, columnName), 
+            pred.neg, 
+            this._compositeStack.current
+        );
     }
 
     visitCoalesceExpr(expr: ast.CoalesceExprContract): void {
