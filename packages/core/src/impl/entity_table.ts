@@ -27,7 +27,11 @@ export abstract class AbstractEntityTable implements AbstractTable {
 
     readonly __anchor: ShadowAnchor | undefined;
 
-    private readonly _mutableData: MutableData;
+    private readonly _sharedData: SharedData;
+
+    private readonly _downcast: boolean;
+
+    private _upcastMap: Map<Entity, AbstractEntityTable> | undefined = undefined;
 
     constructor(
         readonly __entity: Entity,
@@ -36,48 +40,64 @@ export abstract class AbstractEntityTable implements AbstractTable {
         let prototype: AbstractEntityTable;
         let joinOperation: JoinOperation | undefined;
         let anchor: ShadowAnchor | undefined;
-        let mutableData: MutableData;
+        let sharedData: SharedData;
+        let downcast: boolean;
+        let upcastMap: Map<Entity, AbstractEntityTable> | undefined;
         if (options == null) {
             prototype = this;
             joinOperation = undefined;
             anchor = undefined;
-            mutableData = {
+            sharedData = {
                 shadow: undefined,
                 nullable: false,
-                castMap: undefined
+                downcastMap: undefined
             };
+            downcast = false;
+            upcastMap = undefined;
         } else if ((options as any).parent) {
             prototype = this;
             joinOperation = options as JoinOperation;
             anchor = undefined;
-            mutableData = {
+            sharedData = {
                 shadow: undefined,
                 nullable: joinOperation.joinType === "LEFT",
-                castMap: undefined
+                downcastMap: joinOperation.castToEntity != null 
+                    ? (joinOperation.parent as AbstractEntityTable)._getDowncastMap()
+                    : undefined
             };
+            downcast = joinOperation.castToEntity != null 
+                ? (joinOperation.parent as AbstractEntityTable)._downcast 
+                || joinOperation.castToEntity.ancestors.has(this.__entity) 
+                : false;
+            upcastMap = joinOperation.castToEntity != null 
+                && this.__entity.ancestors.has(joinOperation.castToEntity) 
+                ? (joinOperation.parent as AbstractEntityTable)._getUpcastMap()
+                : undefined;
         } else if ((options as any).original) {
             prototype = this;
             joinOperation = undefined;
             anchor = options as ShadowAnchor;
-            mutableData = {
+            sharedData = {
                 shadow: undefined,
                 nullable: false,
-                castMap: undefined
+                downcastMap: undefined
             };
+            downcast = false;
+            upcastMap = undefined;
         } else {
             prototype = options as AbstractEntityTable;
             joinOperation = prototype.__joinOperation;
             anchor = prototype.__anchor;
-            mutableData = {
-                shadow: undefined,
-                nullable: prototype.__isNullable,
-                castMap: undefined
-            };
+            sharedData = prototype._sharedData;
+            downcast = true;
+            upcastMap = undefined;
         }
         this.__prototype = prototype;
         this.__joinOperation = joinOperation;
         this.__anchor = anchor;
-        this._mutableData = mutableData;
+        this._sharedData = sharedData;
+        this._downcast = downcast;
+        this._upcastMap = upcastMap;
     }
 
     __type(): {
@@ -124,54 +144,87 @@ export abstract class AbstractEntityTable implements AbstractTable {
         if (this.__entity === castTo) {
             return this;
         }
-        const isSuper = this.__entity.ancestors.has(castTo);
-        if (this.__entity.tableEntity === castTo.tableEntity) {
-            if (isSuper) {
-                return this;
-            }
+        const isSuper = this.__entity!.ancestors.has(castTo);
+        if (isSuper && !this._downcast && this.__entity.tableEntity === castTo.tableEntity) {
+            return this;
         }
-        const data = this._mutableData;
-        const isDerived = castTo.ancestors.has(this.__entity);
-        const key = `${castTo.identity}\x1F${isDerived || data.nullable ? "n" : ""}`;
-        let castMap = data.castMap;
-        let table = castMap?.get(key);
+        if (isSuper) {
+            return this._upcast(castTo);
+        }
+        if (castTo.ancestors.has(this.__entity!)) {
+            return this._downloadCast(castTo);
+        }
+        throw new ArgumentError(
+            `The model "${
+                castTo.name
+            }" represented by the parameter is not in the same inheritance chain as the current model "${
+                this.__entity.name
+            }"`
+        );
+    }
+
+    private _upcast(castTo: Entity): AbstractEntityTable {
+        const upcastMap = this._getUpcastMap();
+        let table = upcastMap.get(castTo);
         if (table != null) {
             return table;
         }
-        if (castMap == null) {
-            data.castMap = castMap = new Map();
+        table = castTo.table({
+            parent: this,
+            joinType: this._sharedData.nullable || this._downcast ? "LEFT" : "INNER",
+            joinProp: undefined,
+            castToEntity: castTo,
+            weakJoinModel: undefined,
+            filter: undefined
+        });
+        upcastMap.set(castTo, table);
+        return table;
+    }
+
+    private _downloadCast(castTo: Entity): AbstractEntityTable {
+        const downcastMap = this._getDowncastMap();
+        let table = downcastMap.get(castTo);
+        if (table != null) {
+            return table;
         }
         if (this.__entity.tableEntity === castTo.tableEntity) {
             table = castTo.table(this);
         } else {
-            if (!isSuper && !isDerived) {
-                throw new ArgumentError(
-                    `The model "${
-                        castTo.name
-                    }" represented by the parameter is not in the same inheritance chain as the current model "${
-                        this.__entity.name
-                    }"`
-                );
-            }
             table = castTo.table({
                 parent: this,
-                joinType: isDerived || data.nullable ? "LEFT" : "INNER",
+                joinType: "LEFT",
                 joinProp: undefined,
                 castToEntity: castTo,
                 weakJoinModel: undefined,
                 filter: undefined
             });
         }
-        castMap.set(key, table);
+        downcastMap.set(castTo, table);
         return table;
     }
 
+    private _getUpcastMap(): Map<Entity, AbstractEntityTable> {
+        let upcastMap = this._upcastMap;
+        if (upcastMap == null) {
+            this._upcastMap = upcastMap = new Map();
+        }
+        return upcastMap;
+    }
+
+    private _getDowncastMap(): Map<Entity, AbstractEntityTable> {
+        let downcastMap = this._sharedData.downcastMap;
+        if (downcastMap == null) {
+            this._sharedData.downcastMap = downcastMap = new Map();
+        }
+        return downcastMap;
+    }
+
     get __shadow(): TypedBaseTable | undefined {
-        return this._mutableData.shadow;
+        return this._sharedData.shadow;
     }
 
     __forShadow(shadow: TypedBaseTable): AbstractEntityTable {
-        if (this._mutableData.shadow === shadow) {
+        if (this._sharedData.shadow === shadow) {
             return this;
         }
         if (shadow.__baseModel !== this.__anchor?.baseModel) {
@@ -182,8 +235,8 @@ export abstract class AbstractEntityTable implements AbstractTable {
             );
         }
         const cloned = Object.assign(Object.create(Object.getPrototypeOf(this)), this) as AbstractEntityTable;
-        cloned._mutableData.shadow = shadow;
-        cloned._mutableData.nullable = shadow.__isNullable;
+        cloned._sharedData.shadow = shadow;
+        cloned._sharedData.nullable = shadow.__isNullable;
         return cloned;
     }
 
@@ -204,7 +257,7 @@ export abstract class AbstractEntityTable implements AbstractTable {
     }
 
     get __isNullable(): boolean {
-        return this._mutableData.nullable;
+        return this._sharedData.nullable;
     }
 }
 
@@ -216,6 +269,15 @@ export type JoinOperation = {
     readonly weakJoinModel: ModelContract | undefined;
     readonly filter: JoinFilter | undefined;
 };
+
+interface SharedData {
+
+    shadow: TypedBaseTable | undefined;
+
+    nullable: boolean;
+
+    downcastMap: Map<Entity, AbstractEntityTable> | undefined;
+}
 
 export type JoinFilter = (
     ctx: JoinFilterContext
@@ -423,13 +485,4 @@ function writePropPath(prop: EntityProp, separator: string, writer: CodeWriter) 
         writer.code(separator);
         writer.code(prop.name);
     }
-}
-
-interface MutableData {
-
-    shadow: TypedBaseTable | undefined;
-
-    nullable: boolean;
-
-    castMap: Map<string, AbstractEntityTable> | undefined;
 }

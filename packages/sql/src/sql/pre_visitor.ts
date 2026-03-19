@@ -130,7 +130,7 @@ export class PreVisitor extends ast.AbstractVisitor {
             } else {
                 const joinOperation = table.__joinOperation;
                 if (joinOperation == null) {
-                    realTable = new RealTable(table, undefined, undefined);
+                    realTable = new RealTable(table, undefined);
                 } else {
                     const parentRealTable = this._toRealTable(joinOperation.parent);   
                     realTable = parentRealTable.child(

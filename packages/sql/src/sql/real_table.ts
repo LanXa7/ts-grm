@@ -3,7 +3,6 @@ import { JoinMergeScope } from "./join_merge_scope";
 import { SqlBuilder } from "./sql_builder";
 import { BaseQueryMetadata } from "./base_query_metadata";
 import { Fragment } from "./fragment";
-import { CastMergeScope } from "./cast_merge_scope";
 
 export class RealTable {
 
@@ -45,14 +44,12 @@ export class RealTable {
 
     constructor(
         readonly symbol: metadata.AbstractTable,
-        readonly shadow: RealTable | undefined,
-        private _castMergeScope: CastMergeScope | undefined
+        readonly shadow: RealTable | undefined
     ) {
         if (symbol.__joinOperation != null) {
             this._joinType = symbol.__joinOperation.joinType;
             this._joinProp = symbol.__joinOperation.joinProp;
             this._castToEntity = symbol.__joinOperation.castToEntity;
-            this._parent = _castMergeScope?.table;
             if (symbol.__joinOperation?.filter != null) {
                 let filters = this._filters;
                 if (filters == null) {
@@ -96,9 +93,6 @@ export class RealTable {
         if (joinOperation == null) {
             throw new err.ArgumentError(`symbol.joinOperation cannot be null`);
         }
-        if (joinOperation.castToEntity != null) {
-            return this._to(symbol);
-        }
         const restrictKey = RealTable._restrictKeyOf(symbol, undefined);
         let restrictChildMap = this._restrictChildMap;
         let restrictChild = restrictChildMap?.get(restrictKey);
@@ -122,23 +116,13 @@ export class RealTable {
             if (laxChildMap == null) {
                 this._laxChildMap = laxChildMap = new Map();
             }
-            child = new RealTable(symbol, undefined, undefined);
+            child = new RealTable(symbol, undefined);
             child._parent = this;
             restrictChildMap.set(restrictKey, child);
             laxChildMap.set(laxKey, child);
             this._children = undefined;
         }
         return child;
-    }
-
-    private _to(
-        symbol: metadata.AbstractEntityTable
-    ): RealTable {
-        let scope = this._castMergeScope;
-        if (scope == null) {
-            this._castMergeScope = scope = new CastMergeScope(this);
-        }
-        return scope.get(symbol);
     }
 
     export(table: metadata.AbstractTable): RealTable {
@@ -155,7 +139,7 @@ export class RealTable {
         } else {
             this._exportedMap = exportedMap = new Map();
         }
-        realTable = new RealTable(table, this, undefined);
+        realTable = new RealTable(table, this);
         exportedMap.set(table.__anchor!.exportedName, realTable);
         this._children = undefined;
         return realTable;
@@ -165,9 +149,6 @@ export class RealTable {
         let children = this._children;
         if (children == null) {
             const arr: Array<RealTable> = [];
-            if (this._castMergeScope?.table == this) {
-                arr.push(...this._castMergeScope.tables);
-            }
             if (this._laxChildMap != null) {
                 for (const table of this._laxChildMap.values()) {
                     arr.push(table);
@@ -204,8 +185,7 @@ export class RealTable {
         return `${
             (symbol.__entity ?? symbol.__baseModel).identity
         }\x1F${
-            symbol.__joinOperation!.joinProp?.name 
-                ?? `j(${symbol.__joinOperation!.weakJoinModel!.identifier})`
+            RealTable._propKey(symbol)
         }\x1F${
             joinType ?? symbol.__joinOperation!.joinType
         }`;
@@ -218,11 +198,23 @@ export class RealTable {
         return `${
             (symbol.__entity ?? symbol.__baseModel).identity
         }\x1F${
-            symbol.__joinOperation!.joinProp?.name
-                ?? `j(${symbol.__joinOperation!.weakJoinModel!.identifier})`
+            RealTable._propKey(symbol)
         }\x1F${
             scope?.identity ?? 0
         }`;
+    }
+
+    private static _propKey(
+        symbol: metadata.AbstractEntityTable
+    ): string {
+        const joinOperation = symbol.__joinOperation!;
+        if (joinOperation.joinProp != null) {
+            return joinOperation.joinProp.name;
+        }
+        if (joinOperation.weakJoinModel != null) {
+            return `j(${joinOperation.weakJoinModel.identifier})`;
+        }
+        return `c(${joinOperation.castToEntity!.identity})`;
     }
 
     collectTables(builder: SqlBuilder, tables: Set<RealTable>) {
