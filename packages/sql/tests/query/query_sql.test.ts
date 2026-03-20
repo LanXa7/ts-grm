@@ -219,7 +219,8 @@ describe("QuerySqlTest", () => {
                         tb_3_.NAME,
                         tb_1_.c3 + 1
                     from TREE_NODE tb_3_
-                    inner join tb_1_ on tb_3_.PARENT_NODE_ID = tb_1_.c1
+                    inner join tb_1_ on 
+                        tb_3_.PARENT_NODE_ID = tb_1_.c1
                 )
             select 
                 tb_1_.c1,

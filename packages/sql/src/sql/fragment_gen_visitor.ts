@@ -51,19 +51,19 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
             }
 
             override with(precedence: number): Disposable {
-                const disposable1 = super.with(precedence);
-                if (precedence === Precedence.ROOT) {
-                    return disposable1;
-                }
                 const current = this.current;
-                if (current <= precedence) {
-                    return disposable1;
+                const disposable = super.with(precedence);
+                if (precedence === Precedence.ROOT) {
+                    return disposable;
                 }
-                that._compositeStack.current.add("(");
+                if (current <= precedence) {
+                    return disposable;
+                }
+                const noIndentParenDisposable = that._compositeStack.with(new Scope("NO_INDENT_PAREN"));
                 return {
                     [Symbol.dispose]() {
-                        that._compositeStack.current.add(")");
-                        disposable1[Symbol.dispose]();
+                        noIndentParenDisposable[Symbol.dispose]();
+                        disposable[Symbol.dispose]();
                     }
                 };
             }
@@ -109,8 +109,8 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
 
     visitAtomQuery(query: ast.AtomQueryContract): void {
 
-        using _ = this._compositeStack.with(new Query());
-        using __ = this._precedenceStack.with(Precedence.ROOT);
+        using _ = this._precedenceStack.with(Precedence.ROOT);
+        using __ = this._compositeStack.with(new Query());
         
         {
             this._compositeStack.current.add("select ");
@@ -124,7 +124,9 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
             if (query.recursivePred != null) {
                 const visitor = this._cloneVisitor();
                 query.recursivePred.accept(visitor);
-                recursive = { prev: this._baseQueryMetadata!.realTable, pred: visitor.toResult() };
+                const prevComposite = new Scope("INDENT");
+                prevComposite.add(visitor.toResult());
+                recursive = { prev: this._baseQueryMetadata!.realTable, pred: prevComposite };
             }
             const tables = query.tables.map(t => 
                 this._toRealTable(
@@ -184,8 +186,8 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
     }
 
     visitTuple(tuple: ast.TupleContract): void {
-        using _ = this._compositeStack.with(new Scope("VALUES"));
-        using __ = this._precedenceStack.with(Precedence.ROOT);
+        using _ = this._precedenceStack.with(Precedence.ROOT);
+        using __ = this._compositeStack.with(new Scope("VALUES"));
         for (const expr of tuple.exprs) {
             this._compositeStack.current.separator();
             expr.accept(this);
@@ -206,9 +208,9 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
         pred.tuple.accept(this);
         this._compositeStack.current.add(pred.neg ? " not in" : " in");
 
-        using __ = this._compositeStack.with(new Scope("VALUES"));
-        using ___ = this._precedenceStack.with(Precedence.ROOT);
-        for (const tuple of pred.tuples) {
+        using __ = this._precedenceStack.with(Precedence.ROOT);
+        using ___ = this._compositeStack.with(new Scope("VALUES"));
+                for (const tuple of pred.tuples) {
             this._compositeStack.current.separator();
             tuple.accept(this);
         }
@@ -221,8 +223,9 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
         pred.tuple.accept(this);
         this._compositeStack.current.add(pred.neg ? " not in" : " in");
 
-        using __ = this._compositeStack.with(new Scope("VALUES"));
-        using ___ = this._precedenceStack.with(Precedence.ROOT);
+        using __ = this._precedenceStack.with(Precedence.ROOT);
+        using ___ = this._compositeStack.with(new Scope("VALUES"));
+        
         pred.subQuery.accept(this);
     }
 
@@ -245,8 +248,8 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
         using _ = this._precedenceStack.with(Precedence.COMPARISON);
         pred.expr.accept(this);
         this._compositeStack.current.add(pred.neg ? " not in" : " in");
-        using __ = this._compositeStack.with(new Scope("VALUES"));
-        using ___ = this._precedenceStack.with(Precedence.ROOT);
+        using __ = this._precedenceStack.with(Precedence.ROOT);
+        using ___ = this._compositeStack.with(new Scope("VALUES"));
         pred.subQuery.accept(this);
     }
 
@@ -274,8 +277,8 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
     }
 
     visitCompoundPred(pred: ast.CompoundPred): void {
-        using _ = this._compositeStack.with(new Scope(pred.op));
-        using __ = this._precedenceStack.with(pred.op === "AND" ? Precedence.AND : Precedence.OR);
+        using _ = this._precedenceStack.with(pred.op === "AND" ? Precedence.AND : Precedence.OR);
+        using __ = this._compositeStack.with(new Scope(pred.op));
         const current = this._compositeStack.current;
         for (const p of pred.preds) {
             current.separator();
@@ -309,8 +312,8 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
     }
 
     visitIsPred(pred: ast.IsPred): void {
-        const realTable = this._toRealTable(pred.table);
         using _ = this._precedenceStack.with(Precedence.COMPARISON);
+        const realTable = this._toRealTable(pred.table);
         addTypeMatch(
             realTable, 
             pred.derivedEntity, 
@@ -321,9 +324,9 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
     }
 
     visitCoalesceExpr(expr: ast.CoalesceExprContract): void {
+        using _ = this._precedenceStack.with(Precedence.ROOT);
         this._compositeStack.current.add("coalesce")
-        using _ = this._compositeStack.with(new Scope("VALUES"));
-        using __ = this._precedenceStack.with(Precedence.ROOT);
+        using __ = this._compositeStack.with(new Scope("VALUES"));
         expr.expr.accept(this);
         for (const defaultExpr of expr.defaultExprs) {
             this._compositeStack.current.separator();

@@ -124,12 +124,47 @@ export const AUTHOR = model("Author", "id", class {
     books = prop.m2m(BOOK).mappedBy("authors");
 });
 
-export const TREE_NODE = model("TreeNode", "id", class {
-    id = prop.i64()
-    name = prop.str()
-    parentNode = prop.m2o(() => TREE_NODE).nullable()
-    childNodes = prop.o2m(() => TREE_NODE).mappedBy("parentNode")
-});
+export const TREE_NODE = model(
+    "TreeNode", 
+    "id", 
+        class {
+        id = prop.i64()
+        name = prop.str()
+        parentNode = prop.m2o(() => TREE_NODE).nullable()
+        childNodes = prop.o2m(() => TREE_NODE).mappedBy("parentNode")
+    },
+    ctx => {
+        ctx.table({
+            discriminator: "TYPE",
+            discriminatorValue: DV_ABSTRACT
+        })
+    }
+);
+
+export const ORGANIZATION = model.extends(TREE_NODE)(
+    "Organization",
+    class {
+        location = prop.str();
+        kind = prop.str();
+    },
+    ctx => {
+        ctx.table({
+            discriminatorValue: DV_MODEL_NAME
+        });
+    }
+)
+
+export const GROUP = model.extends(TREE_NODE)(
+    "Group",
+    class {
+        email = prop.str()
+    },
+    ctx => {
+        ctx.table({
+            discriminatorValue: DV_MODEL_NAME
+        });
+    }
+);
 
 export const ORDER = model("Order", "id", class {
     id = prop.embedded({

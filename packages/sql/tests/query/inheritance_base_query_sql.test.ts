@@ -1,7 +1,7 @@
 import { dsl } from "@ts-grm/core";
-import { AUTHOR, BOOK, BOOK_STORE, ELECTRONIC_BOOK, PAPER_BOOK, PHYSICAL_BOOK_STORE } from "../model/model";
+import { AUTHOR, BOOK, BOOK_STORE, ELECTRONIC_BOOK, ORGANIZATION, PAPER_BOOK, PHYSICAL_BOOK_STORE, TREE_NODE } from "../model/model";
 import { describe, it } from "vitest";
-import { SIMPLE_BOOK_VIEW, SIMPLE_PAPER_BOOK_VIEW, SIMPLE_PHYSICAL_BOOK_STORE_VIEW, SIMPLE_STORE_VIEW, sql, sqlClient } from "./utils";
+import { SIMPLE_BOOK_VIEW, SIMPLE_PAPER_BOOK_VIEW, SIMPLE_PHYSICAL_BOOK_STORE_VIEW, SIMPLE_STORE_VIEW, SIMPLE_TREE_NODE_VIEW, sql, sqlClient } from "./utils";
 import { expectCode } from "../utils";
 
 describe("InheritanceBaseQuerySqlTest", () => {
@@ -507,6 +507,91 @@ describe("InheritanceBaseQuerySqlTest", () => {
                     tb_1_.c4 = ?
                 or
                     tb_1_.c5 = ?
+        `);
+    });
+
+    it("recursiveCteOfMultipleTables", () => {
+        const baseTreeNodeModel = dsl.cteModel(
+            dsl.baseQuery(TREE_NODE, (q, treeNode) => {
+                q.where(treeNode.as(ORGANIZATION).location.eq("ChengDu"));
+                return q.select({
+                    _: treeNode,
+                    depth: dsl.constant(1)
+                })
+            }).unionAllRecursively(TREE_NODE, {
+                join: (prev, treeNode) => {
+                    return treeNode.parentNodeId.eq(prev._.id);
+                },
+                query: (q, treeNode) => {
+                    q.where(treeNode.as(ORGANIZATION).location.eq("ChengDu"));
+                    return q.select({
+                        _: treeNode,
+                        depth: q.prev.depth.plus(dsl.constant(1))
+                    });
+                }
+            })
+        );
+        const q = sqlClient.createQuery(baseTreeNodeModel, (q, baseTreeNode) => {
+            q.where(
+                baseTreeNode.depth.le(10),
+                dsl.or(
+                    baseTreeNode._.name.like("org"),
+                    baseTreeNode._.as(ORGANIZATION).kind.eq("A")
+                )
+            );
+            return q.select(
+                baseTreeNode._.fetch(SIMPLE_TREE_NODE_VIEW),
+                baseTreeNode.depth
+            );
+        });
+        expectCode(sql(q), `
+            with
+                recursive tb_1_(c1, c2, c3, c4) as (
+                    select 
+                        tb_3_.ID,
+                        tb_3_.NAME,
+                        1,
+                        tb_3_.TYPE
+                    from TREE_NODE tb_3_
+                    left join ORGANIZATION tb_4_ on 
+                        tb_3_.TYPE = 'Organization'
+                    and
+                        tb_3_.ID = tb_4_.ID
+                    where 
+                        tb_4_.LOCATION = ?
+                    union all
+                    select 
+                        tb_5_.ID,
+                        tb_5_.NAME,
+                        tb_1_.c3 + 1,
+                        tb_5_.TYPE
+                    from TREE_NODE tb_5_
+                    left join ORGANIZATION tb_6_ on 
+                        tb_5_.TYPE = 'Organization'
+                    and
+                        tb_5_.ID = tb_6_.ID
+                    inner join tb_1_ on 
+                        tb_5_.PARENT_NODE_ID = tb_1_.c1
+                    where 
+                        tb_6_.LOCATION = ?
+                )
+            select 
+                tb_1_.c1,
+                tb_1_.c2,
+                tb_1_.c3
+            from tb_1_
+            left join ORGANIZATION tb_2_ on 
+                tb_1_.c4 = 'Organization'
+            and
+                tb_1_.c1 = tb_2_.ID
+            where 
+                    tb_1_.c3 <= ?
+                and
+                    (
+                        tb_1_.c2 like ?
+                    or
+                        tb_2_.KIND = ?
+                    )
         `);
     });
 });

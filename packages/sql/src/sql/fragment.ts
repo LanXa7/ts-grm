@@ -103,7 +103,11 @@ export class Scope extends Composite {
 
     into(builder: SqlBuilder): void {
         using _ = builder.withPretty(this.pretty);
-        if (builder.pretty) {
+        if (this.kind === "NO_INDENT_PAREN") {
+            builder.sql("(");
+            this._renderChildren(builder);
+            builder.sql(")");
+        } else if (builder.pretty) {
             if (this.kind === "VALUES") {
                 builder.sql("(\n");
                 this._renderChildren(builder);
@@ -136,6 +140,7 @@ export class Scope extends Composite {
                 case "UNION_ALL":
                 case "MINUS":
                 case "INTERSECT":
+                case "NO_INDENT_PAREN":
                     indent = false;
                     break;
             }    
@@ -168,7 +173,17 @@ export class Scope extends Composite {
     }
 }
 
-export type ScopeKind = "INDENT" | "COMMA" | "VALUES" | "AND" | "OR" | "UNION" | "UNION_ALL" | "MINUS" | "INTERSECT";
+export type ScopeKind = 
+    "INDENT" 
+    | "COMMA" 
+    | "VALUES" 
+    | "AND" 
+    | "OR" 
+    | "UNION" 
+    | "UNION_ALL" 
+    | "MINUS" 
+    | "INTERSECT"
+    | "NO_INDENT_PAREN";
 
 export class Separator extends Fragment {
 
