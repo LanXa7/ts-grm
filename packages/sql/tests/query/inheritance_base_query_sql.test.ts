@@ -1,7 +1,7 @@
 import { dsl } from "@ts-grm/core";
-import { BOOK, ELECTRONIC_BOOK, PAPER_BOOK } from "../model/model";
+import { AUTHOR, BOOK, BOOK_STORE, ELECTRONIC_BOOK, PAPER_BOOK, PHYSICAL_BOOK_STORE } from "../model/model";
 import { describe, it } from "vitest";
-import { SIMPLE_BOOK_VIEW, SIMPLE_PAPER_BOOK_VIEW, sql, sqlClient } from "./utils";
+import { SIMPLE_BOOK_VIEW, SIMPLE_PAPER_BOOK_VIEW, SIMPLE_PHYSICAL_BOOK_STORE_VIEW, SIMPLE_STORE_VIEW, sql, sqlClient } from "./utils";
 import { expectCode } from "../utils";
 
 describe("InheritanceBaseQuerySqlTest", () => {
@@ -116,9 +116,397 @@ describe("InheritanceBaseQuerySqlTest", () => {
         const q = sqlClient.createQuery(basePaperBookModel, (q, basePaperBook) => {
             q.where(basePaperBook.rank.eq(1));
             return q.select(
-                basePaperBook.paperBook.size().width
+                basePaperBook.paperBook.fetch(SIMPLE_PAPER_BOOK_VIEW)
             );
         });
-        console.log(sql(q));
+        expectCode(sql(q), `
+            select 
+                tb_1_.c1,
+                tb_2_.NAME,
+                tb_2_.EDITION,
+                tb_2_.PRICE,
+                tb_1_.c5,
+                tb_1_.c6
+            from (
+                select 
+                    tb_3_.PB_ID c1,
+                    tb_3_.NAME c2,
+                    tb_3_.EDITION c3,
+                    tb_3_.PRICE c4,
+                    tb_3_.WIDTH c5,
+                    tb_3_.HEIGHT c6,
+                    row_number() over(partition by tb_4_.STORE_ID order by tb_4_.PRICE desc) c7
+                from PAPER_BOOK tb_3_
+                inner join BOOK tb_4_ on 
+                    tb_3_.PB_ID = tb_4_.ID
+            ) tb_1_
+            inner join BOOK tb_2_ on 
+                tb_1_.c1 = tb_2_.ID
+            where 
+                tb_1_.c7 = ?
+        `);
+    });
+
+    it("superPropsOfMultipleTables", () => {
+        const baseBookModel = dsl.derivedModel(
+            dsl.baseQuery(BOOK, (q, book) => {
+                return q.select({
+                    book,
+                    rank: dsl.native.num `row_number() over(partition by ${
+                        book.storeId
+                    } order by ${
+                        book.price
+                    } desc)`
+                });
+            })
+        );
+        const q = sqlClient.createQuery(baseBookModel, (q, baseBook) => {
+            q.where(
+                dsl.or(
+                    baseBook.rank.eq(1),
+                    baseBook.book.as(ELECTRONIC_BOOK).address.like("https:", "STARTS_WITH"),
+                    baseBook.book.as(ELECTRONIC_BOOK).edition.lt(3),
+                    baseBook.book.as(ELECTRONIC_BOOK).edition.gt(10)
+                )
+            );
+            return q.select(baseBook.book.fetch(SIMPLE_BOOK_VIEW));
+        });
+        expectCode(sql(q), `
+            select 
+                tb_1_.c1,
+                tb_1_.c2,
+                tb_1_.c3
+            from (
+                select 
+                    tb_4_.ID c1,
+                    tb_4_.NAME c2,
+                    tb_4_.EDITION c3,
+                    row_number() over(partition by tb_4_.STORE_ID order by tb_4_.PRICE desc) c4,
+                    tb_4_.TYPE c5
+                from BOOK tb_4_
+            ) tb_1_
+            left join ELECTRONIC_BOOK tb_2_ on 
+                tb_1_.c5 in('ElectronicBook', 'PdfElectronicBook')
+            and
+                tb_1_.c1 = tb_2_.EB_ID
+            left join BOOK tb_3_ on 
+                tb_2_.EB_ID = tb_3_.ID
+            where 
+                    tb_1_.c4 = ?
+                or
+                    tb_2_.ADDRESS like ?
+                or
+                    tb_3_.EDITION < ?
+                or
+                    tb_3_.EDITION > ?
+        `);
+    });
+
+    it("asFunctionOfExportJoinedTableOfMutableTables", () => {
+        const baseBookModel = dsl.derivedModel(
+            dsl.baseQuery(AUTHOR, (q, author) => {
+                q.where(author.name().firstName.eq("Alex"));
+                return q.select({
+                    book: author.books().$acceptRisk(),
+                    rank: dsl.native.num `row_number() over(partition by ${
+                        author.books().$acceptRisk().storeId
+                    } order by ${
+                        author.books().$acceptRisk().price
+                    } desc)`
+                })
+            })
+        );
+        const q = sqlClient.createQuery(baseBookModel, (q, baseBook) => {
+            q.where(
+                dsl.or(
+                    baseBook.rank.eq(1),
+                    baseBook.book.as(ELECTRONIC_BOOK).address.like("https:", "STARTS_WITH")
+                )
+            );
+            return q.select(
+                baseBook.book.fetch(SIMPLE_BOOK_VIEW)
+            );
+        });
+        expectCode(sql(q), `
+            select 
+                tb_1_.c1,
+                tb_1_.c2,
+                tb_1_.c3
+            from (
+                select 
+                    tb_5_.ID c1,
+                    tb_5_.NAME c2,
+                    tb_5_.EDITION c3,
+                    row_number() over(partition by tb_5_.STORE_ID order by tb_5_.PRICE desc) c4,
+                    tb_5_.TYPE c5
+                from AUTHOR tb_3_
+                inner join book_author_mapping tb_4_ on 
+                    tb_3_.ID = tb_4_.AUTHOR_ID
+                inner join BOOK tb_5_ on 
+                    tb_4_.BOOK_ID = tb_5_.ID
+                where 
+                    tb_3_.FIRST_NAME = ?
+            ) tb_1_
+            left join ELECTRONIC_BOOK tb_2_ on 
+                tb_1_.c5 in('ElectronicBook', 'PdfElectronicBook')
+            and
+                tb_1_.c1 = tb_2_.EB_ID
+            where 
+                    tb_1_.c4 = ?
+                or
+                    tb_2_.ADDRESS like ?
+        `);
+    });
+
+    it("isFunctionOfSingleTable", () => {
+        const baseStoreModel = dsl.derivedModel(
+            dsl.baseQuery(BOOK_STORE, (q, store) => {
+                return q.select({
+                    store,
+                    rank: dsl.native.num `row_number() over(partition by ${
+                        store.name
+                    } order by ${
+                        store.version
+                    } desc)`
+                });
+            })
+        );
+        const q = sqlClient.createQuery(baseStoreModel, (q, baseStore) => {
+            q.where(
+                dsl.or(
+                    baseStore.store.is(PHYSICAL_BOOK_STORE),
+                    baseStore.rank.eq(1)
+                ),
+            );
+            return q.select(
+                baseStore.store.fetch(SIMPLE_STORE_VIEW)
+            );
+        });
+        expectCode(sql(q), `
+            select 
+                tb_1_.c1,
+                tb_1_.c2,
+                tb_1_.c3
+            from (
+                select 
+                    tb_2_.ID c1,
+                    tb_2_.NAME c2,
+                    tb_2_.VERSION c3,
+                    tb_2_.TYPE c4,
+                    row_number() over(partition by tb_2_.NAME order by tb_2_.VERSION desc) c5
+                from BOOK_STORE tb_2_
+            ) tb_1_
+            where 
+                    tb_1_.c4 = 'PhysicalBookStore'
+                or
+                    tb_1_.c5 = ?
+        `);
+    });
+
+    it("asFunctionOfSingleTable", () => {
+        const baseStoreModel = dsl.derivedModel(
+            dsl.baseQuery(BOOK_STORE, (q, store) => {
+                return q.select({
+                    store,
+                    rank: dsl.native.num `row_number() over(partition by ${
+                        store.name
+                    } order by ${
+                        store.version
+                    } desc)`
+                });
+            })
+        );
+        const q = sqlClient.createQuery(baseStoreModel, (q, baseStore) => {
+            q.where(
+                dsl.or(
+                    baseStore.store.as(PHYSICAL_BOOK_STORE).city.eq("ChengDu"),
+                    baseStore.rank.eq(1)
+                ),
+            );
+            return q.select(
+                baseStore.store.fetch(SIMPLE_STORE_VIEW)
+            );
+        });
+        expectCode(sql(q), `
+            select 
+                tb_1_.c1,
+                tb_1_.c2,
+                tb_1_.c3
+            from (
+                select 
+                    tb_2_.ID c1,
+                    tb_2_.NAME c2,
+                    tb_2_.VERSION c3,
+                    tb_2_.CITY c4,
+                    row_number() over(partition by tb_2_.NAME order by tb_2_.VERSION desc) c5
+                from BOOK_STORE tb_2_
+            ) tb_1_
+            where 
+                    tb_1_.c4 = ?
+                or
+                    tb_1_.c5 = ?
+        `);
+    });
+
+    it("superPropsOfSingleTable", () => {
+        const basePhysicalStoreModel = dsl.derivedModel(
+            dsl.baseQuery(PHYSICAL_BOOK_STORE, (q, store) => {
+                return q.select({
+                    store,
+                    rank: dsl.native.num `row_number() over(partition by ${
+                        store.name
+                    } order by ${
+                        store.version
+                    } desc)`
+                });
+            })
+        );
+        const q = sqlClient.createQuery(basePhysicalStoreModel, (q, basePhysicalStore) => {
+            q.where(
+                dsl.or(
+                    basePhysicalStore.store.name.like("room"),
+                    basePhysicalStore.rank.eq(1)
+                ),
+            );
+            return q.select(
+                basePhysicalStore.store.fetch(SIMPLE_PHYSICAL_BOOK_STORE_VIEW)
+            );
+        });
+        expectCode(sql(q), `
+            select 
+                tb_1_.c1,
+                tb_1_.c2,
+                tb_1_.c3,
+                tb_1_.c4,
+                tb_1_.c5
+            from (
+                select 
+                    tb_2_.ID c1,
+                    tb_2_.NAME c2,
+                    tb_2_.VERSION c3,
+                    tb_2_.CITY c4,
+                    tb_2_.STREET c5,
+                    row_number() over(partition by tb_2_.NAME order by tb_2_.VERSION desc) c6
+                from BOOK_STORE tb_2_
+            ) tb_1_
+            where 
+                    tb_1_.c2 like ?
+                or
+                    tb_1_.c6 = ?
+        `);
+    });
+
+    it("superPropOfDowncastTypeOfSingleTable", () => {
+        const baseStoreModel = dsl.derivedModel(
+            dsl.baseQuery(BOOK_STORE, (q, store) => {
+                return q.select({
+                    store,
+                    rank: dsl.native.num `row_number() over(partition by ${
+                        store.name
+                    } order by ${
+                        store.version
+                    } desc)`
+                });
+            })
+        );
+        const q = sqlClient.createQuery(baseStoreModel, (q, baseStore) => {
+            q.where(
+                dsl.or(
+                    baseStore.store.as(PHYSICAL_BOOK_STORE).city.eq("ChengDu"),
+                    baseStore.store.as(PHYSICAL_BOOK_STORE).version.lt(3),
+                    baseStore.store.as(PHYSICAL_BOOK_STORE).version.gt(10),
+                    baseStore.rank.eq(1)
+                ),
+            );
+            return q.select(
+                baseStore.store.fetch(SIMPLE_STORE_VIEW)
+            );
+        });
+        expectCode(sql(q), `
+            select 
+                tb_1_.c1,
+                tb_1_.c2,
+                tb_1_.c3
+            from (
+                select 
+                    tb_3_.ID c1,
+                    tb_3_.NAME c2,
+                    tb_3_.VERSION c3,
+                    tb_3_.CITY c4,
+                    row_number() over(partition by tb_3_.NAME order by tb_3_.VERSION desc) c5
+                from BOOK_STORE tb_3_
+            ) tb_1_
+            left join BOOK_STORE tb_2_ on 
+                tb_1_.c1 = tb_2_.ID
+            where 
+                    tb_1_.c4 = ?
+                or
+                    tb_2_.VERSION < ?
+                or
+                    tb_2_.VERSION > ?
+                or
+                    tb_1_.c5 = ?
+        `);
+    });
+
+    it("asFunctionOfExportJoinedTableOfMutableTables", () => {
+        const baseStoreModel = dsl.derivedModel(
+            dsl.baseQuery(BOOK, (q, book) => {
+                q.where(
+                    dsl.or(
+                        book.name.ilike("graphql"),
+                        book.as(ELECTRONIC_BOOK).address.like("https:", "STARTS_WITH")
+                    )
+                );
+                return q.select({
+                    store: book.store(),
+                    rank: dsl.native.num `row_number() over(partition by ${
+                        book.store().name
+                    } order by ${
+                        book.store().version
+                    } desc)`
+                });
+            })
+        );
+        const q = sqlClient.createQuery(baseStoreModel, (q, baseStore) => {
+            q.where(
+                dsl.or(
+                    baseStore.store.as(PHYSICAL_BOOK_STORE).city.eq("ChengDu"),
+                    baseStore.rank.eq(1)
+                ),
+            );
+            return q.select(
+                baseStore.store.fetch(SIMPLE_STORE_VIEW)
+            );
+        });
+        expectCode(sql(q), `
+            select 
+                tb_1_.c1,
+                tb_1_.c2,
+                tb_1_.c3
+            from (
+                select 
+                    tb_3_.ID c1,
+                    tb_3_.NAME c2,
+                    tb_3_.VERSION c3,
+                    tb_3_.CITY c4,
+                    row_number() over(partition by tb_3_.NAME order by tb_3_.VERSION desc) c5
+                from BOOK tb_2_
+                inner join BOOK_STORE tb_3_ on 
+                    tb_2_.STORE_ID = tb_3_.ID
+                left join ELECTRONIC_BOOK tb_4_ on 
+                    tb_2_.TYPE in('ElectronicBook', 'PdfElectronicBook')
+                and
+                    tb_2_.ID = tb_4_.EB_ID
+                where 
+                        lower(tb_2_.NAME) like ?
+                    or
+                        tb_4_.ADDRESS like ?
+            ) tb_1_
+            where 
+                    tb_1_.c4 = ?
+                or
+                    tb_1_.c5 = ?
+        `);
     });
 });

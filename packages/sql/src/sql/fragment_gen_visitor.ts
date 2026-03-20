@@ -526,7 +526,12 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
         if (table.__isPrev) {
             return this._baseQueryMetadata!.realTable;
         }
-        return this._tableMap.get(table.__prototype) ?? err.makeErr("No mapped real table");
+        return this._tableMap.get(table.__prototype) 
+            ?? err.makeErr(`No mapped real table for  ${
+                table.__entity != null 
+                    ? `entity table "${table.__entity.name}"`
+                    : "base table"
+            }`);
     }
 
     private _createColumn(

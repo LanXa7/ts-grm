@@ -49,6 +49,14 @@ export class PreVisitor extends ast.AbstractVisitor {
                     (selection as any as ast.Node).accept(this);
                 }
                 break;
+            case "BASE":
+                for (const key in projection.args) {
+                    const value = projection.args[key];
+                    if (value instanceof ast.AbstractExpr) {
+                        value.accept(this);
+                    }
+                }
+                break;
         }
         super.visitAtomQuery(query);
         for (const table of query.tables) {
@@ -60,7 +68,7 @@ export class PreVisitor extends ast.AbstractVisitor {
         if (expr.table.__isPrev) {
             return;
         }
-        const shadow = this._toRealTable(expr.table).shadow;
+        const shadow = this._toRealTable(expr.table.__to(expr.prop.declaringEntity)).shadow;
         if (shadow != null) {
             shadow.baseQueryMetadata.alias(
                 expr.table.__anchor!.exportedName, 
@@ -217,10 +225,12 @@ export class PreVisitor extends ast.AbstractVisitor {
 
     private _processInheritance(table: RealTable) {
         const parentTable = table.parent!;
-        const exportedName = parentTable.symbol.__anchor!.exportedName;
-        parentTable.shadow!.baseQueryMetadata.alias(
-            exportedName, 
-            parentTable.symbol.__entity!.tableSettings.discriminator!.name
-        );
+        if (table.symbol.__entity!.ancestors.has(parentTable.symbol.__entity!)) {
+            const exportedName = parentTable.symbol.__anchor!.exportedName;
+            parentTable.shadow!.baseQueryMetadata.alias(
+                exportedName, 
+                parentTable.symbol.__entity!.tableSettings.discriminator!.name
+            );
+        }
     }
 }
