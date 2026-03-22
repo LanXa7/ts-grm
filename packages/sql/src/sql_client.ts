@@ -1,4 +1,4 @@
-import { err, SqlClient } from "@ts-grm/core";
+import { ast, err, SqlClient } from "@ts-grm/core";
 import { SqlClientOptions } from "./cfg/sql_client_options";
 import { Driver } from "./driver/deriver";
 import { metadata } from "@ts-grm/core";
@@ -25,6 +25,10 @@ export interface SqlClientImplementor extends SqlClient {
     readonly driver: Driver;
 
     readonly options: SqlClientOptions;
+
+    isDirectAssociatedKey(
+        expr: ast.PropExprContract
+    ): boolean;
 }
 
 function createDefaultOptions(): SqlClientOptions {

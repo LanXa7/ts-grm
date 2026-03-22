@@ -78,7 +78,7 @@ type DslMembers<
                 ? Expression<MakeType<R, CombinedNullity<TNullity, Nullity>>>
             : TMembers[K] extends EmbeddedProp<infer R, infer Nullity, any>
                 ? () => DslMembers<TModel, R, CombinedNullity<TNullity, Nullity>, TRiskAccepted>
-            : TMembers[K] extends ReferenceProp<infer TTargetModel, any, any, any>
+            : TMembers[K] extends ReferenceProp<infer TTargetModel, any, any, any, any>
                 ? ReferenceJoinAction<TModel, TTargetModel, CtorMembers<ModelCtor<TTargetModel>>, TRiskAccepted>
             : TMembers[K] extends CollectionProp<infer TTargetModel>
                 ? CollectionJoinAction<TModel, TTargetModel, CtorMembers<ModelCtor<TTargetModel>>, TRiskAccepted>
@@ -89,12 +89,12 @@ type DslMembers<
 type ReferenceKeyMembers<TModel extends AnyModel, TMembers, TNullity extends NullityType> = {
     [
         K in keyof TMembers as
-            TMembers[K] extends ReferenceProp<infer _, any, "OWNING", infer TKey>
+            TMembers[K] extends ReferenceProp<infer _, any, "OWNING", any, infer TKey>
                 ? TKey extends string
                     ? `${K & string}${Capitalize<TKey>}`
                     : never
                 : never
-    ]: TMembers[K] extends ReferenceProp<infer TTargetModel, infer Nullity, "OWNING", infer TKey>
+    ]: TMembers[K] extends ReferenceProp<infer TTargetModel, infer Nullity, "OWNING", any, infer TKey>
         ? TKey extends string
             ? AllModelMembers<TTargetModel>[TKey] extends EmbeddedProp<infer R, any, any>
                 ? () => DslMembers<TModel, R, CombinedNullity<TNullity, Nullity>, false>

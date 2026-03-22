@@ -25,7 +25,8 @@ import type {
     AtomRootQuery,
     AtomExpressionSubQuery,
     AtomTupleSubQuery,
-    AtomBaseQuery
+    AtomBaseQuery,
+    metadata
 } from "@ts-grm/core";
 import { suppressUnused, ast } from "@ts-grm/core";
 import { MutableRootQueryImpl } from "./mutable_root_query_impl";
@@ -44,10 +45,14 @@ export class SqlClientImpl implements SqlClientImplementor {
         return { sqlClient: undefined }
     }
 
+    private readonly _strategy: metadata.DatabaseNamingStrategy;
+
     constructor(
         readonly driver: Driver,
         readonly options: SqlClientOptions
-    ) {}
+    ) {
+        this._strategy = options.strategy;
+    }
 
     findNonNull<V extends View<any, any>>(
         view: V,
@@ -78,6 +83,23 @@ export class SqlClientImpl implements SqlClientImplementor {
         const fn = args[args.length - 1] as Function;
         const projection = fn.apply(undefined, fnArgs) as AbstractRootQueryProjection<any>;
         return new AtomRootQueryImpl<TProjection>(mutableQuery, projection, undefined);
+    }
+
+    isDirectAssociatedKey(
+        expr: ast.PropExprContract
+    ): boolean {
+        const joinProp = expr.table.__joinOperation?.joinProp;
+        if (joinProp == null) {
+            return false;
+        }
+        const storage = joinProp.toStorage(this._strategy);
+        if (storage == null) {
+            return false;
+        }
+        if (joinProp.targetKey !== expr.prop.rootProp.name) {
+            return false;
+        }
+        return true;
     }
 }
 

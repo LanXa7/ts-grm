@@ -14,6 +14,8 @@ export class EntityProp {
 
     readonly inputNonNull: boolean;
 
+    private _rootProp: EntityProp | undefined = undefined;
+
     private _scalarType: ScalarType | undefined = undefined;
 
     readonly associationType: AssociationType | undefined = undefined;
@@ -80,6 +82,14 @@ export class EntityProp {
         }
         this._thisKeyProp = undefined;
         this._targetKeyProp = undefined;
+    }
+
+    get rootProp(): EntityProp {
+        let rootProp = this._rootProp;
+        if (rootProp == null) {
+            this._rootProp = rootProp = this.parentProp?.rootProp ?? this;
+        }
+        return rootProp;
     }
 
     get scalarType(): ScalarType | undefined {
@@ -411,13 +421,6 @@ export class EntityProp {
     }
 
     private raise(strings: TemplateStringsArray, ...values: any[]): never {
-        if (this.parentProp != null) {
-            throw new PropError(
-                this.parentProp.declaringEntity.name,
-                `this.parentProp.name.${this.name}`,
-                dedent(strings, ...values)
-            );
-        }
         throw new PropError(
             this.declaringEntity.name,
             this.name,

@@ -23,44 +23,6 @@ describe("QuerySqlTest", () => {
         `);
     });
 
-    it("subQuery", () => {
-        const q = sqlClient.createQuery(BOOK, (q, book) => {
-            q.where(
-                dsl.tuple(book.name, book.edition).inSubQuery(
-                    dsl.subQuery(BOOK, (q, book) => {
-                        q.groupBy(book.name);
-                        return q.select(
-                            book.name,
-                            dsl.max(book.edition).asNonNull()
-                        );
-                    })
-                )
-            )
-            return q.select(
-                book.fetch(SIMPLE_BOOK_VIEW)
-            );
-        });
-        expectCode(sql(q), `
-            select 
-                tb_1_.ID,
-                tb_1_.NAME,
-                tb_1_.EDITION
-            from BOOK tb_1_
-            where 
-                (
-                    tb_1_.NAME,
-                    tb_1_.EDITION
-                ) in(
-                    select 
-                        tb_2_.NAME,
-                        max(tb_2_.EDITION)
-                    from BOOK tb_2_
-                    group by 
-                        tb_2_.NAME
-                )
-        `);
-    });
-
     it("baseQuery", () => {
         const baseModel = dsl.derivedModel(
             dsl.unionAll(

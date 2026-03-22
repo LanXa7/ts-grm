@@ -80,7 +80,7 @@ export const TREE_NODE = model("TreeNode", "id", class {
     id = prop.i64()
     name = prop.str()
     parentNode = prop.m2o(() => TREE_NODE).nullable()
-    childNodes = prop.o2m(() => TREE_NODE).mappedBy("parentNode");
+    childNodes = prop.o2m(() => TREE_NODE).mappedBy("parentNode")
 }, ctx => {
     ctx.unique("name", "parentNode");
 });

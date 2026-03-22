@@ -20,6 +20,7 @@ export type JoinColumn<
 
 export type JoinTable<
     TModel extends AnyModel, 
+    TSourceReferencedProp extends string, // "" means default
     TTargetReferencedProp extends keyof AllModelMembers<TModel>
 > =
     {
@@ -29,7 +30,7 @@ export type JoinTable<
     } | {
         name?: string,
         joinThis?: {
-            referencedProp?: string,
+            referencedProp?: TSourceReferencedProp,
             columns?: WeakTypeJoinColumns,
             cascade?: CascadeType
         }
