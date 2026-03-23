@@ -1,7 +1,7 @@
 import { Entity } from "./entity";
 import { BaseModelImplementor } from "./base_query_implementor";
 import { createTypedBaseTable, TypedBaseTable } from "./base_table";
-import { BaseQuerySelectMapArgs, JoinType, ModelLike } from "@/dsl";
+import { AnyAssociationModel, BaseQuerySelectMapArgs, JoinType, ModelLike } from "@/dsl";
 import { JoinFilter, JoinOperation } from "./entity_table";
 import { ModelImpl } from "./model_impl";
 import { AnyModel } from "@/schema/model";
@@ -13,6 +13,8 @@ export interface AbstractTable {
     readonly __entity: Entity | undefined;
 
     readonly __baseModel: BaseModelImplementor<any> | undefined;
+
+    readonly __associationModel: AnyAssociationModel | undefined;
 
     readonly __joinOperation: JoinOperation | undefined;
 

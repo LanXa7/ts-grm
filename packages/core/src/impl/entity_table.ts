@@ -13,7 +13,7 @@ import { FetchedViewImpl } from "./fetched_view_impl";
 import { TypedBaseTable } from "./base_table";
 import { ArgumentError, StateError } from "@/error/common";
 import { ModelContract } from "./model_contract";
-import { BaseQuerySelectMapArgs } from "@/dsl";
+import { AnyAssociationModel, BaseQuerySelectMapArgs } from "@/dsl";
 import { BaseModelImplementor } from "./base_query_implementor";
 import { AnyModel } from "@/schema/model";
 import { AbstractPred, ConstantPred } from "./ast/pred";
@@ -241,6 +241,10 @@ export abstract class AbstractEntityTable implements AbstractTable {
     }
 
     get __baseModel(): BaseModelImplementor<any> | undefined {
+        return undefined;
+    }
+
+    get __associationModel(): AnyAssociationModel | undefined {
         return undefined;
     }
 

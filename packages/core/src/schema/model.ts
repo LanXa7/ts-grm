@@ -1,4 +1,4 @@
-import { AssociatedProp, CollectionProp, EmbeddedProp, ManyToManyProp, ManyToOneProp, OneToOneProp, ScalarProp } from "@/schema/prop";
+import { AssociatedProp, EmbeddedProp, ManyToManyProp, ManyToOneProp, OneToOneProp, ScalarProp } from "@/schema/prop";
 import { FlattenMembers } from "@/utils";
 import { ModelContextImpl, ModelImpl } from "@/impl/model_impl";
 import { DatabaseIdentifier } from "./database_identifier";
@@ -285,14 +285,6 @@ type OrderedKeysImpl<TFlattenCtorMembers extends object> =
 
 export type ReferenceKey<TModel extends AnyModel> = 
     (keyof AllModelMembers<TModel>) & string;
-
-export type CollectionKeys<TModel extends AnyModel> =
-    {
-        [K in keyof AllModelMembers<TModel>]:
-            AllModelMembers<TModel>[K] extends CollectionProp<infer _>
-                ? K
-                : never
-    }[keyof AllModelMembers<TModel>];
 
 export type Extends<
     TModel1 extends AnyModel,

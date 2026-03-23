@@ -26,7 +26,8 @@ import type {
     AtomExpressionSubQuery,
     AtomTupleSubQuery,
     AtomBaseQuery,
-    metadata
+    metadata,
+    AnyAssociationModel
 } from "@ts-grm/core";
 import { suppressUnused, ast } from "@ts-grm/core";
 import { MutableRootQueryImpl } from "./mutable_root_query_impl";
@@ -64,7 +65,7 @@ export class SqlClientImpl implements SqlClientImplementor {
     }
 
     createQuery<
-        const TModels extends AtLeastOne<AnyModel | BaseModel<any>>,
+        const TModels extends AtLeastOne<AnyModel | BaseModel<any> | AnyAssociationModel>,
         TProjection extends RootQueryProjection<any>
     >(
         ...args: [
@@ -106,7 +107,7 @@ export class SqlClientImpl implements SqlClientImplementor {
 class QueryFactoryImpl implements ast.QueryFactory {
     
     createAtomSubQuery<
-        const TModels extends AtLeastOne<AnyModel | BaseModel<any>>,
+        const TModels extends AtLeastOne<AnyModel | BaseModel<any> | AnyAssociationModel>,
         TProjection extends SubQueryProjection<any, any> | void
     >(
         ...args: [
@@ -147,7 +148,7 @@ class QueryFactoryImpl implements ast.QueryFactory {
     }
         
     createAtomBaseQuery<
-        const TModels extends AtLeastOne<AnyModel | BaseModel<any>>,
+        const TModels extends AtLeastOne<AnyModel | BaseModel<any> | AnyAssociationModel>,
         TProjection extends BaseQueryProjection<any>
     >(
         ...args: [

@@ -106,6 +106,8 @@ const typedBaseTableHandler: ProxyHandler<BaseTableTarget> = {
                 return undefined;
             case "__baseModel":
                 return target.__baseModel;
+            case "__associationModel":
+                return undefined;
             case "__anchor":
                 return undefined;
             case "__shadow":

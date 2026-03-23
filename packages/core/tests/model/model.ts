@@ -79,7 +79,7 @@ export const AUTHOR = model("Author", "id", class {
 export const TREE_NODE = model("TreeNode", "id", class {
     id = prop.i64()
     name = prop.str()
-    parentNode = prop.m2o(() => TREE_NODE).nullable()
+    parentNode = prop.m2o(() => TREE_NODE).joinColumns({cascade: "DELETE"}).nullable()
     childNodes = prop.o2m(() => TREE_NODE).mappedBy("parentNode")
 }, ctx => {
     ctx.unique("name", "parentNode");

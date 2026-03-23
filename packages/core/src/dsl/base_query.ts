@@ -6,6 +6,7 @@ import { getQueryFactory } from "@/impl/ast/query_factory";
 import { BaseQueryImplementor } from "@/impl/base_query_implementor";
 import { QueryContract } from "@/impl/ast";
 import { ArgumentError } from "@/error/common";
+import { AnyAssociationModel } from "./association";
 
 export function derivedModel<TQuery extends BaseQuery<any>>(
     query: TQuery,
@@ -25,7 +26,7 @@ export function cteModel<TQuery extends BaseQuery<any>>(
 }
 
 export function baseQuery<
-    const TModels extends AtLeastOne<AnyModel | BaseModel<any>>,
+    const TModels extends AtLeastOne<AnyModel | BaseModel<any> | AnyAssociationModel>,
     TProjection extends BaseQueryProjection<any>
 >(
     ...args: [

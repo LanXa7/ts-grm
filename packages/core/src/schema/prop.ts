@@ -1,5 +1,13 @@
 import { ModelOrder, OrderNullsType } from "@/schema/order";
-import { AllModelMembers, AnyModel, ManyToManyMappedByKeys, ModelIdKey, OneToManyMappedByKeys, OneToOneMappedByKeys, ReferenceKey } from "@/schema/model";
+import { 
+    AllModelMembers, 
+    AnyModel, 
+    ManyToManyMappedByKeys, 
+    ModelIdKey, 
+    OneToManyMappedByKeys, 
+    OneToOneMappedByKeys, 
+    ReferenceKey 
+} from "@/schema/model";
 import { CascadeType, JoinColumn, JoinColumns, JoinTable } from "./join";
 import { FlattenMembers } from "@/utils";
 import { ArgumentError } from "@/error/common";
@@ -371,7 +379,7 @@ export class ConfigurableOneToOneProp<
 
     joinTable<
         TBackReferencedProp extends string = "",
-        TTargetReferencedProp extends ReferenceKey<TModel> | "" = "",
+        TTargetReferencedProp extends ReferenceKey<TModel> | "" = ModelIdKey<TModel>,
     >(
         options: JoinTable<TModel, TBackReferencedProp, TTargetReferencedProp>
     ): OneToOneProp<
@@ -490,7 +498,7 @@ export class ConfigurableManyToOneProp<
 
     joinTable<
         TBackReferenceProp extends string = "",
-        TTargetReferencedProp extends ReferenceKey<TModel> | "" = ""
+        TTargetReferencedProp extends ReferenceKey<TModel> | "" = ModelIdKey<TModel>
     >(
         options: JoinTable<TModel, TBackReferenceProp, TTargetReferencedProp>
     ): ManyToOneProp<
@@ -671,8 +679,8 @@ export class ConfigurableManyToManyProp<
     }
 
     joinTable<
-        TBackReferenceProp extends string,
-        TTargetReferencedProp extends ReferenceKey<TModel> | ""
+        TBackReferenceProp extends string = "",
+        TTargetReferencedProp extends ReferenceKey<TModel> | "" = ModelIdKey<TModel>
     >(
         options: JoinTable<TModel, TBackReferenceProp, TTargetReferencedProp>
     ): ManyToManyProp<

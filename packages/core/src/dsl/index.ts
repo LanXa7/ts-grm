@@ -4,6 +4,7 @@ import { all, any, exists, notExists, subQuery } from "./sub_query";
 import { unionAll, union, minus, intersect } from "./merged_query";
 import { native } from "./native";
 import { baseQuery, cteModel, derivedModel } from "./base_query";
+import { associationModel } from "./association";
 import { tuple } from "./tuple";
 export { ExpressionOrder } from "./utils";
 export type { SqlClient } from "./sql_client";
@@ -40,7 +41,18 @@ export type {
     BaseQueryProjection,
     BaseQueryMapOf
 } from "./base_query";
-export type { Table, JoinType, ModelLike, EntityTable, BaseTable, FilterType, FilterContextType, NullableEntityTableOf, NullableBaseQuerySelectMapOf } from "./table";
+export type { AssociationModel, AnyAssociationModel } from "./association";
+export type { 
+    Table, 
+    JoinType, 
+    ModelLike, 
+    EntityTable, 
+    BaseTable, 
+    FilterType, 
+    FilterContextType, 
+    NullableEntityTableOf, 
+    NullableBaseQuerySelectMapOf 
+} from "./table";
 export type { LikeMode, Expression, ExpressionLike, Predicate } from "./expression";
 
 export const dsl = {
@@ -64,6 +76,7 @@ export const dsl = {
     baseQuery,
     derivedModel,
     cteModel,
+    associationModel,
     constant,
     tuple,
     native

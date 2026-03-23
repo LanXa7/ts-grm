@@ -1,5 +1,5 @@
 import { Extends } from "@/schema/model";
-import test from "node:test";
+import { test } from "vitest";
 import { expectTypeOf } from "vitest";
 import { BOOK, ELECTRONIC_BOOK, PAPER_BOOK, PDF_ELECTRONIC_BOOK, TREE_NODE } from "../model/model";
 

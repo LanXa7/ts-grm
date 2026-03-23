@@ -4,9 +4,25 @@ import { BaseModelImplementor } from "./base_query_implementor";
 import { JoinFilter, JoinOperation } from "./entity_table";
 import { ShadowAnchor } from "./shadow_anchor";
 import { TypedBaseTable } from "./base_table";
-import { BaseQuerySelectMapArgs, JoinType, ModelLike } from "@/dsl";
+import { AnyAssociationModel, BaseQuerySelectMapArgs, JoinType, ModelLike } from "@/dsl";
+import { suppressUnused } from "@/utils";
 
-export class AssociationTable implements AbstractTable {
+export class AbstractAssociationTable implements AbstractTable {
+
+    constructor(
+        readonly __associationModel: AnyAssociationModel
+    ) {
+    }
+
+    __type(): {
+        readonly tableLike: true;
+        readonly associationTableLike: true
+    } {
+        return {
+            tableLike: true,
+            associationTableLike: true
+        }
+    }
 
     get __entity(): Entity | undefined {
         return undefined;
@@ -55,6 +71,8 @@ export class AssociationTable implements AbstractTable {
             readonly filter: JoinFilter
         }
     ): AbstractTable {
+        suppressUnused(model);
+        suppressUnused(options);
         throw new Error();
     }
 }

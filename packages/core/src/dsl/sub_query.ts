@@ -1,12 +1,14 @@
 import { AnyModel } from "@/schema/model";
 import { Expression, ExpressionLike, Predicate } from "./expression";
-import { EntityTable } from "./table";
 import { AtLeastOne, AtLeastTwo, ExpressionOrder } from "./utils";
 import { getQueryFactory } from "@/impl/ast/query_factory";
 import { ExistsPred, subQueryExpr } from "@/impl/ast/sub_query_expr";
+import { BaseModel } from "./base_query";
+import { AnyAssociationModel } from "./association";
+import { Table } from ".";
 
 export function subQuery<
-    const TModels extends AtLeastOne<AnyModel>,
+    const TModels extends AtLeastOne<AnyModel | BaseModel<any> | AnyAssociationModel>,
     TProjection extends SubQueryProjection<any, any> | void
 >(
     ...args: [
@@ -14,7 +16,7 @@ export function subQuery<
         fn: (
             q: MutableSubQuery,
             ...tables: {
-                [K in keyof TModels]: EntityTable<TModels[K]>
+                [K in keyof TModels]: Table<TModels[K]>
             } extends infer T ? T extends any[] ? T : never : never
         ) => TProjection
     ]

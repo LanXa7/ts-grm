@@ -40,6 +40,8 @@ export type  {
     BaseQuerySelectMapArgs,
     BaseQueryProjection,
     BaseQueryMapOf,
+    AssociationModel,
+    AnyAssociationModel,
     Table,
     EntityTable,
     BaseTable,

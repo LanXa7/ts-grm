@@ -5,6 +5,7 @@ import { AtomRootQuery, MutableRootQuery, RootQueryProjection } from "./root_que
 import { Table } from "./table";
 import { Criteria } from "./criteria";
 import { AnyModel } from "@/schema/model";
+import { AnyAssociationModel } from "./association";
 
 export interface SqlClient {
 
@@ -16,7 +17,7 @@ export interface SqlClient {
     ): Promise<TypeOf<V>>;
 
     createQuery<
-        const TModels extends AtLeastOne<AnyModel | BaseModel<any>>,
+        const TModels extends AtLeastOne<AnyModel | BaseModel<any> | AnyAssociationModel>,
         TProjection extends RootQueryProjection<any>
     >(
         ...args: [

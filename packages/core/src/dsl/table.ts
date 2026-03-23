@@ -1,31 +1,45 @@
 import { AllModelMembers, AnyModel, CtorMembers, DerivedModel, ModelCtor } from "@/schema/model";
-import { CollectionProp, EmbeddedProp, I64Prop, NullityType, ReferenceProp, DirectTypeOf, ScalarProp, CombinedNullity } from "@/schema/prop";
+import { 
+    CollectionProp, 
+    EmbeddedProp, 
+    I64Prop, 
+    NullityType, 
+    ReferenceProp, 
+    DirectTypeOf, 
+    ScalarProp, 
+    CombinedNullity 
+} from "@/schema/prop";
 import { Expression, MakeType, Predicate } from "./expression";
 import { FilterNever } from "@/utils";
 import { View } from "@/schema/dto";
 import { FetchedView } from "./root_query";
 import { BaseQuerySelectMapArgs, BaseModel, BaseQueryMapOf } from "./base_query";
+import { AnyAssociationModel, AssociationTable } from "./association";
 
 export type TableLike = {
 
-    __type(): { tableLike: true; };
+    __type(): { 
+        readonly tableLike: true; 
+    };
 };
 
 export type EntityTableLike = {
 
     __type(): {
-        tableLike: true;
-        entityTableLike: true;
+        readonly tableLike: true;
+        readonly entityTableLike: true;
     };
 };
 
-export type ModelLike = AnyModel | BaseModel<any>;
+export type ModelLike = AnyModel | BaseModel<any> | AnyAssociationModel;
 
 export type Table<T extends ModelLike, TRiskAccepted extends boolean = false> =
     T extends AnyModel
         ? EntityTable<T, TRiskAccepted>
     : T extends BaseModel<infer TMap>
         ? BaseTable<TMap, TRiskAccepted>
+    : T extends AnyAssociationModel
+        ? AssociationTable<T>
     : never;
 
 export type EntityTable<TModel extends AnyModel, TRiskAccepted extends boolean = false> = 

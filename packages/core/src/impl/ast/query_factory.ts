@@ -15,7 +15,8 @@ import {
     MutableSubQuery, 
     RootQuery, 
     RootQueryProjection, 
-    Table
+    Table,
+    AnyAssociationModel
 } from "@/dsl";
 import { AnyModel } from "@/schema/model";
 import { SubQueryProjection } from "@/dsl/sub_query";
@@ -23,7 +24,7 @@ import { SubQueryProjection } from "@/dsl/sub_query";
 export interface QueryFactory {
 
     createAtomSubQuery<
-        const TModels extends AtLeastOne<AnyModel | BaseModel<any>>,
+        const TModels extends AtLeastOne<AnyModel | BaseModel<any> | AnyAssociationModel>,
         TProjection extends SubQueryProjection<any, any> | void
     >(
         ...args: [
@@ -44,7 +45,7 @@ export interface QueryFactory {
         : never;
         
     createAtomBaseQuery<
-        const TModels extends AtLeastOne<AnyModel | BaseModel<any>>,
+        const TModels extends AtLeastOne<AnyModel | BaseModel<any> | AnyAssociationModel>,
         TProjection extends BaseQueryProjection<any>
     >(
         ...args: [
