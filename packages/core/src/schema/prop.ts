@@ -50,8 +50,8 @@ export const prop = {
 
     o2o<TModel extends AnyModel>(
         targetModel: ModelRef<TModel>
-    ): UnconfiguredOneToOneProp<TModel, "NONNULL", "OWNING", ModelIdKey<TModel>> {
-        return new UnconfiguredOneToOneProp({
+    ): ConfigurableOneToOneProp<TModel, "NONNULL", "OWNING", ModelIdKey<TModel>> {
+        return new ConfigurableOneToOneProp({
             ...EMPTY_PROP_DEFINITION_DATA, 
             targetModel, 
             associationType: "ONE_TO_ONE"
@@ -60,14 +60,14 @@ export const prop = {
 
     m2o<TModel extends AnyModel>(
         targetModel: ModelRef<TModel>
-    ): UnconfiguredManyToOneProp<
+    ): ConfigurableManyToOneProp<
         TModel, 
         "NONNULL", 
         "OWNING", 
         "",
         ModelIdKey<TModel>
     > {
-        return new UnconfiguredManyToOneProp({
+        return new ConfigurableManyToOneProp({
             ...EMPTY_PROP_DEFINITION_DATA, 
             targetModel, 
             associationType: "MANY_TO_ONE"
@@ -76,39 +76,24 @@ export const prop = {
 
     o2m<TModel extends AnyModel>(
         targetModel: ModelRef<TModel>
-    ): UnconfiguredOneToManyProp<TModel, "NONNULL", "OWNING", "", ModelIdKey<TModel>> {
-        return new UnconfiguredOneToManyProp({
+    ): ConfigurableOneToManyProp<TModel, "NONNULL", "OWNING", "", ModelIdKey<TModel>> {
+        return new ConfigurableOneToManyProp({
             ...EMPTY_PROP_DEFINITION_DATA, 
             targetModel, 
             associationType: "ONE_TO_MANY"
         });
     },
 
-    o2m_<TModel extends AnyModel>(
-        targetModel: () => {
-            readonly model: TModel,
-            readonly mappedBy: OneToManyMappedByKeys<TModel>
-        }
-    ): OneToManyProp<TModel, "NONNULL", "OWNING", "", ""> {
-        const options = targetModel();
-        return new OneToManyProp({
-            ...EMPTY_PROP_DEFINITION_DATA, 
-            targetModel: options.model, 
-            mappedBy: options.mappedBy,
-            associationType: "ONE_TO_MANY"
-        });
-    },
-
     m2m<TModel extends AnyModel>(
         targetModel: ModelRef<TModel>
-    ): UnconfiguredManyToManyProp<
+    ): ConfigurableManyToManyProp<
         TModel,
         "NONNULL",
         "OWNING",
         "",
         ModelIdKey<TModel>
     > {
-        return new UnconfiguredManyToManyProp({
+        return new ConfigurableManyToManyProp({
             ...EMPTY_PROP_DEFINITION_DATA, 
             targetModel, 
             associationType: "MANY_TO_MANY"
@@ -118,10 +103,12 @@ export const prop = {
 
 export class Prop<T, TNullity extends NullityType> {
 
+    readonly __phantom?: T;
+
     __type(): {
-        prop: [T, TNullity] | true
+        readonly prop: TNullity | true;
     } {
-        return {prop: true };
+        return { prop: true };
     };
 
     protected constructor(readonly __data: PropData) {}
@@ -132,8 +119,8 @@ export class ScalarProp<
 > extends Prop<T, TNullity> {
 
     override __type(): {
-        prop: [T, TNullity] | true,
-        scalarProp: [T, TNullity] | true
+        readonly prop: TNullity | true;
+        readonly scalarProp: TNullity | true;
     } {
         return { 
             prop: true, 
@@ -156,9 +143,9 @@ export class I64Prop<
 > extends ScalarProp<T, TNullity> {
 
     override __type(): {
-        prop: [T, TNullity] | true,
-        scalarProp: [T, TNullity] | true,
-        i64Prop: [T, TNullity] | true
+        readonly prop: TNullity | true;
+        readonly scalarProp: TNullity | true;
+        readonly i64Prop: TNullity | true;
     } {
         return { 
             prop: true, 
@@ -183,8 +170,8 @@ export class EmbeddedProp<
 > extends Prop<TProps, TNullity> {
 
     override __type(): {
-        prop: [TProps, TNullity] | true,
-        embeddedProp: [TProps, TNullity, TFlattenProps] | true,
+        readonly prop: TNullity | true;
+        readonly embeddedProp: [TNullity, TFlattenProps] | true;
     } {
         return { 
             prop: true, 
@@ -214,12 +201,12 @@ export abstract class AssociatedProp<
     TNullity extends NullityType,
     TDirection extends DirectionType,
     TBackReferenceKey extends string,
-    TTargetReferenceKey extends ReferenceKey<TModel> | ""
+    TTargetReferenceKey extends string
 > extends Prop<TModel, TNullity> {
 
     override __type(): {
-        prop: [TModel, TNullity] | true,
-        associatedProp: [TModel, TNullity, TDirection, TBackReferenceKey, TTargetReferenceKey] | true
+        readonly prop: TNullity | true;
+        readonly associatedProp: [TNullity, TDirection, TBackReferenceKey, TTargetReferenceKey] | true;
     } {
         return { 
             prop: true, 
@@ -241,12 +228,13 @@ export interface ReferenceProp<
     TNullity extends NullityType,
     TDirection extends DirectionType,
     TBackReferenceKey extends string,
-    TTargetReferenceKey extends ReferenceKey<TModel> | ""
+    TTargetReferenceKey extends string
 > extends AssociatedProp<TModel, TNullity, TDirection, TBackReferenceKey, TTargetReferenceKey> {
+
     __type(): {
-        prop: [TModel, TNullity] | true,
-        associatedProp: [TModel, TNullity, TDirection, TBackReferenceKey, TTargetReferenceKey] | true,
-        referenceProp: [TModel, TNullity, TDirection, TBackReferenceKey, TTargetReferenceKey] | true
+        readonly prop: TNullity | true;
+        readonly associatedProp: [TNullity, TDirection, TBackReferenceKey, TTargetReferenceKey] | true;
+        readonly referenceProp: [TNullity, TDirection, TBackReferenceKey, TTargetReferenceKey] | true;
     };
 }
 
@@ -260,8 +248,11 @@ export type ForeignKeyProp<T> =
 export interface CollectionProp<
     TModel extends AnyModel
 > {
+  
+    readonly __phantom?: TModel;
+
     __type(): {
-        collectionProp: TModel | true
+        readonly collectionProp: true;
     };
 }
 
@@ -270,15 +261,15 @@ export class OneToOneProp<
     TNullity extends NullityType,
     TDirection extends DirectionType,
     TBackReferenceKey extends string,
-    TTargetReferenceKey extends ReferenceKey<TModel> | ""
+    TTargetReferenceKey extends string
 > extends AssociatedProp<TModel, TNullity, TDirection, TBackReferenceKey, TTargetReferenceKey> 
 implements ReferenceProp<TModel, TNullity, TDirection, TBackReferenceKey, TTargetReferenceKey> {
 
     override __type(): {
-        prop: [TModel, TNullity] | true,
-        associatedProp: [TModel, TNullity, TDirection, TBackReferenceKey, TTargetReferenceKey] | true,
-        referenceProp: [TModel, TNullity, TDirection, TBackReferenceKey, TTargetReferenceKey] | true,
-        oneToOneProp: [TModel, TNullity, TDirection, TBackReferenceKey, TTargetReferenceKey] | true
+        readonly prop: TNullity | true;
+        readonly associatedProp: [TNullity, TDirection, TBackReferenceKey, TTargetReferenceKey] | true;
+        readonly referenceProp: [TNullity, TDirection, TBackReferenceKey, TTargetReferenceKey] | true;
+        readonly oneToOneProp: [TNullity, TDirection, TBackReferenceKey, TTargetReferenceKey] | true;
     } {
         return { 
             prop: true, 
@@ -292,27 +283,39 @@ implements ReferenceProp<TModel, TNullity, TDirection, TBackReferenceKey, TTarge
         super(data);
     }
 
-    nullable(): OneToOneProp<TModel, "NULLABLE", TDirection, TBackReferenceKey, TTargetReferenceKey> {
+    nullable(): OneToOneProp<
+        TModel, 
+        "NULLABLE", 
+        TDirection, 
+        TBackReferenceKey, 
+        TTargetReferenceKey
+    > {
         return new OneToOneProp(
             {...this.__data, nullity: "NULLABLE"}
         );
     }
 }
 
-class UnconfiguredOneToOneProp<
+export class ConfigurableOneToOneProp<
     TModel extends AnyModel,
     TNullity extends NullityType = "NONNULL",
     TDirection extends DirectionType = "OWNING",
     TBackReferenceKey extends string = "",
-    TTargetReferenceKey extends ReferenceKey<TModel> | "" = ""
+    TTargetReferenceKey extends string = ""
 > extends OneToOneProp<TModel, TNullity, TDirection, TBackReferenceKey, TTargetReferenceKey> {
 
     constructor(data: PropData) {
         super(data);
     }
 
-    nullable(): UnconfiguredOneToOneProp<TModel, "NULLABLE", TDirection, TBackReferenceKey, TTargetReferenceKey> {
-        return new UnconfiguredOneToOneProp({...this.__data, nullity: "NULLABLE"});
+    nullable(): ConfigurableOneToOneProp<
+        TModel, 
+        "NULLABLE", 
+        TDirection, 
+        TBackReferenceKey, 
+        TTargetReferenceKey
+    > {
+        return new ConfigurableOneToOneProp({...this.__data, nullity: "NULLABLE"});
     }
 
     mappedBy(
@@ -333,15 +336,33 @@ class UnconfiguredOneToOneProp<
             columns?: JoinColumns<AllModelMembers<TModel>[TTargetKeyProp]>
             cascade?: CascadeType
         }
-    ): OneToOneProp<TModel, TNullity, "OWNING", "", TTargetKeyProp>;
+    ): OneToOneProp<
+        TModel, 
+        TNullity, 
+        "OWNING", 
+        TBackReferenceKey, 
+        TTargetKeyProp
+    >;
 
     joinColumns(
         ...joinColumns: JoinColumns<AllModelMembers<TModel>[ModelIdKey<TModel>]>
-    ): OneToOneProp<TModel, TNullity, "OWNING", "", ModelIdKey<TModel>>;
+    ): OneToOneProp<
+        TModel, 
+        TNullity, 
+        "OWNING", 
+        TBackReferenceKey, 
+        ModelIdKey<TModel>
+    >;
 
     joinColumns(
         data: any
-    ): OneToOneProp<TModel, TNullity, "OWNING", "", ModelIdKey<TModel>> {
+    ): OneToOneProp<
+        TModel, 
+        TNullity, 
+        "OWNING", 
+        TBackReferenceKey, 
+        ModelIdKey<TModel>
+    > {
         return new OneToOneProp({
             ...this.__data, 
             joinColumns: foreignKeyDataOf(data, this.__data.targetModel)
@@ -353,7 +374,13 @@ class UnconfiguredOneToOneProp<
         TTargetReferencedProp extends ReferenceKey<TModel> | "" = "",
     >(
         options: JoinTable<TModel, TBackReferencedProp, TTargetReferencedProp>
-    ): OneToOneProp<TModel, TNullity, "OWNING", TBackReferenceKey, TTargetReferencedProp> {
+    ): OneToOneProp<
+        TModel, 
+        TNullity, 
+        "OWNING", 
+        TBackReferencedProp, 
+        TTargetReferencedProp
+    > {
         return new OneToOneProp({
             ...this.__data,
             joinTable: joinTableDataOf(options, this.targetModel)
@@ -366,15 +393,15 @@ export class ManyToOneProp<
     TNullity extends NullityType,
     TDirection extends DirectionType,
     TBackReferenceKey extends string,
-    TTargetReferenceKey extends ReferenceKey<TModel> | ""
+    TTargetReferenceKey extends string
 > extends AssociatedProp<TModel, TNullity, TDirection, TBackReferenceKey, TTargetReferenceKey> 
 implements ReferenceProp<TModel, TNullity, TDirection, TBackReferenceKey, TTargetReferenceKey> {
 
     override __type(): {
-        prop: [TModel, TNullity] | true,
-        associatedProp: [TModel, TNullity, TDirection, TBackReferenceKey, TTargetReferenceKey] | true,
-        referenceProp: [TModel, TNullity, TDirection, TBackReferenceKey, TTargetReferenceKey] | true,
-        manyToOneProp: [TModel, TNullity, TDirection, TBackReferenceKey, TTargetReferenceKey] | true
+        readonly prop: TNullity | true;
+        readonly associatedProp: [TNullity, TDirection, TBackReferenceKey, TTargetReferenceKey] | true;
+        readonly referenceProp: [TNullity, TDirection, TBackReferenceKey, TTargetReferenceKey] | true;
+        readonly manyToOneProp: [TNullity, TDirection, TBackReferenceKey, TTargetReferenceKey] | true;
     } {
         return { 
             prop: true, 
@@ -388,27 +415,39 @@ implements ReferenceProp<TModel, TNullity, TDirection, TBackReferenceKey, TTarge
         super(data);
     }
 
-    nullable(): ManyToOneProp<TModel, "NULLABLE", TDirection, TBackReferenceKey, TTargetReferenceKey> {
+    nullable(): ManyToOneProp<
+        TModel, 
+        "NULLABLE", 
+        TDirection, 
+        TBackReferenceKey, 
+        TTargetReferenceKey
+    > {
         return new ManyToOneProp(
             {...this.__data, nullity: "NULLABLE"}
         );
     }
 }
 
-class UnconfiguredManyToOneProp<
+export class ConfigurableManyToOneProp<
     TModel extends AnyModel,
-    TNullity extends NullityType = "NONNULL",
-    TDirection extends DirectionType = "OWNING",
-    TBackReferenceKey extends string = "",
-    TTargetReferenceKey extends ReferenceKey<TModel> | "" = ""
+    TNullity extends NullityType,
+    TDirection extends DirectionType,
+    TBackReferenceKey extends string,
+    TTargetReferenceKey extends string
 > extends ManyToOneProp<TModel, TNullity, TDirection, TBackReferenceKey, TTargetReferenceKey> {
 
     constructor(data: PropData) {
         super(data);
     }
 
-    nullable(): UnconfiguredManyToOneProp<TModel, "NULLABLE", TDirection, TBackReferenceKey, TTargetReferenceKey> {
-        return new UnconfiguredManyToOneProp({...this.__data, nullity: "NULLABLE"});
+    nullable(): ConfigurableManyToOneProp<
+        TModel, 
+        "NULLABLE", 
+        TDirection, 
+        TBackReferenceKey, 
+        TTargetReferenceKey
+    > {
+        return new ConfigurableManyToOneProp({...this.__data, nullity: "NULLABLE"});
     }
 
     joinColumns<TTargetKeyProp extends ReferenceKey<TModel> = ModelIdKey<TModel>>(
@@ -417,15 +456,32 @@ class UnconfiguredManyToOneProp<
             columns?: JoinColumns<AllModelMembers<TModel>[TTargetKeyProp]>
             cascade?: CascadeType
         }
-    ): ManyToOneProp<TModel, TNullity, "OWNING", TBackReferenceKey, TTargetKeyProp>;
+    ): ManyToOneProp<
+        TModel, 
+        TNullity, 
+        "OWNING", 
+        TBackReferenceKey, 
+        TTargetKeyProp
+    >;
 
     joinColumns(
         ...joinColumns: JoinColumns<AllModelMembers<TModel>[ModelIdKey<TModel>]>
-    ): ManyToOneProp<TModel, TNullity, "OWNING", TBackReferenceKey, ModelIdKey<TModel>>;
+    ): ManyToOneProp<
+        TModel, 
+        TNullity, 
+        "OWNING", 
+        TBackReferenceKey, 
+        ModelIdKey<TModel>
+    >;
 
     joinColumns(
         options: any
-    ): ManyToOneProp<TModel, TNullity, "OWNING", TBackReferenceKey, ModelIdKey<TModel>> {
+    ): ManyToOneProp<
+        TModel, 
+        TNullity, 
+        "OWNING", TBackReferenceKey, 
+        ModelIdKey<TModel>
+    > {
         return new ManyToOneProp({
             ...this.__data,
             joinColumns: foreignKeyDataOf(options, this.__data.targetModel)
@@ -437,7 +493,13 @@ class UnconfiguredManyToOneProp<
         TTargetReferencedProp extends ReferenceKey<TModel> | "" = ""
     >(
         options: JoinTable<TModel, TBackReferenceProp, TTargetReferencedProp>
-    ): ManyToOneProp<TModel, TNullity, "OWNING", TBackReferenceKey, TTargetReferencedProp> {
+    ): ManyToOneProp<
+        TModel, 
+        TNullity, 
+        "OWNING", 
+        TBackReferenceProp, 
+        TTargetReferencedProp
+    > {
         return new ManyToOneProp({
             ...this.__data,
             joinColumns: foreignKeyDataOf(options, this.__data.targetModel)
@@ -450,15 +512,15 @@ export class OneToManyProp<
     TNullity extends NullityType,
     TDirection extends DirectionType,
     TBackReferenceKey extends string,
-    TTargetReferenceKey extends ReferenceKey<TModel> | ""
+    TTargetReferenceKey extends string
 > extends AssociatedProp<TModel, TNullity, TDirection, TBackReferenceKey, TTargetReferenceKey> 
 implements CollectionProp<TModel> {
 
     override __type(): {
-        prop: [TModel, TNullity]  | true,
-        associatedProp: [TModel, TNullity, TDirection, TBackReferenceKey, TTargetReferenceKey] | true,
-        collectionProp: TModel | true,
-        oneToManyProp: [TModel, TNullity, TDirection, TBackReferenceKey, TTargetReferenceKey] | true
+        readonly prop: TNullity | true;
+        readonly associatedProp: [TNullity, TDirection, TBackReferenceKey, TTargetReferenceKey] | true;
+        readonly collectionProp: true;
+        readonly oneToManyProp: [TNullity, TDirection, TBackReferenceKey, TTargetReferenceKey] | true;
     } {
         return { 
             prop: true, 
@@ -474,7 +536,13 @@ implements CollectionProp<TModel> {
 
     orderBy(
         ...orders: ModelOrder<TModel>[]
-    ): OneToManyProp<TModel, TNullity, TDirection, TBackReferenceKey, TTargetReferenceKey> {
+    ): OneToManyProp<
+        TModel, 
+        TNullity, 
+        TDirection, 
+        TBackReferenceKey, 
+        TTargetReferenceKey
+    > {
         const arr: ReadonlyArray<{
             path: string,
             desc: boolean,
@@ -497,12 +565,12 @@ implements CollectionProp<TModel> {
     }
 }
 
-class UnconfiguredOneToManyProp<
+export class ConfigurableOneToManyProp<
     TModel extends AnyModel,
-    TNullity extends NullityType = "NONNULL",
-    TDirection extends DirectionType = "OWNING",
-    TBackReferenceKey extends string = "",
-    TTargetReferenceKey extends ReferenceKey<TModel> | "" = ""
+    TNullity extends NullityType,
+    TDirection extends DirectionType,
+    TBackReferenceKey extends string,
+    TTargetReferenceKey extends string
 > extends OneToManyProp<TModel, TNullity, TDirection, TBackReferenceKey, TTargetReferenceKey> {
 
     constructor(data: PropData) {
@@ -523,8 +591,14 @@ class UnconfiguredOneToManyProp<
 
     override orderBy(
         ...orders: ModelOrder<TModel>[]
-    ): UnconfiguredOneToManyProp<TModel, TNullity, TDirection, TBackReferenceKey, TTargetReferenceKey> {
-        return new UnconfiguredOneToManyProp(
+    ): ConfigurableOneToManyProp<
+        TModel, 
+        TNullity, 
+        TDirection, 
+        TBackReferenceKey, 
+        TTargetReferenceKey
+    > {
+        return new ConfigurableOneToManyProp(
             {...this.__data, orders: [...orders] as ReadonlyArray<any> }
         );
     }
@@ -535,15 +609,15 @@ export class ManyToManyProp<
     TNullity extends NullityType,
     TDirection extends DirectionType,
     TBackReferenceKey extends string,
-    TTargetReferenceKey extends ReferenceKey<TModel> | ""
+    TTargetReferenceKey extends string
 > extends AssociatedProp<TModel, TNullity, TDirection, TBackReferenceKey, TTargetReferenceKey> 
 implements CollectionProp<TModel> {
 
     override __type(): {
-        prop: [TModel, TNullity] | true,
-        associatedProp: [TModel, TNullity, TDirection, TBackReferenceKey, TTargetReferenceKey] | true,
-        collectionProp: TModel | true,
-        manyToManyProp: [TModel, TNullity, TDirection, TBackReferenceKey, TTargetReferenceKey] | true
+        readonly prop: TNullity | true;
+        readonly associatedProp: [TNullity, TDirection, TBackReferenceKey, TTargetReferenceKey] | true;
+        readonly collectionProp: true;
+        readonly manyToManyProp: [TNullity, TDirection, TBackReferenceKey, TTargetReferenceKey] | true;
     } {
         return { 
             prop: true, 
@@ -559,19 +633,25 @@ implements CollectionProp<TModel> {
 
     orderBy(
         ...orders: ModelOrder<TModel>[]
-    ): ManyToManyProp<TModel, TNullity, TDirection, TBackReferenceKey, TTargetReferenceKey> {
+    ): ManyToManyProp<
+        TModel, 
+        TNullity, 
+        TDirection, 
+        TBackReferenceKey, 
+        TTargetReferenceKey
+    > {
         return new ManyToManyProp(
             {...this.__data, orders: [...orders] as ReadonlyArray<any> }
         );
     }
 }
 
-class UnconfiguredManyToManyProp<
+export class ConfigurableManyToManyProp<
     TModel extends AnyModel,
-    TNullity extends NullityType = "NONNULL",
-    TDirection extends DirectionType = "OWNING",
-    TBackReferenceKey extends string = "",
-    TTargetReferenceKey extends ReferenceKey<TModel> | "" = ""
+    TNullity extends NullityType,
+    TDirection extends DirectionType,
+    TBackReferenceKey extends string,
+    TTargetReferenceKey extends string
 > extends ManyToManyProp<TModel, TNullity, TDirection, TBackReferenceKey, TTargetReferenceKey> {
 
     constructor(data: PropData) {
@@ -595,7 +675,13 @@ class UnconfiguredManyToManyProp<
         TTargetReferencedProp extends ReferenceKey<TModel> | ""
     >(
         options: JoinTable<TModel, TBackReferenceProp, TTargetReferencedProp>
-    ): ManyToManyProp<TModel, TNullity, "OWNING", TBackReferenceProp, TTargetReferencedProp> {
+    ): ManyToManyProp<
+        TModel, 
+        TNullity, 
+        "OWNING", 
+        TBackReferenceProp, 
+        TTargetReferencedProp
+    > {
         return new ManyToManyProp({
             ...this.__data,
             joinTable: joinTableDataOf(options, this.__data.targetModel)
@@ -604,8 +690,14 @@ class UnconfiguredManyToManyProp<
 
     orderBy(
         ...orders: ModelOrder<TModel>[]
-    ): UnconfiguredManyToManyProp<TModel, TNullity, TDirection, TBackReferenceKey, TTargetReferenceKey> {
-        return new UnconfiguredManyToManyProp(
+    ): ConfigurableManyToManyProp<
+        TModel, 
+        TNullity, 
+        TDirection, 
+        TBackReferenceKey, 
+        TTargetReferenceKey
+    > {
+        return new ConfigurableManyToManyProp(
             {...this.__data, orders: [...orders] as ReadonlyArray<any> }
         );
     }
@@ -762,3 +854,23 @@ function joinColumnDataOf(data: any): JoinColumnData {
             undefined
     };
 }
+
+// type M2OCreator = {
+
+//     <TModel extends AnyModel>(
+//         targetModel: ModelRef<TModel>
+//     ): ConfigurableManyToOneProp<
+//         TModel, 
+//         "NONNULL", 
+//         "OWNING", 
+//         "",
+//         ModelIdKey<TModel>
+//     >;
+
+//     self<TSelf extends AnyModel>(
+//         selfModelGetter: () => TSelf,
+//         options: {
+            
+//         }
+//     ): void;
+// };
