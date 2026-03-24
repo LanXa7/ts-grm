@@ -1,8 +1,9 @@
 import { makeErr } from "@/error/util";
 import { Entity, EntityProp } from "@/impl";
 import { AllModelMembers, AnyModel, RequiredModelKey, OptionalModelKey } from "@/schema/model";
-import { AssociatedProp, DirectTypeOf, I64Prop } from "@/schema/prop";
-import { EntityTable, Expression } from ".";
+import { AssociatedProp, NullityType } from "@/schema/prop";
+import { EntityTableMembers } from "./table";
+import { MakeExpression } from "./expression";
 
 export interface AssociationModel<
     TSourceModel extends AnyModel,
@@ -57,7 +58,7 @@ export function associationModel<
     return new AssociationModelImpl(associationProp) as any;
 }
 
-type MakeAssociationModel<
+export type MakeAssociationModel<
     TModel extends AnyModel,
     TAssociationKey extends AssociationKeys<TModel>
 > = 
@@ -74,6 +75,28 @@ type MakeAssociationModel<
             RequiredModelKey<TModel, SourceKey>,
             TargetModel,
             RequiredModelKey<TargetModel, TargetKey>
+        >
+        : never;
+
+export type MakeAssociationTableMembers<
+    TModel extends AnyModel,
+    TAssociationKey extends AssociationKeys<TModel>,
+    TNullity extends NullityType
+> = 
+    AllModelMembers<TModel>[TAssociationKey] extends AssociatedProp<
+        infer TargetModel, 
+        any, 
+        any, 
+        true,
+        infer SourceKey, 
+        infer TargetKey
+    >
+        ? AssociationTableMembers<
+            TModel,
+            RequiredModelKey<TModel, SourceKey>,
+            TargetModel,
+            RequiredModelKey<TargetModel, TargetKey>,
+            TNullity
         >
         : never;
 
@@ -130,29 +153,47 @@ export type AssociationTable<
             SourceModel, 
             SourceKey, 
             TargetModel, 
-            TargetKey
+            TargetKey,
+            "NONNULL"
         > 
         : never;
       
-type AssociationTableMembers<
+export type AssociationTableMembers<
     TSourceModel extends AnyModel,
     TSourceKey extends keyof AllModelMembers<TSourceModel> & string,
     TTargetModel extends AnyModel,
-    TTargetKey extends keyof AllModelMembers<TTargetModel> & string
+    TTargetKey extends keyof AllModelMembers<TTargetModel> & string,
+    TNullity extends NullityType
 > = {
 
-    readonly source: EntityTable<TSourceModel>;
+    __type(): {
+        readonly tableLike: true;
+    };
 
-    readonly target: EntityTable<TTargetModel>;
+    readonly source: EntityTableMembers<
+        TSourceModel, 
+        AllModelMembers<TSourceModel>,
+        TNullity,
+        false
+    >;
+
+    readonly target: EntityTableMembers<
+        TTargetModel,
+        AllModelMembers<TSourceModel>,
+        TNullity,
+        false
+    >;
 } & {
     readonly [K in `source${Capitalize<TSourceKey>}`]: 
-        AssociationKeyType<TSourceModel, TSourceKey>;
+        AssociationKeyType<TSourceModel, TSourceKey, TNullity>;
 } & {
     readonly [K in `target${Capitalize<TTargetKey>}`]: 
-        AssociationKeyType<TTargetModel, TTargetKey>;
+        AssociationKeyType<TTargetModel, TTargetKey, TNullity>;
 };
 
-type AssociationKeyType<TModel extends AnyModel, TKey extends string> = 
-    AllModelMembers<TModel>[TKey] extends I64Prop<infer R, any>
-        ? Expression<R, R extends string ? "AS_NUMBER" : "">
-        : Expression<DirectTypeOf<AllModelMembers<TModel>[TKey]>>;
+type AssociationKeyType<
+    TModel extends AnyModel, 
+    TKey extends string, 
+    TNullity extends NullityType
+> = 
+    MakeExpression<AllModelMembers<TModel>[TKey], TNullity>;

@@ -1,4 +1,4 @@
-import { NullityType } from "@/schema/prop";
+import { CombinedNullity, I64Prop, NullityType, ScalarProp } from "@/schema/prop";
 import { CompilationError } from "@/utils"
 import { ExpressionSubQuery } from "./sub_query";
 import { AtLeastOne, ExpressionOrder } from "./utils";
@@ -390,6 +390,18 @@ export type MakeType<T, TNullity extends NullityType> =
     TNullity extends "NONNULL"
         ? T
         : T | null | undefined;
+
+export type MakeExpression<TProp, TNullity extends NullityType> =
+    TProp extends I64Prop<infer R, infer Nullity>
+        ? Expression<
+            MakeType<R, CombinedNullity<Nullity, TNullity>>, 
+            R extends string ? "AS_NUMBER" : ""
+        >
+    : TProp extends ScalarProp<infer R, infer Nullity>
+        ? Expression<
+            MakeType<R, CombinedNullity<Nullity, TNullity>>
+        >
+    : never;
 
 export function and(
     ...predicates: ReadonlyArray<Nullable<AnyExpression<boolean>>>

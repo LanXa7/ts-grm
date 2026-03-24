@@ -1,20 +1,19 @@
-import { AllModelMembers, AnyModel, CtorMembers, DerivedModel, ModelCtor, RequiredModelKey } from "@/schema/model";
+import { AllModelMembers, AnyModel, DerivedModel, RequiredModelKey } from "@/schema/model";
 import { 
     CollectionProp, 
     EmbeddedProp, 
     I64Prop, 
     NullityType, 
     ReferenceProp, 
-    DirectTypeOf, 
     ScalarProp, 
-    CombinedNullity 
+    CombinedNullity,
 } from "@/schema/prop";
-import { Expression, MakeType, Predicate } from "./expression";
+import { Expression, MakeExpression, MakeType, Predicate } from "./expression";
 import { FilterNever } from "@/utils";
 import { View } from "@/schema/dto";
 import { FetchedView } from "./root_query";
 import { BaseQuerySelectMapArgs, BaseModel, BaseQueryMapOf } from "./base_query";
-import { AnyAssociationModel, AssociationTable } from "./association";
+import { AnyAssociationModel, AssociationKeys, AssociationTable, MakeAssociationTableMembers } from "./association";
 
 export type TableLike = {
 
@@ -52,6 +51,7 @@ export type EntityTableMembers<
     TRiskAccepted extends boolean
 > = DslMembers<TModel, TMembers, TNullity, TRiskAccepted>
     & WeakJoinAction<TModel, TRiskAccepted> 
+    & AssociationAction<TModel, TRiskAccepted>
     & { 
         __type(): {
             tableLike: true;
@@ -92,12 +92,12 @@ type DslMembers<
                 ? Expression<MakeType<R, CombinedNullity<TNullity, Nullity>>>
             : TMembers[K] extends EmbeddedProp<infer R, infer Nullity, any>
                 ? () => DslMembers<TModel, R, CombinedNullity<TNullity, Nullity>, TRiskAccepted>
-            : TMembers[K] extends ReferenceProp<infer TTargetModel, any, any, any, any, any>
-                ? ReferenceJoinAction<TModel, TTargetModel, CtorMembers<ModelCtor<TTargetModel>>, TRiskAccepted>
-            : TMembers[K] extends CollectionProp<infer TTargetModel>
-                ? CollectionJoinAction<TModel, TTargetModel, CtorMembers<ModelCtor<TTargetModel>>, TRiskAccepted>
+            : TMembers[K] extends ReferenceProp<infer TargetModel, any, any, any, any, any>
+                ? ReferenceJoinAction<TModel, TargetModel, AllModelMembers<TargetModel>, TRiskAccepted>
+            : TMembers[K] extends CollectionProp<infer TargetModel>
+                ? CollectionJoinAction<TModel, TargetModel, AllModelMembers<TargetModel>, TRiskAccepted>
             : never
-        } & ReferenceKeyMembers<TModel, TMembers,TNullity>
+        } & ReferenceKeyMembers<TModel, TMembers, TNullity>
     >;
 
 type ReferenceKeyMembers<TModel extends AnyModel, TMembers, TNullity extends NullityType> = {
@@ -108,21 +108,14 @@ type ReferenceKeyMembers<TModel extends AnyModel, TMembers, TNullity extends Nul
                     ? `${K & string}${Capitalize<RequiredModelKey<TModel, TKey>>}`
                     : never
                 : never
-    ]: TMembers[K] extends ReferenceProp<infer TTargetModel, infer Nullity, "OWNING", false, any, infer TKey>
-        ? TKey extends string
-            ? AllModelMembers<TTargetModel>[RequiredModelKey<TModel, TKey>] extends EmbeddedProp<infer R, any, any>
+    ]: TMembers[K] extends ReferenceProp<infer TargetModel, infer Nullity, "OWNING", false, any, infer Key>
+        ? Key extends string
+            ? AllModelMembers<TargetModel>[RequiredModelKey<TargetModel, Key>] extends EmbeddedProp<infer R, any, any>
                 ? () => DslMembers<TModel, R, CombinedNullity<TNullity, Nullity>, false>
-            : AllModelMembers<TTargetModel>[RequiredModelKey<TModel, TKey>] extends I64Prop<infer R, any>
-                ? Expression<
-                    MakeType<R, CombinedNullity<TNullity, Nullity>>, 
-                    R extends string ? "AS_NUMBER" : ""
-                >
-                : Expression<
-                    MakeType<
-                        DirectTypeOf<AllModelMembers<TTargetModel>[RequiredModelKey<TModel, TKey>]>, 
-                        CombinedNullity<TNullity, Nullity>
-                    >
-                > 
+            : MakeExpression<
+                AllModelMembers<TargetModel>[RequiredModelKey<TModel, Key>],
+                CombinedNullity<TNullity, Nullity>
+            >
             : never
         : never
 };
@@ -166,51 +159,43 @@ type CollectionJoinAction<
     TMembers extends object, 
     TRiskAccepted extends boolean
 > = {
-    (): TRiskAccepted extends true
-        ? EntityTableMembers<TModel, TMembers, "NONNULL", true>
-        : RiskUnknownJoinedTable<TModel, TMembers, "NONNULL">;
+    (): TableRiskWrapper<
+        EntityTableMembers<TModel, TMembers, "NONNULL", true>,
+        TRiskAccepted
+    >; 
     
     <TJoinType extends JoinType>(
         joinType: TJoinType
-    ): TRiskAccepted extends true
-        ? EntityTableMembers<
-            TModel, 
-            TMembers, 
-            TJoinType extends "LEFT" ? "NULLABLE" : "NONNULL", 
-            TRiskAccepted
-        >
-        : RiskUnknownJoinedTable<
+    ): TableRiskWrapper<
+        EntityTableMembers<
             TModel,
             TMembers, 
-            TJoinType extends "LEFT" ? "NULLABLE" : "NONNULL"
-        >;
+            TJoinType extends "LEFT" ? "NULLABLE" : "NONNULL",
+            true
+        >,
+        TRiskAccepted
+    >;
     
     <TJoinType extends JoinType = "INNER">(
         options: {
             readonly joinType?: TJoinType,
             readonly filter?: FilterType<TParentModel, TModel>
         }
-    ): TRiskAccepted extends true
-        ? EntityTableMembers<
-            TModel, 
-            TMembers, 
-            TJoinType extends "LEFT" ? "NULLABLE" : "NONNULL", 
-            TRiskAccepted
-        >
-        : RiskUnknownJoinedTable<
+    ): TableRiskWrapper<
+        EntityTableMembers<
             TModel,
             TMembers, 
-            TJoinType extends "LEFT" ? "NULLABLE" : "NONNULL"
-        >;
+            TJoinType extends "LEFT" ? "NULLABLE" : "NONNULL",
+            true
+        >,
+        TRiskAccepted
+    >;
 };
 
-type RiskUnknownJoinedTable<
-    TModel extends AnyModel, 
-    TMembers extends object, 
-    TNullity extends NullityType
-> = {
-    $acceptRisk(): EntityTableMembers<TModel, TMembers, TNullity, true>;
-};
+type TableRiskWrapper<T extends TableLike, TRiskAccepted extends boolean> = 
+    TRiskAccepted extends true
+        ? T
+        : { $acceptRisk(): T; };
 
 type WeakJoinAction<
     TModel extends ModelLike,
@@ -222,18 +207,14 @@ type WeakJoinAction<
     >(
         targetModel: TTargetModel,
         filter: FilterType<TModel, TTargetModel>
-    ): TRiskAccepted extends true
-        ? EntityTableMembers<
+    ): TableRiskWrapper<EntityTableMembers<
             TTargetModel, 
             AllModelMembers<TTargetModel>, 
             "NONNULL", 
             TRiskAccepted
-        >
-        : RiskUnknownJoinedTable<
-            TTargetModel,
-            AllModelMembers<TTargetModel>, 
-            "NONNULL"
-        >;
+        >,
+        TRiskAccepted
+    >;
 
     join<
         TTargetModel extends AnyModel,
@@ -244,18 +225,15 @@ type WeakJoinAction<
             readonly joinType?: TJoinType,
             readonly filter: FilterType<TModel, TTargetModel>
         }
-    ): TRiskAccepted extends true
-        ? EntityTableMembers<
+    ): TableRiskWrapper<
+        EntityTableMembers<
             TTargetModel, 
             AllModelMembers<TTargetModel>, 
             TJoinType extends "LEFT" ? "NULLABLE" : "NONNULL", 
             TRiskAccepted
-        >
-        : RiskUnknownJoinedTable<
-            TTargetModel,
-            AllModelMembers<TTargetModel>, 
-            TJoinType extends "LEFT" ? "NULLABLE" : "NONNULL"
-        >;
+        >,
+        TRiskAccepted
+    >;
 
     join<
         TTargetModel extends BaseModel<any>,
@@ -277,6 +255,30 @@ type WeakJoinAction<
         TJoinType extends "LEFT"
             ? NullableBaseQuerySelectMapOf<BaseQueryMapOf<TTargetModel>>
             : BaseQueryMapOf<TTargetModel>, 
+        TRiskAccepted
+    >;
+};
+
+type AssociationAction<TModel extends AnyModel, TRiskAccepted extends boolean> = 
+    AssociationActionImpl<TModel, AssociationKeys<TModel>, TRiskAccepted>;
+
+type AssociationActionImpl<
+    TModel extends AnyModel, 
+    TAssociationKeys extends AssociationKeys<TModel>,
+    TRiskAccepted extends boolean
+> = {
+    association<
+        TKey extends TAssociationKeys,
+        TJoinType extends JoinType = "INNER"
+    >(
+        key: TAssociationKeys,
+        joinType?: JoinType
+    ): TableRiskWrapper<
+        MakeAssociationTableMembers<
+            TModel,
+            TKey,
+            TJoinType extends "LEFT" ? "NULLABLE" : "NONNULL"
+        >,
         TRiskAccepted
     >;
 };
