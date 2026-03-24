@@ -17,16 +17,16 @@ type LogicOperators<TMembers, TNullity extends NullityType> = {
 type CriteriaMember<TProp, TNullity extends NullityType> =
     TProp extends Prop<any, infer Nullity>
         ? Nullity extends "NULLABLE"
-            ? { $isNull: boolean } | NonNullCriteiraMember<TProp, TNullity>
-            : NonNullCriteiraMember<TProp, TNullity>
+            ? { $isNull: boolean } | NonNullCriteriaMember<TProp, TNullity>
+            : NonNullCriteriaMember<TProp, TNullity>
         : never;
 
-type NonNullCriteiraMember<TProp, TNullity extends NullityType> =
+type NonNullCriteriaMember<TProp, TNullity extends NullityType> =
     TProp extends ScalarProp<any, any>
         ? ScalarType<TProp>
     : TProp extends EmbeddedProp<infer R, infer Nullity, any>
         ? { [K in keyof R]?: CriteriaMember<R[K], CombinedNullity<TNullity, Nullity>> } & LogicOperators<R, TNullity>
-    : TProp extends ReferenceProp<any, any, any, any, any>
+    : TProp extends ReferenceProp<any, any, any, any, any, any>
         ? ReferenceType<TProp>
     : TProp extends CollectionProp<any>
         ? CollectionType<TProp>
@@ -48,7 +48,7 @@ type ScalarType<TProp> =
 type ReferenceType<TProp> = 
     { $action?: "SOME" | "NONE"; }
     & (
-        TProp extends ReferenceProp<infer TargetModel, any, any, any, any>
+        TProp extends ReferenceProp<infer TargetModel, any, any, any, any, any>
             ? CriteriaMembers<AllModelMembers<TargetModel>, "NONNULL">
             : never
     );

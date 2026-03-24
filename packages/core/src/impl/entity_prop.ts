@@ -134,7 +134,7 @@ export class EntityProp {
             return undefined;
         }
         if (this.associationType === "MANY_TO_ONE" || this.associationType === "ONE_TO_ONE") {
-            return this._data.joinColumns?.referencedProp ?? this._targetEntity?.idKey;
+            return this._data.joinColumns?.keyProp ?? this._targetEntity?.idKey;
         }
     }
 
@@ -176,7 +176,7 @@ export class EntityProp {
     }
 
     get thisKey(): string | undefined {
-        const key = this._data.joinTable?.joinThis?.referencedProp;
+        const key = this._data.joinTable?.joinThis?.keyProp;
         if (key != null) {
             return key;
         }
@@ -184,11 +184,11 @@ export class EntityProp {
     }
 
     get targetKey(): string | undefined {
-        let key = this._data.joinColumns?.referencedProp;
+        let key = this._data.joinColumns?.keyProp;
         if (key != null) {
             return key;
         }
-        key = this._data.joinTable?.joinThis?.referencedProp;
+        key = this._data.joinTable?.joinThis?.keyProp;
         if (key != null) {
             return key;
         }
@@ -365,19 +365,19 @@ export class EntityProp {
         const joinTable = this._data.joinTable;
         const joinColumns = this._data.joinColumns;
         if (joinTable != null || this.associationType === "MANY_TO_MANY") {
-            if (joinTable?.joinThis?.referencedProp != null) {
-                this._thisKeyProp = this.declaringEntity.prop(joinTable.joinThis.referencedProp);
+            if (joinTable?.joinThis?.keyProp != null) {
+                this._thisKeyProp = this.declaringEntity.prop(joinTable.joinThis.keyProp);
             } else {
                 this._thisKeyProp = this.declaringEntity.idProp;
             }
-            if (joinTable?.joinTarget?.referencedProp != null) {
-                this._targetKeyProp = this.targetEntity!.prop(joinTable.joinTarget.referencedProp);
+            if (joinTable?.joinTarget?.keyProp != null) {
+                this._targetKeyProp = this.targetEntity!.prop(joinTable.joinTarget.keyProp);
             } else {
                 this._targetKeyProp = this.targetEntity!.idProp;
             }
         } else if (joinColumns != null || this.associationType === "ONE_TO_ONE" || this.associationType == "MANY_TO_ONE") {
-            if (joinColumns?.referencedProp) {
-                this._targetKeyProp = this.targetEntity!.prop(joinColumns.referencedProp);
+            if (joinColumns?.keyProp) {
+                this._targetKeyProp = this.targetEntity!.prop(joinColumns.keyProp);
             } else {
                 this._targetKeyProp = this.targetEntity!.idProp;
             }

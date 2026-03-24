@@ -1,5 +1,5 @@
 import { AtLeastOne } from "../dsl/utils";
-import { AllModelMembers, AnyModel, DerivedModel, Extends, ModelName, ModelSuperNames } from "@/schema/model";
+import { AllModelMembers, AnyModel, DerivedModel, Extends, RequiredModelKey, ModelName, ModelSuperNames } from "@/schema/model";
 import { CollectionProp, EmbeddedProp, NullityOf, ReferenceProp, DirectTypeOf, ScalarProp, NullityType, AssociatedProp, Prop } from "@/schema/prop";
 import { Prettify, UnionToIntersection } from "@/utils";
 import { ModelOrder } from "./order";
@@ -97,7 +97,7 @@ type ViewBuilder<
                 TMembers[K],
                 K & string
             >
-        : TMembers[K] extends ReferenceProp<infer R, infer Nullity, any, any, any>
+        : TMembers[K] extends ReferenceProp<infer R, infer Nullity, any, any, any, any>
             ? <X>(
                 fn: (
                     builder: ViewBuilder<R, AllModelMembers<R>, TViewNullType, {}, {}, any, any>
@@ -188,7 +188,7 @@ type ReferenceFetch<
     TLastProp, 
     TLastName extends string
 > =
-    TLastProp extends ReferenceProp<any, any, any, any, any>
+    TLastProp extends ReferenceProp<any, any, any, any, any, any>
         ? {
             $fetch(
                 fetchType: ReferenceFetchType
@@ -380,7 +380,7 @@ type FlatEmbedded<
 type FlatReferenceKeys<TMembers> = 
     keyof {
         [K in keyof TMembers
-            as TMembers[K] extends ReferenceProp<any, any, any, any, any> 
+            as TMembers[K] extends ReferenceProp<any, any, any, any, any, any> 
                 ? K
                 : never
         ]: number
@@ -396,12 +396,12 @@ type FlatEmbeddedKeys<TMembers> =
     };
 
 type FlatTargetModel<TModel extends AnyModel, TProp> =
-    TProp extends ReferenceProp<infer TargetModel, any, any, any, any>
+    TProp extends ReferenceProp<infer TargetModel, any, any, any, any, any>
         ? TargetModel
         : TModel;
 
 type FlatTargetMembers<TProp> =
-    TProp extends ReferenceProp<infer TargetModel, any, any, any, any>
+    TProp extends ReferenceProp<infer TargetModel, any, any, any, any, any>
         ? AllModelMembers<TargetModel>
         : DirectTypeOf<TProp>;
 
@@ -418,11 +418,12 @@ type ReferenceKeyMembers<
             infer _, 
             any, 
             "OWNING", 
+            false,
             any, 
             infer Key
         > 
             ? Key extends string
-                ? PrefixString<K & string, Key>
+                ? PrefixString<K & string, RequiredModelKey<TModel, Key>>
                 : never
             : never
     ]: 
@@ -431,10 +432,11 @@ type ReferenceKeyMembers<
             infer Nullity,
             any,
             any,
+            any,
             infer Key
         >
-            ? AllModelMembers<TargetModel>[Key & string] extends EmbeddedProp<infer R, infer Nullity, any>
-                ? <X = SimpleDataTypeOf<AllModelMembers<TargetModel>[Key & string], TViewNullType>>(
+            ? AllModelMembers<TargetModel>[RequiredModelKey<TModel, Key>] extends EmbeddedProp<infer R, infer Nullity, any>
+                ? <X = SimpleDataTypeOf<AllModelMembers<TargetModel>[RequiredModelKey<TModel, Key>], TViewNullType>>(
                     fn?: (builder: ViewBuilder<
                         never,
                         R, 
@@ -460,7 +462,7 @@ type ReferenceKeyMembers<
                         TViewNullType,
                         TCurrent, 
                         XTypeOfView<
-                            PrefixString<K & string, Key & string>,
+                            PrefixString<K & string, RequiredModelKey<TModel, Key>>,
                             X,
                             Nullity,
                             TViewNullType
@@ -469,7 +471,7 @@ type ReferenceKeyMembers<
                     >,
                     TRecursiveKindMap,
                     TMembers[K],
-                    PrefixString<K & string, Key & string>
+                    PrefixString<K & string, RequiredModelKey<TModel, Key>>
                 >
                 : ViewBuilder<
                     TModel,
@@ -479,8 +481,8 @@ type ReferenceKeyMembers<
                         TViewNullType,
                         TCurrent, 
                         XTypeOfView<
-                            PrefixString<K & string, Key & string>,
-                            SimpleDataTypeOf<AllModelMembers<TargetModel>[Key & string], TViewNullType>,
+                            PrefixString<K & string, RequiredModelKey<TModel, Key>>,
+                            SimpleDataTypeOf<AllModelMembers<TargetModel>[RequiredModelKey<TModel, Key>], TViewNullType>,
                             Nullity,
                             TViewNullType
                         >,
@@ -488,7 +490,7 @@ type ReferenceKeyMembers<
                     >,
                     TRecursiveKindMap,
                     TMembers[K],
-                    PrefixString<K & string, Key & string>
+                    PrefixString<K & string, RequiredModelKey<TModel, Key>>
                 >
             : never
 };
@@ -729,7 +731,7 @@ type RecursiveKeys<TModel extends AnyModel, TMembers> =
     };
 
 type IsRecursiveProp<TModel extends AnyModel, TProp> =
-    TProp extends AssociatedProp<infer TargetModel, any, any, any, any>
+    TProp extends AssociatedProp<infer TargetModel, any, any, any, any, any>
         ? Extends<TModel, TargetModel> extends true
             ? true
             : false
@@ -902,7 +904,7 @@ export type SimpleDataTypeOf<TProp, TViewNullType extends ViewNullType> =
         ? R
     : TProp extends EmbeddedProp<infer R, any, any>
         ? EmbeddedDataType<R, TViewNullType>
-    : TProp extends ReferenceProp<infer TargetModel, any, "OWNING", any, infer Key>
+    : TProp extends ReferenceProp<infer TargetModel, any, "OWNING", false, any, infer Key>
         ? {
             [
                 K in keyof Key

@@ -1,4 +1,4 @@
-import { AllModelMembers, AnyModel, CtorMembers, DerivedModel, ModelCtor } from "@/schema/model";
+import { AllModelMembers, AnyModel, CtorMembers, DerivedModel, ModelCtor, RequiredModelKey } from "@/schema/model";
 import { 
     CollectionProp, 
     EmbeddedProp, 
@@ -92,7 +92,7 @@ type DslMembers<
                 ? Expression<MakeType<R, CombinedNullity<TNullity, Nullity>>>
             : TMembers[K] extends EmbeddedProp<infer R, infer Nullity, any>
                 ? () => DslMembers<TModel, R, CombinedNullity<TNullity, Nullity>, TRiskAccepted>
-            : TMembers[K] extends ReferenceProp<infer TTargetModel, any, any, any, any>
+            : TMembers[K] extends ReferenceProp<infer TTargetModel, any, any, any, any, any>
                 ? ReferenceJoinAction<TModel, TTargetModel, CtorMembers<ModelCtor<TTargetModel>>, TRiskAccepted>
             : TMembers[K] extends CollectionProp<infer TTargetModel>
                 ? CollectionJoinAction<TModel, TTargetModel, CtorMembers<ModelCtor<TTargetModel>>, TRiskAccepted>
@@ -103,23 +103,23 @@ type DslMembers<
 type ReferenceKeyMembers<TModel extends AnyModel, TMembers, TNullity extends NullityType> = {
     [
         K in keyof TMembers as
-            TMembers[K] extends ReferenceProp<infer _, any, "OWNING", any, infer TKey>
+            TMembers[K] extends ReferenceProp<infer _, any, "OWNING", false, any, infer TKey>
                 ? TKey extends string
-                    ? `${K & string}${Capitalize<TKey>}`
+                    ? `${K & string}${Capitalize<RequiredModelKey<TModel, TKey>>}`
                     : never
                 : never
-    ]: TMembers[K] extends ReferenceProp<infer TTargetModel, infer Nullity, "OWNING", any, infer TKey>
+    ]: TMembers[K] extends ReferenceProp<infer TTargetModel, infer Nullity, "OWNING", false, any, infer TKey>
         ? TKey extends string
-            ? AllModelMembers<TTargetModel>[TKey] extends EmbeddedProp<infer R, any, any>
+            ? AllModelMembers<TTargetModel>[RequiredModelKey<TModel, TKey>] extends EmbeddedProp<infer R, any, any>
                 ? () => DslMembers<TModel, R, CombinedNullity<TNullity, Nullity>, false>
-            : AllModelMembers<TTargetModel>[TKey] extends I64Prop<infer R, any>
+            : AllModelMembers<TTargetModel>[RequiredModelKey<TModel, TKey>] extends I64Prop<infer R, any>
                 ? Expression<
                     MakeType<R, CombinedNullity<TNullity, Nullity>>, 
                     R extends string ? "AS_NUMBER" : ""
                 >
                 : Expression<
                     MakeType<
-                        DirectTypeOf<AllModelMembers<TTargetModel>[TKey]>, 
+                        DirectTypeOf<AllModelMembers<TTargetModel>[RequiredModelKey<TModel, TKey>]>, 
                         CombinedNullity<TNullity, Nullity>
                     >
                 > 

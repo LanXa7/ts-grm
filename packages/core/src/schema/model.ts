@@ -190,7 +190,7 @@ export type OneToOneMappedByKeys<TModel extends AnyModel> =
     TModel extends Model<any, any, infer TCtor, any, any>
         ? MappedByKeysImpl<
             CtorMembers<TCtor>, 
-            OneToOneProp<any, any, "OWNING", any, any>
+            OneToOneProp<any, any, "OWNING", any, any, any>
         > & string :
         never;
 
@@ -198,7 +198,7 @@ export type OneToManyMappedByKeys<TModel extends AnyModel> =
     TModel extends Model<any, any, infer TCtor, any, any>
         ? MappedByKeysImpl<
             CtorMembers<TCtor>, 
-            ManyToOneProp<any, any, "OWNING", any, any>
+            ManyToOneProp<any, any, "OWNING", any, any, any>
         > & string :
         never;
 
@@ -206,13 +206,13 @@ export type ManyToManyMappedByKeys<TModel extends AnyModel> =
     TModel extends Model<any, any, infer TCtor, any, any>
         ? MappedByKeysImpl<
             CtorMembers<TCtor>, 
-            ManyToManyProp<any, any, "OWNING", any, any>
+            ManyToManyProp<any, any, "OWNING", any, any, any>
         > & string :
         never;
 
 type MappedByKeysImpl<
     TModelMembers, 
-    TExpectedProp extends AssociatedProp<any, any, "OWNING", any, any>
+    TExpectedProp extends AssociatedProp<any, any, "OWNING", any, any, any>
 > = 
     TModelMembers extends object 
         ? { 
@@ -264,8 +264,8 @@ type UniqueKeysImpl<TFlattenCtorMembers> =
             [K in keyof TFlattenCtorMembers]: 
                 TFlattenCtorMembers[K] extends (
                     ScalarProp<any, any> 
-                    | OneToOneProp<any, any, "OWNING", any, any>
-                    | ManyToOneProp<any, any, "OWNING", any, any>
+                    | OneToOneProp<any, any, "OWNING", false, any, any>
+                    | ManyToOneProp<any, any, "OWNING", false, any, any>
                 )
                     ? K
                     : never
@@ -283,8 +283,16 @@ type OrderedKeysImpl<TFlattenCtorMembers extends object> =
                 : never
     }[keyof TFlattenCtorMembers];
 
-export type ReferenceKey<TModel extends AnyModel> = 
-    (keyof AllModelMembers<TModel>) & string;
+export type OptionalModelKey<TModel extends AnyModel> = 
+    ((keyof AllModelMembers<TModel>) & string) | "";
+
+export type RequiredModelKey<
+    TModel extends AnyModel, 
+    TKey extends OptionalModelKey<TModel>
+> =
+    TKey extends ""
+        ? ModelIdKey<TModel> & string
+        : TKey;
 
 export type Extends<
     TModel1 extends AnyModel,

@@ -1,5 +1,5 @@
 import { EmbeddedProp, Prop } from "./prop";
-import { AllModelMembers, AnyModel, ModelIdKey } from "./model";
+import { AllModelMembers, AnyModel, ModelIdKey, OptionalModelKey } from "./model";
 
 export type JoinColumns<
     TTargetKeyProp extends Prop<any, any>
@@ -20,8 +20,8 @@ export type JoinColumn<
 
 export type JoinTable<
     TModel extends AnyModel, 
-    TSourceReferencedProp extends string, // "" means default
-    TTargetReferencedProp extends keyof AllModelMembers<TModel>
+    TSourceKeyProp extends string,
+    TTargetKeyProp extends OptionalModelKey<TModel>
 > =
     {
         name?: string,
@@ -30,13 +30,13 @@ export type JoinTable<
     } | {
         name?: string,
         joinThis?: {
-            referencedProp?: TSourceReferencedProp,
+            keyProp?: TSourceKeyProp,
             columns?: WeakTypeJoinColumns,
             cascade?: CascadeType
         }
         joinTarget?: {
-            referencedProp: TTargetReferencedProp,
-            columns?: JoinColumns<AllModelMembers<TModel>[TTargetReferencedProp]>,
+            keyProp?: TTargetKeyProp,
+            columns?: JoinColumns<AllModelMembers<TModel>[TTargetKeyProp]>,
             cascade?: CascadeType
         }
     };

@@ -1,21 +1,21 @@
 import { makeErr } from "@/error/util";
 import { Entity, EntityProp } from "@/impl";
-import { AllModelMembers, AnyModel, ModelIdKey, ReferenceKey } from "@/schema/model";
+import { AllModelMembers, AnyModel, RequiredModelKey, OptionalModelKey } from "@/schema/model";
 import { AssociatedProp, DirectTypeOf, I64Prop } from "@/schema/prop";
 import { EntityTable, Expression } from ".";
 
 export interface AssociationModel<
     TSourceModel extends AnyModel,
-    TSourceKeyName extends ReferenceKey<TSourceModel>,
+    TSourceKey extends keyof AllModelMembers<TSourceModel> & string,
     TTargetModel extends AnyModel,
-    TTargetKeyName extends ReferenceKey<TTargetModel>
+    TTargetKey extends keyof AllModelMembers<TTargetModel> & string
 > {
     __type(): {
         readonly associationModel: [
             TSourceModel, 
-            TSourceKeyName, 
+            TSourceKey, 
             TTargetModel, 
-            TTargetKeyName
+            TTargetKey
         ] | true;
     };
 
@@ -39,7 +39,7 @@ type AssociationKeysImpl<TModelMembers> =
     TModelMembers extends object 
         ? { 
             [K in keyof TModelMembers]: 
-                TModelMembers[K] extends AssociatedProp<any, any, any, any, any>
+                TModelMembers[K] extends AssociatedProp<any, any, any, true, any, any>
                     ? K
                     : never
         }[keyof TModelMembers] :
@@ -65,30 +65,31 @@ type MakeAssociationModel<
         infer TargetModel, 
         any, 
         any, 
+        true,
         infer SourceKey, 
         infer TargetKey
     >
         ? AssociationModel<
             TModel,
-            SourceKey extends "" ? ModelIdKey<TModel> : SourceKey,
+            RequiredModelKey<TModel, SourceKey>,
             TargetModel,
-            TargetKey extends "" ? ModelIdKey<TargetModel> : TargetKey
+            RequiredModelKey<TargetModel, TargetKey>
         >
         : never;
 
 class AssociationModelImpl<
     TSourceModel extends AnyModel,
-    TSourceKeyName extends ReferenceKey<TSourceModel>,
+    TSourceKey extends OptionalModelKey<TSourceModel>,
     TTargetModel extends AnyModel,
-    TTargetKeyName extends ReferenceKey<TTargetModel>
-> implements AssociationModel<TSourceModel, TSourceKeyName, TTargetModel, TTargetKeyName> {
+    TTargetKey extends OptionalModelKey<TTargetModel>
+> implements AssociationModel<TSourceModel, TSourceKey, TTargetModel, TTargetKey> {
 
     __type(): {
         readonly associationModel: [
             TSourceModel, 
-            TSourceKeyName, 
+            TSourceKey, 
             TTargetModel, 
-            TTargetKeyName
+            TTargetKey
         ] | true;
     } {
         return { associationModel: true };
@@ -121,37 +122,37 @@ export type AssociationTable<
 > = 
     TModel extends AssociationModel<
         infer SourceModel,
-        infer SourceKeyName,
+        infer SourceKey,
         infer TargetModel,
-        infer TargetKeyName
+        infer TargetKey
     >
         ? AssociationTableMembers<
             SourceModel, 
-            SourceKeyName, 
+            SourceKey, 
             TargetModel, 
-            TargetKeyName
+            TargetKey
         > 
         : never;
       
 type AssociationTableMembers<
     TSourceModel extends AnyModel,
-    TSourceKeyName extends ReferenceKey<TSourceModel> & string,
+    TSourceKey extends keyof AllModelMembers<TSourceModel> & string,
     TTargetModel extends AnyModel,
-    TTargetKeyName extends ReferenceKey<TTargetModel> & string
+    TTargetKey extends keyof AllModelMembers<TTargetModel> & string
 > = {
 
     readonly source: EntityTable<TSourceModel>;
 
     readonly target: EntityTable<TTargetModel>;
 } & {
-    readonly [K in `source${Capitalize<TSourceKeyName>}`]: 
-        AssociationKeyType<TSourceModel, TSourceKeyName>;
+    readonly [K in `source${Capitalize<TSourceKey>}`]: 
+        AssociationKeyType<TSourceModel, TSourceKey>;
 } & {
-    readonly [K in `target${Capitalize<TTargetKeyName>}`]: 
-        AssociationKeyType<TTargetModel, TTargetKeyName>;
+    readonly [K in `target${Capitalize<TTargetKey>}`]: 
+        AssociationKeyType<TTargetModel, TTargetKey>;
 };
 
-type AssociationKeyType<TModel extends AnyModel, TKeyName extends string> = 
-    AllModelMembers<TModel>[TKeyName] extends I64Prop<infer R, any>
+type AssociationKeyType<TModel extends AnyModel, TKey extends string> = 
+    AllModelMembers<TModel>[TKey] extends I64Prop<infer R, any>
         ? Expression<R, R extends string ? "AS_NUMBER" : "">
-        : Expression<DirectTypeOf<AllModelMembers<TModel>[TKeyName]>>;
+        : Expression<DirectTypeOf<AllModelMembers<TModel>[TKey]>>;

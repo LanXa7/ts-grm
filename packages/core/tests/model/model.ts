@@ -79,8 +79,8 @@ export const AUTHOR = model("Author", "id", class {
 export const TREE_NODE = model("TreeNode", "id", class {
     id = prop.i64()
     name = prop.str()
-    parentNode = prop.m2o(() => TREE_NODE).joinColumns({cascade: "DELETE"}).nullable()
-    childNodes = prop.o2m(() => TREE_NODE).mappedBy("parentNode")
+    parentNode = prop.m2o.self(() => TREE_NODE, { joinColumns: { cascade: "DELETE" } })
+    childNodes = prop.o2m.self(() => TREE_NODE, { mappedBy: "parentNode", sourceKeyProp: "id", targetKeyProp: "id" })
 }, ctx => {
     ctx.unique("name", "parentNode");
 });
@@ -96,7 +96,7 @@ export const ORDER = model("Order", "id", class {
     name = prop.num()
     tags = prop.m2m(TAG).joinTable({
         joinThis: {
-            referencedProp: "id",
+            keyProp: "id",
             columns: [
                 {columnName: "order_x", referencedSubPath: "x"},
                 {columnName: "order_y_a", referencedSubPath: "y.a"},
@@ -104,7 +104,7 @@ export const ORDER = model("Order", "id", class {
             ]
         },
         joinTarget: {
-            referencedProp: "id",
+            keyProp: "id",
             columns: [
                 {columnName: "tag_low", referencedSubPath: "low"},
                 {columnName: "tag_high", referencedSubPath: "high"}
