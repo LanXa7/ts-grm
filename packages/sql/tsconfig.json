@@ -1,11 +1,12 @@
 {
   "compilerOptions": {
-    "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["./src/*"]
     },
+    "ignoreDeprecations": "6.0",
     "target": "ES2022",
-    "lib": ["ES2022"],
+    "lib": ["ES2022", "esnext.disposable"],
+    "types": ["node"],
     "module": "ESNext",
     "moduleResolution": "Bundler",
     
@@ -30,6 +31,6 @@
     "skipLibCheck": true,
     "resolveJsonModule": true
   },
-  "include": ["src/**/*", "tests/**/*", "../core/src/dsl", "../core/src/impl/ast"],
+  "include": ["src/**/*", "tests/**/*"],
   "exclude": ["node_modules", "dist"]
 }

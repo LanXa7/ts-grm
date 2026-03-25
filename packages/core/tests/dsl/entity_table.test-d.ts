@@ -1,6 +1,6 @@
 import { EntityTable } from "@/dsl/table";
 import { Expression } from "@/dsl/expression";
-import { AUTHOR, BOOK, BOOK_STORE } from "tests/model/model";
+import { AUTHOR, BOOK, BOOK_STORE } from "../model/model";
 import { expectTypeOf, test } from "vitest";
 
 function book(): EntityTable<typeof BOOK> {

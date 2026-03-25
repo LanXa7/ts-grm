@@ -1,7 +1,7 @@
 import { describe, it, expectTypeOf } from "vitest";
 import { dto } from "@/schema/dto";
 import type { TypeOf } from "@/schema/dto";
-import { BOOK, BOOK_STORE, ELECTRONIC_BOOK, PAPER_BOOK, ORDER_ITEM, ORDER, PDF_ELECTRONIC_BOOK, TREE_NODE, AUTHOR } from "tests/model/model";
+import { BOOK, BOOK_STORE, ELECTRONIC_BOOK, PAPER_BOOK, ORDER_ITEM, ORDER, PDF_ELECTRONIC_BOOK, TREE_NODE, AUTHOR } from "../model/model";
 
 describe("ViewShapeTest", () => {
     function make<T>(): T {
@@ -14,7 +14,6 @@ describe("ViewShapeTest", () => {
             : never;
             
     it("testSimpleView", () => {
-
         const view = dto.view(BOOK_STORE, $ => $
             .id
             .name

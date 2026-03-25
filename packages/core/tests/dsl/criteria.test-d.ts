@@ -1,7 +1,7 @@
 import { SqlClient } from "@/dsl/sql_client";
 import { dto } from "@/schema/dto";
 import { test } from "vitest";
-import { BOOK } from "tests/model/model";
+import { BOOK } from "../model/model";
 import { expectTypeOf } from "vitest";
 
 function sqlClient(): SqlClient {
