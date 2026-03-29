@@ -305,7 +305,7 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
         }
     }
 
-    visitTablePropExpr(expr: ast.PropExprContract): void {
+    visitPropExpr(expr: ast.PropExprContract): void {
         const column = expr.prop.toStorage(this._strategy) as metadata.Column;
         if (this.sqlClient.isDirectAssociatedKey(expr)) {
             this._compositeStack.current.add("/* direct */ ");

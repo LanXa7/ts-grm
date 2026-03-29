@@ -49,7 +49,7 @@ export interface Visitor {
 
     visitFetchedView(view: FetchedViewContract): void;
 
-    visitTablePropExpr(expr: PropExprContract): void;
+    visitPropExpr(expr: PropExprContract): void;
 
     visitIsPred(pred: IsPred): void;
 
@@ -190,7 +190,7 @@ export abstract class AbstractVisitor implements Visitor {
     visitFetchedView(_: FetchedViewContract): void {
     }
 
-    visitTablePropExpr(_: PropExprContract): void {
+    visitPropExpr(_: PropExprContract): void {
     }
 
     visitIsPred(_: IsPred): void {

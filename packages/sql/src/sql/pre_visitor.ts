@@ -64,7 +64,7 @@ export class PreVisitor extends ast.AbstractVisitor {
         }
     }
 
-    visitTablePropExpr(expr: ast.PropExprContract): void {
+    visitPropExpr(expr: ast.PropExprContract): void {
         if (expr.table.__isPrev) {
             return;
         }

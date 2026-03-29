@@ -42,16 +42,6 @@ export function createTableProp(table: AbstractEntityTable, prop: EntityProp) {
     }
 }
 
-// class PropExpr<T> extends AbstractExpr<T> implements TableProp {
-
-//     constructor(
-//         readonly prop: EntityProp,
-//         readonly table: EntityTable<any>,
-//     ) {
-//         super();
-//     }
-// }
-
 class PropNumExpr<T extends string | number> extends AbstractNumExpr<T> implements PropExprContract {
 
     constructor(
@@ -62,7 +52,7 @@ class PropNumExpr<T extends string | number> extends AbstractNumExpr<T> implemen
     }
 
     accept(visitor: Visitor): void {
-        visitor.visitTablePropExpr(this);
+        visitor.visitPropExpr(this);
     }
 }
 
@@ -76,7 +66,7 @@ class PropStrExpr extends AbstractStrExpr implements PropExprContract {
     }
 
     accept(visitor: Visitor): void {
-        visitor.visitTablePropExpr(this);
+        visitor.visitPropExpr(this);
     }
 }
 
@@ -90,6 +80,6 @@ class PropDtExpr extends AbstractDtExpr implements PropExprContract {
     }
 
     accept(visitor: Visitor): void {
-        visitor.visitTablePropExpr(this);
+        visitor.visitPropExpr(this);
     }
 }
