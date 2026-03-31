@@ -1,6 +1,8 @@
 export { Entity } from "./entity";
 export type { TableSettings } from "./entity";
 export { EntityProp } from "./entity_prop";
+export { AssociationEntity } from "./association_entity";
+export type { AssociationProp } from "./association_entity";
 export { AbstractEntityTable } from "./entity_table";
 export { createTypedBaseTable } from "./base_table";
 export { withShadowAnchor } from "./shadow_anchor";

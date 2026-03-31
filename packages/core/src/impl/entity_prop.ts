@@ -175,27 +175,6 @@ export class EntityProp {
         return false;
     }
 
-    get thisKey(): string | undefined {
-        const key = this._data.joinTable?.joinThis?.keyProp;
-        if (key != null) {
-            return key;
-        }
-        return this.declaringEntity?.idKey;
-    }
-
-    get targetKey(): string | undefined {
-        let key = this._data.joinColumns?.keyProp;
-        if (key != null) {
-            return key;
-        }
-        key = this._data.joinTable?.joinThis?.keyProp;
-        if (key != null) {
-            return key;
-        }
-        this.resolve(2);
-        return this.targetEntity?.idKey;
-    }
-
     get thisKeyProp(): EntityProp | undefined {
         this.resolve(2);
         return this._thisKeyProp;
@@ -330,20 +309,20 @@ export class EntityProp {
     }
 
     private _initMappedBy() {
-        if (this._data.mappedBy == null) {
+        if (this._data.mappedBy == null || this._mappedByProp != null) {
             return;
         }
         const prop = this._targetEntity?.expandedPropMap.get(this._data.mappedBy);
         if (prop == null) {
             throw this.raise `Illegal mappedBy "${this._data.mappedBy}" 
-            which deos not exists in target model ${this._targetEntity?.name}`
+            which does not exists in target model ${this._targetEntity?.name}`
         }
         if (prop._targetEntity !== this.declaringEntity) {
             this.raise `Illegal mappedBy property 
             "${prop?.declaringEntity.name}.${prop?.name}", 
             its target model is not this model`
         }
-        // TODO 
+        prop._resolve(2);
         this._mappedByProp = prop;
         this._oppositeProp = prop;
         prop!._oppositeProp = this;
@@ -354,11 +333,13 @@ export class EntityProp {
     }
 
     private _resolveTargetKeyProps() {
-        if (this._data.mappedBy != null) {
+        if (this._mappedByProp != null) {
+            this._thisKeyProp = this._mappedByProp._targetKeyProp;
+            this._targetKeyProp = this._mappedByProp._thisKeyProp;
             return;
         }
         if (this._referenceProp != null) {
-            this._referenceProp._resolveTargetKeyProps();
+            this._referenceProp._resolve(2);
             this._targetKeyProp = this.referenceProp!._targetKeyProp;
             return;
         }

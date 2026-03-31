@@ -51,7 +51,7 @@ export class DefaultDatabaseNamingStrategy implements DatabaseNamingStrategy {
         return `${
             toSnakeCase(prop.declaringEntity.name, this.lower)
         }_${
-            toSnakeCase(prop.thisKey!, this.lower)
+            toSnakeCase(prop.thisKeyProp!.name, this.lower)
         }`;
     }
 
@@ -59,7 +59,7 @@ export class DefaultDatabaseNamingStrategy implements DatabaseNamingStrategy {
         return `${
             toSnakeCase(prop.targetEntity!.name, this.lower)
         }_${
-            toSnakeCase(prop.targetKey!, this.lower)
+            toSnakeCase(prop.targetKeyProp!.name, this.lower)
         }`;
     }
 }

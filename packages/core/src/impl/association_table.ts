@@ -1,7 +1,7 @@
 import { AbstractTable } from "./abstract_table";
 import { Entity } from "./entity";
 import { BaseModelImplementor } from "./base_query_implementor";
-import { AbstractEntityTable, JoinFilter, JoinOperation } from "./entity_table";
+import { JoinFilter, JoinOperation } from "./entity_table";
 import { ShadowAnchor } from "./shadow_anchor";
 import { TypedBaseTable } from "./base_table";
 import { AnyAssociationModel, BaseQuerySelectMapArgs, JoinType, ModelLike } from "@/dsl";
@@ -9,13 +9,13 @@ import { suppressUnused } from "@/utils";
 
 export class AbstractAssociationTable implements AbstractTable {
 
-    private _source: AbstractEntityTable | undefined = undefined;
+    //private _source: AbstractEntityTable | undefined = undefined;
 
-    private _target: AbstractEntityTable | undefined = undefined;
+    //private _target: AbstractEntityTable | undefined = undefined;
 
     constructor(
         readonly __associationModel: AnyAssociationModel,
-        private readonly joinOperation: JoinOperation | undefined
+        readonly joinOperation: JoinOperation | undefined
     ) {
     }
 

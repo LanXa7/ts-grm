@@ -5,10 +5,11 @@ import { AnyModelImpl, ModelImpl, ModelOptions } from "@/impl/model_impl";
 import { dedent, makeErr } from "@/error/util";
 import { capitalize } from "./util";
 import { AbstractEntityTable, createEntityTableClass, EntityTableCtor, JoinOperation } from "./entity_table";
-import { StateError } from "@/error/common";
+import { ArgumentError, StateError } from "@/error/common";
 import { ShadowAnchor } from "./shadow_anchor";
 import { DatabaseNamingStrategy } from "./strategy";
 import { Mutable } from "@/utils";
+import { AssociationEntity } from "./association_entity";
 
 export class Entity {
 
@@ -25,6 +26,8 @@ export class Entity {
     private _expandedPropMap: ReadonlyMap<string, EntityProp> | undefined = undefined;
 
     private _uniqueConstraintArr: ReadonlyArray<ReadonlyArray<EntityProp>> | undefined = undefined;
+
+    private _associationMap: Map<string, AssociationEntity> | undefined = undefined;
 
     readonly tableSettings: TableSettings;
 
@@ -117,6 +120,29 @@ export class Entity {
         this.resolve(2);
         return this._uniqueConstraintArr ?? 
             makeErr(`The uniqueConstraintArr of ${this.name} is not initialized`);
+    }
+
+    association(
+        prop: string
+    ): AssociationEntity {
+        let associationMap = this._associationMap;
+        let associationEntity = associationMap?.get(prop);
+        if (associationEntity == null) {
+            const entityProp = this.prop(prop);
+            if (entityProp.storageType !== "MIDDLE_TABLE") {
+                throw new ArgumentError(
+                    `The prop "${
+                        prop.toString()
+                    }" must be property based on MiddleTable
+                `);
+            }
+            associationEntity = new AssociationEntity(entityProp, ++Entity._nextIdentity);
+            if (associationMap == null) {
+                this._associationMap = associationMap = new Map<string, AssociationEntity>();
+            }
+            associationMap.set(prop, associationEntity);
+        }
+        return associationEntity;
     }
 
     prop(name: string): EntityProp {
@@ -225,7 +251,7 @@ export class Entity {
                     dedent `The association "${prop.toString()}" has foreign key, 
                     so the associated id property "${newPropName}" 
                     will be defined automatically, you cannot define 
-                    "${newPropName}" mannually`
+                    "${newPropName}" manually`
                 );
             }
             const referenceKeyProp = new EntityProp(this, newPropName, {
