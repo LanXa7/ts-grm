@@ -9,7 +9,7 @@ import {
     OneToOneMappedByKeys, 
     OptionalModelKey 
 } from "@/schema/model";
-import { CascadeType, JoinColumn, JoinColumns, JoinTable, WeakTypeJoinColumns } from "./join";
+import { CascadeType, JoinTable, JoinColumns } from "./join";
 import { FlattenMembers } from "@/utils";
 import { ArgumentError } from "@/error/common";
 
@@ -305,7 +305,7 @@ export class ConfigurableOneToOneProp<
     joinColumns<TTargetKeyProp extends OptionalModelKey<TModel> = "">(
         options: {
             targetKeyProp?: TTargetKeyProp
-            columns?: JoinColumns<AllModelMembers<TModel>[RequiredModelKey<TModel, TTargetKeyProp>]>
+            columns?: JoinColumns
             cascade?: CascadeType
         }
     ): OneToOneProp<
@@ -318,7 +318,7 @@ export class ConfigurableOneToOneProp<
     >;
 
     joinColumns(
-        ...joinColumns: JoinColumns<AllModelMembers<TModel>[ModelIdKey<TModel>]>
+        ...joinColumns: JoinColumns
     ): OneToOneProp<
         TModel, 
         TNullity, 
@@ -433,7 +433,7 @@ export class ConfigurableManyToOneProp<
     joinColumns<TTargetKeyProp extends OptionalModelKey<TModel> = "">(
         options: {
             targetKeyProp?: TTargetKeyProp
-            columns?: JoinColumns<AllModelMembers<TModel>[RequiredModelKey<TModel, TTargetKeyProp>]>
+            columns?: JoinColumns
             cascade?: CascadeType
         }
     ): ManyToOneProp<
@@ -446,7 +446,7 @@ export class ConfigurableManyToOneProp<
     >;
 
     joinColumns(
-        ...joinColumns: JoinColumns<AllModelMembers<TModel>[ModelIdKey<TModel>]>
+        ...joinColumns: JoinColumns
     ): ManyToOneProp<
         TModel, 
         TNullity, 
@@ -823,7 +823,7 @@ function joinColumnsDataOf(data: any, targetModel: any): ForeignKeyData | undefi
         return undefined;
     }
     if (Array.isArray(data)) {
-        const arr = data as ReadonlyArray<JoinColumn<any>>;
+        const arr = data as JoinColumns;
         const columns = arr.map(joinColumnDataOf);
         if (columns.length > 1) {
             for (const column of columns) {
@@ -1045,10 +1045,10 @@ export type M2MCreator = {
 type SelfJoinColumnsOptions<
     TTargetKeyProp extends string
 > = {
-    readonly joinColumns?: WeakTypeJoinColumns | {
+    readonly joinColumns?: JoinColumns | {
         readonly targetKeyProp?: TTargetKeyProp | undefined;
         readonly cascade?: CascadeType | undefined;
-        readonly columns?: WeakTypeJoinColumns | undefined;
+        readonly columns?: JoinColumns | undefined;
     } | undefined;
 };
 
@@ -1058,19 +1058,19 @@ type SelfJoinTableOptions<
 > = {
     readonly joinTable: {
         readonly name?: string | undefined;
-        readonly joinThisColumns?: WeakTypeJoinColumns | undefined;
-        readonly joinTargetColumns?: WeakTypeJoinColumns | undefined; 
+        readonly joinThisColumns?: JoinColumns | undefined;
+        readonly joinTargetColumns?: JoinColumns | undefined; 
     } | {
         readonly nam?: string | undefined;
         readonly joinThis?: {
             readonly sourceKeyProp?: TSourceKeyProp | undefined;
             readonly cascadeType?: CascadeType | undefined;
-            readonly columns?: WeakTypeJoinColumns | undefined;
+            readonly columns?: JoinColumns | undefined;
         } | undefined;
         readonly joinTarget?: {
             readonly targetKeyProp?: TTargetKeyProp | undefined;
             readonly cascadeType?: CascadeType | undefined;
-            readonly columns?: WeakTypeJoinColumns | undefined;
+            readonly columns?: JoinColumns | undefined;
         }
     };
 };

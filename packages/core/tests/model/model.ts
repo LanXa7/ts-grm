@@ -94,6 +94,7 @@ export const ORDER = model("Order", "id", class {
         })
     });
     name = prop.num();
+    items = prop.o2m(ORDER_ITEM).mappedBy("order")
     tags = prop.m2m(TAG).joinTable({
         joinThis: {
             keyProp: "id",
@@ -110,7 +111,7 @@ export const ORDER = model("Order", "id", class {
                 {columnName: "tag_high", referencedSubPath: "high"}
             ]
         }
-    });
+    }).orderBy("id.low", "id.high");
 }, ctx => {
     ctx.table({
         discriminator: {
@@ -154,5 +155,5 @@ export const TAG = model("Tag", "id", class {
         high: prop.i32()
     });
     name = prop.str()
-    orders = prop.m2m(ORDER).mappedBy("tags")
+    orders = prop.m2m(ORDER).mappedBy("tags").orderBy("id.y.a", "name")
 });

@@ -1,22 +1,4 @@
-import { EmbeddedProp, Prop } from "./prop";
 import { AnyModel, OptionalModelKey } from "./model";
-
-export type JoinColumns<
-    TTargetKeyProp extends Prop<any, any>
-> = [
-    JoinColumn<TTargetKeyProp>, 
-    ...JoinColumn<TTargetKeyProp>[]
-];
-
-export type JoinColumn<
-    TTargetKeyProp extends Prop<any, any>
-> = 
-    TTargetKeyProp extends EmbeddedProp<any, any, infer FlattenProps>
-        ? {
-            columnName: string,
-            referencedSubPath: keyof FlattenProps
-        }
-        : string | { columnName: string, referencedSubPath?: "" };
 
 export type JoinTable<
     TModel extends AnyModel, 
@@ -25,28 +7,28 @@ export type JoinTable<
 > =
     {
         name?: string,
-        joinThisColumns?: WeakTypeJoinColumns,
-        joinTargetColumns?: WeakTypeJoinColumns
+        joinThisColumns?: JoinColumns,
+        joinTargetColumns?: JoinColumns
     } | {
         name?: string,
         joinThis?: {
             keyProp?: TSourceKeyProp,
-            columns?: WeakTypeJoinColumns,
+            columns?: JoinColumns,
             cascade?: CascadeType
         }
         joinTarget?: {
             keyProp?: TTargetKeyProp,
-            columns?: WeakTypeJoinColumns,
+            columns?: JoinColumns,
             cascade?: CascadeType
         }
     };
 
-export type WeakTypeJoinColumns = [
-    WeakTypeJoinColumn,
-    ...WeakTypeJoinColumn[]
+export type JoinColumns = [
+    JoinColumn,
+    ...JoinColumn[]
 ];
 
-export type WeakTypeJoinColumn = string | {
+export type JoinColumn = string | {
     columnName: string,
     referencedSubPath: string
 };
