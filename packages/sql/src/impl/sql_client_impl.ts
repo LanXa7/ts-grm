@@ -93,14 +93,18 @@ export class SqlClientImpl implements SqlClientImplementor {
         if (joinProp == null) {
             return false;
         }
-        const storage = joinProp.toStorage(this._strategy);
-        if (storage == null) {
-            return false;
-        }
-        if (joinProp.targetKey !== expr.prop.rootProp.name) {
-            return false;
-        }
-        return true;
+        if (joinProp.isAssociationProp) {
+            throw new Error();
+        } else {
+            const storage = (joinProp as metadata.EntityProp).toStorage(this._strategy);
+            if (storage == null) {
+                return false;
+            }
+            if ((joinProp as metadata.EntityProp).targetKeyProp!.name !== expr.prop.rootProp.name) {
+                return false;
+            }
+            return true
+        };
     }
 }
 

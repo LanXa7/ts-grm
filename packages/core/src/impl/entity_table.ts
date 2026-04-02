@@ -13,11 +13,12 @@ import { FetchedViewImpl } from "./fetched_view_impl";
 import { TypedBaseTable } from "./base_table";
 import { ArgumentError, StateError } from "@/error/common";
 import { ModelContract } from "./model_contract";
-import { AnyAssociationModel, BaseQuerySelectMapArgs } from "@/dsl";
+import { BaseQuerySelectMapArgs } from "@/dsl";
 import { BaseModelImplementor } from "./base_query_implementor";
 import { AnyModel } from "@/schema/model";
 import { AbstractPred, ConstantPred } from "./ast/pred";
 import { IsPred } from "./ast/is_pred";
+import { AssociationEntity, AssociationProp } from "./association_entity";
 
 export abstract class AbstractEntityTable implements AbstractTable {
 
@@ -244,7 +245,7 @@ export abstract class AbstractEntityTable implements AbstractTable {
         return undefined;
     }
 
-    get __associationModel(): AnyAssociationModel | undefined {
+    get __associationEntity(): AssociationEntity | undefined {
         return undefined;
     }
 
@@ -268,11 +269,13 @@ export abstract class AbstractEntityTable implements AbstractTable {
 export type JoinOperation = {
     readonly parent: AbstractTable;
     readonly joinType: JoinType;
-    readonly joinProp: EntityProp | undefined;
+    readonly joinProp: JoinProp | undefined;
     readonly castToEntity: Entity | undefined;
     readonly weakJoinModel: ModelContract | undefined;
     readonly filter: JoinFilter | undefined;
 };
+
+export type JoinProp = EntityProp | AssociationProp;
 
 interface SharedData {
 

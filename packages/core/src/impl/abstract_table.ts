@@ -1,12 +1,14 @@
 import { Entity } from "./entity";
 import { BaseModelImplementor } from "./base_query_implementor";
 import { createTypedBaseTable, TypedBaseTable } from "./base_table";
-import { AnyAssociationModel, BaseQuerySelectMapArgs, JoinType, ModelLike } from "@/dsl";
+import { BaseQuerySelectMapArgs, JoinType, ModelLike } from "@/dsl";
 import { JoinFilter, JoinOperation } from "./entity_table";
 import { ModelImpl } from "./model_impl";
 import { AnyModel } from "@/schema/model";
 import { ModelContract } from "./model_contract";
 import { ShadowAnchor } from "./shadow_anchor";
+import { AssociationEntity } from "./association_entity";
+import { AssociationModelImpl } from "./association_model_impl";
 
 export interface AbstractTable {
 
@@ -14,7 +16,7 @@ export interface AbstractTable {
 
     readonly __baseModel: BaseModelImplementor<any> | undefined;
 
-    readonly __associationModel: AnyAssociationModel | undefined;
+    readonly __associationEntity: AssociationEntity | undefined;
 
     readonly __joinOperation: JoinOperation | undefined;
 
@@ -53,6 +55,16 @@ export function createJoinedTable(
     const filter = typeof options === "function" ? options : options.filter;
     if (model instanceof ModelImpl) {
         return Entity.of(model as AnyModel).table({
+            parent, 
+            joinType, 
+            joinProp: undefined, 
+            castToEntity: undefined,
+            weakJoinModel: model as any as ModelContract,
+            filter
+        });
+    }
+    if (model instanceof AssociationModelImpl) {
+        return model.toEntity().table({
             parent, 
             joinType, 
             joinProp: undefined, 

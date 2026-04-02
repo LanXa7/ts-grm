@@ -68,11 +68,13 @@ export class PreVisitor extends ast.AbstractVisitor {
         if (expr.table.__isPrev) {
             return;
         }
-        const shadow = this._toRealTable(expr.table.__to(expr.prop.declaringEntity)).shadow;
+        const table = expr.table as metadata.AbstractEntityTable;
+        const prop = expr.prop as metadata.EntityProp;
+        const shadow = this._toRealTable(table.__to(prop.declaringEntity)).shadow;
         if (shadow != null) {
             shadow.baseQueryMetadata.alias(
                 expr.table.__anchor!.exportedName, 
-                (expr.prop.toStorage(this._strategy) as any as metadata.Column).name
+                (prop.toStorage(this._strategy) as any as metadata.Column).name
             );
         }
     }
@@ -180,7 +182,7 @@ export class PreVisitor extends ast.AbstractVisitor {
             return;
         }
         if (table.joinProp != null) {
-            switch (table.joinProp.storageType) {
+            switch ((table.joinProp as metadata.EntityProp).storageType) {
                 case "MIDDLE_TABLE":
                     this._processMiddleTable(table);
                     break;
@@ -197,7 +199,7 @@ export class PreVisitor extends ast.AbstractVisitor {
     }
 
     private _processMiddleTable(table: RealTable) {
-        const middleTable = table.joinProp!.toStorage(this._strategy)! as metadata.MiddleTable;
+        const middleTable = (table.joinProp as metadata.EntityProp)!.toStorage(this._strategy)! as metadata.MiddleTable;
         const exportedName = table.parent!.symbol.__anchor!.exportedName;
         for (const column of middleTable.toThisColumns) {
             table.parent!.shadow!.baseQueryMetadata.alias(exportedName, column.referencedColumnName!);
@@ -205,7 +207,7 @@ export class PreVisitor extends ast.AbstractVisitor {
     }
 
     private _processForeignKey(table: RealTable, reverse: boolean) {
-        const storage = (reverse ? table.joinProp!.mappedByProp! : table.joinProp!)
+        const storage = (reverse ? (table.joinProp as metadata.EntityProp)!.mappedByProp! : (table.joinProp as metadata.EntityProp)!)
             .toStorage(this._strategy) as metadata.PropStorage;
         const exportedName = table.parent!.symbol.__anchor!.exportedName;
         if (storage.kind === "COLUMN") {

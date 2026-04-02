@@ -1,9 +1,9 @@
-import { makeErr } from "@/error/util";
 import { Entity, EntityProp } from "@/impl";
-import { AllModelMembers, AnyModel, RequiredModelKey, OptionalModelKey } from "@/schema/model";
+import { AllModelMembers, AnyModel, RequiredModelKey } from "@/schema/model";
 import { AssociatedProp, NullityType } from "@/schema/prop";
-import { EntityTableMembers } from "./table";
+import { EntityTableMembers, FilterType } from "./table";
 import { MakeExpression } from "./expression";
+import { AssociationModelImpl } from "@/impl/association_model_impl";
 
 export interface AssociationModel<
     TSourceModel extends AnyModel,
@@ -27,8 +27,6 @@ export interface AssociationModel<
     readonly targetEntity: Entity;
 
     readonly targetKeyProp: EntityProp;
-
-    readonly associationProp: EntityProp;
 }
 
 export type AnyAssociationModel = AssociationModel<AnyModel, any, AnyModel, any>;
@@ -100,46 +98,6 @@ export type MakeAssociationTableMembers<
         >
         : never;
 
-class AssociationModelImpl<
-    TSourceModel extends AnyModel,
-    TSourceKey extends OptionalModelKey<TSourceModel>,
-    TTargetModel extends AnyModel,
-    TTargetKey extends OptionalModelKey<TTargetModel>
-> implements AssociationModel<TSourceModel, TSourceKey, TTargetModel, TTargetKey> {
-
-    __type(): {
-        readonly associationModel: [
-            TSourceModel, 
-            TSourceKey, 
-            TTargetModel, 
-            TTargetKey
-        ] | true;
-    } {
-        return { associationModel: true };
-    }
-
-    readonly sourceEntity: Entity;
-
-    readonly sourceKeyProp: EntityProp;
-
-    readonly targetEntity: Entity;
-
-    readonly targetKeyProp: EntityProp;
-
-    constructor(
-        readonly associationProp: EntityProp
-    ) {
-        this.sourceEntity = associationProp.declaringEntity;
-        this.targetEntity = associationProp.targetEntity!;
-        this.sourceKeyProp = associationProp.thisKeyProp ?? makeErr(
-            `Cannot create association model for "${
-                associationProp.toString()
-            }" because it is not based on middle table`
-        );
-        this.targetKeyProp = associationProp.targetKeyProp!;
-    }
-}
-
 export type AssociationTable<
     TModel extends AnyAssociationModel 
 > = 
@@ -170,14 +128,24 @@ export type AssociationTableMembers<
         readonly tableLike: true;
     };
 
-    readonly source: EntityTableMembers<
+    source(
+        filter?: FilterType<
+            AssociationModel<TSourceModel, TSourceKey, TTargetModel, TSourceKey>, 
+            TSourceModel
+        >
+    ): EntityTableMembers<
         TSourceModel, 
         AllModelMembers<TSourceModel>,
         TNullity,
         false
     >;
 
-    readonly target: EntityTableMembers<
+    target(
+        filter?: FilterType<
+            AssociationModel<TSourceModel, TSourceKey, TTargetModel, TSourceKey>, 
+            TSourceModel
+        >
+    ): EntityTableMembers<
         TTargetModel,
         AllModelMembers<TSourceModel>,
         TNullity,

@@ -287,15 +287,15 @@ describe("QueryTest", () => {
         ]>();
     });
 
-    it("associationModel", async () => {
+    it("TestAssociationModel", async () => {
         const rows = await sqlClient().createQuery(
             dsl.associationModel(BOOK, "authors"), 
             (q, association) => {
                 q.where(association.sourceId.in(1, 2, 3));
                 q.where(association.targetId.in(1, 2, 3));
                 return q.select(
-                    association.source.fetch(SIMPLE_BOOK_VIEW),
-                    association.target.fetch(SIMPLE_AUTHOR_VIEW)
+                    association.source().fetch(SIMPLE_BOOK_VIEW),
+                    association.target().fetch(SIMPLE_AUTHOR_VIEW)
                 );
             }
         ).fetchList();

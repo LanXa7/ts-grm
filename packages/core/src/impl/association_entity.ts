@@ -1,8 +1,10 @@
 import { ArgumentError } from "@/error/common";
 import { EntityProp } from "./entity_prop";
-import { Column, DatabaseNamingStrategy, Entity, MiddleTable } from ".";
+import { Column, DatabaseNamingStrategy, Entity, JoinOperation, MiddleTable } from ".";
 import { capitalize } from "./util";
 import { makeErr } from "@/error/util";
+import { AbstractAssociationTable, AssociationTableCtor, createAssociationTableClass } from "./association_table";
+import { ScalarType } from "@/schema/prop";
 
 export class AssociationEntity {
 
@@ -15,6 +17,8 @@ export class AssociationEntity {
     readonly targetKeyProp: AssociationProp;
 
     readonly expandedProps: ReadonlyMap<string, AssociationProp>;
+
+    private _tableCtor: AssociationTableCtor | undefined = undefined;
 
     constructor(
         readonly originalProp: EntityProp,
@@ -80,9 +84,23 @@ export class AssociationEntity {
     toString(): string {
         return `MiddleTable(${this.originalProp.toString()})`;
     }
+
+    table(joinOperation: JoinOperation | undefined): AbstractAssociationTable {
+        return new (this._tableClass())(this, joinOperation);
+    }
+
+    private _tableClass(): AssociationTableCtor {
+        let ctor = this._tableCtor;
+        if (ctor == null) {
+            this._tableCtor = ctor = createAssociationTableClass(this);
+        }
+        return ctor;
+    }
 }
 
 export interface AssociationProp {
+
+    readonly isAssociationProp: boolean;
 
     readonly declaredEntity: AssociationEntity;
 
@@ -99,6 +117,8 @@ export interface AssociationProp {
     readonly referenceKeyProp: AssociationProp | undefined;
 
     readonly referenceProp: AssociationProp | undefined;
+
+    readonly scalarType: ScalarType | undefined;
 
     readonly props: ReadonlyMap<string, AssociationProp> | undefined;
 
@@ -121,6 +141,10 @@ class AssociationPropImpl implements AssociationProp {
         readonly targetEntity: Entity | undefined,
         readonly parentProp: AssociationProp | undefined
     ) {}
+
+    get isAssociationProp(): true {
+        return true;
+    }
     
     get subPath(): string {
         if (this.parentProp == null) {
@@ -133,11 +157,13 @@ class AssociationPropImpl implements AssociationProp {
         return `${parentPath}.${this.name}`;
     }
 
-    referenceKeyProp: AssociationProp | undefined;
+    referenceKeyProp: AssociationProp | undefined = undefined;
 
-    referenceProp: AssociationProp | undefined;
+    referenceProp: AssociationProp | undefined = undefined;
 
-    props: ReadonlyMap<string, AssociationProp> | undefined;
+    props: ReadonlyMap<string, AssociationProp> | undefined = undefined;
+
+    scalarType: ScalarType | undefined = undefined;
 
     get rootProp(): AssociationProp {
         return this.parentProp?.rootProp ?? this;
@@ -190,6 +216,7 @@ class AssociationPropImpl implements AssociationProp {
 
     fillProps(entityProp: EntityProp) {
         if (entityProp.props == null) {
+            this.scalarType = entityProp.scalarType;
             return;
         }
         const subProps = new Map<string, AssociationProp>();

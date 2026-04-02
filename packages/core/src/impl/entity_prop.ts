@@ -84,6 +84,10 @@ export class EntityProp {
         this._targetKeyProp = undefined;
     }
 
+    get isAssociationProp(): false {
+        return false;
+    }
+
     get rootProp(): EntityProp {
         let rootProp = this._rootProp;
         if (rootProp == null) {

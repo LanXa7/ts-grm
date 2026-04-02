@@ -5,13 +5,18 @@ import { AbstractDtExpr } from "./dt_expr";
 import { ArgumentError } from "@/error/common";
 import { AbstractEntityTable } from "../entity_table";
 import { Visitor } from "./visitor";
+import { AssociationProp } from "../association_entity";
+import { AbstractAssociationTable } from "../association_table";
 
 export interface PropExprContract {
-    readonly table: AbstractEntityTable,
-    readonly prop: EntityProp
+    readonly table: AbstractEntityTable | AbstractAssociationTable,
+    readonly prop: EntityProp | AssociationProp
 }
 
-export function createTableProp(table: AbstractEntityTable, prop: EntityProp) {
+export function createTableProp(
+    table: AbstractEntityTable | AbstractAssociationTable, 
+    prop: EntityProp | AssociationProp
+) {
     if (prop.scalarType == null) {
         throw new ArgumentError(
             `Cannot create table prop for "${
@@ -19,7 +24,17 @@ export function createTableProp(table: AbstractEntityTable, prop: EntityProp) {
             }" which is not scalar property`
         );
     }
-    const directTable = table.__to(prop.declaringEntity);
+    const isAssociation = table instanceof AbstractAssociationTable;
+    if (isAssociation !== prop.isAssociationProp) {
+        throw new ArgumentError(
+            `The property "${prop.toString()}" is not ${
+                isAssociation ? "association" : "entity"
+            } property`
+        );
+    }
+    const directTable = prop instanceof EntityProp
+        ? (table as AbstractEntityTable).__to(prop.declaringEntity)
+        : table;
     switch (prop.scalarType) {
         case "I8":
         case "I16":
@@ -28,11 +43,11 @@ export function createTableProp(table: AbstractEntityTable, prop: EntityProp) {
         case "NUM":
         case "F32":
         case "F64":
-            return new PropNumExpr(directTable, prop);
+            return new PropNumExpr(directTable, prop, isAssociation);
         case "STR":
-            return new PropStrExpr(directTable, prop);
+            return new PropStrExpr(directTable, prop, isAssociation);
         case "DATE":
-            return new PropDtExpr(directTable, prop);
+            return new PropDtExpr(directTable, prop, isAssociation);
         default:
             throw new ArgumentError(
             `Cannot create table prop for "${
@@ -45,8 +60,9 @@ export function createTableProp(table: AbstractEntityTable, prop: EntityProp) {
 class PropNumExpr<T extends string | number> extends AbstractNumExpr<T> implements PropExprContract {
 
     constructor(
-        readonly table: AbstractEntityTable,
-        readonly prop: EntityProp
+        readonly table: AbstractEntityTable | AbstractAssociationTable,
+        readonly prop: EntityProp | AssociationProp,
+        readonly isAssociation: boolean
     ) {
         super();
     }
@@ -59,8 +75,9 @@ class PropNumExpr<T extends string | number> extends AbstractNumExpr<T> implemen
 class PropStrExpr extends AbstractStrExpr implements PropExprContract {
 
     constructor(
-        readonly table: AbstractEntityTable,
-        readonly prop: EntityProp
+        readonly table: AbstractEntityTable | AbstractAssociationTable,
+        readonly prop: EntityProp | AssociationProp,
+        readonly isAssociation: boolean
     ) {
         super();
     }
@@ -73,8 +90,9 @@ class PropStrExpr extends AbstractStrExpr implements PropExprContract {
 class PropDtExpr extends AbstractDtExpr implements PropExprContract {
     
     constructor(
-        readonly table: AbstractEntityTable,
-        readonly prop: EntityProp
+        readonly table: AbstractEntityTable | AbstractAssociationTable,
+        readonly prop: EntityProp | AssociationProp,
+        readonly isAssociation: boolean
     ) {
         super();
     }

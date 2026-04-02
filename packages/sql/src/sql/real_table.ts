@@ -18,7 +18,7 @@ export class RealTable {
 
     private _joinType: JoinType | undefined;
 
-    private _joinProp: metadata.EntityProp | undefined = undefined;
+    private _joinProp: metadata.EntityProp | metadata.AssociationProp | undefined = undefined;
 
     private _castToEntity: metadata.Entity | undefined = undefined;
 
@@ -73,7 +73,7 @@ export class RealTable {
         return this._parent;
     }
 
-    get joinProp(): metadata.EntityProp | undefined {
+    get joinProp(): metadata.EntityProp | metadata.AssociationProp | undefined {
         return this._joinProp;
     }
 
@@ -218,7 +218,7 @@ export class RealTable {
     }
 
     collectTables(builder: SqlBuilder, tables: Set<RealTable>) {
-        if (this.joinProp?.storageType === "MIDDLE_TABLE") {
+        if ((this.joinProp as metadata.EntityProp)?.storageType === "MIDDLE_TABLE") {
             this._middleTableAlias = builder.allocateTableAlias();
         }
         this._alias = builder.allocateTableAlias();
@@ -239,7 +239,7 @@ export class RealTable {
 
     get middleTableAlias(): string | undefined {
         const middleTableAlias = this._middleTableAlias;
-        if (middleTableAlias == null && this.joinProp?.storageType == "MIDDLE_TABLE") {
+        if (middleTableAlias == null && (this.joinProp as metadata.EntityProp)?.storageType == "MIDDLE_TABLE") {
             return `__unknown__${this.identity}`;
             //throw new err.StateError("The middle table alias has not been allocated");
         }
