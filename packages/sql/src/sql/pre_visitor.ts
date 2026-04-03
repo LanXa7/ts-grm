@@ -182,7 +182,7 @@ export class PreVisitor extends ast.AbstractVisitor {
             return;
         }
         if (table.joinProp != null) {
-            switch ((table.joinProp as metadata.EntityProp).storageType) {
+            switch (table.joinProp.storageType) {
                 case "MIDDLE_TABLE":
                     this._processMiddleTable(table);
                     break;

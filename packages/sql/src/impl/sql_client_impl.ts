@@ -96,7 +96,7 @@ export class SqlClientImpl implements SqlClientImplementor {
         if (joinProp.isAssociationProp) {
             throw new Error();
         } else {
-            const storage = (joinProp as metadata.EntityProp).toStorage(this._strategy);
+            const storage = joinProp.toStorage(this._strategy);
             if (storage == null) {
                 return false;
             }

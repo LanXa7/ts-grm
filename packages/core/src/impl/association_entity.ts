@@ -1,6 +1,6 @@
 import { ArgumentError } from "@/error/common";
 import { EntityProp } from "./entity_prop";
-import { Column, DatabaseNamingStrategy, Entity, JoinOperation, MiddleTable } from ".";
+import { Column, Columns, DatabaseNamingStrategy, Entity, JoinOperation, MiddleTable, StorageType } from ".";
 import { capitalize } from "./util";
 import { makeErr } from "@/error/util";
 import { AbstractAssociationTable, AssociationTableCtor, createAssociationTableClass } from "./association_table";
@@ -122,18 +122,24 @@ export interface AssociationProp {
 
     readonly props: ReadonlyMap<string, AssociationProp> | undefined;
 
+    readonly span: number;
+
+    readonly storageType: StorageType;
+
     toString(): string;
 
-    toColumns(
+    toStorage(
         strategy: DatabaseNamingStrategy
-    ): ReadonlyArray<Column> | undefined;
+    ): Column | Columns | undefined;
 }
 
 class AssociationPropImpl implements AssociationProp {
 
-    private _columns: ReadonlyArray<Column> | undefined = undefined;
+    private _span: number | undefined = undefined;
 
-    private _columnsResolved = false;
+    private _storage: Column | Columns | undefined = undefined;
+
+    private _storageResolver: DatabaseNamingStrategy | undefined = undefined;
  
     constructor(
         readonly declaredEntity: AssociationEntity,    
@@ -169,20 +175,53 @@ class AssociationPropImpl implements AssociationProp {
         return this.parentProp?.rootProp ?? this;
     }
 
-    toColumns(
-        strategy: DatabaseNamingStrategy
-    ): ReadonlyArray<Column> | undefined {
-        if (this._columnsResolved) {
-            return this._columns;
+    get span(): number {
+        let span = this._span;
+        if (span == null) {
+            this._span = span = this._createSpan();
         }
-        this._columns = this._toColumns(strategy);
-        this._columnsResolved = true;
-        return this._columns;
+        return span;
     }
 
-    private _toColumns(
+    private _createSpan(): number {
+        if (this.referenceKeyProp != null) {
+            return 0;
+        }   
+        if (this.props == null) {
+            return 1;
+        }
+        let span = 0;
+        for (const subProp of this.props.values()) {
+            span += subProp.span;
+        }
+        return span;
+    }
+
+    get storageType(): StorageType {
+        switch (this.span) {
+            case 0:
+                return "NONE";
+            case 1:
+                return "COLUMN";
+            default:
+                return "COLUMNS";    
+        }
+    }
+
+    toStorage(
         strategy: DatabaseNamingStrategy
-    ): ReadonlyArray<Column> | undefined {
+    ): Column | Columns | undefined {
+        if (this._storageResolver === strategy) {
+            return this._storage;
+        }
+        this._storage = this._toStorage(strategy);
+        this._storageResolver = strategy;
+        return this._storage;
+    }
+
+    private _toStorage(
+        strategy: DatabaseNamingStrategy
+    ): Column | Columns | undefined {
         const rootProp = this.rootProp;
         if (rootProp.referenceProp == null) {
             return undefined;
@@ -191,20 +230,26 @@ class AssociationPropImpl implements AssociationProp {
             const middleTable = this.declaredEntity.originalProp.toStorage(strategy) as MiddleTable;
             const isSource = rootProp.referenceProp.name === "source";
             if (isSource) {
-                return middleTable.toThisColumns;
+                return columnsToStorage(middleTable.toThisColumns);
             }
-            return middleTable.toTargetColumns;
+            return columnsToStorage(middleTable.toTargetColumns);
         }
         if (this.props == null) {
-            return rootProp
-                .toColumns(strategy)!
-                .filter(c => c.referencedProp!.subPath === this.subPath);
+            return columnsToStorage( 
+                storageToColumns(rootProp.toStorage(strategy)!)
+                .filter(c => c.referencedProp!.subPath === this.subPath)
+            );
         }
         const columns: Array<Column> = [];
         for (const subProp of this.props.values()) {
-            columns.push(...subProp.toColumns(strategy)!);
+            const subStorage = subProp.toStorage(strategy)!;
+            if (subStorage?.kind === "COLUMN") {
+                columns.push(subStorage);
+            } else {
+                columns.push(...subStorage);
+            }
         }
-        return columns;
+        return columnsToStorage(columns);
     }
 
     toString() {
@@ -241,5 +286,23 @@ class AssociationPropImpl implements AssociationProp {
                 (subProp as AssociationPropImpl).collectProps(key, map);
             }
         }
+    }
+}
+
+function columnsToStorage(columns: ReadonlyArray<Column>): Column | Columns {
+    if (columns.length === 1) {
+        return columns[0]!;
+    }
+    const arr = [ ...columns ];
+    (arr as any).kind = "COLUMNS";
+    return arr as any as Columns;
+}
+
+function storageToColumns(storage: Column | Columns): ReadonlyArray<Column> {
+    switch (storage.kind) {
+        case "COLUMN":
+            return [storage];
+        case "COLUMNS":
+            return storage;
     }
 }

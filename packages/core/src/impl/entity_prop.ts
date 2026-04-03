@@ -46,7 +46,7 @@ export class EntityProp {
 
     private _baseStorage: PropStorage | null | undefined = undefined;
 
-    private _strategy: DatabaseNamingStrategy | undefined = undefined;
+    private _storageResolver: DatabaseNamingStrategy | undefined = undefined;
 
     private _storage: PropStorage | undefined = undefined;
 
@@ -556,7 +556,7 @@ export class EntityProp {
     }
 
     toStorage(strategy: DatabaseNamingStrategy): PropStorage | undefined {
-        if (this._strategy === strategy) {
+        if (this._storageResolver === strategy) {
             return this._storage;
         }
         if (this._data.mappedBy != null) {
@@ -579,7 +579,7 @@ export class EntityProp {
                 this._storage = this._createStorage(baseStorage, strategy);
             }
         }
-        this._strategy = strategy;
+        this._storageResolver = strategy;
         return this._storage;
     }
 

@@ -1,38 +1,11 @@
 import { Entity } from "@/impl/entity";
 import { PAPER_BOOK, ORDER_ITEM, BOOK, AUTHOR, TREE_NODE, BOOK_STORE, ELECTRONIC_BOOK, PDF_ELECTRONIC_BOOK, ORDER, VIP_ORDER } from "../model/model";
-import { describe, expect, it, JestAssertion } from "vitest";
+import { describe, expect, it } from "vitest";
 import { makeErr } from "@/error/util";
-import { Column, PropStorage, UPPER_SNAKE_CASE_DATABASE_NAMING_STRATEGY } from "@/impl";
+import { Column, UPPER_SNAKE_CASE_DATABASE_NAMING_STRATEGY } from "@/impl";
+import { expectStorage } from "./utils";
 
 describe("EntityTest", () => {
-
-    function expectStorage(storage: PropStorage | undefined): JestAssertion {
-        if (storage == null) {
-            return expect(undefined);
-        }
-        function columnJson(column: Column): any {
-            if (column.referencedProp == null) {
-                return column;
-            }
-            return {
-                ...column,
-                referencedProp: column.referencedProp.toString()
-            }
-        }
-        const json = storage.kind === "COLUMNS"
-            ? {
-                kind: "COLUMNS",
-                arr: storage.map(columnJson)
-            }
-            : storage.kind === "MIDDLE_TABLE" 
-                ? {
-                    ...storage,
-                    toThisColumns: storage.toThisColumns.map(columnJson),
-                    toTargetColumns: storage.toTargetColumns.map(columnJson)
-                }
-                : columnJson(storage);
-        return expect(json);
-    }
 
     it("entityWithSimpleColumns", () => {
         const paperBookEntity = Entity.of(PAPER_BOOK);
