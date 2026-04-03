@@ -1,8 +1,9 @@
 import { dsl, Table } from "@/dsl";
-import { Entity } from "@/impl";
-import { describe, it } from "vitest";
+import { AbstractEntityTable, Entity } from "@/impl";
+import { describe, expect, it } from "vitest";
 import { BOOK, ORDER } from "../model/model";
 import { expectCode } from "../utils";
+import { AbstractNumExpr } from "@/impl/ast";
 
 describe("AssociationTableTest", () => {
 
@@ -37,6 +38,10 @@ describe("AssociationTableTest", () => {
                 static __targetId = $entity.prop("targetId");
             }
         `);
+        expect(table.source() instanceof AbstractEntityTable).toEqual(true);
+        expect(table.sourceId instanceof AbstractNumExpr).toEqual(true);
+        expect(table.target() instanceof AbstractEntityTable).toEqual(true);
+        expect(table.targetId instanceof AbstractNumExpr).toEqual(true);
     });
 
     it("multiColumnsAssociation", () => {
@@ -126,5 +131,9 @@ describe("AssociationTableTest", () => {
                 static __targetId_high = $entity.prop("targetId.high");
             }
         `);
+        expect(table.source() instanceof AbstractEntityTable).toEqual(true);
+        expect(table.sourceId().x instanceof AbstractNumExpr).toEqual(true);
+        expect(table.sourceId().y().a instanceof AbstractNumExpr).toEqual(true);
+        expect(table.sourceId().y().b instanceof AbstractNumExpr).toEqual(true);
     });
 });

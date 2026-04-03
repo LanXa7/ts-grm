@@ -1,6 +1,6 @@
 import { Entity, EntityProp } from "@/impl";
 import { AllModelMembers, AnyModel, RequiredModelKey } from "@/schema/model";
-import { AssociatedProp, NullityType } from "@/schema/prop";
+import { AssociatedProp, CombinedNullity, EmbeddedProp, NullityType } from "@/schema/prop";
 import { EntityTableMembers, FilterType } from "./table";
 import { MakeExpression } from "./expression";
 import { AssociationModelImpl } from "@/impl/association_model_impl";
@@ -153,15 +153,23 @@ export type AssociationTableMembers<
     >;
 } & {
     readonly [K in `source${Capitalize<TSourceKey>}`]: 
-        AssociationKeyType<TSourceModel, TSourceKey, TNullity>;
+        AssociationKeyType<AllModelMembers<TSourceModel>, TSourceKey, TNullity>;
 } & {
     readonly [K in `target${Capitalize<TTargetKey>}`]: 
-        AssociationKeyType<TTargetModel, TTargetKey, TNullity>;
+        AssociationKeyType<AllModelMembers<TTargetModel>, TTargetKey, TNullity>;
 };
 
 type AssociationKeyType<
-    TModel extends AnyModel, 
-    TKey extends string, 
+    TMembers,
+    TKey extends keyof TMembers, 
     TNullity extends NullityType
 > = 
-    MakeExpression<AllModelMembers<TModel>[TKey], TNullity>;
+    TMembers[TKey] extends EmbeddedProp<infer Props, infer Nullity, any>
+        ? () => {
+            readonly [K in keyof Props]: AssociationKeyType<
+                Props,
+                K & keyof Props,
+                CombinedNullity<TNullity, Nullity>
+            >
+        }
+        : MakeExpression<TMembers[TKey], TNullity>;
