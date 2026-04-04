@@ -1,5 +1,5 @@
 import { metadata } from "@ts-grm/core";
-import { Alias, Column, Composite, MiddleAlias, Scope } from "./fragment";
+import { Alias, Column, Composite, Scope } from "./fragment";
 import { RealTable } from "./real_table";
 import { FragmentGenGenVisitor } from "./fragment_gen_visitor";
 import { SqlClientImplementor } from "@/sql_client";
@@ -35,17 +35,7 @@ export class TableFragmentCreator {
         if (table.parent == null) {
             this._addTable(table, composite);
         } else if (table.joinProp != null) {
-            switch (table.joinProp.storageType) {
-                case "MIDDLE_TABLE":
-                    this._addJoinByMiddleTable(table, composite);
-                    break;
-                case "NONE":
-                    this._addJoinByForeignKey(table, true, composite);
-                    break;
-                default:
-                    this._addJoinByForeignKey(table, false, composite);
-                    break;
-            }
+            this._addJoinByForeignKey(table, composite);
         } else if (table.castToEntity != null) {
             this._addJoinByInheritance(table, composite);
         } else {
@@ -67,9 +57,13 @@ export class TableFragmentCreator {
         composite: Composite
     ) {
         if (table.symbol.__entity != null) {
-            const entityTable = table.symbol as metadata.AbstractEntityTable;
             composite
-                .add(entityTable.__entity.toTableName(this._strategy))
+                .add(table.symbol.__entity.toTableName(this._strategy))
+                .add(" ")
+                .add(new Alias(table));
+        } else if (table.symbol.__associationEntity != null) {
+            composite
+                .add(table.symbol.__associationEntity.toTableName(this._strategy))
                 .add(" ")
                 .add(new Alias(table));
         } else {
@@ -83,60 +77,8 @@ export class TableFragmentCreator {
         }
     }
 
-    private _addJoinByMiddleTable(
-        table: RealTable,
-        composite: Composite
-    ) {
-        const middleTable = table.joinProp!.toStorage(this._strategy)! as metadata.MiddleTable;
-        composite
-            .add("\n")
-            .add(table.joinType!.toLowerCase())
-            .add(" join ")
-            .add(middleTable.name)
-            .add(" ")
-            .add(new MiddleAlias(table))
-            .add(" on ");
-        const thisConditionScope = new Scope("AND");
-        for (const column of middleTable.toThisColumns) {
-            thisConditionScope
-                .separator()
-                .add(
-                    this._createColumn(
-                        table.parent!,
-                        column.referencedColumnName!
-                    )
-                )
-                .add(" = ")
-                .add(new MiddleAlias(table))
-                .add(".")
-                .add(column.name);
-        }
-        composite.add(thisConditionScope);
-        composite
-            .add("\n")
-            .add(table.joinType!.toLowerCase())
-            .add(" join ");
-        this._addTable(table, composite);
-        composite.add(" on ");
-        const targetConditionScope = new Scope("AND");
-        for (const column of middleTable.toTargetColumns) {
-            targetConditionScope
-                .separator()
-                .add(new MiddleAlias(table))
-                .add(".")
-                .add(column.name)
-                .add(" = ")
-                .add(new Alias(table))
-                .add(".")
-                .add(column.referencedColumnName!);
-        }
-        this._addJoinFilter(table, targetConditionScope);
-        composite.add(targetConditionScope);
-    }
-
     private _addJoinByForeignKey(
         table: RealTable,
-        reverse: boolean,
         composite: Composite
     ) {
         composite
@@ -145,8 +87,7 @@ export class TableFragmentCreator {
             .add(" join ");
         this._addTable(table, composite);
         composite.add(" on ");
-        const storage = (reverse ? table.joinProp!.mappedByProp! : table.joinProp!)
-            .toStorage(this._strategy) as metadata.PropStorage;
+        const storage = table.joinProp!.toStorage(this._strategy) as metadata.PropStorage;
         const conditionScope = new Scope("AND");
         if (storage.kind === "COLUMN") {
             conditionScope
@@ -154,13 +95,13 @@ export class TableFragmentCreator {
                 .add(
                     this._createColumn(
                         table.parent!, 
-                        reverse ? storage.referencedColumnName! : storage.name
+                        table.isJoinPropInverse ? storage.referencedColumnName! : storage.name
                     )
                 )
                 .add(" = ")
                 .add(new Alias(table))
                 .add(".")
-                .add(reverse ? storage.name : storage.referencedColumnName!);
+                .add(table.isJoinPropInverse ? storage.name : storage.referencedColumnName!);
         } else if (storage.kind === "COLUMNS") {
             for (const column of storage) {
                 conditionScope
@@ -168,13 +109,13 @@ export class TableFragmentCreator {
                     .add(
                         this._createColumn(
                             table.parent!, 
-                            reverse ? column.referencedColumnName! : column.name
+                            table.isJoinPropInverse ? column.referencedColumnName! : column.name
                         )
                     )
                     .add(" = ")
                     .add(new Alias(table))
                     .add(".")
-                    .add(reverse ? column.name : column.referencedColumnName!);
+                    .add(table.isJoinPropInverse ? column.name : column.referencedColumnName!);
             }
         }
         this._addJoinFilter(table, conditionScope);

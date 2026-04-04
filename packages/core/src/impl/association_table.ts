@@ -31,6 +31,10 @@ export class AbstractAssociationTable implements AbstractTable {
         }
     }
 
+    $acceptRisk(): this {
+        return this;
+    }
+
     get __entity(): Entity | undefined {
         return undefined;
     }
@@ -75,6 +79,7 @@ export class AbstractAssociationTable implements AbstractTable {
                 parent: this,
                 joinType: this.__joinOperation?.joinType ?? "INNER",
                 joinProp: this.__associationEntity.sourceProp,
+                isJoinPropInverse: false,
                 weakJoinModel: undefined,
                 castToEntity: undefined,
                 filter
@@ -90,6 +95,7 @@ export class AbstractAssociationTable implements AbstractTable {
                     parent: this,
                     joinType: joinOperation?.joinType ?? "INNER",
                     joinProp: this.__associationEntity.sourceProp,
+                    isJoinPropInverse: false,
                     weakJoinModel: undefined,
                     castToEntity: undefined,
                     filter: undefined
@@ -104,10 +110,11 @@ export class AbstractAssociationTable implements AbstractTable {
         filter?: JoinFilter
     ): AbstractEntityTable {
         if (filter != null) {
-            this.__associationEntity.targetProp!.targetEntity!.table({
+            return this.__associationEntity.targetProp!.targetEntity!.table({
                 parent: this,
                 joinType: this.__joinOperation?.joinType ?? "INNER",
                 joinProp: this.__associationEntity.targetProp,
+                isJoinPropInverse: false,
                 weakJoinModel: undefined,
                 castToEntity: undefined,
                 filter
@@ -119,6 +126,7 @@ export class AbstractAssociationTable implements AbstractTable {
                 parent: this,
                 joinType: this.__joinOperation?.joinType ?? "INNER",
                 joinProp: this.__associationEntity.targetProp,
+                isJoinPropInverse: false,
                 weakJoinModel: undefined,
                 castToEntity: undefined,
                 filter: undefined

@@ -68,6 +68,10 @@ export class PreVisitor extends ast.AbstractVisitor {
         if (expr.table.__isPrev) {
             return;
         }
+        if (expr.prop.isAssociationProp) {
+            this._toRealTable(expr.table);
+            return;
+        }
         const table = expr.table as metadata.AbstractEntityTable;
         const prop = expr.prop as metadata.EntityProp;
         const shadow = this._toRealTable(table.__to(prop.declaringEntity)).shadow;
@@ -150,7 +154,7 @@ export class PreVisitor extends ast.AbstractVisitor {
                 } else {
                     const parentRealTable = this._toRealTable(joinOperation.parent);   
                     realTable = parentRealTable.child(
-                        table as metadata.AbstractEntityTable, 
+                        table, 
                         this._joinMergeScopeStack.currentOrUndefined
                     );
                 }

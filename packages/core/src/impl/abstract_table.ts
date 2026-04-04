@@ -46,18 +46,23 @@ export interface AbstractTable {
 export function createJoinedTable(
     parent: AbstractTable,
     model: ModelLike,
-    options: JoinFilter | {
+    options: JoinType | JoinFilter | {
         readonly joinType?: JoinType,
-        readonly filter: JoinFilter
-    }
+        readonly filter?: JoinFilter
+    } | undefined
 ): AbstractTable {
-    const joinType = typeof options === "function" ? "INNER" : options.joinType ?? "INNER";
-    const filter = typeof options === "function" ? options : options.filter;
+    const joinType = typeof options === "string" 
+        ? options as JoinType
+        : typeof options === "function" ? "INNER" : options?.joinType ?? "INNER";
+    const filter = typeof options === "string"
+        ? undefined 
+        : typeof options === "function" ? options : options?.filter;
     if (model instanceof ModelImpl) {
         return Entity.of(model as AnyModel).table({
             parent, 
             joinType, 
             joinProp: undefined, 
+            isJoinPropInverse: false,
             castToEntity: undefined,
             weakJoinModel: model as any as ModelContract,
             filter
@@ -68,6 +73,7 @@ export function createJoinedTable(
             parent, 
             joinType, 
             joinProp: undefined, 
+            isJoinPropInverse: false,
             castToEntity: undefined,
             weakJoinModel: model as any as ModelContract,
             filter
@@ -77,6 +83,7 @@ export function createJoinedTable(
         parent,
         joinType,
         joinProp: undefined,
+        isJoinPropInverse: false,
         castToEntity: undefined,
         weakJoinModel: model as any as ModelContract,
         filter

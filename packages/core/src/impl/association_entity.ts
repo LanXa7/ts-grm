@@ -5,6 +5,8 @@ import { capitalize } from "./util";
 import { makeErr } from "@/error/util";
 import { AbstractAssociationTable, AssociationTableCtor, createAssociationTableClass } from "./association_table";
 import { ScalarType } from "@/schema/prop";
+import { AnyAssociationModel } from "@/dsl/association";
+import { AssociationModelImpl } from "./association_model_impl";
 
 export class AssociationEntity {
 
@@ -96,6 +98,10 @@ export class AssociationEntity {
         }
         return ctor;
     }
+
+    static of(model: AnyAssociationModel) {
+        return (model as AssociationModelImpl<any, any, any, any>).toEntity();
+    }
 }
 
 export interface AssociationProp {
@@ -178,15 +184,15 @@ class AssociationPropImpl implements AssociationProp {
     get span(): number {
         let span = this._span;
         if (span == null) {
-            this._span = span = this._createSpan();
+            this._span = span = this._calcSpan();
         }
         return span;
     }
 
-    private _createSpan(): number {
-        if (this.referenceKeyProp != null) {
+    private _calcSpan(): number {
+        if (this.rootProp.targetEntity != null) {
             return 0;
-        }   
+        }
         if (this.props == null) {
             return 1;
         }
@@ -200,7 +206,7 @@ class AssociationPropImpl implements AssociationProp {
     get storageType(): StorageType {
         switch (this.span) {
             case 0:
-                return "NONE";
+                return this.referenceKeyProp?.storageType ?? "NONE";
             case 1:
                 return "COLUMN";
             default:
@@ -223,12 +229,12 @@ class AssociationPropImpl implements AssociationProp {
         strategy: DatabaseNamingStrategy
     ): Column | Columns | undefined {
         const rootProp = this.rootProp;
-        if (rootProp.referenceProp == null) {
-            return undefined;
+        if (rootProp.referenceKeyProp != null) {
+            return rootProp.referenceKeyProp.toStorage(strategy);
         }
         if (this.parentProp == null) {
             const middleTable = this.declaredEntity.originalProp.toStorage(strategy) as MiddleTable;
-            const isSource = rootProp.referenceProp.name === "source";
+            const isSource = rootProp.referenceProp!.name === "source";
             if (isSource) {
                 return columnsToStorage(middleTable.toThisColumns);
             }

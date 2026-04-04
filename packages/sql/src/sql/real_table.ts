@@ -20,6 +20,8 @@ export class RealTable {
 
     private _joinProp: metadata.EntityProp | metadata.AssociationProp | undefined = undefined;
 
+    private _isJoinPropInverse: boolean = false;
+
     private _castToEntity: metadata.Entity | undefined = undefined;
 
     private _filters: Set<metadata.JoinFilter> | undefined = undefined;
@@ -29,8 +31,6 @@ export class RealTable {
     private _filterPredResolved = false;
 
     private _alias: string | undefined = undefined;
-
-    private _middleTableAlias: string | undefined = undefined;
 
     private _baseQueryMetadata: BaseQueryMetadata | undefined = undefined;
 
@@ -49,6 +49,7 @@ export class RealTable {
         if (symbol.__joinOperation != null) {
             this._joinType = symbol.__joinOperation.joinType;
             this._joinProp = symbol.__joinOperation.joinProp;
+            this._isJoinPropInverse = symbol.__joinOperation.isJoinPropInverse;
             this._castToEntity = symbol.__joinOperation.castToEntity;
             if (symbol.__joinOperation?.filter != null) {
                 let filters = this._filters;
@@ -77,6 +78,10 @@ export class RealTable {
         return this._joinProp;
     }
 
+    get isJoinPropInverse(): boolean {
+        return this._isJoinPropInverse;
+    }
+
     get castToEntity(): metadata.Entity | undefined {
         return this._castToEntity;
     }
@@ -86,7 +91,7 @@ export class RealTable {
     }
 
     child(
-        symbol: metadata.AbstractEntityTable, 
+        symbol:metadata.AbstractTable, 
         scope: JoinMergeScope | undefined
     ): RealTable {
         const joinOperation = symbol.__joinOperation;
@@ -179,11 +184,11 @@ export class RealTable {
     }
 
     private static _restrictKeyOf(
-        symbol: metadata.AbstractEntityTable,
+        symbol: metadata.AbstractTable,
         joinType: JoinType | undefined
     ): string {
         return `${
-            (symbol.__entity ?? symbol.__baseModel).identity
+            (symbol.__entity ?? symbol.__associationEntity)?.identity ?? ""
         }\x1F${
             RealTable._propKey(symbol)
         }\x1F${
@@ -192,11 +197,11 @@ export class RealTable {
     }
 
     private static _laxKeyOf(
-        symbol: metadata.AbstractEntityTable,
+        symbol: metadata.AbstractTable,
         scope: JoinMergeScope | undefined
     ): string {
         return `${
-            (symbol.__entity ?? symbol.__baseModel).identity
+            (symbol.__entity ?? symbol.__associationEntity)?.identity ?? ""
         }\x1F${
             RealTable._propKey(symbol)
         }\x1F${
@@ -205,7 +210,7 @@ export class RealTable {
     }
 
     private static _propKey(
-        symbol: metadata.AbstractEntityTable
+        symbol: metadata.AbstractTable
     ): string {
         const joinOperation = symbol.__joinOperation!;
         if (joinOperation.joinProp != null) {
@@ -218,9 +223,6 @@ export class RealTable {
     }
 
     collectTables(builder: SqlBuilder, tables: Set<RealTable>) {
-        if (this.joinProp?.storageType === "MIDDLE_TABLE") {
-            this._middleTableAlias = builder.allocateTableAlias();
-        }
         this._alias = builder.allocateTableAlias();
         tables.add(this);
         for (const child of this.children) {
@@ -235,15 +237,6 @@ export class RealTable {
             //throw new err.StateError("The table alias has not been allocated");
         }
         return alias;
-    }
-
-    get middleTableAlias(): string | undefined {
-        const middleTableAlias = this._middleTableAlias;
-        if (middleTableAlias == null && this.joinProp?.storageType == "MIDDLE_TABLE") {
-            return `__unknown__${this.identity}`;
-            //throw new err.StateError("The middle table alias has not been allocated");
-        }
-        return middleTableAlias;
     }
 
     get baseQueryMetadata(): BaseQueryMetadata {

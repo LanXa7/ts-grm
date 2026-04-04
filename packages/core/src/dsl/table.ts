@@ -13,7 +13,7 @@ import { FilterNever } from "@/utils";
 import { View } from "@/schema/dto";
 import { FetchedView } from "./root_query";
 import { BaseQuerySelectMapArgs, BaseModel, BaseQueryMapOf } from "./base_query";
-import { AnyAssociationModel, AssociationKeys, AssociationTable, MakeAssociationTableMembers } from "./association";
+import { AnyAssociationModel, AssociationKeys, AssociationTable, MakeAssociationModel, MakeAssociationTableMembers } from "./association";
 
 export type TableLike = {
 
@@ -272,7 +272,10 @@ type AssociationActionImpl<
         TJoinType extends JoinType = "INNER"
     >(
         key: TAssociationKeys,
-        joinType?: JoinType
+        options?: TJoinType | {
+            readonly joinType?: TJoinType;
+            readonly filter?: FilterType<TModel, MakeAssociationModel<TModel, TKey>>
+        }
     ): TableRiskWrapper<
         MakeAssociationTableMembers<
             TModel,

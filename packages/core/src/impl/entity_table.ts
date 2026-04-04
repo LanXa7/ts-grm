@@ -13,12 +13,13 @@ import { FetchedViewImpl } from "./fetched_view_impl";
 import { TypedBaseTable } from "./base_table";
 import { ArgumentError, StateError } from "@/error/common";
 import { ModelContract } from "./model_contract";
-import { BaseQuerySelectMapArgs } from "@/dsl";
+import { BaseQuerySelectMapArgs, dsl } from "@/dsl";
 import { BaseModelImplementor } from "./base_query_implementor";
 import { AnyModel } from "@/schema/model";
 import { AbstractPred, ConstantPred } from "./ast/pred";
 import { IsPred } from "./ast/is_pred";
 import { AssociationEntity, AssociationProp } from "./association_entity";
+import { AbstractAssociationTable } from "./association_table";
 
 export abstract class AbstractEntityTable implements AbstractTable {
 
@@ -33,6 +34,8 @@ export abstract class AbstractEntityTable implements AbstractTable {
     private readonly _downcast: boolean;
 
     private _upcastMap: Map<Entity, AbstractEntityTable> | undefined = undefined;
+
+    private _associationMap: Map<string, AbstractAssociationTable> | undefined = undefined;
 
     constructor(
         readonly __entity: Entity,
@@ -141,6 +144,54 @@ export abstract class AbstractEntityTable implements AbstractTable {
         return this.__to(Entity.of(derivedModel));
     }
 
+    association(
+        key: string, 
+        options?: JoinType | JoinFilter | {
+            readonly joinType?: JoinType;
+            readonly filter?: JoinFilter;
+        }
+    ): AbstractAssociationTable {
+        const joinType = typeof options === "string" 
+                ? options as JoinType
+                : typeof options === "function" ? "INNER" : options?.joinType ?? "INNER";
+        const filter = typeof options === "string"
+            ? undefined 
+            : typeof options === "function" ? options : options?.filter;
+        if (filter != null) {
+            return this._association(key, joinType, filter);
+        }
+        const mapKey = `${key}\x1F${joinType}`;
+        let associationMap = this._associationMap;
+        let association = associationMap?.get(mapKey);
+        if (association != null) {
+            return association;
+        }
+        if (associationMap == null) {
+            this._associationMap = associationMap = new Map();
+        }
+        association = this._association(key, joinType, filter);
+        associationMap.set(mapKey, association);
+        return association;
+    }
+
+    private _association(
+        key: string, 
+        joinType: JoinType,
+        filter: JoinFilter | undefined
+    ): AbstractAssociationTable {
+        const associationModel = dsl.associationModel(this.__entity.model!, key);
+        const associationEntity = AssociationEntity.of(associationModel); 
+        return associationEntity.table({
+            parent: this,
+            joinType,
+            joinProp: associationEntity.sourceProp,
+            isJoinPropInverse: true,
+            castToEntity: undefined,
+            weakJoinModel: undefined,
+            filter
+        });
+    }
+
     __to(castTo: Entity): AbstractEntityTable {
         if (this.__entity === castTo) {
             return this;
@@ -174,6 +225,7 @@ export abstract class AbstractEntityTable implements AbstractTable {
             parent: this,
             joinType: this._sharedData.nullable || this._downcast ? "LEFT" : "INNER",
             joinProp: undefined,
+            isJoinPropInverse: false,
             castToEntity: castTo,
             weakJoinModel: undefined,
             filter: undefined
@@ -195,6 +247,7 @@ export abstract class AbstractEntityTable implements AbstractTable {
                 parent: this,
                 joinType: "LEFT",
                 joinProp: undefined,
+                isJoinPropInverse: false,
                 castToEntity: castTo,
                 weakJoinModel: undefined,
                 filter: undefined
@@ -270,6 +323,7 @@ export type JoinOperation = {
     readonly parent: AbstractTable;
     readonly joinType: JoinType;
     readonly joinProp: JoinProp | undefined;
+    readonly isJoinPropInverse: boolean;
     readonly castToEntity: Entity | undefined;
     readonly weakJoinModel: ModelContract | undefined;
     readonly filter: JoinFilter | undefined;
@@ -341,6 +395,9 @@ function writeConstructor(writer: CodeWriter) {
 }
 
 function writeField(prop: EntityProp, writer: CodeWriter) {
+    if (prop.storageType === "MIDDLE_TABLE") {
+        return;
+    }
     if (prop.associationType != null) {
         writer.code("_").code(prop.name).code(" = undefined").newLine(";");
         writer.code("_").code(prop.name).code("_LEFT = undefined").newLine(";");
@@ -385,15 +442,23 @@ function writeAssociationProp(prop: EntityProp, writer: CodeWriter) {
             writer.code(`typeof options === "string" ? options : options.joinType ?? "INNER"`);
         }).newLine(";");
         writer.code(`const filter = options?.filter`).newLine(";");
-        writer.code(`if (filter == null && joinType === "INNER") `).scope("CURLY_BRACKETS", () => {
-            writeNoFilterJoin(prop, false, writer);
-        }).newLine();
-        writer.code(`if (filter == null && joinType === "LEFT") `).scope("CURLY_BRACKETS", () => {
-            writeNoFilterJoin(prop, true, writer);
-        }).newLine();
-        writer.code("return ");
-        writeJoinTable(prop, true, writer);
-        writer.newLine(";")
+        if (prop.storageType === "MIDDLE_TABLE") {
+            writer
+                .code(`return this.association("`)
+                .code(prop.name)
+                .code(`", joinType).target(filter)`)
+                .newLine(";");
+        } else {
+            writer.code(`if (filter == null && joinType === "INNER") `).scope("CURLY_BRACKETS", () => {
+                writeNoFilterJoin(prop, false, writer);
+            }).newLine();
+            writer.code(`if (filter == null && joinType === "LEFT") `).scope("CURLY_BRACKETS", () => {
+                writeNoFilterJoin(prop, true, writer);
+            }).newLine();
+            writer.code("return ");
+            writeJoinTable(prop, true, writer);
+            writer.newLine(";");
+        }
     }).newLine();
 }
 
@@ -434,8 +499,11 @@ function writeJoinTable(
                 .separator()
                 .code("joinType")
                 .separator()
-                .code("joinProp: ThisClass.__").code(prop.name)
-                .separator();
+                .code("joinProp: ThisClass.__").code(prop.name);
+            if (prop.mappedByProp != null && prop.storageType != "MIDDLE_TABLE") {
+                writer.code(".mappedByProp").separator().code("isJoinPropInverse: true");
+            }
+            writer.separator();
             if (useFilter) {
                 writer.code("filter");
             } else {
@@ -471,6 +539,9 @@ function writePropMeta(prop: EntityProp, writer: CodeWriter) {
         for (const subProp of prop.props.values()) {
             writePropMeta(subProp, writer);
         }
+        return;
+    }
+    if (prop.storageType === "MIDDLE_TABLE") {
         return;
     }
     if (prop.targetEntity == null && prop.scalarType == null) {

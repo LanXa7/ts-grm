@@ -6,6 +6,7 @@ import { AbstractNumExpr } from "@/impl/ast/num_expr";
 import { AbstractStrExpr } from "@/impl/ast/str_expr";
 import { AbstractEntityTable } from "@/impl/entity_table";
 import { expectCode } from "../utils";
+import { AbstractAssociationTable } from "@/impl/association_table";
 
 describe("RuntimeTableTest", () => {
 
@@ -53,7 +54,8 @@ describe("RuntimeTableTest", () => {
                             this._books = join = ThisClass.__books.targetEntity.table({
                                 parent: this, 
                                 joinType, 
-                                joinProp: ThisClass.__books, 
+                                joinProp: ThisClass.__books.mappedByProp, 
+                                isJoinPropInverse: true, 
                                 filter: undefined
                             });
                         }
@@ -65,7 +67,8 @@ describe("RuntimeTableTest", () => {
                             this._books_LEFT = join = ThisClass.__books.targetEntity.table({
                                 parent: this, 
                                 joinType, 
-                                joinProp: ThisClass.__books, 
+                                joinProp: ThisClass.__books.mappedByProp, 
+                                isJoinPropInverse: true, 
                                 filter: undefined
                             });
                         }
@@ -74,7 +77,8 @@ describe("RuntimeTableTest", () => {
                     return ThisClass.__books.targetEntity.table({
                         parent: this, 
                         joinType, 
-                        joinProp: ThisClass.__books, 
+                        joinProp: ThisClass.__books.mappedByProp, 
+                        isJoinPropInverse: true, 
                         filter
                     });
                 }
@@ -84,10 +88,10 @@ describe("RuntimeTableTest", () => {
                 static __books = $entity.expandedPropMap.get("books");
             }
         `);
-        expect(true).toEqual(table.id instanceof AbstractNumExpr);
-        expect(true).toEqual(table.name instanceof AbstractStrExpr);
-        expect(true).toEqual(table.version instanceof AbstractNumExpr);
-        expect(true).toEqual(table.books() instanceof AbstractEntityTable);
+        expect(table.id instanceof AbstractNumExpr).toEqual(true);
+        expect(table.name instanceof AbstractStrExpr).toEqual(true);
+        expect(table.version instanceof AbstractNumExpr).toEqual(true);
+        expect(table.books() instanceof AbstractEntityTable).toEqual(true);
     });
 
     it("book", () => {
@@ -103,8 +107,6 @@ describe("RuntimeTableTest", () => {
                 _price = undefined;
                 _store = undefined;
                 _store_LEFT = undefined;
-                _authors = undefined;
-                _authors_LEFT = undefined;
                 _storeId = undefined;
                 get id() {
                     let expr = this._id;
@@ -175,36 +177,7 @@ describe("RuntimeTableTest", () => {
                         typeof options === "string" ? options : options.joinType ?? "INNER"
                     );
                     const filter = options?.filter;
-                    if (filter == null && joinType === "INNER") {
-                        let join = this._authors;
-                        if (join == null) {
-                            this._authors = join = ThisClass.__authors.targetEntity.table({
-                                parent: this, 
-                                joinType, 
-                                joinProp: ThisClass.__authors, 
-                                filter: undefined
-                            });
-                        }
-                        return join;
-                    }
-                    if (filter == null && joinType === "LEFT") {
-                        let join = this._authors_LEFT;
-                        if (join == null) {
-                            this._authors_LEFT = join = ThisClass.__authors.targetEntity.table({
-                                parent: this, 
-                                joinType, 
-                                joinProp: ThisClass.__authors, 
-                                filter: undefined
-                            });
-                        }
-                        return join;
-                    }
-                    return ThisClass.__authors.targetEntity.table({
-                        parent: this, 
-                        joinType, 
-                        joinProp: ThisClass.__authors, 
-                        filter
-                    });
+                    return this.association("authors", joinType).target(filter);
                 }
                 get storeId() {
                     let expr = this._storeId;
@@ -218,17 +191,17 @@ describe("RuntimeTableTest", () => {
                 static __edition = $entity.expandedPropMap.get("edition");
                 static __price = $entity.expandedPropMap.get("price");
                 static __store = $entity.expandedPropMap.get("store");
-                static __authors = $entity.expandedPropMap.get("authors");
                 static __storeId = $entity.expandedPropMap.get("storeId");
             }
         `);
-        expect(true).toEqual(table.id instanceof AbstractNumExpr);
-        expect(true).toEqual(table.name instanceof AbstractStrExpr);
-        expect(true).toEqual(table.edition instanceof AbstractNumExpr);
-        expect(true).toEqual(table.price instanceof AbstractNumExpr);
-        expect(true).toEqual(table.storeId instanceof AbstractNumExpr);
-        expect(true).toEqual(table.store() instanceof AbstractEntityTable);
-        expect(true).toEqual(table.authors() instanceof AbstractEntityTable);
+        expect(table.id instanceof AbstractNumExpr).toEqual(true);
+        expect(table.name instanceof AbstractStrExpr).toEqual(true);
+        expect(table.edition instanceof AbstractNumExpr).toEqual(true);
+        expect(table.price instanceof AbstractNumExpr).toEqual(true);
+        expect(table.storeId instanceof AbstractNumExpr).toEqual(true);
+        expect(table.store() instanceof AbstractEntityTable).toEqual(true);
+        expect(table.association("authors") instanceof AbstractAssociationTable).toEqual(true);
+        expect(table.authors() instanceof AbstractEntityTable).toEqual(true);
     });
 
     it("author", () => {
@@ -240,8 +213,6 @@ describe("RuntimeTableTest", () => {
                 }
                 _id = undefined;
                 _name = undefined;
-                _books = undefined;
-                _books_LEFT = undefined;
                 get id() {
                     let expr = this._id;
                     if (expr == null) {
@@ -279,47 +250,18 @@ describe("RuntimeTableTest", () => {
                         typeof options === "string" ? options : options.joinType ?? "INNER"
                     );
                     const filter = options?.filter;
-                    if (filter == null && joinType === "INNER") {
-                        let join = this._books;
-                        if (join == null) {
-                            this._books = join = ThisClass.__books.targetEntity.table({
-                                parent: this, 
-                                joinType, 
-                                joinProp: ThisClass.__books, 
-                                filter: undefined
-                            });
-                        }
-                        return join;
-                    }
-                    if (filter == null && joinType === "LEFT") {
-                        let join = this._books_LEFT;
-                        if (join == null) {
-                            this._books_LEFT = join = ThisClass.__books.targetEntity.table({
-                                parent: this, 
-                                joinType, 
-                                joinProp: ThisClass.__books, 
-                                filter: undefined
-                            });
-                        }
-                        return join;
-                    }
-                    return ThisClass.__books.targetEntity.table({
-                        parent: this, 
-                        joinType, 
-                        joinProp: ThisClass.__books, 
-                        filter
-                    });
+                    return this.association("books", joinType).target(filter);
                 }
                 static __id = $entity.expandedPropMap.get("id");
                 static __name_firstName = $entity.expandedPropMap.get("name.firstName");
                 static __name_lastName = $entity.expandedPropMap.get("name.lastName");
-                static __books = $entity.expandedPropMap.get("books");
             }
         `);
-        expect(true).toEqual(table.id instanceof AbstractNumExpr);
-        expect(true).toEqual(table.name().firstName instanceof AbstractStrExpr);
-        expect(true).toEqual(table.name().lastName instanceof AbstractStrExpr);
-        expect(true).toEqual(table.books().$acceptRisk() instanceof AbstractEntityTable);
+        expect(table.id instanceof AbstractNumExpr).toEqual(true);
+        expect(table.name().firstName instanceof AbstractStrExpr).toEqual(true);
+        expect(table.name().lastName instanceof AbstractStrExpr).toEqual(true);
+        expect(table.association("books") instanceof AbstractAssociationTable).toEqual(true);
+        expect(table.books().$acceptRisk() instanceof AbstractEntityTable).toEqual(true);
     });
 
     it("orderItem", () => {
@@ -425,10 +367,10 @@ describe("RuntimeTableTest", () => {
                 static __orderId_y_b = $entity.expandedPropMap.get("orderId.y.b");
             }
         `);
-        expect(true).toEqual(table.id instanceof AbstractNumExpr);
-        expect(true).toEqual(table.order() instanceof AbstractEntityTable);
-        expect(true).toEqual(table.orderId().x instanceof AbstractNumExpr);
-        expect(true).toEqual(table.orderId().y().a instanceof AbstractNumExpr);
-        expect(true).toEqual(table.orderId().y().b instanceof AbstractNumExpr);
+        expect(table.id instanceof AbstractNumExpr).toEqual(true);
+        expect(table.order() instanceof AbstractEntityTable).toEqual(true);
+        expect(table.orderId().x instanceof AbstractNumExpr).toEqual(true);
+        expect(table.orderId().y().a instanceof AbstractNumExpr).toEqual(true);
+        expect(table.orderId().y().b instanceof AbstractNumExpr).toEqual(true);
     });
 });

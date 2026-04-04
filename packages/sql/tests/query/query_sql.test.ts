@@ -5,7 +5,6 @@ import { expectCode } from "../utils";
 import { SIMPLE_BOOK_VIEW, SIMPLE_STORE_VIEW, sql, sqlClient } from "./utils";
 
 describe("QuerySqlTest", () => {
-
     
     it("where", () => {
         const q = sqlClient.createQuery(BOOK, (q, book) => {

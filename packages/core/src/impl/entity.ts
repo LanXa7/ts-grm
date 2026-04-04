@@ -53,7 +53,7 @@ export class Entity {
         readonly name: string, 
         private readonly _idKey: string | undefined, 
         private readonly _ctor: Ctor, 
-        private readonly _model: AnyModel | undefined,
+        readonly model: AnyModel,
         private readonly _options: ModelOptions
     ) {
         if (Entity._nextIdentity >= Number.MAX_SAFE_INTEGER) {
@@ -66,7 +66,7 @@ export class Entity {
                 "${CAMEL_CASE_REGEX.source}"`
             )
         }
-        const superModel = (_model as ModelImpl<any, any, any, any, any>).superModel;
+        const superModel = (model as ModelImpl<any, any, any, any, any>).superModel;
         this.superEntity = superModel !== undefined
             ? Entity.of(superModel)
             : undefined;
@@ -384,7 +384,7 @@ export class Entity {
         let descendants = this._descendants;
         if (descendants == null) {
             descendants = new Set();
-            const derivedModels = (this._model as AnyModelImpl).derivedModels;
+            const derivedModels = (this.model as AnyModelImpl).derivedModels;
             if (derivedModels != null) {
                 for (const derivedModel of derivedModels) {
                     const derivedEntity = Entity.of(derivedModel);

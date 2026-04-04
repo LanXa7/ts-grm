@@ -30,8 +30,18 @@ describe("AssociationEntityTest", () => {
         expect(targetKeyProp.referenceProp).toBe(targetProp);
        
         const strategy = UPPER_SNAKE_CASE_DATABASE_NAMING_STRATEGY;
-        expect(sourceProp.toStorage(strategy)).toEqual(undefined);
-        expect(targetProp.toStorage(strategy)).toEqual(undefined);
+        expectStorage(sourceProp.toStorage(strategy)).toEqual({
+            "kind": "COLUMN",
+            "name": "BOOK_ID",
+            "referencedColumnName": "ID",
+            "referencedProp": "Book.id",
+        });
+        expectStorage(targetProp.toStorage(strategy)).toEqual({
+            "kind": "COLUMN",
+            "name": "AUTHOR_ID",
+            "referencedColumnName": "ID",
+            "referencedProp": "Author.id",
+        });
         expectStorage(sourceKeyProp.toStorage(strategy)).toEqual({
             "kind": "COLUMN",
             "name": "BOOK_ID",
@@ -71,8 +81,18 @@ describe("AssociationEntityTest", () => {
         expect(targetKeyProp.referenceProp).toBe(targetProp);
        
         const strategy = UPPER_SNAKE_CASE_DATABASE_NAMING_STRATEGY;
-        expect(sourceProp.toStorage(strategy)).toEqual(undefined);
-        expect(targetProp.toStorage(strategy)).toEqual(undefined);
+        expectStorage(sourceProp.toStorage(strategy)).toEqual({
+            "kind": "COLUMN",
+            "name": "AUTHOR_ID",
+            "referencedColumnName": "ID",
+            "referencedProp": "Author.id",
+        });
+        expectStorage(targetProp.toStorage(strategy)).toEqual({
+            "kind": "COLUMN",
+            "name": "BOOK_ID",
+            "referencedColumnName": "ID",
+            "referencedProp": "Book.id",
+        });
         expectStorage(sourceKeyProp.toStorage(strategy)).toEqual({
             "kind": "COLUMN",
             "name": "AUTHOR_ID",

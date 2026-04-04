@@ -225,19 +225,6 @@ export class Alias extends Fragment {
     }
 }
 
-export class MiddleAlias extends Fragment {
-    
-    constructor(
-        readonly table: RealTable
-    ) {
-        super();
-    }
-
-    into(builder: SqlBuilder): void {
-        builder.sql(this.table.middleTableAlias!);
-    }
-}
-
 export class Column extends Fragment {
 
     private readonly _alias: string;

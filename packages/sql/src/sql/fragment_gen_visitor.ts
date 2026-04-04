@@ -306,12 +306,13 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
     }
 
     visitPropExpr(expr: ast.PropExprContract): void {
+        const column = expr.prop.toStorage(this._strategy) as metadata.Column;
         if (expr.prop.isAssociationProp) {
-            throw new Error();
+            const realTable = this._toRealTable(expr.table);
+            this._compositeStack.current.add(this._createColumn(realTable, column.name));
         } else {
             const table = expr.table as metadata.AbstractEntityTable;
             const prop = expr.prop as metadata.EntityProp;
-            const column = prop.toStorage(this._strategy) as metadata.Column;
             if (this.sqlClient.isDirectAssociatedKey(expr)) {
                 this._compositeStack.current.add("/* direct */ ");
             }
