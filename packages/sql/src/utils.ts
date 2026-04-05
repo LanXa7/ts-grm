@@ -1,3 +1,5 @@
+import { FilterManager } from "./cfg";
+
 export type DeepPartial<T> = 
     T extends object
         ? {
@@ -11,6 +13,9 @@ export function merge<T>(
 ): T {
     if (value == null) {
         return defaultValue;
+    }
+    if (value.constructor === FilterManager) {
+        return value as T;
     }
     if (typeof value !== "object") {
         return value as T;

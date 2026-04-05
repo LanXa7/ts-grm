@@ -1,4 +1,4 @@
-import { ast, err, metadata } from "@ts-grm/core";
+import { AnyModel, ast, dsl, EntityTable, err, metadata, Predicate } from "@ts-grm/core";
 import { Alias, Column, Composite, Query, Scope, ShadowExpr, Source, Value } from "./fragment";
 import { Stack } from "./stack";
 import { Precedence } from "./precedence";
@@ -137,11 +137,26 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
             using _ = this._compositeStack.with(new Source(tables, recursive));
         }
 
-        const wherePred = query.wherePred;
+        let wherePred = query.wherePred;
+        for (const table of query.tables) {
+            const entity = table.__entity;
+            if (entity != null) {
+                const filters = this.sqlClient.getFilters(entity);
+                if (filters.length !== 0) {
+                    for (const filter of filters) {
+                        const pred = filter(table as any as EntityTable<AnyModel>);
+                        if (pred != null) {
+                            wherePred = dsl.and(wherePred as Predicate | undefined, pred) as 
+                                ast.AbstractPred;
+                        }
+                    }
+                }
+            }
+        }
         if (wherePred != null) {
             this._compositeStack.current.add("\nwhere ");
             using _ = this._compositeStack.with(new Scope("INDENT"));
-            query.wherePred?.accept(this);
+            wherePred?.accept(this);
         }
 
         const orders = query.orders;
@@ -311,7 +326,9 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
         let column: metadata.Column;
         if (this.sqlClient.isDirectAssociatedKey(expr)) {
             table = table.__joinOperation!.parent;
-            column = expr.table.__joinOperation!.joinProp!.targetKeyProp!.sub(prop.subPath).toStorage(this._strategy) as metadata.Column;
+            column = expr.table.__joinOperation!
+                .joinProp!.sub(prop.subPath)
+                .toStorage(this._strategy) as metadata.Column;
         } else {
             if (!prop.isAssociationProp) {
                 table = (table as metadata.AbstractEntityTable).__to(

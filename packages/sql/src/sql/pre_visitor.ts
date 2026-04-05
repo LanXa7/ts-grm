@@ -75,7 +75,7 @@ export class PreVisitor extends ast.AbstractVisitor {
         let column: metadata.Column;
         if (this._sqlClient.isDirectAssociatedKey(expr)) {
             table = table.__joinOperation!.parent;
-            column = expr.table.__joinOperation!.joinProp!.targetKeyProp!.sub(prop.subPath).toStorage(this._strategy) as metadata.Column;
+            column = expr.table.__joinOperation!.joinProp!.sub(prop.subPath).toStorage(this._strategy) as metadata.Column;
         } else {
             if (!prop.isAssociationProp) {
                 table = (table as metadata.AbstractEntityTable).__to(

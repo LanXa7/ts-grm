@@ -1,4 +1,4 @@
-import { SqlClientOptions } from "@/cfg";
+import { AnyFilter, SqlClientOptions } from "@/cfg";
 import { Driver } from "@/driver/deriver";
 import { SqlClientImplementor } from "@/sql_client";
 import type { 
@@ -46,13 +46,16 @@ export class SqlClientImpl implements SqlClientImplementor {
         return { sqlClient: undefined }
     }
 
-    private readonly _strategy: metadata.DatabaseNamingStrategy;
+    private readonly _configuredFilterMap: Map<metadata.Entity, ReadonlyArray<AnyFilter>>;
+
+    private readonly _filterMap =
+        new Map<metadata.Entity, ReadonlyArray<AnyFilter>>();
 
     constructor(
         readonly driver: Driver,
         readonly options: SqlClientOptions
     ) {
-        this._strategy = options.strategy;
+        this._configuredFilterMap = (options.filterManager as any)._toMap();
     }
 
     findNonNull<V extends View<any, any>>(
@@ -96,15 +99,36 @@ export class SqlClientImpl implements SqlClientImplementor {
         if (joinProp.targetKeyProp !== expr.prop.rootProp) {
             return false;
         }
-        if (joinProp.isAssociationProp) {
-            return true;
-        } else {
-            const storage = joinProp.toStorage(this._strategy);
-            if (storage == null) {
-                return false;
+        if (expr.table.__entity != null && this.getFilters(expr.table.__entity).length != 0) {
+            return false;
+        }
+        return true;
+    }
+
+    getFilters(
+        entity: metadata.Entity
+    ): ReadonlyArray<AnyFilter> {
+        let filters = this._filterMap.get(entity);
+        if (filters == null) {
+            filters = this._createFilters(entity);
+            this._filterMap.set(entity, filters);
+        }
+        return filters;
+    }
+
+    private _createFilters(
+        entity: metadata.Entity
+    ): ReadonlyArray<AnyFilter> {
+        const filters: Array<AnyFilter> = [];
+        for (let e: metadata.Entity | undefined = entity; 
+            e != null; 
+            e = e.superEntity) {
+            const arr = this._configuredFilterMap?.get(e);
+            if (arr != null) {
+                filters.push(...arr);
             }
-            return true
-        };
+        }
+        return filters;
     }
 }
 

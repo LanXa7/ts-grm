@@ -1,4 +1,4 @@
-import { metadata } from "@ts-grm/core";
+import { AnyModel, ast, dsl, EntityTable, metadata, Predicate } from "@ts-grm/core";
 import { Alias, Column, Composite, Scope } from "./fragment";
 import { RealTable } from "./real_table";
 import { FragmentGenGenVisitor } from "./fragment_gen_visitor";
@@ -46,7 +46,7 @@ export class TableFragmentCreator {
             this._addTable(table, composite);
             composite.add(" on ");
             const scope = new Scope("AND");
-            this._addJoinFilter(table, scope);
+            this._addFilters(table, scope);
             composite.add(scope);
         }
         return composite;
@@ -118,7 +118,7 @@ export class TableFragmentCreator {
                     .add(table.isJoinPropInverse ? column.name : column.referencedColumnName!);
             }
         }
-        this._addJoinFilter(table, conditionScope);
+        this._addFilters(table, conditionScope);
         composite.add(conditionScope);
     }
 
@@ -165,13 +165,43 @@ export class TableFragmentCreator {
                 break;
         }
         composite.add(conditionScope);
+        this._addFilters(table, conditionScope);
     }
 
-    private _addJoinFilter(table: RealTable, scope: Scope) {
+    private _addFilters(table: RealTable, scope: Scope) {
+        this._addJoinFilters(table, scope);
+        this._addGlobalFilters(table, scope);
+    }
+
+    private _addJoinFilters(table: RealTable, scope: Scope) {
         const pred = table.filterPred;
-        if (pred == null) {
+        if (pred != null) {
+            this._addFilterPredicate(pred, scope);
+        }
+    }
+
+    private _addGlobalFilters(table: RealTable, scope: Scope) {
+        const entity = table.symbol.__entity;
+        if (entity == null) {
             return;
         }
+        const filters = this._sqlClient.getFilters(entity);
+        if (filters.length === 0) {
+            return;
+        }
+        let predicate: Predicate | undefined = undefined;
+        for (const filter of filters) {
+            const prd = filter(table.symbol as any as EntityTable<AnyModel>);
+            if (prd != null) {
+                predicate = dsl.and(predicate, prd);
+            }
+        }
+        if (predicate != null) {
+            this._addFilterPredicate(predicate as ast.AbstractPred, scope);
+        }
+    }
+
+    private _addFilterPredicate(pred: ast.AbstractPred, scope: Scope) {
         scope.separator();
         const visitor = this._cloneVisitor();
         pred.accept(visitor);

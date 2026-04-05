@@ -8,7 +8,7 @@ implements AtomRootQuery<TProjection>, ast.AtomQueryContract {
     readonly options: ast.AtomQueryOptions;
 
     constructor(
-        private readonly mutableQuery: MutableRootQueryImpl,
+        readonly mutableQuery: MutableRootQueryImpl,
         private _projection: AbstractRootQueryProjection<any>,
         options: ast.AtomQueryOptions | undefined
     ) {

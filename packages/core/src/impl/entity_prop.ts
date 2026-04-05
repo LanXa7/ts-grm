@@ -455,10 +455,10 @@ export class EntityProp {
             return this;
         }
         const parts = subPath.split(".");
-        let prop: EntityProp = this;
+        let prop: EntityProp = this.referenceKeyProp ?? this;
         for (const part of parts) {
             prop = prop._props?.get(part) 
-                ?? makeErr(`Illegal subPath "${subPath}"`);
+                ?? makeErr(`Illegal subPath "${subPath}" for "${this.toString()}"`);
         }
         return prop;
     }

@@ -4,12 +4,22 @@ import { Driver } from "./driver/deriver";
 import { metadata } from "@ts-grm/core";
 import { SqlClientImpl } from "./impl/sql_client_impl";
 import { DeepPartial, merge } from "./utils";
+import { AnyFilter, FilterManager } from "./cfg/filter";
 
 export function newSqlClient(
-    driver: Driver,
+    data: Driver | SqlClient,
     options: DeepPartial<SqlClientOptions>
 ): SqlClient {
-    const finalOptions = merge(options, createDefaultOptions());
+    const originalSqlClient =
+        (data as any).createQuery != null
+            ? data as SqlClientImplementor
+            : undefined;
+    const driver = 
+        originalSqlClient?.driver ?? (data as Driver);
+    const finalOptions = merge(
+        options, 
+        originalSqlClient?.options ?? createDefaultOptions()
+    );
     if (options.defaultBatchSize != null) {
         if (options.defaultBatchSize < 2) {
             throw new err.ArgumentError(
@@ -29,6 +39,10 @@ export interface SqlClientImplementor extends SqlClient {
     isDirectAssociatedKey(
         expr: ast.PropExprContract
     ): boolean;
+
+    getFilters(
+        entity: metadata.Entity
+    ): ReadonlyArray<AnyFilter>;
 }
 
 function createDefaultOptions(): SqlClientOptions {
@@ -38,6 +52,7 @@ function createDefaultOptions(): SqlClientOptions {
         sqlLogger: {
             pretty: false,
             parameter: "PLACEHOLDER"
-        }
+        },
+        filterManager: new FilterManager()
     };
 }

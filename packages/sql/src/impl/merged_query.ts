@@ -1,6 +1,8 @@
 import { ast, BaseQuery, BaseQueryMapOf, RootQuery, RootQueryProjection, RowTypeOf } from "@ts-grm/core";
 import { AbstractBaseQueryImpl } from "./abstract_base_query_impl";
 import { AbstractDtSubQueryImpl, AbstractExprSubQueryImpl, AbstractNumSubQueryImpl, AbstractStrSubQueryImpl, AbstractTupleSubQueryImpl } from "./abstract_sub_query_impl";
+import { SqlClientImplementor } from "@/sql_client";
+import { AtomRootQueryImpl } from "./atom_root_query_impl";
 
 export class MergedRootQueryImpl<
     TProjection extends RootQueryProjection<any>
@@ -25,6 +27,14 @@ export class MergedRootQueryImpl<
 
     accept(visitor: ast.Visitor): void {
         visitor.visitMergedQuery(this);
+    }
+
+    get sqlClient(): SqlClientImplementor {
+        const q = this.queries[0] as ast.QueryContract;
+        if (q.kind === "ATOM") {
+            return (q as AtomRootQueryImpl<any>).mutableQuery.sqlClient;
+        }
+        return (q as MergedRootQueryImpl<any>).sqlClient;
     }
 }
 

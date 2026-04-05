@@ -2,8 +2,10 @@ import { SqliteDriver } from "@/driver/sqlite_driver";
 import { Composite } from "@/sql/fragment";
 import { SqlBuilder } from "@/sql/sql_builder";
 import { newSqlClient } from "@/sql_client";
-import { dto, RootQuery } from "@ts-grm/core";
+import { ast, dto, RootQuery } from "@ts-grm/core";
 import { AUTHOR, BOOK, BOOK_STORE, PAPER_BOOK, PHYSICAL_BOOK_STORE, TREE_NODE } from "../model/model";
+import { AtomRootQueryImpl } from "@/impl/atom_root_query_impl";
+import { MergedRootQueryImpl } from "@/impl/merged_query";
 
 export const sqlClient = newSqlClient(new SqliteDriver(), {
     sqlLogger: {
@@ -12,6 +14,10 @@ export const sqlClient = newSqlClient(new SqliteDriver(), {
 });
 
 export function sql(q: RootQuery<any>): string {
+    const contract = q as any as ast.QueryContract;
+    const sqlClient = contract.kind === "ATOM"
+        ? (q as AtomRootQueryImpl<any>).mutableQuery.sqlClient
+        : (q as MergedRootQueryImpl<any>).sqlClient;
     const composite = Composite.of(q, sqlClient, undefined);
     const builder = SqlBuilder.of(sqlClient);
     composite.into(builder);
