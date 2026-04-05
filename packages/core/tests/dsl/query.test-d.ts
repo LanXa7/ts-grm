@@ -208,7 +208,7 @@ describe("QueryTest", () => {
             })
         );
         const rows = await sqlClient().createQuery(baseModel, (q, base) => {
-            q.where(base.localRank.le(3));
+            q.where(base.localRank.lte(3));
             return q.select(base.book.fetch(SIMPLE_BOOK_VIEW));
         }).fetchList();
         expectTypeOf<typeof rows[0]>().toEqualTypeOf<{
@@ -274,8 +274,8 @@ describe("QueryTest", () => {
                 }
             );
             q.where(
-                baseBook.rank.le(3),
-                baseStore.rank.le(3)
+                baseBook.rank.lte(3),
+                baseStore.rank.lte(3)
             );
             return q.select(
                 baseBook.book.id,

@@ -143,11 +143,11 @@ export type AssociationTableMembers<
     target(
         filter?: FilterType<
             AssociationModel<TSourceModel, TSourceKey, TTargetModel, TSourceKey>, 
-            TSourceModel
+            TTargetModel
         >
     ): EntityTableMembers<
         TTargetModel,
-        AllModelMembers<TSourceModel>,
+        AllModelMembers<TTargetModel>,
         TNullity,
         false
     >;

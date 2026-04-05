@@ -231,7 +231,7 @@ export abstract class AbstractCmpExpr<T> extends AbstractExpr<T> {
         );
     }
     
-    le(
+    lte(
         value: T | AbstractCmpExpr<T>
     ): CmpPred {
         const factory = getInternalFactory();
@@ -253,7 +253,7 @@ export abstract class AbstractCmpExpr<T> extends AbstractExpr<T> {
         );
     }
     
-    ge(
+    gte(
         value: T | AbstractCmpExpr<T>
     ): CmpPred {
         const factory = getInternalFactory();
@@ -290,7 +290,7 @@ export abstract class AbstractCmpExpr<T> extends AbstractExpr<T> {
         );
     }
     
-    leIf(
+    lteIf(
         value: T | null | undefined
     ): CmpPred | undefined {
         if (value == null) {
@@ -318,7 +318,7 @@ export abstract class AbstractCmpExpr<T> extends AbstractExpr<T> {
         );
     }
     
-    geIf(
+    gteIf(
         value: T | null | undefined
     ): CmpPred | undefined {
         if (value == null) {
@@ -340,10 +340,10 @@ export abstract class AbstractCmpExpr<T> extends AbstractExpr<T> {
             return undefined;
         }
         if (min == null) {
-            return this.le(max);
+            return this.lte(max);
         }
         if (max == null) {
-            return this.ge(min);
+            return this.gte(min);
         }
         const factory = getInternalFactory();
         return factory.createBetweenPred(

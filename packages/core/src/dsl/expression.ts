@@ -175,7 +175,7 @@ type CmpExpression<
         value: RHSType<T, TAsNumber>
     ): AnyExpression<boolean>;
     
-    le(
+    lte(
         value: RHSType<T, TAsNumber>
     ): AnyExpression<boolean>;
     
@@ -183,7 +183,7 @@ type CmpExpression<
         value: RHSType<T, TAsNumber>
     ): AnyExpression<boolean>;
     
-    ge(
+    gte(
         value: RHSType<T, TAsNumber>
     ): AnyExpression<boolean>;
 
@@ -196,7 +196,7 @@ type CmpExpression<
         value: Nullable<T>
     ): AnyExpression<boolean> | undefined;
     
-    leIf(
+    lteIf(
         value: Nullable<T>
     ): AnyExpression<boolean> | undefined;
     
@@ -204,7 +204,7 @@ type CmpExpression<
         value: Nullable<T>
     ): AnyExpression<boolean> | undefined;
     
-    geIf(
+    gteIf(
         value: Nullable<T>
     ): AnyExpression<boolean> | undefined;
 

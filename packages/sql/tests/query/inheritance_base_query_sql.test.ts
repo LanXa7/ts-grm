@@ -533,7 +533,7 @@ describe("InheritanceBaseQuerySqlTest", () => {
         );
         const q = sqlClient.createQuery(baseTreeNodeModel, (q, baseTreeNode) => {
             q.where(
-                baseTreeNode.depth.le(10),
+                baseTreeNode.depth.lte(10),
                 dsl.or(
                     baseTreeNode._.name.like("org"),
                     baseTreeNode._.as(ORGANIZATION).kind.eq("A")

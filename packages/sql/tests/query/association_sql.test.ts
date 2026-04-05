@@ -1,12 +1,12 @@
 import { describe, it } from "vitest";
 import { SIMPLE_AUTHOR_VIEW, SIMPLE_BOOK_VIEW, sql, sqlClient } from "./utils";
 import { dsl } from "@ts-grm/core";
-import { BOOK } from "../model/model";
+import { AUTHOR, BOOK, ORDER } from "../model/model";
 import { expectCode } from "../utils";
 
 describe("AssociationSqlTest", () => {
 
-    it("key", () => {
+    it("root", () => {
         const q = sqlClient.createQuery(dsl.associationModel(BOOK, "authors"), (q, association) => {
             q.where(association.sourceId.eq(3));
             return q.select(
@@ -31,4 +31,103 @@ describe("AssociationSqlTest", () => {
                 tb_1_.BOOK_ID = ?
         `);
     });
+
+    it("inverseRoot", () => {
+        const q = sqlClient.createQuery(dsl.associationModel(AUTHOR, "books"), (q, association) => {
+            q.where(association.sourceId.eq(3));
+            return q.select(
+                association.source().fetch(SIMPLE_AUTHOR_VIEW),
+                association.target().fetch(SIMPLE_BOOK_VIEW)
+            );
+        });
+        expectCode(sql(q), `
+            select 
+                tb_2_.ID,
+                tb_2_.FIRST_NAME,
+                tb_2_.LAST_NAME,
+                tb_3_.ID,
+                tb_3_.NAME,
+                tb_3_.EDITION
+            from book_author_mapping tb_1_
+            inner join AUTHOR tb_2_ on 
+                tb_1_.AUTHOR_ID = tb_2_.ID
+            inner join BOOK tb_3_ on 
+                tb_1_.BOOK_ID = tb_3_.ID
+            where 
+                tb_1_.AUTHOR_ID = ?
+        `);
+    });
+
+    it("half", () => {
+        const q = sqlClient.createQuery(BOOK, (q, book) => {
+            q.where(book.association("authors").$acceptRisk().targetId.eq(3));
+            return q.select(
+                book.fetch(SIMPLE_BOOK_VIEW)
+            );
+        });
+        expectCode(sql(q), `
+            select 
+                tb_1_.ID,
+                tb_1_.NAME,
+                tb_1_.EDITION
+            from BOOK tb_1_
+            inner join book_author_mapping tb_2_ on 
+                tb_1_.ID = tb_2_.BOOK_ID
+            where 
+                tb_2_.AUTHOR_ID = ?
+        `);
+    });
+
+    it("inverseHalf", () => {
+        const q = sqlClient.createQuery(AUTHOR, (q, author) => {
+            q.where(author.association("books").$acceptRisk().targetId.eq(3));
+            return q.select(
+                author.fetch(SIMPLE_AUTHOR_VIEW)
+            );
+        });
+        expectCode(sql(q), `
+            select 
+                tb_1_.ID,
+                tb_1_.FIRST_NAME,
+                tb_1_.LAST_NAME
+            from AUTHOR tb_1_
+            inner join book_author_mapping tb_2_ on 
+                tb_1_.ID = tb_2_.AUTHOR_ID
+            where 
+                tb_2_.BOOK_ID = ?
+        `);
+    });
+
+    it("halfWithTwoFilters", () => {
+        const q = sqlClient.createQuery(ORDER, (q, order) => {
+            const tag = order
+                .association("tags", ctx => ctx.target.targetId().high.eq(0))
+                .$acceptRisk()
+                .target(ctx => ctx.target.name.length().lteIf(10));
+            return q.select(
+                order.name,
+                tag.name
+            )
+        });
+        expectCode(sql(q), `
+            select 
+                tb_1_.NAME,
+                tb_3_.NAME
+            from ORDER tb_1_
+            inner join ORDER_TAG_MAPPING tb_2_ on 
+                tb_1_.X = tb_2_.order_x
+            and
+                tb_1_.A = tb_2_.order_y_a
+            and
+                tb_1_.B = tb_2_.order_y_b
+            and
+                tb_2_.tag_high = ?
+            inner join TAG tb_3_ on 
+                tb_2_.tag_low = tb_3_.LOW
+            and
+                tb_2_.tag_high = tb_3_.HIGH
+            and
+                length(cast(tb_3_.NAME as text)) <= ?
+        `);
+    })
 });

@@ -174,7 +174,7 @@ export const ORDER = model("Order", "id", class {
             b: prop.i16()
         })
     });
-    name = prop.num()
+    name = prop.str()
     tags = prop.m2m(TAG).joinTable({
         joinThis: {
             keyProp: "id",

@@ -139,6 +139,13 @@ type ReferenceJoinAction<
         TJoinType extends "LEFT" ? "NULLABLE" : "NONNULL", 
         TRiskAccepted
     >;
+
+    (filter: FilterType<TParentModel, TModel>): EntityTableMembers<
+        TModel, 
+        TMembers, 
+        "NONNULL", 
+        TRiskAccepted
+    >;
     
     <TJoinType extends JoinType = "INNER">(
         options: {
@@ -159,6 +166,7 @@ type CollectionJoinAction<
     TMembers extends object, 
     TRiskAccepted extends boolean
 > = {
+
     (): TableRiskWrapper<
         EntityTableMembers<TModel, TMembers, "NONNULL", true>,
         TRiskAccepted
@@ -171,6 +179,16 @@ type CollectionJoinAction<
             TModel,
             TMembers, 
             TJoinType extends "LEFT" ? "NULLABLE" : "NONNULL",
+            true
+        >,
+        TRiskAccepted
+    >;
+
+    (filter: FilterType<TParentModel, TModel>): TableRiskWrapper<
+        EntityTableMembers<
+            TModel,
+            TMembers, 
+            "NONNULL",
             true
         >,
         TRiskAccepted
@@ -267,12 +285,55 @@ type AssociationActionImpl<
     TAssociationKeys extends AssociationKeys<TModel>,
     TRiskAccepted extends boolean
 > = {
+    
+    association<
+        TKey extends TAssociationKeys
+    >(
+        key: TAssociationKeys,
+    ): TableRiskWrapper<
+        MakeAssociationTableMembers<
+            TModel,
+            TKey,
+            "NONNULL"
+        >,
+        TRiskAccepted
+    >;
+
     association<
         TKey extends TAssociationKeys,
         TJoinType extends JoinType = "INNER"
     >(
         key: TAssociationKeys,
-        options?: TJoinType | {
+        joinType: TJoinType
+    ): TableRiskWrapper<
+        MakeAssociationTableMembers<
+            TModel,
+            TKey,
+            TJoinType extends "LEFT" ? "NULLABLE" : "NONNULL"
+        >,
+        TRiskAccepted
+    >;
+
+    association<
+        TKey extends TAssociationKeys
+    >(
+        key: TAssociationKeys,
+        filter: FilterType<TModel, MakeAssociationModel<TModel, TKey>>
+    ): TableRiskWrapper<
+        MakeAssociationTableMembers<
+            TModel,
+            TKey,
+            "NONNULL"
+        >,
+        TRiskAccepted
+    >;
+
+    association<
+        TKey extends TAssociationKeys,
+        TJoinType extends JoinType = "INNER"
+    >(
+        key: TAssociationKeys,
+        options: {
             readonly joinType?: TJoinType;
             readonly filter?: FilterType<TModel, MakeAssociationModel<TModel, TKey>>
         }

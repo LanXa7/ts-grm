@@ -587,8 +587,8 @@ describe("QuerySqlTest", () => {
                 }
             );
             q.where(
-                baseBook.rank.le(3),
-                baseStore.rank.le(3)
+                baseBook.rank.lte(3),
+                baseStore.rank.lte(3)
             );
             return q.select(
                 baseBook.book.id,
