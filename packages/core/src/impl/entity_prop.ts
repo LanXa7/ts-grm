@@ -450,6 +450,19 @@ export class EntityProp {
         return `${parentSubPath}.${this.name}`;
     }
 
+    sub(subPath: string): EntityProp {
+        if (subPath === "") {
+            return this;
+        }
+        const parts = subPath.split(".");
+        let prop: EntityProp = this;
+        for (const part of parts) {
+            prop = prop._props?.get(part) 
+                ?? makeErr(`Illegal subPath "${subPath}"`);
+        }
+        return prop;
+    }
+
     toString(): string {
         return this.parentProp != null
             ? `${this.parentProp.toString()}.${this.name}`

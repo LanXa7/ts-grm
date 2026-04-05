@@ -22,12 +22,16 @@ describe("AssociationEntityTest", () => {
         expect(targetKeyProp.toString()).toEqual("MiddleTable(Book.authors).targetId");
         expect(sourceProp.referenceKeyProp).toBe(sourceKeyProp);
         expect(sourceProp.referenceProp).toBe(undefined);
+        expect(sourceProp.targetKeyProp).toBe(Entity.of(BOOK).idProp);
         expect(targetProp.referenceKeyProp).toBe(targetKeyProp);
         expect(targetProp.referenceProp).toBe(undefined);
+        expect(targetProp.targetKeyProp).toBe(Entity.of(AUTHOR).idProp);
         expect(sourceKeyProp.referenceKeyProp).toBe(undefined);
         expect(sourceKeyProp.referenceProp).toBe(sourceProp);
+        expect(sourceKeyProp.targetKeyProp).toBe(undefined);
         expect(targetKeyProp.referenceKeyProp).toBe(undefined);
         expect(targetKeyProp.referenceProp).toBe(targetProp);
+        expect(targetKeyProp.targetKeyProp).toBe(undefined);
        
         const strategy = UPPER_SNAKE_CASE_DATABASE_NAMING_STRATEGY;
         expectStorage(sourceProp.toStorage(strategy)).toEqual({
@@ -73,12 +77,16 @@ describe("AssociationEntityTest", () => {
         expect(targetKeyProp.toString()).toEqual("MiddleTable(Author.books).targetId");
         expect(sourceProp.referenceKeyProp).toBe(sourceKeyProp);
         expect(sourceProp.referenceProp).toBe(undefined);
+        expect(sourceProp.targetKeyProp).toBe(Entity.of(AUTHOR).idProp);
         expect(targetProp.referenceKeyProp).toBe(targetKeyProp);
         expect(targetProp.referenceProp).toBe(undefined);
+        expect(targetProp.targetKeyProp).toBe(Entity.of(BOOK).idProp);
         expect(sourceKeyProp.referenceKeyProp).toBe(undefined);
         expect(sourceKeyProp.referenceProp).toBe(sourceProp);
+        expect(sourceKeyProp.targetKeyProp).toBe(undefined);
         expect(targetKeyProp.referenceKeyProp).toBe(undefined);
         expect(targetKeyProp.referenceProp).toBe(targetProp);
+        expect(targetKeyProp.targetKeyProp).toBe(undefined);
        
         const strategy = UPPER_SNAKE_CASE_DATABASE_NAMING_STRATEGY;
         expectStorage(sourceProp.toStorage(strategy)).toEqual({
@@ -126,11 +134,16 @@ describe("AssociationEntityTest", () => {
         expect(targetKeyProp.toString()).toEqual("MiddleTable(Order.tags).targetId");
         expect(sourceProp.referenceKeyProp).toBe(sourceKeyProp);
         expect(sourceProp.referenceProp).toBe(undefined);
+        expect(sourceProp.targetKeyProp).toBe(Entity.of(ORDER).idProp);
         expect(targetProp.referenceKeyProp).toBe(targetKeyProp);
         expect(targetProp.referenceProp).toBe(undefined);
+        expect(targetProp.targetKeyProp).toBe(Entity.of(TAG).idProp);
         expect(sourceKeyProp.referenceKeyProp).toBe(undefined);
         expect(sourceKeyProp.referenceProp).toBe(sourceProp);
+        expect(sourceKeyProp.targetKeyProp).toBe(undefined);
         expect(targetKeyProp.referenceKeyProp).toBe(undefined);
+        expect(targetKeyProp.referenceProp).toBe(targetProp);
+        expect(targetKeyProp.targetKeyProp).toBe(undefined);
 
         const strategy = UPPER_SNAKE_CASE_DATABASE_NAMING_STRATEGY;
 
@@ -249,11 +262,16 @@ describe("AssociationEntityTest", () => {
         expect(targetKeyProp.toString()).toEqual("MiddleTable(Tag.orders).targetId");
         expect(sourceProp.referenceKeyProp).toBe(sourceKeyProp);
         expect(sourceProp.referenceProp).toBe(undefined);
+        expect(sourceProp.targetKeyProp).toBe(Entity.of(TAG).idProp);
         expect(targetProp.referenceKeyProp).toBe(targetKeyProp);
         expect(targetProp.referenceProp).toBe(undefined);
+        expect(targetProp.targetKeyProp).toBe(Entity.of(ORDER).idProp);
         expect(sourceKeyProp.referenceKeyProp).toBe(undefined);
         expect(sourceKeyProp.referenceProp).toBe(sourceProp);
+        expect(sourceKeyProp.targetKeyProp).toBe(undefined);
         expect(targetKeyProp.referenceKeyProp).toBe(undefined);
+        expect(targetKeyProp.referenceProp).toBe(targetProp);
+        expect(targetKeyProp.targetKeyProp).toBe(undefined);
 
         const strategy = UPPER_SNAKE_CASE_DATABASE_NAMING_STRATEGY;
 

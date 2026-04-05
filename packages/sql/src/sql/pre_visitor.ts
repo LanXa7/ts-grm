@@ -15,9 +15,11 @@ export class PreVisitor extends ast.AbstractVisitor {
 
     private _filterProcessingTables: Array<RealTable> | undefined = undefined;
         
-    constructor(sqlClient: SqlClientImplementor) {
+    constructor(
+        private readonly _sqlClient: SqlClientImplementor
+    ) {
         super();
-        this._strategy = sqlClient.options.strategy;
+        this._strategy = _sqlClient.options.strategy;
     }
 
     get tableMap(): ReadonlyMap<metadata.AbstractTable, RealTable> {
@@ -68,17 +70,25 @@ export class PreVisitor extends ast.AbstractVisitor {
         if (expr.table.__isPrev) {
             return;
         }
-        if (expr.prop.isAssociationProp) {
-            this._toRealTable(expr.table);
-            return;
+        let table: metadata.AbstractTable = expr.table;
+        let prop = expr.prop;
+        let column: metadata.Column;
+        if (this._sqlClient.isDirectAssociatedKey(expr)) {
+            table = table.__joinOperation!.parent;
+            column = expr.table.__joinOperation!.joinProp!.targetKeyProp!.sub(prop.subPath).toStorage(this._strategy) as metadata.Column;
+        } else {
+            if (!prop.isAssociationProp) {
+                table = (table as metadata.AbstractEntityTable).__to(
+                    (prop as metadata.EntityProp).declaringEntity
+                );
+            }
+            column = prop.toStorage(this._strategy) as metadata.Column;
         }
-        const table = expr.table as metadata.AbstractEntityTable;
-        const prop = expr.prop as metadata.EntityProp;
-        const shadow = this._toRealTable(table.__to(prop.declaringEntity)).shadow;
+        const shadow = this._toRealTable(table).shadow;
         if (shadow != null) {
             shadow.baseQueryMetadata.alias(
                 expr.table.__anchor!.exportedName, 
-                (prop.toStorage(this._strategy) as any as metadata.Column).name
+                column.name
             );
         }
     }

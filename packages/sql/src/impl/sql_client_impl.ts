@@ -90,17 +90,17 @@ export class SqlClientImpl implements SqlClientImplementor {
         expr: ast.PropExprContract
     ): boolean {
         const joinProp = expr.table.__joinOperation?.joinProp;
-        if (joinProp == null || expr.table.__joinOperation?.isJoinPropInverse) {
+        if (joinProp == null || expr.table.__joinOperation!.isJoinPropInverse) {
+            return false;
+        }
+        if (joinProp.targetKeyProp !== expr.prop.rootProp) {
             return false;
         }
         if (joinProp.isAssociationProp) {
-            return false;
+            return true;
         } else {
             const storage = joinProp.toStorage(this._strategy);
             if (storage == null) {
-                return false;
-            }
-            if ((joinProp as metadata.EntityProp).targetKeyProp!.name !== expr.prop.rootProp.name) {
                 return false;
             }
             return true

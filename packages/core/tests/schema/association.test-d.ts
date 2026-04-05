@@ -11,7 +11,8 @@ describe("AssociationTest", () => {
                 typeof BOOK,
                 "id",
                 typeof AUTHOR,
-                "id"
+                "id",
+                false
             >
         >();
     });
@@ -23,7 +24,8 @@ describe("AssociationTest", () => {
                 typeof AUTHOR,
                 "id",
                 typeof BOOK,
-                "id"
+                "id",
+                false
             >
         >();
     });

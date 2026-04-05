@@ -306,19 +306,22 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
     }
 
     visitPropExpr(expr: ast.PropExprContract): void {
-        const column = expr.prop.toStorage(this._strategy) as metadata.Column;
-        if (expr.prop.isAssociationProp) {
-            const realTable = this._toRealTable(expr.table);
-            this._compositeStack.current.add(this._createColumn(realTable, column.name));
+        let table: metadata.AbstractTable = expr.table;
+        let prop = expr.prop;
+        let column: metadata.Column;
+        if (this.sqlClient.isDirectAssociatedKey(expr)) {
+            table = table.__joinOperation!.parent;
+            column = expr.table.__joinOperation!.joinProp!.targetKeyProp!.sub(prop.subPath).toStorage(this._strategy) as metadata.Column;
         } else {
-            const table = expr.table as metadata.AbstractEntityTable;
-            const prop = expr.prop as metadata.EntityProp;
-            if (this.sqlClient.isDirectAssociatedKey(expr)) {
-                this._compositeStack.current.add("/* direct */ ");
+            if (!prop.isAssociationProp) {
+                table = (table as metadata.AbstractEntityTable).__to(
+                    (prop as metadata.EntityProp).declaringEntity
+                );
             }
-            const realTable = this._toRealTable(table.__to(prop.declaringEntity));
-            this._compositeStack.current.add(this._createColumn(realTable, column.name));
+            column = prop.toStorage(this._strategy) as metadata.Column;
         }
+        const realTable = this._toRealTable(table);
+        this._compositeStack.current.add(this._createColumn(realTable, column.name));
     }
 
     visitIsPred(pred: ast.IsPred): void {

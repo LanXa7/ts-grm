@@ -1,6 +1,6 @@
 import { Entity, EntityProp } from "@/impl";
 import { AllModelMembers, AnyModel, RequiredModelKey } from "@/schema/model";
-import { AssociatedProp, CombinedNullity, EmbeddedProp, NullityType } from "@/schema/prop";
+import { AssociatedProp, CombinedNullity, EmbeddedProp, NullityType, ReferenceProp } from "@/schema/prop";
 import { EntityTableMembers, FilterType } from "./table";
 import { MakeExpression } from "./expression";
 import { AssociationModelImpl } from "@/impl/association_model_impl";
@@ -9,14 +9,16 @@ export interface AssociationModel<
     TSourceModel extends AnyModel,
     TSourceKey extends keyof AllModelMembers<TSourceModel> & string,
     TTargetModel extends AnyModel,
-    TTargetKey extends keyof AllModelMembers<TTargetModel> & string
+    TTargetKey extends keyof AllModelMembers<TTargetModel> & string,
+    TRiskAccepted extends boolean
 > {
     __type(): {
         readonly associationModel: [
             TSourceModel, 
             TSourceKey, 
             TTargetModel, 
-            TTargetKey
+            TTargetKey,
+            TRiskAccepted
         ] | true;
     };
 
@@ -29,7 +31,7 @@ export interface AssociationModel<
     readonly targetKeyProp: EntityProp;
 }
 
-export type AnyAssociationModel = AssociationModel<AnyModel, any, AnyModel, any>;
+export type AnyAssociationModel = AssociationModel<AnyModel, any, AnyModel, any, any>;
 
 export type AssociationKeys<TModel extends AnyModel> =
     AssociationKeysImpl<AllModelMembers<TModel>>;
@@ -72,7 +74,10 @@ export type MakeAssociationModel<
             TModel,
             RequiredModelKey<TModel, SourceKey>,
             TargetModel,
-            RequiredModelKey<TargetModel, TargetKey>
+            RequiredModelKey<TargetModel, TargetKey>,
+            AllModelMembers<TModel>[TAssociationKey] extends ReferenceProp<any, any, any, any, any, any>
+                ? true
+                : false
         >
         : never;
 
@@ -94,7 +99,10 @@ export type MakeAssociationTableMembers<
             RequiredModelKey<TModel, SourceKey>,
             TargetModel,
             RequiredModelKey<TargetModel, TargetKey>,
-            TNullity
+            TNullity,
+            AllModelMembers<TModel>[TAssociationKey] extends ReferenceProp<any, any, any, any, any, any>
+                ? true
+                : false
         >
         : never;
 
@@ -105,14 +113,16 @@ export type AssociationTable<
         infer SourceModel,
         infer SourceKey,
         infer TargetModel,
-        infer TargetKey
+        infer TargetKey,
+        infer RiskAccepted
     >
         ? AssociationTableMembers<
             SourceModel, 
             SourceKey, 
             TargetModel, 
             TargetKey,
-            "NONNULL"
+            "NONNULL",
+            RiskAccepted
         > 
         : never;
       
@@ -121,7 +131,8 @@ export type AssociationTableMembers<
     TSourceKey extends keyof AllModelMembers<TSourceModel> & string,
     TTargetModel extends AnyModel,
     TTargetKey extends keyof AllModelMembers<TTargetModel> & string,
-    TNullity extends NullityType
+    TNullity extends NullityType,
+    TRiskAccepted extends boolean
 > = {
 
     __type(): {
@@ -130,26 +141,26 @@ export type AssociationTableMembers<
 
     source(
         filter?: FilterType<
-            AssociationModel<TSourceModel, TSourceKey, TTargetModel, TSourceKey>, 
+            AssociationModel<TSourceModel, TSourceKey, TTargetModel, TSourceKey, TRiskAccepted>, 
             TSourceModel
         >
     ): EntityTableMembers<
         TSourceModel, 
         AllModelMembers<TSourceModel>,
         TNullity,
-        false
+        TRiskAccepted
     >;
 
     target(
         filter?: FilterType<
-            AssociationModel<TSourceModel, TSourceKey, TTargetModel, TSourceKey>, 
+            AssociationModel<TSourceModel, TSourceKey, TTargetModel, TSourceKey, TRiskAccepted>, 
             TTargetModel
         >
     ): EntityTableMembers<
         TTargetModel,
         AllModelMembers<TTargetModel>,
         TNullity,
-        false
+        TRiskAccepted
     >;
 } & {
     readonly [K in `source${Capitalize<TSourceKey>}`]: 

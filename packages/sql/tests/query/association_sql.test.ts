@@ -104,10 +104,7 @@ describe("AssociationSqlTest", () => {
                 .association("tags", ctx => ctx.target.targetId().high.eq(0))
                 .$acceptRisk()
                 .target(ctx => ctx.target.name.length().lteIf(10));
-            return q.select(
-                order.name,
-                tag.name
-            )
+            return q.select(order.name, tag.name);
         });
         expectCode(sql(q), `
             select 

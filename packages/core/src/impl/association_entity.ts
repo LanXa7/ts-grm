@@ -55,6 +55,8 @@ export class AssociationEntity {
         );
         sourceProp.referenceKeyProp = sourceKeyProp;
         targetProp.referenceKeyProp = targetKeyProp;
+        sourceProp.targetKeyProp = originalProp.thisKeyProp;
+        targetProp.targetKeyProp = originalProp.targetKeyProp;
         sourceKeyProp.referenceProp = sourceProp;
         targetKeyProp.referenceProp = targetProp;
         sourceKeyProp.fillProps(originalProp.thisKeyProp!);
@@ -100,7 +102,7 @@ export class AssociationEntity {
     }
 
     static of(model: AnyAssociationModel) {
-        return (model as AssociationModelImpl<any, any, any, any>).toEntity();
+        return (model as AssociationModelImpl<any, any, any, any, any>).toEntity();
     }
 }
 
@@ -120,6 +122,8 @@ export interface AssociationProp {
     
     readonly targetEntity: Entity | undefined;
 
+    readonly targetKeyProp: EntityProp | undefined;
+
     readonly referenceKeyProp: AssociationProp | undefined;
 
     readonly referenceProp: AssociationProp | undefined;
@@ -131,6 +135,8 @@ export interface AssociationProp {
     readonly span: number;
 
     readonly storageType: StorageType;
+
+    sub(subPath: string): AssociationProp;
 
     toString(): string;
 
@@ -152,7 +158,8 @@ class AssociationPropImpl implements AssociationProp {
         readonly name: string,
         readonly targetEntity: Entity | undefined,
         readonly parentProp: AssociationProp | undefined
-    ) {}
+    ) {
+    }
 
     get isAssociationProp(): true {
         return true;
@@ -176,6 +183,8 @@ class AssociationPropImpl implements AssociationProp {
     props: ReadonlyMap<string, AssociationProp> | undefined = undefined;
 
     scalarType: ScalarType | undefined = undefined;
+
+    targetKeyProp: EntityProp | undefined = undefined;
 
     get rootProp(): AssociationProp {
         return this.parentProp?.rootProp ?? this;
@@ -256,6 +265,19 @@ class AssociationPropImpl implements AssociationProp {
             }
         }
         return columnsToStorage(columns);
+    }
+
+    sub(subPath: string): AssociationProp {
+        if (subPath === "") {
+            return this;
+        }
+        const parts = subPath.split(".");
+        let prop: AssociationProp = this;
+        for (const part of parts) {
+            prop = prop.props?.get(part) 
+                ?? makeErr(`Illegal subPath "${subPath}"`);
+        }
+        return prop;
     }
 
     toString() {
