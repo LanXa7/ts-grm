@@ -75,7 +75,7 @@ describe("FilterSqlTest", () => {
 
     it("m2mOptimization", () => {
         const q = sqlClient.createQuery(BOOK, (q, book) => {
-            q.where(book.authors().$acceptRisk().id.in(3, 4));
+            q.where(book.authors().$acceptMulti().id.in(3, 4));
             return q.select(
                 book.fetch(SIMPLE_BOOK_VIEW)
             );
@@ -103,7 +103,7 @@ describe("FilterSqlTest", () => {
         const q = newSqlClient(sqlClient, {
             filterManager
         }).createQuery(BOOK, (q, book) => {
-            q.where(book.authors().$acceptRisk().id.in(3, 4));
+            q.where(book.authors().$acceptMulti().id.in(3, 4));
             return q.select(
                 book.fetch(SIMPLE_BOOK_VIEW)
             );
@@ -127,7 +127,7 @@ describe("FilterSqlTest", () => {
 
     it("inverseMultiColumnsM2MOptimization", () => {
         const q = sqlClient.createQuery(TAG, (q, tag) => {
-            q.where(tag.orders().$acceptRisk().id().y().a.lt(5));
+            q.where(tag.orders().$acceptMulti().id().y().a.lt(5));
             return q.select(tag.id().low, tag.id().high, tag.name);
         });
         expectCode(sql(q), `
@@ -151,7 +151,7 @@ describe("FilterSqlTest", () => {
         const q = newSqlClient(sqlClient, {
             filterManager
         }).createQuery(TAG, (q, tag) => {
-            q.where(tag.orders().$acceptRisk().id().y().a.lt(5));
+            q.where(tag.orders().$acceptMulti().id().y().a.lt(5));
             return q.select(tag.id().low, tag.id().high, tag.name);
         });
         expectCode(sql(q), `

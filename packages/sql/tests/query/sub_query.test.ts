@@ -12,7 +12,7 @@ describe("SubQueryTest", () => {
                 book.id.inSubQuery(
                     dsl.subQuery(AUTHOR, (q, author) => {
                         q.where(author.name().firstName.like("a"));
-                        return q.select(author.books().$acceptRisk().id);
+                        return q.select(author.books().$acceptMulti().id);
                     })
                 )
             );

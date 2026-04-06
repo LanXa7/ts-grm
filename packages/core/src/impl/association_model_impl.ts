@@ -8,8 +8,8 @@ export class AssociationModelImpl<
     TSourceKey extends OptionalModelKey<TSourceModel>,
     TTargetModel extends AnyModel,
     TTargetKey extends OptionalModelKey<TTargetModel>,
-    TRiskAccepted extends boolean
-> implements AssociationModel<TSourceModel, TSourceKey, TTargetModel, TTargetKey, TRiskAccepted> {
+    TMultiAccepted extends boolean
+> implements AssociationModel<TSourceModel, TSourceKey, TTargetModel, TTargetKey, TMultiAccepted> {
 
     __type(): {
         readonly associationModel: [
@@ -17,7 +17,7 @@ export class AssociationModelImpl<
             TSourceKey, 
             TTargetModel, 
             TTargetKey,
-            TRiskAccepted
+            TMultiAccepted
         ] | true;
     } {
         return { associationModel: true };

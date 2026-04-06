@@ -207,11 +207,11 @@ describe("InheritanceBaseQuerySqlTest", () => {
             dsl.baseQuery(AUTHOR, (q, author) => {
                 q.where(author.name().firstName.eq("Alex"));
                 return q.select({
-                    book: author.books().$acceptRisk(),
+                    book: author.books().$acceptMulti(),
                     rank: dsl.native.num `row_number() over(partition by ${
-                        author.books().$acceptRisk().storeId
+                        author.books().$acceptMulti().storeId
                     } order by ${
-                        author.books().$acceptRisk().price
+                        author.books().$acceptMulti().price
                     } desc)`
                 })
             })

@@ -116,7 +116,7 @@ export abstract class AbstractEntityTable implements AbstractTable {
         }
     }
 
-    $acceptRisk(): this {
+    $acceptMulti(): this {
         return this;
     }
 

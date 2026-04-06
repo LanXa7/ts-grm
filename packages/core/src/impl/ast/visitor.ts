@@ -14,6 +14,7 @@ import { ExistsPred, SubQueryExprContract } from "./sub_query_expr";
 import { TupleCmpPred, TupleContract, TupleInCollectionPred, TupleInSubQueryPred } from "./tuple";
 import { Node } from "./node";
 import { IsPred } from "./is_pred";
+import { AssociatedPred, AssociatedSizeExpr } from "./associated";
 
 export interface Visitor {
 
@@ -46,6 +47,10 @@ export interface Visitor {
     visitCompoundPred(pred: CompoundPred): void;
 
     visitExistsPred(pred: ExistsPred): void;
+
+    visitAssociatedPred(pred: AssociatedPred): void;
+
+    visitAssociatedSizeExpr(expr: AssociatedSizeExpr): void;
 
     visitFetchedView(view: FetchedViewContract): void;
 
@@ -185,6 +190,14 @@ export abstract class AbstractVisitor implements Visitor {
 
     visitExistsPred(pred: ExistsPred): void {
         pred.subQuery.accept(this);
+    }
+
+    visitAssociatedPred(_: AssociatedPred): void {
+        
+    }
+
+    visitAssociatedSizeExpr(_: AssociatedSizeExpr): void {
+        
     }
 
     visitFetchedView(_: FetchedViewContract): void {

@@ -60,7 +60,7 @@ describe("AssociationSqlTest", () => {
 
     it("half", () => {
         const q = sqlClient.createQuery(BOOK, (q, book) => {
-            q.where(book.association("authors").$acceptRisk().targetId.eq(3));
+            q.where(book.association("authors").$acceptMulti().targetId.eq(3));
             return q.select(
                 book.fetch(SIMPLE_BOOK_VIEW)
             );
@@ -80,7 +80,7 @@ describe("AssociationSqlTest", () => {
 
     it("inverseHalf", () => {
         const q = sqlClient.createQuery(AUTHOR, (q, author) => {
-            q.where(author.association("books").$acceptRisk().targetId.eq(3));
+            q.where(author.association("books").$acceptMulti().targetId.eq(3));
             return q.select(
                 author.fetch(SIMPLE_AUTHOR_VIEW)
             );
@@ -102,7 +102,7 @@ describe("AssociationSqlTest", () => {
         const q = sqlClient.createQuery(ORDER, (q, order) => {
             const tag = order
                 .association("tags", ctx => ctx.target.targetId().high.eq(0))
-                .$acceptRisk()
+                .$acceptMulti()
                 .target(ctx => ctx.target.name.length().lteIf(10));
             return q.select(order.name, tag.name);
         });

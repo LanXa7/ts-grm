@@ -33,27 +33,27 @@ export type EntityTableLike = {
 
 export type ModelLike = AnyModel | BaseModel<any> | AnyAssociationModel;
 
-export type Table<T extends ModelLike, TRiskAccepted extends boolean = false> =
+export type Table<T extends ModelLike, TMultiAccepted extends boolean = false> =
     T extends AnyModel
-        ? EntityTable<T, TRiskAccepted>
+        ? EntityTable<T, TMultiAccepted>
     : T extends BaseModel<infer TMap>
-        ? BaseTable<TMap, TRiskAccepted>
+        ? BaseTable<TMap, TMultiAccepted>
     : T extends AnyAssociationModel
         ? AssociationTable<T>
     : never;
 
-export type EntityTable<TModel extends AnyModel, TRiskAccepted extends boolean = false> = 
-    EntityTableMembers<TModel, AllModelMembers<TModel>, "NONNULL", TRiskAccepted>;
+export type EntityTable<TModel extends AnyModel, TMultiAccepted extends boolean = false> = 
+    EntityTableMembers<TModel, AllModelMembers<TModel>, "NONNULL", TMultiAccepted>;
 
 export type EntityTableMembers<
     TModel extends AnyModel, 
     TMembers extends object, 
     TNullity extends NullityType, 
-    TRiskAccepted extends boolean
+    TMultiAccepted extends boolean
 > = PrettifyDsl<
-    DslMembers<TModel, TMembers, TNullity, TRiskAccepted>
-    & WeakJoinAction<TModel, TRiskAccepted> 
-    & AssociationAction<TModel, TRiskAccepted>
+    DslMembers<TModel, TMembers, TNullity, TMultiAccepted>
+    & WeakJoinAction<TModel, TMultiAccepted> 
+    & AssociationAction<TModel, TMultiAccepted>
     & AssociatedAction<TMembers>
     & CollectionAction<TMembers>
     & { 
@@ -76,7 +76,7 @@ export type EntityTableMembers<
 
         as<TDerivedModel extends AnyModel>(
             derivedModel: DerivedModel<TDerivedModel, TModel>
-        ): EntityTableMembers<TModel, AllModelMembers<TDerivedModel>, "NULLABLE", TRiskAccepted>;
+        ): EntityTableMembers<TModel, AllModelMembers<TDerivedModel>, "NULLABLE", TMultiAccepted>;
     }
 >;
 
@@ -84,7 +84,7 @@ type DslMembers<
     TModel extends AnyModel, 
     TMembers extends object, 
     TNullity extends NullityType, 
-    TRiskAccepted extends boolean
+    TMultiAccepted extends boolean
 > = 
     FilterNever<{
         [K in keyof TMembers]:
@@ -96,11 +96,11 @@ type DslMembers<
             : TMembers[K] extends ScalarProp<infer R, infer Nullity>
                 ? Expression<MakeType<R, CombinedNullity<TNullity, Nullity>>>
             : TMembers[K] extends EmbeddedProp<infer R, infer Nullity, any>
-                ? () => DslMembers<TModel, R, CombinedNullity<TNullity, Nullity>, TRiskAccepted>
+                ? () => DslMembers<TModel, R, CombinedNullity<TNullity, Nullity>, TMultiAccepted>
             : TMembers[K] extends ReferenceProp<infer TargetModel, any, any, any, any, any>
-                ? ReferenceJoinAction<TModel, TargetModel, AllModelMembers<TargetModel>, TRiskAccepted>
+                ? ReferenceJoinAction<TModel, TargetModel, AllModelMembers<TargetModel>, TMultiAccepted>
             : TMembers[K] extends CollectionProp<infer TargetModel>
-                ? CollectionJoinAction<TModel, TargetModel, AllModelMembers<TargetModel>, TRiskAccepted>
+                ? CollectionJoinAction<TModel, TargetModel, AllModelMembers<TargetModel>, TMultiAccepted>
             : never
         } & ReferenceKeyMembers<TModel, TMembers, TNullity>
     >;
@@ -131,10 +131,10 @@ type ReferenceJoinAction<
     TParentModel extends AnyModel, 
     TModel extends AnyModel, 
     TMembers extends object, 
-    TRiskAccepted extends boolean
+    TMultiAccepted extends boolean
 > = {
 
-    (): EntityTableMembers<TModel, TMembers, "NONNULL", TRiskAccepted>;
+    (): EntityTableMembers<TModel, TMembers, "NONNULL", TMultiAccepted>;
     
     <TJoinType extends JoinType>(
         joinType: TJoinType
@@ -142,14 +142,14 @@ type ReferenceJoinAction<
         TModel, 
         TMembers, 
         TJoinType extends "LEFT" ? "NULLABLE" : "NONNULL", 
-        TRiskAccepted
+        TMultiAccepted
     >;
 
     (filter: FilterType<TParentModel, TModel>): EntityTableMembers<
         TModel, 
         TMembers, 
         "NONNULL", 
-        TRiskAccepted
+        TMultiAccepted
     >;
     
     <TJoinType extends JoinType = "INNER">(
@@ -161,7 +161,7 @@ type ReferenceJoinAction<
         TModel, 
         TMembers, 
         TJoinType extends "LEFT" ? "NULLABLE" : "NONNULL", 
-        TRiskAccepted
+        TMultiAccepted
     >;
 };
 
@@ -169,12 +169,12 @@ type CollectionJoinAction<
     TParentModel extends AnyModel, 
     TModel extends AnyModel, 
     TMembers extends object, 
-    TRiskAccepted extends boolean
+    TMultiAccepted extends boolean
 > = {
 
     (): TableRiskWrapper<
         EntityTableMembers<TModel, TMembers, "NONNULL", true>,
-        TRiskAccepted
+        TMultiAccepted
     >; 
     
     <TJoinType extends JoinType>(
@@ -186,7 +186,7 @@ type CollectionJoinAction<
             TJoinType extends "LEFT" ? "NULLABLE" : "NONNULL",
             true
         >,
-        TRiskAccepted
+        TMultiAccepted
     >;
 
     (filter: FilterType<TParentModel, TModel>): TableRiskWrapper<
@@ -196,7 +196,7 @@ type CollectionJoinAction<
             "NONNULL",
             true
         >,
-        TRiskAccepted
+        TMultiAccepted
     >;
     
     <TJoinType extends JoinType = "INNER">(
@@ -211,18 +211,18 @@ type CollectionJoinAction<
             TJoinType extends "LEFT" ? "NULLABLE" : "NONNULL",
             true
         >,
-        TRiskAccepted
+        TMultiAccepted
     >;
 };
 
-type TableRiskWrapper<T extends TableLike, TRiskAccepted extends boolean> = 
-    TRiskAccepted extends true
+type TableRiskWrapper<T extends TableLike, TMultiAccepted extends boolean> = 
+    TMultiAccepted extends true
         ? T
-        : { $acceptRisk(): T; };
+        : { $acceptMulti(): T; };
 
 type WeakJoinAction<
     TModel extends ModelLike,
-    TRiskAccepted extends boolean
+    TMultiAccepted extends boolean
 > = {
 
     join<
@@ -234,9 +234,9 @@ type WeakJoinAction<
             TTargetModel, 
             AllModelMembers<TTargetModel>, 
             "NONNULL", 
-            TRiskAccepted
+            TMultiAccepted
         >,
-        TRiskAccepted
+        TMultiAccepted
     >;
 
     join<
@@ -253,9 +253,9 @@ type WeakJoinAction<
             TTargetModel, 
             AllModelMembers<TTargetModel>, 
             TJoinType extends "LEFT" ? "NULLABLE" : "NONNULL", 
-            TRiskAccepted
+            TMultiAccepted
         >,
-        TRiskAccepted
+        TMultiAccepted
     >;
 
     join<
@@ -263,7 +263,7 @@ type WeakJoinAction<
     >(
         targetModel: TTargetModel,
         filter: FilterType<TModel, TTargetModel>
-    ): BaseTable<BaseQueryMapOf<TTargetModel>, TRiskAccepted>;
+    ): BaseTable<BaseQueryMapOf<TTargetModel>, TMultiAccepted>;
 
     join<
         TTargetModel extends BaseModel<any>,
@@ -278,17 +278,17 @@ type WeakJoinAction<
         TJoinType extends "LEFT"
             ? NullableBaseQuerySelectMapOf<BaseQueryMapOf<TTargetModel>>
             : BaseQueryMapOf<TTargetModel>, 
-        TRiskAccepted
+        TMultiAccepted
     >;
 };
 
-type AssociationAction<TModel extends AnyModel, TRiskAccepted extends boolean> = 
-    AssociationActionImpl<TModel, AssociationKeys<TModel>, TRiskAccepted>;
+type AssociationAction<TModel extends AnyModel, TMultiAccepted extends boolean> = 
+    AssociationActionImpl<TModel, AssociationKeys<TModel>, TMultiAccepted>;
 
 type AssociationActionImpl<
     TModel extends AnyModel, 
     TAssociationKeys extends AssociationKeys<TModel>,
-    TRiskAccepted extends boolean
+    TMultiAccepted extends boolean
 > = {
     
     association<
@@ -301,7 +301,7 @@ type AssociationActionImpl<
             TKey,
             "NONNULL"
         >,
-        TRiskAccepted
+        TMultiAccepted
     >;
 
     association<
@@ -316,7 +316,7 @@ type AssociationActionImpl<
             TKey,
             TJoinType extends "LEFT" ? "NULLABLE" : "NONNULL"
         >,
-        TRiskAccepted
+        TMultiAccepted
     >;
 
     association<
@@ -330,7 +330,7 @@ type AssociationActionImpl<
             TKey,
             "NONNULL"
         >,
-        TRiskAccepted
+        TMultiAccepted
     >;
 
     association<
@@ -348,7 +348,7 @@ type AssociationActionImpl<
             TKey,
             TJoinType extends "LEFT" ? "NULLABLE" : "NONNULL"
         >,
-        TRiskAccepted
+        TMultiAccepted
     >;
 };
 
@@ -357,18 +357,19 @@ type AssociatedAction<TModelMembers> =
         ? {}
         : {
             exists<TKey extends AssociatedKeys<TModelMembers>>(
-                key: TKey
+                key: TKey,
+                fn: AssociatedFilter<TModelMembers[TKey]>
             ): Predicate;
 
             none<TKey extends AssociatedKeys<TModelMembers>>(
                 key: TKey,
                 fn: AssociatedFilter<TModelMembers[TKey]>
-            ): Predicate | undefined;
+            ): Predicate;
 
             some<TKey extends AssociatedKeys<TModelMembers>>(
                 key: TKey,
                 fn: AssociatedFilter<TModelMembers[TKey]>
-            ): Predicate | undefined;
+            ): Predicate;
         };
 
 type AssociatedKeys<TModelMembers> =
@@ -400,7 +401,7 @@ type CollectionAction<TModelMembers> =
             all<TKey extends CollectionKeys<TModelMembers>>(
                 key: TKey,
                 fn: AssociatedFilter<TModelMembers[TKey]>
-            ): Predicate | undefined;
+            ): Predicate;
 
             size<TKey extends CollectionKeys<TModelMembers>>(
                 key: TKey,
@@ -434,7 +435,7 @@ export type FilterContextType<
 
 export type BaseTable<
     TMap extends BaseQuerySelectMapArgs,
-    TRiskAccepted extends boolean = false
+    TMultiAccepted extends boolean = false
 > = {
     __type(): { 
         tableLike: true; 
@@ -443,9 +444,9 @@ export type BaseTable<
 } & {
     readonly [K in keyof TMap]: 
         TMap[K] extends EntityTableMembers<any, any, any, any>
-            ? MakeRiskAcceptedTable<TMap[K], TRiskAccepted>
+            ? MakeMultiAcceptedTable<TMap[K], TMultiAccepted>
             : TMap[K];
-} & WeakJoinAction<BaseModel<TMap>, TRiskAccepted>;
+} & WeakJoinAction<BaseModel<TMap>, TMultiAccepted>;
 
 export type NullableBaseQuerySelectMapOf<
     TMap extends BaseQuerySelectMapArgs
@@ -456,14 +457,14 @@ export type NullableBaseQuerySelectMapOf<
         : NullableEntityTableOf<TMap[K]>;
 };
 
-type MakeRiskAcceptedTable<TEntityTable, TRiskAccepted extends boolean = false> =
+type MakeMultiAcceptedTable<TEntityTable, TMultiAccepted extends boolean = false> =
     TEntityTable extends EntityTable<infer M extends AnyModel, any>
-        ? EntityTable<M, TRiskAccepted>
+        ? EntityTable<M, TMultiAccepted>
         : never;
 
 export type NullableEntityTableOf<TEntityTable> =
-    TEntityTable extends EntityTableMembers<infer Model, infer _ extends object, any, infer RiskAccepted>
-        ? EntityTableMembers<Model, AllModelMembers<Model>, "NULLABLE", RiskAccepted>
+    TEntityTable extends EntityTableMembers<infer Model, infer _ extends object, any, infer MultiAccepted>
+        ? EntityTableMembers<Model, AllModelMembers<Model>, "NULLABLE", MultiAccepted>
         : never;
 
 type PrettifyDsl<T> = {

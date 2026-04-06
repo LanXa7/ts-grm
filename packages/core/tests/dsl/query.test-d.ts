@@ -75,7 +75,7 @@ describe("QueryTest", () => {
             q.orderBy(book.price.desc());
             return q.select(
                 book.fetch(SIMPLE_BOOK_VIEW), 
-                book.authors("LEFT").$acceptRisk().fetch(SIMPLE_AUTHOR_VIEW)
+                book.authors("LEFT").$acceptMulti().fetch(SIMPLE_AUTHOR_VIEW)
             );
         }).fetchList();
 

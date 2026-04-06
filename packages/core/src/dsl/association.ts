@@ -10,7 +10,7 @@ export interface AssociationModel<
     TSourceKey extends keyof AllModelMembers<TSourceModel> & string,
     TTargetModel extends AnyModel,
     TTargetKey extends keyof AllModelMembers<TTargetModel> & string,
-    TRiskAccepted extends boolean
+    TMultiAccepted extends boolean
 > {
     __type(): {
         readonly associationModel: [
@@ -18,7 +18,7 @@ export interface AssociationModel<
             TSourceKey, 
             TTargetModel, 
             TTargetKey,
-            TRiskAccepted
+            TMultiAccepted
         ] | true;
     };
 
@@ -114,7 +114,7 @@ export type AssociationTable<
         infer SourceKey,
         infer TargetModel,
         infer TargetKey,
-        infer RiskAccepted
+        infer MultiAccepted
     >
         ? AssociationTableMembers<
             SourceModel, 
@@ -122,7 +122,7 @@ export type AssociationTable<
             TargetModel, 
             TargetKey,
             "NONNULL",
-            RiskAccepted
+            MultiAccepted
         > 
         : never;
       
@@ -132,7 +132,7 @@ export type AssociationTableMembers<
     TTargetModel extends AnyModel,
     TTargetKey extends keyof AllModelMembers<TTargetModel> & string,
     TNullity extends NullityType,
-    TRiskAccepted extends boolean
+    TMultiAccepted extends boolean
 > = {
 
     __type(): {
@@ -141,26 +141,26 @@ export type AssociationTableMembers<
 
     source(
         filter?: FilterType<
-            AssociationModel<TSourceModel, TSourceKey, TTargetModel, TSourceKey, TRiskAccepted>, 
+            AssociationModel<TSourceModel, TSourceKey, TTargetModel, TSourceKey, TMultiAccepted>, 
             TSourceModel
         >
     ): EntityTableMembers<
         TSourceModel, 
         AllModelMembers<TSourceModel>,
         TNullity,
-        TRiskAccepted
+        TMultiAccepted
     >;
 
     target(
         filter?: FilterType<
-            AssociationModel<TSourceModel, TSourceKey, TTargetModel, TSourceKey, TRiskAccepted>, 
+            AssociationModel<TSourceModel, TSourceKey, TTargetModel, TSourceKey, TMultiAccepted>, 
             TTargetModel
         >
     ): EntityTableMembers<
         TTargetModel,
         AllModelMembers<TTargetModel>,
         TNullity,
-        TRiskAccepted
+        TMultiAccepted
     >;
 } & {
     readonly [K in `source${Capitalize<TSourceKey>}`]: 

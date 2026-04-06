@@ -13,7 +13,7 @@ function store(): EntityTable<typeof BOOK_STORE> {
 
 test("TableMembers", () => {
 
-    const authorLastName = store().books().$acceptRisk().authors().name().lastName;
+    const authorLastName = store().books().$acceptMulti().authors().name().lastName;
     expectTypeOf<typeof authorLastName>().toEqualTypeOf<Expression<string>>();
     
     const storeId = book().storeId;
@@ -36,7 +36,7 @@ test("TableMembers", () => {
     const weakJoinName1 = store().join(
         AUTHOR, 
         ctx => ctx.source.name.eq(ctx.target.name().firstName)
-    ).$acceptRisk().name().firstName;
+    ).$acceptMulti().name().firstName;
     expectTypeOf<typeof weakJoinName1>().toEqualTypeOf<Expression<string>>();
 
     const weakJoinName2 = store().join(
@@ -45,6 +45,6 @@ test("TableMembers", () => {
             joinType: "LEFT",
             filter: ctx => ctx.source.name.eq(ctx.target.name().firstName)
         }
-    ).$acceptRisk().name().firstName;
+    ).$acceptMulti().name().firstName;
     expectTypeOf<typeof weakJoinName2>().toEqualTypeOf<Expression<string | null | undefined>>();
 });

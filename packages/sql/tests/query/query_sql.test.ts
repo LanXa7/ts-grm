@@ -277,15 +277,15 @@ describe("QuerySqlTest", () => {
     it("mergeAllJoinsByBackReference", () => {
         const q = sqlClient.createQuery(BOOK_STORE, (q, store) => {
             q.where(
-                store.books().$acceptRisk().name.in("java", "c++", "c#", "typescript"),
+                store.books().$acceptMulti().name.in("java", "c++", "c#", "typescript"),
                 store.books({
                     filter: ctx => ctx.target.name.notLike("name1")
-                }).$acceptRisk().name.ilike("n"),
-                store.books("LEFT").$acceptRisk().name.notIn("cobol", "pascal", "fortran", "perl"),
+                }).$acceptMulti().name.ilike("n"),
+                store.books("LEFT").$acceptMulti().name.notIn("cobol", "pascal", "fortran", "perl"),
                 store.books({
                     joinType: "LEFT",
                     filter: ctx => ctx.target.name.notLike("name2")
-                }).$acceptRisk().edition.ne(1)
+                }).$acceptMulti().edition.ne(1)
             );
             return q.select(store.fetch(SIMPLE_STORE_VIEW));
         });
@@ -316,15 +316,15 @@ describe("QuerySqlTest", () => {
         const q = sqlClient.createQuery(BOOK_STORE, (q, store) => {
             q.where(
                 dsl.or(
-                    store.books().$acceptRisk().name.in("java", "c++", "c#", "typescript"),
+                    store.books().$acceptMulti().name.in("java", "c++", "c#", "typescript"),
                     store.books({
                         filter: ctx => ctx.target.name.notLike("name1")
-                    }).$acceptRisk().name.ilike("n"),
-                    store.books("LEFT").$acceptRisk().name.notIn("cobol", "pascal", "fortran", "perl"),
+                    }).$acceptMulti().name.ilike("n"),
+                    store.books("LEFT").$acceptMulti().name.notIn("cobol", "pascal", "fortran", "perl"),
                     store.books({
                         joinType: "LEFT",
                         filter: ctx => ctx.target.name.notLike("name2")
-                    }).$acceptRisk().edition.ne(1)
+                    }).$acceptMulti().edition.ne(1)
                 )
             );
             return q.select(store.fetch(SIMPLE_STORE_VIEW));
@@ -357,15 +357,15 @@ describe("QuerySqlTest", () => {
     it("mergeAllJoinsByMiddleTable", () => {
         const q = sqlClient.createQuery(BOOK, (q, book) => {
             q.where(
-                book.authors().$acceptRisk().name().lastName.in("smith", "johnson", "williams", "brown"),
+                book.authors().$acceptMulti().name().lastName.in("smith", "johnson", "williams", "brown"),
                 book.authors({
                     filter: ctx => ctx.target.name().firstName.notLike("name1")
-                }).$acceptRisk().name().firstName.ilike("n"),
-                book.authors("LEFT").$acceptRisk().name().lastName.notIn("fernsehby", "macgillivray", "pussett", "bythesea"),
+                }).$acceptMulti().name().firstName.ilike("n"),
+                book.authors("LEFT").$acceptMulti().name().lastName.notIn("fernsehby", "macgillivray", "pussett", "bythesea"),
                 book.authors({
                     joinType: "LEFT",
                     filter: ctx => ctx.target.name().firstName.notLike("name2")
-                }).$acceptRisk().name().firstName.ne("tim")
+                }).$acceptMulti().name().firstName.ne("tim")
             );
             return q.select(book.fetch(SIMPLE_BOOK_VIEW));
         });
@@ -398,15 +398,15 @@ describe("QuerySqlTest", () => {
         const q = sqlClient.createQuery(BOOK, (q, book) => {
             q.where(
                 dsl.or(
-                    book.authors().$acceptRisk().name().lastName.in("smith", "johnson", "williams", "brown"),
+                    book.authors().$acceptMulti().name().lastName.in("smith", "johnson", "williams", "brown"),
                     book.authors({
                         filter: ctx => ctx.target.name().firstName.notLike("name1")
-                    }).$acceptRisk().name().firstName.ilike("n"),
-                    book.authors("LEFT").$acceptRisk().name().lastName.notIn("fernsehby", "macgillivray", "pussett", "bythesea"),
+                    }).$acceptMulti().name().firstName.ilike("n"),
+                    book.authors("LEFT").$acceptMulti().name().lastName.notIn("fernsehby", "macgillivray", "pussett", "bythesea"),
                     book.authors({
                         joinType: "LEFT",
                         filter: ctx => ctx.target.name().firstName.notLike("name2")
-                    }).$acceptRisk().name().firstName.ne("tim")
+                    }).$acceptMulti().name().firstName.ne("tim")
                 )
             );
             return q.select(book.fetch(SIMPLE_BOOK_VIEW));
@@ -446,11 +446,11 @@ describe("QuerySqlTest", () => {
                 ctx => ctx.source.name.eq(ctx.target.name().firstName);
             q.where(
                 book.join(AUTHOR, filter)
-                    .$acceptRisk()
+                    .$acceptMulti()
                     .name()
                     .lastName.like("a"),
                 book.join(AUTHOR, { joinType: "LEFT", filter })
-                    .$acceptRisk()
+                    .$acceptMulti()
                     .name()
                     .lastName.like("b")
             );
@@ -478,11 +478,11 @@ describe("QuerySqlTest", () => {
             q.where(
                 dsl.or(
                     book.join(AUTHOR, filter)
-                        .$acceptRisk()
+                        .$acceptMulti()
                         .name()
                         .lastName.like("a"),
                     book.join(AUTHOR, { joinType: "LEFT", filter })
-                        .$acceptRisk()
+                        .$acceptMulti()
                         .name()
                         .lastName.like("b")
                 )
@@ -640,7 +640,7 @@ describe("QuerySqlTest", () => {
                     ctx.source.book.storeId.eq(ctx.target.id),
                     ctx.source.rank.eq(1)
                 )
-            ).$acceptRisk();
+            ).$acceptMulti();
             return q.select(
                 baseBook.book.fetch(SIMPLE_BOOK_VIEW),
                 store.fetch(SIMPLE_STORE_VIEW)
@@ -778,7 +778,7 @@ describe("QuerySqlTest", () => {
             const store = baseBook.book.join(
                 BOOK_STORE,
                 ctx => ctx.source.storeId.eq(ctx.target.id)
-            ).$acceptRisk();
+            ).$acceptMulti();
             q.where(baseBook.rank.eq(1));
             q.where(store.version.eq(1));
             return q.select(

@@ -31,7 +31,7 @@ export class AbstractAssociationTable implements AbstractTable {
         }
     }
 
-    $acceptRisk(): this {
+    $acceptMulti(): this {
         return this;
     }
 

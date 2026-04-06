@@ -261,7 +261,7 @@ describe("RuntimeTableTest", () => {
         expect(table.name().firstName instanceof AbstractStrExpr).toEqual(true);
         expect(table.name().lastName instanceof AbstractStrExpr).toEqual(true);
         expect(table.association("books") instanceof AbstractAssociationTable).toEqual(true);
-        expect(table.books().$acceptRisk() instanceof AbstractEntityTable).toEqual(true);
+        expect(table.books().$acceptMulti() instanceof AbstractEntityTable).toEqual(true);
     });
 
     it("orderItem", () => {
