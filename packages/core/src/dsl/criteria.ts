@@ -54,14 +54,14 @@ type ReferenceType<TProp> =
     );
 
 type CollectionType<TProp> =
-    TargetMembers<TProp> 
-    | { $elemMatch: TargetMembers<TProp>; }
-    | { $none: TargetMembers<TProp>; }
-    | { $all: TargetMembers<TProp> }
-    | { $exists: boolean } & TargetMembers<TProp>
-    | { $size: number | CmpJson<number> } & TargetMembers<TProp>;
+    ElementMembers<TProp> 
+    | { $some: ElementMembers<TProp>; }
+    | { $none: ElementMembers<TProp>; }
+    | { $all: ElementMembers<TProp> }
+    | { $exists: boolean } & ElementMembers<TProp>
+    | { $size: number | CmpJson<number> } & ElementMembers<TProp>;
 
-type TargetMembers<TProp> =
+type ElementMembers<TProp> =
     TProp extends CollectionProp<infer TargetModel>
         ? CriteriaMembers<AllModelMembers<TargetModel>, "NONNULL">
         : never;

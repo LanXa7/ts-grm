@@ -28,7 +28,7 @@ export class FilterManager {
             filters = [];
             filterMap.set(entity, filters);
         }
-        filters.push(filter as AnyFilter);
+        filters.push(filter as any as AnyFilter);
         return this;
     }
 

@@ -7,6 +7,7 @@ import {
     ReferenceProp, 
     ScalarProp, 
     CombinedNullity,
+    AssociatedProp,
 } from "@/schema/prop";
 import { Expression, MakeExpression, MakeType, Predicate } from "./expression";
 import { FilterNever } from "@/utils";
@@ -49,9 +50,12 @@ export type EntityTableMembers<
     TMembers extends object, 
     TNullity extends NullityType, 
     TRiskAccepted extends boolean
-> = DslMembers<TModel, TMembers, TNullity, TRiskAccepted>
+> = PrettifyDsl<
+    DslMembers<TModel, TMembers, TNullity, TRiskAccepted>
     & WeakJoinAction<TModel, TRiskAccepted> 
     & AssociationAction<TModel, TRiskAccepted>
+    & AssociatedAction<TMembers>
+    & CollectionAction<TMembers>
     & { 
         __type(): {
             tableLike: true;
@@ -73,7 +77,8 @@ export type EntityTableMembers<
         as<TDerivedModel extends AnyModel>(
             derivedModel: DerivedModel<TDerivedModel, TModel>
         ): EntityTableMembers<TModel, AllModelMembers<TDerivedModel>, "NULLABLE", TRiskAccepted>;
-    };
+    }
+>;
 
 type DslMembers<
     TModel extends AnyModel, 
@@ -347,6 +352,72 @@ type AssociationActionImpl<
     >;
 };
 
+type AssociatedAction<TModelMembers> =
+    AssociatedKeys<TModelMembers> extends never
+        ? {}
+        : {
+            exists<TKey extends AssociatedKeys<TModelMembers>>(
+                key: TKey
+            ): Predicate;
+
+            none<TKey extends AssociatedKeys<TModelMembers>>(
+                key: TKey,
+                fn: AssociatedFilter<TModelMembers[TKey]>
+            ): Predicate | undefined;
+
+            some<TKey extends AssociatedKeys<TModelMembers>>(
+                key: TKey,
+                fn: AssociatedFilter<TModelMembers[TKey]>
+            ): Predicate | undefined;
+        };
+
+type AssociatedKeys<TModelMembers> =
+    TModelMembers extends object 
+        ? { 
+            [K in keyof TModelMembers]: 
+                TModelMembers[K] extends AssociatedProp<any, any, any, any, any, any>
+                    ? K
+                    : never
+        }[keyof TModelMembers] :
+        never;
+
+type AssociatedFilter<TProp> =
+    TProp extends AssociatedProp<infer TargetModel, any, any, any, any, any>
+        ? (
+            table: EntityTableMembers<
+                TargetModel, 
+                AllModelMembers<TargetModel>, 
+                "NONNULL", 
+                true
+            >
+        ) => Predicate | undefined
+        : never;
+
+type CollectionAction<TModelMembers> =
+    CollectionKeys<TModelMembers> extends never
+        ? {}
+        : {
+            all<TKey extends CollectionKeys<TModelMembers>>(
+                key: TKey,
+                fn: AssociatedFilter<TModelMembers[TKey]>
+            ): Predicate | undefined;
+
+            size<TKey extends CollectionKeys<TModelMembers>>(
+                key: TKey,
+                fn: AssociatedFilter<TModelMembers[TKey]>
+            ): Expression<number>;
+        };
+
+type CollectionKeys<TModelMembers> =
+    TModelMembers extends object 
+        ? { 
+            [K in keyof TModelMembers]: 
+                TModelMembers[K] extends CollectionProp<any>
+                    ? K
+                    : never
+        }[keyof TModelMembers] :
+        never;
+
 export type FilterType<
     TParentModel extends ModelLike, 
     TModel extends ModelLike
@@ -394,3 +465,7 @@ export type NullableEntityTableOf<TEntityTable> =
     TEntityTable extends EntityTableMembers<infer Model, infer _ extends object, any, infer RiskAccepted>
         ? EntityTableMembers<Model, AllModelMembers<Model>, "NULLABLE", RiskAccepted>
         : never;
+
+type PrettifyDsl<T> = {
+    readonly [K in keyof T]: T[K];
+};

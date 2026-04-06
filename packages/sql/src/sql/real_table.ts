@@ -214,7 +214,9 @@ export class RealTable {
     ): string {
         const joinOperation = symbol.__joinOperation!;
         if (joinOperation.joinProp != null) {
-            return joinOperation.joinProp.name;
+            return joinOperation.isJoinPropInverse 
+                ? `←${joinOperation.joinProp.name}`
+                : joinOperation.joinProp.name;
         }
         if (joinOperation.weakJoinModel != null) {
             return `j(${joinOperation.weakJoinModel.identifier})`;

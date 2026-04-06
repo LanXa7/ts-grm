@@ -20,6 +20,8 @@ import { AbstractPred, ConstantPred } from "./ast/pred";
 import { IsPred } from "./ast/is_pred";
 import { AssociationEntity, AssociationProp } from "./association_entity";
 import { AbstractAssociationTable } from "./association_table";
+import { AbstractNumExpr } from "./ast";
+import { suppressUnused } from "@/utils";
 
 export abstract class AbstractEntityTable implements AbstractTable {
 
@@ -172,6 +174,49 @@ export abstract class AbstractEntityTable implements AbstractTable {
         association = this._association(key, joinType, filter);
         associationMap.set(mapKey, association);
         return association;
+    }
+
+    exists(
+        key: string
+    ): Predicate {
+        suppressUnused(key);
+        throw new Error("Unsupported");
+    }
+
+    none(
+        key: string, 
+        fn: (table: AbstractEntityTable) => Predicate | undefined
+    ): Predicate | undefined {
+        suppressUnused(key);
+        suppressUnused(fn);
+        return undefined;
+    }
+
+    some(
+        key: string, 
+        fn: (table: AbstractEntityTable) => Predicate | undefined
+    ): Predicate | undefined {
+        suppressUnused(key);
+        suppressUnused(fn);
+        return undefined;
+    }
+
+    all(
+        key: string, 
+        fn: (table: AbstractEntityTable) => Predicate | undefined
+    ): Predicate | undefined {
+        suppressUnused(key);
+        suppressUnused(fn);
+        return undefined;
+    }
+
+    size(
+        key: string, 
+        fn: (table: AbstractEntityTable) => Predicate | undefined
+    ): AbstractNumExpr<number> {
+        suppressUnused(key);
+        suppressUnused(fn);
+        throw new Error("Unsupported");
     }
 
     private _association(
