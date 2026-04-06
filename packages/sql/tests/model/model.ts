@@ -213,4 +213,5 @@ export const TAG = model("Tag", "id", class {
         high: prop.i32()
     });
     name = prop.str()
+    orders = prop.m2m(ORDER).mappedBy("tags")
 });

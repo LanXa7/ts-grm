@@ -272,10 +272,10 @@ class AssociationPropImpl implements AssociationProp {
             return this;
         }
         const parts = subPath.split(".");
-        let prop: AssociationProp = this;
+        let prop: AssociationProp = this?.referenceKeyProp ?? this;
         for (const part of parts) {
             prop = prop.props?.get(part) 
-                ?? makeErr(`Illegal subPath "${subPath}"`);
+                ?? makeErr(`Illegal subPath "${subPath}" for "${this.toString()}"`);
         }
         return prop;
     }

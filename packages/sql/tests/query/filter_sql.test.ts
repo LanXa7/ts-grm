@@ -1,5 +1,5 @@
 import { describe, it } from "vitest";
-import { AUTHOR, BOOK, BOOK_STORE } from "../model/model";
+import { AUTHOR, BOOK, BOOK_STORE, ORDER, TAG } from "../model/model";
 import { SIMPLE_BOOK_VIEW, sql, sqlClient } from "./utils";
 import { expectCode } from "../utils";
 import { FilterManager } from "@/cfg";
@@ -122,6 +122,58 @@ describe("FilterSqlTest", () => {
                 length(cast(tb_3_.FIRST_NAME as text)) + length(cast(tb_3_.LAST_NAME as text)) <= ?
             where 
                 tb_3_.ID in(?, ?)
+        `);
+    });
+
+    it("inverseMultiColumnsM2MOptimization", () => {
+        const q = sqlClient.createQuery(TAG, (q, tag) => {
+            q.where(tag.orders().$acceptRisk().id().y().a.lt(5));
+            return q.select(tag.id().low, tag.id().high, tag.name);
+        });
+        expectCode(sql(q), `
+            select 
+                tb_1_.LOW,
+                tb_1_.HIGH,
+                tb_1_.NAME
+            from TAG tb_1_
+            inner join ORDER_TAG_MAPPING tb_2_ on 
+                tb_1_.LOW = tb_2_.tag_low
+            and
+                tb_1_.HIGH = tb_2_.tag_high
+            where 
+                tb_2_.order_y_a < ?
+        `);
+    });
+
+    it("inverseMultiColumnsM2MFilter", () => {
+        const filterManager = new FilterManager()
+            .add(ORDER, table => table.name.notLike("DELETED"));
+        const q = newSqlClient(sqlClient, {
+            filterManager
+        }).createQuery(TAG, (q, tag) => {
+            q.where(tag.orders().$acceptRisk().id().y().a.lt(5));
+            return q.select(tag.id().low, tag.id().high, tag.name);
+        });
+        expectCode(sql(q), `
+            select 
+                tb_1_.LOW,
+                tb_1_.HIGH,
+                tb_1_.NAME
+            from TAG tb_1_
+            inner join ORDER_TAG_MAPPING tb_2_ on 
+                tb_1_.LOW = tb_2_.tag_low
+            and
+                tb_1_.HIGH = tb_2_.tag_high
+            inner join ORDER tb_3_ on 
+                tb_2_.order_x = tb_3_.X
+            and
+                tb_2_.order_y_a = tb_3_.A
+            and
+                tb_2_.order_y_b = tb_3_.B
+            and
+                tb_3_.NAME not like ?
+            where 
+                tb_3_.A < ?
         `);
     });
 });
