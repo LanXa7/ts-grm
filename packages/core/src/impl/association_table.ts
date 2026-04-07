@@ -80,6 +80,7 @@ export class AbstractAssociationTable implements AbstractTable {
                 joinType: this.__joinOperation?.joinType ?? "INNER",
                 joinProp: this.__associationEntity.sourceProp,
                 isJoinPropInverse: false,
+                isTargetFilterIgnored: false,
                 weakJoinModel: undefined,
                 castToEntity: undefined,
                 filter
@@ -96,6 +97,7 @@ export class AbstractAssociationTable implements AbstractTable {
                     joinType: joinOperation?.joinType ?? "INNER",
                     joinProp: this.__associationEntity.sourceProp,
                     isJoinPropInverse: false,
+                    isTargetFilterIgnored: false,
                     weakJoinModel: undefined,
                     castToEntity: undefined,
                     filter: undefined
@@ -115,6 +117,7 @@ export class AbstractAssociationTable implements AbstractTable {
                 joinType: this.__joinOperation?.joinType ?? "INNER",
                 joinProp: this.__associationEntity.targetProp,
                 isJoinPropInverse: false,
+                isTargetFilterIgnored: false,
                 weakJoinModel: undefined,
                 castToEntity: undefined,
                 filter
@@ -127,6 +130,7 @@ export class AbstractAssociationTable implements AbstractTable {
                 joinType: this.__joinOperation?.joinType ?? "INNER",
                 joinProp: this.__associationEntity.targetProp,
                 isJoinPropInverse: false,
+                isTargetFilterIgnored: false,
                 weakJoinModel: undefined,
                 castToEntity: undefined,
                 filter: undefined

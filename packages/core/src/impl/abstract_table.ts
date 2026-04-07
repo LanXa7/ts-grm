@@ -63,6 +63,7 @@ export function createJoinedTable(
             joinType, 
             joinProp: undefined, 
             isJoinPropInverse: false,
+            isTargetFilterIgnored: false,
             castToEntity: undefined,
             weakJoinModel: model as any as ModelContract,
             filter
@@ -74,6 +75,7 @@ export function createJoinedTable(
             joinType, 
             joinProp: undefined, 
             isJoinPropInverse: false,
+            isTargetFilterIgnored: false,
             castToEntity: undefined,
             weakJoinModel: model as any as ModelContract,
             filter
@@ -84,6 +86,7 @@ export function createJoinedTable(
         joinType,
         joinProp: undefined,
         isJoinPropInverse: false,
+        isTargetFilterIgnored: false,
         castToEntity: undefined,
         weakJoinModel: model as any as ModelContract,
         filter

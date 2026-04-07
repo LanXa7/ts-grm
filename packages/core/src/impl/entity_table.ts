@@ -13,14 +13,14 @@ import { FetchedViewImpl } from "./fetched_view_impl";
 import { TypedBaseTable } from "./base_table";
 import { ArgumentError, StateError } from "@/error/common";
 import { ModelContract } from "./model_contract";
-import { BaseQuerySelectMapArgs, dsl } from "@/dsl";
+import { BaseQuerySelectMapArgs, dsl, ExpressionLike, ExprTuple } from "@/dsl";
 import { BaseModelImplementor } from "./base_query_implementor";
 import { AnyModel } from "@/schema/model";
 import { AbstractPred, ConstantPred } from "./ast/pred";
 import { IsPred } from "./ast/is_pred";
 import { AssociationEntity, AssociationProp } from "./association_entity";
 import { AbstractAssociationTable } from "./association_table";
-import { AbstractNumExpr } from "./ast";
+import { AbstractExpr, AbstractNumExpr } from "./ast";
 import { suppressUnused } from "@/utils";
 
 export abstract class AbstractEntityTable implements AbstractTable {
@@ -231,6 +231,7 @@ export abstract class AbstractEntityTable implements AbstractTable {
             joinType,
             joinProp: associationEntity.sourceProp,
             isJoinPropInverse: true,
+            isTargetFilterIgnored: false,
             castToEntity: undefined,
             weakJoinModel: undefined,
             filter
@@ -271,6 +272,7 @@ export abstract class AbstractEntityTable implements AbstractTable {
             joinType: this._sharedData.nullable || this._downcast ? "LEFT" : "INNER",
             joinProp: undefined,
             isJoinPropInverse: false,
+            isTargetFilterIgnored: false,
             castToEntity: castTo,
             weakJoinModel: undefined,
             filter: undefined
@@ -293,6 +295,7 @@ export abstract class AbstractEntityTable implements AbstractTable {
                 joinType: "LEFT",
                 joinProp: undefined,
                 isJoinPropInverse: false,
+                isTargetFilterIgnored: false,
                 castToEntity: castTo,
                 weakJoinModel: undefined,
                 filter: undefined
@@ -362,6 +365,54 @@ export abstract class AbstractEntityTable implements AbstractTable {
     get __isNullable(): boolean {
         return this._sharedData.nullable;
     }
+
+    __inverseAssociatedKey(
+        propName: string,
+        targetTable: AbstractEntityTable
+    ): AbstractExpr<any> | ExprTuple<ExpressionLike[]> {
+        const prop = this.__entity.prop(propName);
+        if (prop.targetEntity == null) {
+            throw new ArgumentError(`The property "${prop.toString()}" is not association entity`);
+        }
+        if (prop.targetEntity != targetTable.__entity 
+            && targetTable.__entity.ancestors.has(prop.targetEntity)) {
+            throw new ArgumentError(
+                `The target table of "${
+                    targetTable.__entity.name
+                }" is not the target of "${prop.toString()}"`
+            );
+        }
+        const oppositeProp = prop.oppositeProp;
+        let backTable: AbstractEntityTable;
+        let backKeyProp: EntityProp;
+        if (oppositeProp != null) {
+            backTable = this.__entity.table({
+                parent: targetTable,
+                joinType: "INNER",
+                joinProp: oppositeProp,
+                isJoinPropInverse: false,
+                isTargetFilterIgnored: true,
+                castToEntity: undefined,
+                weakJoinModel: undefined,
+                filter: undefined
+            });
+            backKeyProp = oppositeProp.targetKeyProp ?? this.__entity.idProp;
+        } else {
+            backTable = this.__entity.table({
+                parent: targetTable,
+                joinType: "INNER",
+                joinProp: prop,
+                isJoinPropInverse: true,
+                isTargetFilterIgnored: true,
+                castToEntity: undefined,
+                weakJoinModel: undefined,
+                filter: undefined
+            });
+            backKeyProp = prop.thisKeyProp ?? this.__entity.idProp;
+        }
+        console.log((backTable as any)[backKeyProp.name]);
+        throw new Error();
+    }
 }
 
 export type JoinOperation = {
@@ -369,6 +420,7 @@ export type JoinOperation = {
     readonly joinType: JoinType;
     readonly joinProp: JoinProp | undefined;
     readonly isJoinPropInverse: boolean;
+    readonly isTargetFilterIgnored: boolean;
     readonly castToEntity: Entity | undefined;
     readonly weakJoinModel: ModelContract | undefined;
     readonly filter: JoinFilter | undefined;
