@@ -317,9 +317,13 @@ export class Entity {
         let expendedPropMap: Map<string, EntityProp> | undefined = undefined;
         for (const prop of this.allPropMap.values()) {
             if (prop.props !== undefined) {
-                expendedPropMap = new Map<string, EntityProp>(this.allPropMap);
+                if (expendedPropMap == null) {
+                    expendedPropMap = new Map<string, EntityProp>(this.allPropMap);
+                }
+                for (const [key, value] of prop.flattenScalarProps.entries()) {
+                    expendedPropMap.set(`${prop.name}.${key}`, value);
+                }
             }
-            prop.collectDeeperProps(expendedPropMap!);
         }
         return expendedPropMap !== undefined ? expendedPropMap : new Map(this.allPropMap);
     }
@@ -330,11 +334,8 @@ export class Entity {
                 continue;
             }
             if (prop.props !== undefined) {
-                const map = new Map<string, EntityProp>();
-                prop.collectDeeperProps(map);
-                const offset = prop.name.length;
-                for (const [key, value] of map.entries()) {
-                    const newKey = `${prop.name}${key.substring(offset)}`;
+                for (const [key, value] of prop.flattenProps.entries()) {
+                    const newKey = key === "" ? prop.name : `${prop.name}.${key}`;
                     (this._expandedPropMap as Map<string, EntityProp>).set(newKey, value);
                 }
             }

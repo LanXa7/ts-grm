@@ -24,6 +24,10 @@ export class EntityProp {
 
     private _props: ReadonlyMap<string, EntityProp> | undefined = undefined;
 
+    private _flattenProps: ReadonlyMap<string, EntityProp> | undefined = undefined;
+
+    private _flattenScalarProps: ReadonlyMap<string, EntityProp> | undefined = undefined;
+
     private _targetEntity: Entity | undefined = undefined;
 
     private _orders:  ReadonlyArray<EntityPropOrder> | undefined = undefined;
@@ -51,6 +55,9 @@ export class EntityProp {
     private _storage: PropStorage | undefined = undefined;
 
     private _override = false;
+
+    private static readonly _EMPTY_PROP_MAP: ReadonlyMap<string, EntityProp> = 
+        new Map<string, EntityProp>();
 
     constructor(
         readonly declaringEntity: Entity,
@@ -102,6 +109,38 @@ export class EntityProp {
 
     get props(): ReadonlyMap<string, EntityProp> | undefined {
         return this._props;
+    }
+
+    get flattenProps(): ReadonlyMap<string, EntityProp> {
+        let flattenProps = this._flattenProps;
+        if (flattenProps == null) {
+            if (this.props == null) {
+                this._flattenProps = flattenProps = EntityProp._EMPTY_PROP_MAP;
+            } else {
+                const map = new Map<string, EntityProp>();
+                EntityProp._collectFlattenProps(this, undefined, map);
+                this._flattenProps = flattenProps = map;
+            }
+        }
+        return flattenProps;
+    }
+
+    get flattenScalarProps(): ReadonlyMap<string, EntityProp> {
+        let flattenScalarProps = this._flattenScalarProps;
+        if (flattenScalarProps == null) {
+            if (this.props == null) {
+                this._flattenScalarProps = flattenScalarProps = EntityProp._EMPTY_PROP_MAP;
+            } else {
+                const map = new Map<string, EntityProp>();
+                for (const [key, value] of this.flattenProps.entries()) {
+                    if (value.scalarType != null) {
+                        map.set(key, value);
+                    }
+                }
+                this._flattenScalarProps = flattenScalarProps = map;
+            }
+        }
+        return flattenScalarProps;
     }
 
     get targetEntity(): Entity | undefined {
@@ -376,24 +415,6 @@ export class EntityProp {
         }
         this._scalarType = referenceProp.targetKeyProp!.scalarType;
         this._props = EntityProp._redirectSubPropMap(this, referenceProp.targetKeyProp!._props);
-    }
-
-    collectDeeperProps(map: Map<string, EntityProp>) {
-        this._collectDeeperProps(undefined, map);
-    }
-
-    private _collectDeeperProps(prefix: string | undefined, map: Map<string, EntityProp>) {
-        if (prefix != null) {
-            map.set(`${prefix}.${this.name}`, this);
-        }
-        if (this.props != null) {
-            for (const prop of this.props.values()) {
-                prop._collectDeeperProps(
-                    prefix == null ? this.name : `${prefix}.${this.name}`,
-                    map
-                );
-            }
-        }
     }
 
     // @ts-ignore
@@ -797,8 +818,6 @@ export class EntityProp {
             return;
         }
 
-        const propMap = new Map<string, EntityProp>();
-        EntityProp._flatProps(targetKeyProp, undefined, propMap);
         const joinColumnMap = new Map<string, JoinColumnData>();
         for (const joinColumn of joinColumns) {
             if (joinColumn.columnName === "") {
@@ -815,7 +834,7 @@ export class EntityProp {
                     `The referencedSubPath of each element of "${joinColumnsName}" must be specified when the foreign key has multiple-columns`
                 );
             }
-            if (!propMap.has(joinColumn.referencedSubPath)) {
+            if (!targetKeyProp.flattenScalarProps.has(joinColumn.referencedSubPath)) {
                 throw new PropError(
                     this.declaringEntity.name,
                     this.name,
@@ -824,7 +843,7 @@ export class EntityProp {
             }
             joinColumnMap.set(joinColumn.referencedSubPath, joinColumn);
         }
-        for (const [k, prop] of propMap.entries()) {
+        for (const [k, prop] of targetKeyProp.flattenScalarProps.entries()) {
             const joinColumn = joinColumnMap.get(k);
             if (joinColumn == null) {
                 throw new PropError(
@@ -843,17 +862,20 @@ export class EntityProp {
         }
     }
 
-    private static _flatProps(
+    private static _collectFlattenProps(
         prop: EntityProp,
         prefix: string | undefined, 
         outputPropMap: Map<string, EntityProp>
     ) {
-        if (prop.scalarType != null) {
+        if (prefix == null) {
+            outputPropMap.set("", prop);
+        } else {
             outputPropMap.set(`${prefix}${prop.name}`, prop);
-        } else if (prop.props != null) {
+        }
+        if (prop.props != null) {
             const subPrefix = prefix == null ? "" : `${prefix}${prop.name}.`;
             for (const subProp of prop.props.values()) {
-                EntityProp._flatProps(subProp, subPrefix, outputPropMap);
+                EntityProp._collectFlattenProps(subProp, subPrefix, outputPropMap);
             }
         }
     }
