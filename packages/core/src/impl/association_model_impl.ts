@@ -35,7 +35,7 @@ export class AssociationModelImpl<
         private readonly _originalProp: EntityProp
     ) {
         this.sourceEntity = _originalProp.declaringEntity;
-        this.targetEntity = _originalProp.targetEntity!;
+        this.targetEntity =  _originalProp.targetEntity!;
         this.sourceKeyProp = _originalProp.thisKeyProp ?? makeErr(
             `Cannot create association model for "${
                 _originalProp.toString()

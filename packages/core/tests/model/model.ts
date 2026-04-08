@@ -112,6 +112,17 @@ export const ORDER = model("Order", "id", class {
             ]
         }
     }).orderBy("id.low", "id.high");
+    // Be different with `tags`, `comments` is not bidirectional
+    comments = prop.m2m(COMMENT).joinTable({
+        joinThis: {
+            keyProp: "id",
+            columns: [
+                {columnName: "order_x", referencedSubPath: "x"},
+                {columnName: "order_y_a", referencedSubPath: "y.a"},
+                {columnName: "order_y_b", referencedSubPath: "y.b"}
+            ]
+        }
+    })
 }, ctx => {
     ctx.table({
         discriminator: {
@@ -156,4 +167,9 @@ export const TAG = model("Tag", "id", class {
     });
     name = prop.str()
     orders = prop.m2m(ORDER).mappedBy("tags").orderBy("id.y.a", "name")
+});
+
+export const COMMENT = model("Comment", "id", class {
+    id = prop.i64()
+    name = prop.str()
 });

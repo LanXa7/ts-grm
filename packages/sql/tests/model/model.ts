@@ -192,6 +192,17 @@ export const ORDER = model("Order", "id", class {
             ]
         }
     })
+    // Be different with `tags`, `comments` is not bidirectional
+    comments = prop.m2m(COMMENT).joinTable({
+        joinThis: {
+            keyProp: "id",
+            columns: [
+                {columnName: "order_x", referencedSubPath: "x"},
+                {columnName: "order_y_a", referencedSubPath: "y.a"},
+                {columnName: "order_y_b", referencedSubPath: "y.b"}
+            ]
+        }
+    })
 });
 
 export const ORDER_ITEM = model("OrderItem", "id", class {
@@ -214,4 +225,10 @@ export const TAG = model("Tag", "id", class {
     });
     name = prop.str()
     orders = prop.m2m(ORDER).mappedBy("tags")
+});
+
+export const COMMENT = model("Comment", "id", class {
+    id = prop.i64()
+    name = prop.str()
+    text = prop.str()
 });

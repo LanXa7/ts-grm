@@ -22,6 +22,8 @@ import { AssociationEntity, AssociationProp } from "./association_entity";
 import { AbstractAssociationTable } from "./association_table";
 import { AbstractExpr, AbstractNumExpr } from "./ast";
 import { suppressUnused } from "@/utils";
+import { ExprTupleImpl } from "./ast/tuple";
+import { capitalize } from "./util";
 
 export abstract class AbstractEntityTable implements AbstractTable {
 
@@ -38,6 +40,8 @@ export abstract class AbstractEntityTable implements AbstractTable {
     private _upcastMap: Map<Entity, AbstractEntityTable> | undefined = undefined;
 
     private _associationMap: Map<string, AbstractAssociationTable> | undefined = undefined;
+
+    private _inverseAssociationMap: Map<string, AbstractAssociationTable> | undefined = undefined;
 
     constructor(
         readonly __entity: Entity,
@@ -147,7 +151,7 @@ export abstract class AbstractEntityTable implements AbstractTable {
     }
 
     association(
-        key: string, 
+        propName: string, 
         options?: JoinType | JoinFilter | {
             readonly joinType?: JoinType;
             readonly filter?: JoinFilter;
@@ -160,20 +164,71 @@ export abstract class AbstractEntityTable implements AbstractTable {
             ? undefined 
             : typeof options === "function" ? options : options?.filter;
         if (filter != null) {
-            return this._association(key, joinType, filter);
+            return this._association(propName, joinType, filter);
         }
-        const mapKey = `${key}\x1F${joinType}`;
+        const key = `${propName}\x1F${joinType}`;
         let associationMap = this._associationMap;
-        let association = associationMap?.get(mapKey);
+        let association = associationMap?.get(key);
         if (association != null) {
             return association;
         }
         if (associationMap == null) {
             this._associationMap = associationMap = new Map();
         }
-        association = this._association(key, joinType, filter);
-        associationMap.set(mapKey, association);
+        association = this._association(propName, joinType, filter);
+        associationMap.set(key, association);
         return association;
+    }
+
+    private _association(
+        propName: string, 
+        joinType: JoinType,
+        filter: JoinFilter | undefined
+    ): AbstractAssociationTable {
+        const associationModel = dsl.associationModel(this.__entity.model!, propName);
+        const associationEntity = AssociationEntity.of(associationModel); 
+        return associationEntity.table({
+            parent: this,
+            joinType,
+            joinProp: associationEntity.sourceProp,
+            isJoinPropInverse: true,
+            isTargetFilterIgnored: false,
+            castToEntity: undefined,
+            weakJoinModel: undefined,
+            filter
+        });
+    }
+
+    private _inverseAssociation(
+        parentModel: AnyModel,
+        toThisPropName: string
+    ): AbstractAssociationTable {
+        const prop = Entity.of(parentModel).prop(toThisPropName);
+        this._validateToThisProp(prop);
+        let inverseAssociationMap = this._inverseAssociationMap;
+        let inverseAssociation = inverseAssociationMap?.get(toThisPropName);
+        if (inverseAssociation != null) {
+            return inverseAssociation;
+        }
+        if (inverseAssociationMap == null) {
+            this._inverseAssociationMap = inverseAssociationMap = new Map();
+        }
+        const associationEntity = this.__entity.inverseAssociation(
+            Entity.of(parentModel),
+            toThisPropName
+        );
+        inverseAssociation = associationEntity.table({
+            parent: this,
+            joinType: "INNER",
+            joinProp: associationEntity.sourceProp,
+            isJoinPropInverse: true,
+            isTargetFilterIgnored: true,
+            castToEntity: undefined,
+            weakJoinModel: undefined,
+            filter: undefined
+        });
+        inverseAssociationMap.set(toThisPropName, inverseAssociation);
+        return inverseAssociation;
     }
 
     exists(
@@ -217,25 +272,6 @@ export abstract class AbstractEntityTable implements AbstractTable {
         suppressUnused(key);
         suppressUnused(fn);
         throw new Error("Unsupported");
-    }
-
-    private _association(
-        key: string, 
-        joinType: JoinType,
-        filter: JoinFilter | undefined
-    ): AbstractAssociationTable {
-        const associationModel = dsl.associationModel(this.__entity.model!, key);
-        const associationEntity = AssociationEntity.of(associationModel); 
-        return associationEntity.table({
-            parent: this,
-            joinType,
-            joinProp: associationEntity.sourceProp,
-            isJoinPropInverse: true,
-            isTargetFilterIgnored: false,
-            castToEntity: undefined,
-            weakJoinModel: undefined,
-            filter
-        });
     }
 
     __to(castTo: Entity): AbstractEntityTable {
@@ -367,51 +403,88 @@ export abstract class AbstractEntityTable implements AbstractTable {
     }
 
     __inverseAssociatedKey(
-        propName: string,
-        targetTable: AbstractEntityTable
+        parentModel: AnyModel,
+        toThisPropName: string
     ): AbstractExpr<any> | ExprTuple<ExpressionLike[]> {
-        const prop = this.__entity.prop(propName);
+        const parentEntity = Entity.of(parentModel);
+        const prop = parentEntity.prop(toThisPropName);
+        this._validateToThisProp(prop);
+        const keyProp = prop.thisKeyProp ?? prop.declaringEntity.idProp;
+        let exprOrEmbedded: any;
+        if (prop.storageType === "MIDDLE_TABLE") {
+            const association = this._inverseAssociation(parentModel, toThisPropName);
+            const name = `target${capitalize(keyProp.name)}`;
+            exprOrEmbedded = 
+                keyProp.props != null
+                    ? (association as any)[name]()
+                    : (association as any)[name];
+        } else {
+            let backTable: AbstractEntityTable;
+            if (prop.mappedByProp != null) {
+                backTable = parentEntity.table({
+                    parent: this,
+                    joinType: "INNER",
+                    joinProp: prop.mappedByProp,
+                    isJoinPropInverse: false,
+                    isTargetFilterIgnored: true,
+                    castToEntity: undefined,
+                    weakJoinModel: undefined,
+                    filter: undefined
+                });
+            } else {
+                backTable = parentEntity.table({
+                    parent: this,
+                    joinType: "INNER",
+                    joinProp: prop,
+                    isJoinPropInverse: true,
+                    isTargetFilterIgnored: true,
+                    castToEntity: undefined,
+                    weakJoinModel: undefined,
+                    filter: undefined
+                });
+            }
+            exprOrEmbedded = 
+                keyProp.props != null
+                    ? (backTable as any)[keyProp.name]()
+                    : (backTable as any)[keyProp.name];
+        }
+        if (keyProp.flattenScalarProps.size === 0) {
+            return exprOrEmbedded as AbstractExpr<any>;
+        }
+        const expressions = Array<AbstractExpr<any>>();
+        for (const key of keyProp.flattenScalarProps.keys()) {
+            let prev = exprOrEmbedded;
+            const parts = key.split('.');
+            const size = parts.length;
+            for (let i = 0; i < size; i++) {
+                if (i + 1 == size) {
+                    prev = prev[parts[i]!];
+                } else {
+                    prev = prev[parts[i]!]();
+                }
+            }
+            expressions.push(prev as AbstractExpr<any>);
+        }
+        if (expressions.length === 1) {
+            return expressions[0]!;
+        }
+        return new ExprTupleImpl(expressions);
+    }
+
+    private _validateToThisProp(
+        prop: EntityProp
+    ) {
         if (prop.targetEntity == null) {
             throw new ArgumentError(`The property "${prop.toString()}" is not association entity`);
         }
-        if (prop.targetEntity != targetTable.__entity 
-            && targetTable.__entity.ancestors.has(prop.targetEntity)) {
+        if (prop.targetEntity != this.__entity 
+            && this.__entity.ancestors.has(prop.targetEntity)) {
             throw new ArgumentError(
                 `The target table of "${
-                    targetTable.__entity.name
+                    this.__entity.name
                 }" is not the target of "${prop.toString()}"`
             );
         }
-        const oppositeProp = prop.oppositeProp;
-        let backTable: AbstractEntityTable;
-        let backKeyProp: EntityProp;
-        if (oppositeProp != null) {
-            backTable = this.__entity.table({
-                parent: targetTable,
-                joinType: "INNER",
-                joinProp: oppositeProp,
-                isJoinPropInverse: false,
-                isTargetFilterIgnored: true,
-                castToEntity: undefined,
-                weakJoinModel: undefined,
-                filter: undefined
-            });
-            backKeyProp = oppositeProp.targetKeyProp ?? this.__entity.idProp;
-        } else {
-            backTable = this.__entity.table({
-                parent: targetTable,
-                joinType: "INNER",
-                joinProp: prop,
-                isJoinPropInverse: true,
-                isTargetFilterIgnored: true,
-                castToEntity: undefined,
-                weakJoinModel: undefined,
-                filter: undefined
-            });
-            backKeyProp = prop.thisKeyProp ?? this.__entity.idProp;
-        }
-        console.log((backTable as any)[backKeyProp.name]);
-        throw new Error();
     }
 }
 

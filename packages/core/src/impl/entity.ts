@@ -29,6 +29,8 @@ export class Entity {
 
     private _associationMap: Map<string, AssociationEntity> | undefined = undefined;
 
+    private _inverseAssociationMap: Map<string, AssociationEntity> | undefined = undefined;
+
     readonly tableSettings: TableSettings;
 
     private _tableCtor: EntityTableCtor | undefined;
@@ -136,13 +138,36 @@ export class Entity {
                     }" must be property based on MiddleTable
                 `);
             }
-            associationEntity = new AssociationEntity(entityProp, ++Entity._nextIdentity);
+            associationEntity = new AssociationEntity(entityProp, false, ++Entity._nextIdentity);
             if (associationMap == null) {
                 this._associationMap = associationMap = new Map<string, AssociationEntity>();
             }
             associationMap.set(prop, associationEntity);
         }
         return associationEntity;
+    }
+
+    inverseAssociation(
+        parentEntity: Entity,
+        toThisProp: string
+    ): AssociationEntity {
+        const prop = parentEntity.prop(toThisProp);
+        const oppositeProp = prop.oppositeProp;
+        if (oppositeProp != null) {
+            return this.association(oppositeProp.name);
+        }
+        const key = `${parentEntity.identity}.${toThisProp}`
+        let inverseAssociationMap = this._inverseAssociationMap;
+        let inverseAssociation = inverseAssociationMap?.get(key);
+        if (inverseAssociation != null) {
+            return inverseAssociation;
+        }
+        if (inverseAssociationMap == null) {
+            this._inverseAssociationMap = inverseAssociationMap = new Map();
+        }
+        inverseAssociation = new AssociationEntity(prop, true, ++Entity._nextIdentity);
+        inverseAssociationMap.set(key, inverseAssociation);
+        return inverseAssociation;
     }
 
     prop(name: string): EntityProp {

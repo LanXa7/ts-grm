@@ -1,6 +1,6 @@
 import { Entity, UPPER_SNAKE_CASE_DATABASE_NAMING_STRATEGY } from "@/impl";
 import { describe, expect, it } from "vitest";
-import { AUTHOR, BOOK, ORDER, TAG } from "../model/model";
+import { AUTHOR, BOOK, COMMENT, ORDER, TAG } from "../model/model";
 import { expectStorage } from "./utils";
 
 describe("AssociationEntityTest", () => {
@@ -305,6 +305,120 @@ describe("AssociationEntityTest", () => {
             "name": "tag_high",
             "referencedColumnName": "HIGH",
             "referencedProp": "Tag.id.high"
+        });
+
+        const targetKeyXProp = entity.prop("targetId.x");
+        const targetKeyYProp = entity.prop("targetId.y");
+        const targetKeyYAProp = entity.prop("targetId.y.a");
+        const targetKeyYBProp = entity.prop("targetId.y.b");
+        expectStorage(targetKeyProp.toStorage(strategy)).toEqual({
+            kind: "COLUMNS",
+            arr: [
+                {
+                    "kind": "COLUMN",
+                    "name": "order_x",
+                    "referencedColumnName": "X",
+                    "referencedProp": "Order.id.x",
+                },
+                {
+                    "kind": "COLUMN",
+                    "name": "order_y_a",
+                    "referencedColumnName": "A",
+                    "referencedProp": "Order.id.y.a",
+                },
+                {
+                    "kind": "COLUMN",
+                    "name": "order_y_b",
+                    "referencedColumnName": "B",
+                    "referencedProp": "Order.id.y.b"
+                },
+            ]
+        });
+        expectStorage(targetKeyXProp.toStorage(strategy)).toEqual({
+            "kind": "COLUMN",
+            "name": "order_x",
+            "referencedColumnName": "X",
+            "referencedProp": "Order.id.x"
+        });
+        expectStorage(targetKeyYProp.toStorage(strategy)).toEqual({
+            kind: "COLUMNS",
+            arr: [
+                {
+                    "kind": "COLUMN",
+                    "name": "order_y_a",
+                    "referencedColumnName": "A",
+                    "referencedProp": "Order.id.y.a"
+                },
+                {
+                    "kind": "COLUMN",
+                    "name": "order_y_b",
+                    "referencedColumnName": "B",
+                    "referencedProp": "Order.id.y.b"
+                }
+            ]
+        });
+        expectStorage(targetKeyYAProp.toStorage(strategy)).toEqual({
+            "kind": "COLUMN",
+            "name": "order_y_a",
+            "referencedColumnName": "A",
+            "referencedProp": "Order.id.y.a"
+        });
+        expectStorage(targetKeyYBProp.toStorage(strategy)).toEqual({
+            "kind": "COLUMN",
+            "name": "order_y_b",
+            "referencedColumnName": "B",
+            "referencedProp": "Order.id.y.b"
+        });
+    });
+
+    it("inverseAssociationOfUnidirectionalM2M", () => {
+        const entity = Entity.of(COMMENT)
+            .inverseAssociation(
+                Entity.of(ORDER), 
+                "comments"
+            );
+        expect(entity).toBe(
+            Entity.of(COMMENT)
+            .inverseAssociation(
+                Entity.of(ORDER), 
+                "comments"
+            )
+        );
+        expect(Array.from(entity.expandedProps.keys())).toEqual([
+            "source", "target",
+            "sourceId",
+            "targetId", "targetId.x", "targetId.y", "targetId.y.a", "targetId.y.b"  
+        ]);
+
+        const sourceProp = entity.sourceProp;
+        const targetProp = entity.targetProp;
+        const sourceKeyProp = entity.sourceKeyProp;
+        const targetKeyProp = entity.targetKeyProp;
+        expect(sourceProp.toString()).toEqual("MiddleTable(←Order.comments).source");
+        expect(targetProp.toString()).toEqual("MiddleTable(←Order.comments).target");
+        expect(sourceKeyProp.toString()).toEqual("MiddleTable(←Order.comments).sourceId");
+        expect(targetKeyProp.toString()).toEqual("MiddleTable(←Order.comments).targetId");
+
+        expect(sourceProp.referenceKeyProp).toBe(sourceKeyProp);
+        expect(sourceProp.referenceProp).toBe(undefined);
+        expect(sourceProp.targetKeyProp).toBe(Entity.of(COMMENT).idProp);
+        expect(targetProp.referenceKeyProp).toBe(targetKeyProp);
+        expect(targetProp.referenceProp).toBe(undefined);
+        expect(targetProp.targetKeyProp).toBe(Entity.of(ORDER).idProp);
+        expect(sourceKeyProp.referenceKeyProp).toBe(undefined);
+        expect(sourceKeyProp.referenceProp).toBe(sourceProp);
+        expect(sourceKeyProp.targetKeyProp).toBe(undefined);
+        expect(targetKeyProp.referenceKeyProp).toBe(undefined);
+        expect(targetKeyProp.referenceProp).toBe(targetProp);
+        expect(targetKeyProp.targetKeyProp).toBe(undefined);
+
+        const strategy = UPPER_SNAKE_CASE_DATABASE_NAMING_STRATEGY;
+
+        expectStorage(sourceKeyProp.toStorage(strategy)).toEqual({
+            "kind": "COLUMN",
+            "name": "COMMENT_ID",
+            "referencedColumnName": "ID",
+            "referencedProp": "Comment.id"
         });
 
         const targetKeyXProp = entity.prop("targetId.x");

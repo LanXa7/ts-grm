@@ -49,6 +49,7 @@ export type  {
     LikeMode,
     Expression,
     ExpressionLike,
+    ExprTuple,
     Predicate,
     RowTypeOf,
     ModelLike,

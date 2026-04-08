@@ -176,7 +176,7 @@ export function createAssociationTableClass(
                 writePropMeta(prop, writer);
             }
         });
-
+    
     return new Function(
         "$baseClass", "$entity", "$createTableProp", "$makeErr", writer.toString()
     )(

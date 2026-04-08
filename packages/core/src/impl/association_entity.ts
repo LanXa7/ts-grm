@@ -24,6 +24,7 @@ export class AssociationEntity {
 
     constructor(
         readonly originalProp: EntityProp,
+        readonly isInverseOriginalProp: boolean,
         readonly identity: number
     ) {
         if (originalProp.storageType !== "MIDDLE_TABLE") {
@@ -32,35 +33,65 @@ export class AssociationEntity {
         const sourceProp = new AssociationPropImpl(
             this,
             "source",
-            originalProp.declaringEntity,
+            isInverseOriginalProp 
+                ? originalProp.targetEntity!
+                : originalProp.declaringEntity,
             undefined
         );
         const targetProp = new AssociationPropImpl(
             this,
             "target",
-            originalProp.targetEntity!,
+            isInverseOriginalProp
+                ? originalProp.declaringEntity 
+                : originalProp.targetEntity!,
             undefined
         );
         const sourceKeyProp = new AssociationPropImpl(
             this,
-            `source${capitalize(originalProp.thisKeyProp!.name)}`,
+            `source${
+                capitalize(
+                    isInverseOriginalProp
+                        ? originalProp.targetKeyProp!.name
+                        : originalProp.thisKeyProp!.name
+                )
+            }`,
             undefined,
             undefined
         );
         const targetKeyProp = new AssociationPropImpl(
             this,
-            `target${capitalize(originalProp.targetKeyProp!.name)}`,
+            `target${
+                capitalize(
+                    isInverseOriginalProp
+                        ? originalProp.thisKeyProp!.name
+                        : originalProp.targetKeyProp!.name
+                )
+            }`,
             undefined,
             undefined
         );
         sourceProp.referenceKeyProp = sourceKeyProp;
         targetProp.referenceKeyProp = targetKeyProp;
-        sourceProp.targetKeyProp = originalProp.thisKeyProp;
-        targetProp.targetKeyProp = originalProp.targetKeyProp;
+        sourceProp.targetKeyProp = 
+            isInverseOriginalProp
+                ? originalProp.targetKeyProp
+                : originalProp.thisKeyProp;
+        targetProp.targetKeyProp = 
+            isInverseOriginalProp 
+                ? originalProp.thisKeyProp
+                : originalProp.targetKeyProp;
         sourceKeyProp.referenceProp = sourceProp;
         targetKeyProp.referenceProp = targetProp;
-        sourceKeyProp.fillProps(originalProp.thisKeyProp!);
-        targetKeyProp.fillProps(originalProp.targetKeyProp!);
+        sourceKeyProp.fillProps(
+            isInverseOriginalProp 
+                ? originalProp.targetKeyProp!
+                : originalProp.thisKeyProp!
+        );
+        targetKeyProp.fillProps(
+            isInverseOriginalProp 
+                ? originalProp.thisKeyProp!
+                : originalProp.targetKeyProp!
+        );
         const propMap = new Map<string, AssociationProp>();
         sourceProp.collectProps("", propMap);
         targetProp.collectProps("", propMap);
@@ -86,6 +117,9 @@ export class AssociationEntity {
     }
 
     toString(): string {
+        if (this.isInverseOriginalProp) {
+            return `MiddleTable(←${this.originalProp.toString()})`;
+        }
         return `MiddleTable(${this.originalProp.toString()})`;
     }
 
@@ -245,9 +279,17 @@ class AssociationPropImpl implements AssociationProp {
             const middleTable = this.declaredEntity.originalProp.toStorage(strategy) as MiddleTable;
             const isSource = rootProp.referenceProp!.name === "source";
             if (isSource) {
-                return columnsToStorage(middleTable.toThisColumns);
+                return columnsToStorage(
+                    this.declaredEntity.isInverseOriginalProp
+                        ? middleTable.toTargetColumns
+                        : middleTable.toThisColumns
+                );
             }
-            return columnsToStorage(middleTable.toTargetColumns);
+            return columnsToStorage(
+                this.declaredEntity.isInverseOriginalProp
+                    ? middleTable.toThisColumns
+                    : middleTable.toTargetColumns
+            );
         }
         if (this.props == null) {
             return columnsToStorage( 

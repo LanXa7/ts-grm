@@ -27,9 +27,6 @@ export class BaseQueryMetadata {
             columnName,
             alias
         });
-        if (alias === "c8") {
-            console.log("FUCK");
-        }
         return alias;
     }
 

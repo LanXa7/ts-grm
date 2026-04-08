@@ -99,6 +99,9 @@ export class SqlClientImpl implements SqlClientImplementor {
         if (joinProp.targetKeyProp !== expr.prop.rootProp) {
             return false;
         }
+        if (expr.table.__joinOperation!.isTargetFilterIgnored) {
+            return true;
+        }
         if (expr.table.__entity != null && this.getFilters(expr.table.__entity).length != 0) {
             return false;
         }
