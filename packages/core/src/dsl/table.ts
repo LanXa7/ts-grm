@@ -363,18 +363,18 @@ type AssociatedAction<TModelMembers> =
         : {
             exists<TKey extends AssociatedKeys<TModelMembers>>(
                 key: TKey,
-                fn: AssociatedFilter<TModelMembers[TKey]>
+                fn?: AssociatedFilter<TModelMembers[TKey]> | undefined
             ): Predicate;
 
             none<TKey extends AssociatedKeys<TModelMembers>>(
                 key: TKey,
                 fn: AssociatedFilter<TModelMembers[TKey]>
-            ): Predicate;
+            ): Predicate | undefined;
 
             some<TKey extends AssociatedKeys<TModelMembers>>(
                 key: TKey,
                 fn: AssociatedFilter<TModelMembers[TKey]>
-            ): Predicate;
+            ): Predicate | undefined;
         };
 
 type AssociatedKeys<TModelMembers> =
@@ -406,7 +406,7 @@ type CollectionAction<TModelMembers> =
             every<TKey extends CollectionKeys<TModelMembers>>(
                 key: TKey,
                 fn: AssociatedFilter<TModelMembers[TKey]>
-            ): Predicate;
+            ): Predicate | undefined;
 
             size<TKey extends CollectionKeys<TModelMembers>>(
                 key: TKey,

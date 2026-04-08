@@ -22,6 +22,10 @@ export class RealTable {
 
     private _isJoinPropInverse: boolean = false;
 
+    // Becareful, `symbol.joinOperation.isTargetFilterIgnored` 
+    // should not be copied to this object because it is 
+    // field which cannot be nmerged
+
     private _castToEntity: metadata.Entity | undefined = undefined;
 
     private _filters: Set<metadata.JoinFilter> | undefined = undefined;

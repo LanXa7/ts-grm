@@ -1,7 +1,7 @@
 import { CodeWriter } from "./code_writer";
 import { Entity } from "./entity";
 import { EntityProp } from "./entity_prop";
-import { Predicate } from "@/dsl/expression";
+import { not, Predicate } from "@/dsl/expression";
 import { createTableProp } from "./ast/prop_expr";
 import { JoinType, ModelLike } from "@/dsl/table";
 import { makeErr } from "@/error/util";
@@ -20,10 +20,13 @@ import { AbstractPred, ConstantPred } from "./ast/pred";
 import { IsPred } from "./ast/is_pred";
 import { AssociationEntity, AssociationProp } from "./association_entity";
 import { AbstractAssociationTable } from "./association_table";
-import { AbstractExpr, AbstractNumExpr } from "./ast";
-import { suppressUnused } from "@/utils";
+import { AbstractExpr, AbstractNumExpr, AtomQueryContract } from "./ast";
 import { ExprTupleImpl } from "./ast/tuple";
 import { capitalize } from "./util";
+import { getQueryFactory } from "./ast/query_factory";
+import { metadata } from "..";
+import { exists, notExists } from "@/dsl/sub_query";
+import { count } from "@/dsl/aggregate";
 
 export abstract class AbstractEntityTable implements AbstractTable {
 
@@ -237,46 +240,105 @@ export abstract class AbstractEntityTable implements AbstractTable {
     }
 
     exists(
-        key: string
+        propName: string,
+        fn?: (table: AbstractEntityTable) => Predicate | undefined
     ): Predicate {
-        suppressUnused(key);
-        throw new Error("Unsupported");
+        const prop = this.__entity.prop(propName);
+        const targetEntity = prop.targetEntity 
+            ?? makeErr(() => new ArgumentError(
+                `Illegal argument "${prop.toString()}", it is not association property`
+            ));
+        const subQuery = getQueryFactory().createAtomSubQuery(targetEntity.model, (q, table) => {
+            if (fn != null) {
+                const pred = fn(table as any as metadata.AbstractEntityTable);
+                q.where(pred as Predicate | null | undefined);
+            }
+        });
+        return exists(subQuery);
     }
 
     none(
-        key: string, 
+        propName: string, 
         fn: (table: AbstractEntityTable) => Predicate | undefined
     ): Predicate | undefined {
-        suppressUnused(key);
-        suppressUnused(fn);
-        return undefined;
+        const prop = this.__entity.prop(propName);
+        const targetEntity = prop.targetEntity 
+            ?? makeErr(() => new ArgumentError(
+                `Illegal argument "${prop.toString()}", it is not association property`
+            ));
+        const subQuery = getQueryFactory().createAtomSubQuery(targetEntity.model, (q, table) => {
+            if (fn != null) {
+                const pred = fn(table as any as metadata.AbstractEntityTable);
+                q.where(pred as Predicate | null | undefined);
+            }
+        });
+        if ((subQuery as any as AtomQueryContract).wherePred == null) {
+            return undefined;
+        }
+        return notExists(subQuery);
     }
 
     some(
-        key: string, 
+        propName: string, 
         fn: (table: AbstractEntityTable) => Predicate | undefined
     ): Predicate | undefined {
-        suppressUnused(key);
-        suppressUnused(fn);
-        return undefined;
+        const prop = this.__entity.prop(propName);
+        const targetEntity = prop.targetEntity 
+            ?? makeErr(() => new ArgumentError(
+                `Illegal argument "${prop.toString()}", it is not association property`
+            ));
+        const subQuery = getQueryFactory().createAtomSubQuery(targetEntity.model, (q, table) => {
+            if (fn != null) {
+                const pred = fn(table as any as metadata.AbstractEntityTable);
+                q.where(pred as Predicate | null | undefined);
+            }
+        });
+        if ((subQuery as any as AtomQueryContract).wherePred == null) {
+            return undefined;
+        }
+        return exists(subQuery);
     }
 
     every(
-        key: string, 
+        propName: string, 
         fn: (table: AbstractEntityTable) => Predicate | undefined
     ): Predicate | undefined {
-        suppressUnused(key);
-        suppressUnused(fn);
-        return undefined;
+        const prop = this.__entity.prop(propName);
+        if (prop.associationType !== "ONE_TO_MANY" && prop.associationType !== "MANY_TO_MANY") {
+            throw new ArgumentError(
+                `Illegal argument "${prop.toString()}", it is not collection property`
+            );
+        }
+        const subQuery = getQueryFactory().createAtomSubQuery(prop.targetEntity!.model, (q, table) => {
+            if (fn != null) {
+                const pred = not(fn(table as any as metadata.AbstractEntityTable));
+                q.where(pred as Predicate | null | undefined);
+            }
+        });
+        if ((subQuery as any as AtomQueryContract).wherePred == null) {
+            return undefined;
+        }
+        return notExists(subQuery);
     }
 
     size(
-        key: string, 
+        propName: string, 
         fn: (table: AbstractEntityTable) => Predicate | undefined
     ): AbstractNumExpr<number> {
-        suppressUnused(key);
-        suppressUnused(fn);
-        throw new Error("Unsupported");
+        const prop = this.__entity.prop(propName);
+        if (prop.associationType !== "ONE_TO_MANY" && prop.associationType !== "MANY_TO_MANY") {
+            throw new ArgumentError(
+                `Illegal argument "${prop.toString()}", it is not collection property`
+            );
+        }
+        const subQuery = getQueryFactory().createAtomSubQuery(prop.targetEntity!.model, (q, table) => {
+            if (fn != null) {
+                const pred = fn(table as any as metadata.AbstractEntityTable);
+                q.where(pred as Predicate | null | undefined);
+            }
+            return q.select(count());
+        });
+        return subQuery as any as AbstractNumExpr<any>;
     }
 
     __to(castTo: Entity): AbstractEntityTable {
