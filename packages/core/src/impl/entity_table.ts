@@ -155,18 +155,22 @@ export abstract class AbstractEntityTable implements AbstractTable {
         options?: JoinType | JoinFilter | {
             readonly joinType?: JoinType;
             readonly filter?: JoinFilter;
+            readonly ignoreTargetFilters?: boolean;
         }
     ): AbstractAssociationTable {
         const joinType = typeof options === "string" 
-                ? options as JoinType
-                : typeof options === "function" ? "INNER" : options?.joinType ?? "INNER";
+            ? options as JoinType
+            : typeof options === "function" ? "INNER" : options?.joinType ?? "INNER";
         const filter = typeof options === "string"
             ? undefined 
             : typeof options === "function" ? options : options?.filter;
+        const ignoreTargetFilters = typeof options === "string"
+            ? false
+            : typeof options === "function" ? false : options?.ignoreTargetFilters ?? false; 
         if (filter != null) {
-            return this._association(propName, joinType, filter);
+            return this._association(propName, joinType, filter, ignoreTargetFilters);
         }
-        const key = `${propName}\x1F${joinType}`;
+        const key = `${propName}\x1F${joinType}\x1F${ignoreTargetFilters}`;
         let associationMap = this._associationMap;
         let association = associationMap?.get(key);
         if (association != null) {
@@ -175,7 +179,7 @@ export abstract class AbstractEntityTable implements AbstractTable {
         if (associationMap == null) {
             this._associationMap = associationMap = new Map();
         }
-        association = this._association(propName, joinType, filter);
+        association = this._association(propName, joinType, filter, ignoreTargetFilters);
         associationMap.set(key, association);
         return association;
     }
@@ -183,7 +187,8 @@ export abstract class AbstractEntityTable implements AbstractTable {
     private _association(
         propName: string, 
         joinType: JoinType,
-        filter: JoinFilter | undefined
+        filter: JoinFilter | undefined,
+        ignoreTargetFilters: boolean
     ): AbstractAssociationTable {
         const associationModel = dsl.associationModel(this.__entity.model!, propName);
         const associationEntity = AssociationEntity.of(associationModel); 
@@ -192,7 +197,7 @@ export abstract class AbstractEntityTable implements AbstractTable {
             joinType,
             joinProp: associationEntity.sourceProp,
             isJoinPropInverse: true,
-            isTargetFilterIgnored: false,
+            isTargetFilterIgnored: ignoreTargetFilters,
             castToEntity: undefined,
             weakJoinModel: undefined,
             filter
@@ -256,7 +261,7 @@ export abstract class AbstractEntityTable implements AbstractTable {
         return undefined;
     }
 
-    all(
+    every(
         key: string, 
         fn: (table: AbstractEntityTable) => Predicate | undefined
     ): Predicate | undefined {
@@ -308,7 +313,7 @@ export abstract class AbstractEntityTable implements AbstractTable {
             joinType: this._sharedData.nullable || this._downcast ? "LEFT" : "INNER",
             joinProp: undefined,
             isJoinPropInverse: false,
-            isTargetFilterIgnored: false,
+            isTargetFilterIgnored: this.__joinOperation?.isTargetFilterIgnored ?? false,
             castToEntity: castTo,
             weakJoinModel: undefined,
             filter: undefined
@@ -331,7 +336,7 @@ export abstract class AbstractEntityTable implements AbstractTable {
                 joinType: "LEFT",
                 joinProp: undefined,
                 isJoinPropInverse: false,
-                isTargetFilterIgnored: false,
+                isTargetFilterIgnored: this.__joinOperation?.isTargetFilterIgnored ?? false,
                 castToEntity: castTo,
                 weakJoinModel: undefined,
                 filter: undefined
@@ -607,16 +612,14 @@ function writeScalarProp(prop: EntityProp, writer: CodeWriter) {
 function writeAssociationProp(prop: EntityProp, writer: CodeWriter) {
     writer.code(prop.name).code("(options) ");
     writer.scope("CURLY_BRACKETS", () => {
-        writer.code(`const joinType = options == null ? "INNER" : `);
-        writer.scope({kind: "PARENTHESES", multiline: true}, () => {
-            writer.code(`typeof options === "string" ? options : options.joinType ?? "INNER"`);
-        }).newLine(";");
-        writer.code(`const filter = options?.filter`).newLine(";");
+        writer.code(`const joinType = typeof options === "string" ? options : options?.joinType ?? "INNER"`).newLine(";");
+        writer.code(`const filter = typeof options === "object" ? options?.filter : undefined`).newLine(";");
+        writer.code(`const ignoreTargetFilters = typeof options === "object" ? options?.ignoreTargetFilters ?? false : false`).newLine(";");
         if (prop.storageType === "MIDDLE_TABLE") {
             writer
                 .code(`return this.association("`)
                 .code(prop.name)
-                .code(`", joinType).target(filter)`)
+                .code(`", {joinType, ignoreTargetFilters}).target(filter)`)
                 .newLine(";");
         } else {
             writer.code(`if (filter == null && joinType === "INNER") `).scope("CURLY_BRACKETS", () => {
@@ -674,10 +677,10 @@ function writeJoinTable(
                 writer.code(".mappedByProp").separator().code("isJoinPropInverse: true");
             }
             writer.separator();
+            writer.code("isTargetFilterIgnored: ignoreTargetFilters");
             if (useFilter) {
+                writer.separator();
                 writer.code("filter");
-            } else {
-                writer.code("filter: undefined");
             }
         });
     });

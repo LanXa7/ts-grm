@@ -44,10 +44,9 @@ describe("RuntimeTableTest", () => {
                     return expr;
                 }
                 books(options) {
-                    const joinType = options == null ? "INNER" : (
-                        typeof options === "string" ? options : options.joinType ?? "INNER"
-                    );
-                    const filter = options?.filter;
+                    const joinType = typeof options === "string" ? options : options?.joinType ?? "INNER";
+                    const filter = typeof options === "object" ? options?.filter : undefined;
+                    const ignoreTargetFilters = typeof options === "object" ? options?.ignoreTargetFilters ?? false : false;
                     if (filter == null && joinType === "INNER") {
                         let join = this._books;
                         if (join == null) {
@@ -56,7 +55,7 @@ describe("RuntimeTableTest", () => {
                                 joinType, 
                                 joinProp: ThisClass.__books.mappedByProp, 
                                 isJoinPropInverse: true, 
-                                filter: undefined
+                                isTargetFilterIgnored: ignoreTargetFilters
                             });
                         }
                         return join;
@@ -69,7 +68,7 @@ describe("RuntimeTableTest", () => {
                                 joinType, 
                                 joinProp: ThisClass.__books.mappedByProp, 
                                 isJoinPropInverse: true, 
-                                filter: undefined
+                                isTargetFilterIgnored: ignoreTargetFilters
                             });
                         }
                         return join;
@@ -79,6 +78,7 @@ describe("RuntimeTableTest", () => {
                         joinType, 
                         joinProp: ThisClass.__books.mappedByProp, 
                         isJoinPropInverse: true, 
+                        isTargetFilterIgnored: ignoreTargetFilters, 
                         filter
                     });
                 }
@@ -137,10 +137,9 @@ describe("RuntimeTableTest", () => {
                     return expr;
                 }
                 store(options) {
-                    const joinType = options == null ? "INNER" : (
-                        typeof options === "string" ? options : options.joinType ?? "INNER"
-                    );
-                    const filter = options?.filter;
+                    const joinType = typeof options === "string" ? options : options?.joinType ?? "INNER";
+                    const filter = typeof options === "object" ? options?.filter : undefined;
+                    const ignoreTargetFilters = typeof options === "object" ? options?.ignoreTargetFilters ?? false : false;
                     if (filter == null && joinType === "INNER") {
                         let join = this._store;
                         if (join == null) {
@@ -148,7 +147,7 @@ describe("RuntimeTableTest", () => {
                                 parent: this, 
                                 joinType, 
                                 joinProp: ThisClass.__store, 
-                                filter: undefined
+                                isTargetFilterIgnored: ignoreTargetFilters
                             });
                         }
                         return join;
@@ -160,7 +159,7 @@ describe("RuntimeTableTest", () => {
                                 parent: this, 
                                 joinType, 
                                 joinProp: ThisClass.__store, 
-                                filter: undefined
+                                isTargetFilterIgnored: ignoreTargetFilters
                             });
                         }
                         return join;
@@ -169,15 +168,15 @@ describe("RuntimeTableTest", () => {
                         parent: this, 
                         joinType, 
                         joinProp: ThisClass.__store, 
+                        isTargetFilterIgnored: ignoreTargetFilters, 
                         filter
                     });
                 }
                 authors(options) {
-                    const joinType = options == null ? "INNER" : (
-                        typeof options === "string" ? options : options.joinType ?? "INNER"
-                    );
-                    const filter = options?.filter;
-                    return this.association("authors", joinType).target(filter);
+                    const joinType = typeof options === "string" ? options : options?.joinType ?? "INNER";
+                    const filter = typeof options === "object" ? options?.filter : undefined;
+                    const ignoreTargetFilters = typeof options === "object" ? options?.ignoreTargetFilters ?? false : false;
+                    return this.association("authors", {joinType, ignoreTargetFilters}).target(filter);
                 }
                 get storeId() {
                     let expr = this._storeId;
@@ -246,11 +245,10 @@ describe("RuntimeTableTest", () => {
                     return embedded;
                 }
                 books(options) {
-                    const joinType = options == null ? "INNER" : (
-                        typeof options === "string" ? options : options.joinType ?? "INNER"
-                    );
-                    const filter = options?.filter;
-                    return this.association("books", joinType).target(filter);
+                    const joinType = typeof options === "string" ? options : options?.joinType ?? "INNER";
+                    const filter = typeof options === "object" ? options?.filter : undefined;
+                    const ignoreTargetFilters = typeof options === "object" ? options?.ignoreTargetFilters ?? false : false;
+                    return this.association("books", {joinType, ignoreTargetFilters}).target(filter);
                 }
                 static __id = $entity.expandedPropMap.get("id");
                 static __name_firstName = $entity.expandedPropMap.get("name.firstName");
@@ -283,10 +281,9 @@ describe("RuntimeTableTest", () => {
                     return expr;
                 }
                 order(options) {
-                    const joinType = options == null ? "INNER" : (
-                        typeof options === "string" ? options : options.joinType ?? "INNER"
-                    );
-                    const filter = options?.filter;
+                    const joinType = typeof options === "string" ? options : options?.joinType ?? "INNER";
+                    const filter = typeof options === "object" ? options?.filter : undefined;
+                    const ignoreTargetFilters = typeof options === "object" ? options?.ignoreTargetFilters ?? false : false;
                     if (filter == null && joinType === "INNER") {
                         let join = this._order;
                         if (join == null) {
@@ -294,7 +291,7 @@ describe("RuntimeTableTest", () => {
                                 parent: this, 
                                 joinType, 
                                 joinProp: ThisClass.__order, 
-                                filter: undefined
+                                isTargetFilterIgnored: ignoreTargetFilters
                             });
                         }
                         return join;
@@ -306,7 +303,7 @@ describe("RuntimeTableTest", () => {
                                 parent: this, 
                                 joinType, 
                                 joinProp: ThisClass.__order, 
-                                filter: undefined
+                                isTargetFilterIgnored: ignoreTargetFilters
                             });
                         }
                         return join;
@@ -315,6 +312,7 @@ describe("RuntimeTableTest", () => {
                         parent: this, 
                         joinType, 
                         joinProp: ThisClass.__order, 
+                        isTargetFilterIgnored: ignoreTargetFilters, 
                         filter
                     });
                 }

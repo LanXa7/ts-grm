@@ -72,15 +72,24 @@ export class AbstractAssociationTable implements AbstractTable {
     }
 
     source(
-        filter?: JoinFilter
+        options?: JoinFilter | {
+            readonly filter?: JoinFilter,
+            readonly ignoreTargetFilters?: boolean
+        }
     ): AbstractEntityTable {
+        const filter = typeof options === "function"
+            ? options as JoinFilter
+            : options?.filter;
+        const ignoreTargetFilters = typeof options === "function"
+            ? false
+            : options?.ignoreTargetFilters ?? false;
         if (filter != null) {
             return this.__associationEntity.sourceProp.targetEntity!.table({
                 parent: this,
                 joinType: this.__joinOperation?.joinType ?? "INNER",
                 joinProp: this.__associationEntity.sourceProp,
                 isJoinPropInverse: false,
-                isTargetFilterIgnored: false,
+                isTargetFilterIgnored: ignoreTargetFilters,
                 weakJoinModel: undefined,
                 castToEntity: undefined,
                 filter
@@ -89,7 +98,10 @@ export class AbstractAssociationTable implements AbstractTable {
         let source = this._source;
         if (source == null) {
             const joinOperation = this.__joinOperation;
-            if (joinOperation?.filter == null && joinOperation?.joinProp?.name === "source") {
+            if (joinOperation != null 
+                && joinOperation.filter == null 
+                && joinOperation.isTargetFilterIgnored === ignoreTargetFilters
+                && joinOperation.joinProp?.name === "source") {
                 source = joinOperation?.parent as AbstractEntityTable;
             } else {
                 source = this.__associationEntity.sourceProp.targetEntity!.table({
@@ -97,7 +109,7 @@ export class AbstractAssociationTable implements AbstractTable {
                     joinType: joinOperation?.joinType ?? "INNER",
                     joinProp: this.__associationEntity.sourceProp,
                     isJoinPropInverse: false,
-                    isTargetFilterIgnored: false,
+                    isTargetFilterIgnored: ignoreTargetFilters,
                     weakJoinModel: undefined,
                     castToEntity: undefined,
                     filter: undefined
@@ -109,15 +121,24 @@ export class AbstractAssociationTable implements AbstractTable {
     }
 
     target(
-        filter?: JoinFilter
+        options?: JoinFilter | {
+            readonly filter?: JoinFilter,
+            readonly ignoreTargetFilters?: boolean
+        }
     ): AbstractEntityTable {
+        const filter = typeof options === "function" 
+            ? options as JoinFilter
+            : options?.filter;
+        const ignoreTargetFilters = typeof options === "function"
+            ? false
+            : options?.ignoreTargetFilters ?? false;
         if (filter != null) {
             return this.__associationEntity.targetProp!.targetEntity!.table({
                 parent: this,
                 joinType: this.__joinOperation?.joinType ?? "INNER",
                 joinProp: this.__associationEntity.targetProp,
                 isJoinPropInverse: false,
-                isTargetFilterIgnored: false,
+                isTargetFilterIgnored: ignoreTargetFilters,
                 weakJoinModel: undefined,
                 castToEntity: undefined,
                 filter
@@ -130,7 +151,7 @@ export class AbstractAssociationTable implements AbstractTable {
                 joinType: this.__joinOperation?.joinType ?? "INNER",
                 joinProp: this.__associationEntity.targetProp,
                 isJoinPropInverse: false,
-                isTargetFilterIgnored: false,
+                isTargetFilterIgnored: ignoreTargetFilters,
                 weakJoinModel: undefined,
                 castToEntity: undefined,
                 filter: undefined
@@ -143,7 +164,8 @@ export class AbstractAssociationTable implements AbstractTable {
         model: ModelLike,
         options: JoinFilter | {
             readonly joinType?: JoinType,
-            readonly filter: JoinFilter
+            readonly filter: JoinFilter,
+            readonly ignoreTargetFilters?: boolean
         }
     ): AbstractTable {
         return createJoinedTable(this, model, options);

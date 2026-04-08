@@ -156,6 +156,7 @@ type ReferenceJoinAction<
         options: {
             readonly joinType?: TJoinType,
             readonly filter?: FilterType<TParentModel, TModel>
+            readonly ignoreTargetFilters?: boolean
         }
     ): EntityTableMembers<
         TModel, 
@@ -202,7 +203,8 @@ type CollectionJoinAction<
     <TJoinType extends JoinType = "INNER">(
         options: {
             readonly joinType?: TJoinType,
-            readonly filter?: FilterType<TParentModel, TModel>
+            readonly filter?: FilterType<TParentModel, TModel>,
+            readonly ignoreTargetFilters?: boolean
         }
     ): TableRiskWrapper<
         EntityTableMembers<
@@ -246,7 +248,8 @@ type WeakJoinAction<
         targetModel: TTargetModel,
         options: {
             readonly joinType?: TJoinType,
-            readonly filter: FilterType<TModel, TTargetModel>
+            readonly filter: FilterType<TModel, TTargetModel>,
+            readonly ignoreTargetFilters?: boolean
         }
     ): TableRiskWrapper<
         EntityTableMembers<
@@ -272,7 +275,8 @@ type WeakJoinAction<
         targetModel: TTargetModel,
         options: {
             readonly joinType?: TJoinType,
-            readonly filter: FilterType<TModel, TTargetModel>
+            readonly filter: FilterType<TModel, TTargetModel>,
+            readonly ignoreTargetFilters?: boolean
         }
     ): BaseTable<
         TJoinType extends "LEFT"
@@ -340,7 +344,8 @@ type AssociationActionImpl<
         key: TAssociationKeys,
         options: {
             readonly joinType?: TJoinType;
-            readonly filter?: FilterType<TModel, MakeAssociationModel<TModel, TKey>>
+            readonly filter?: FilterType<TModel, MakeAssociationModel<TModel, TKey>>,
+            readonly ignoreTargetFilters?: boolean
         }
     ): TableRiskWrapper<
         MakeAssociationTableMembers<
@@ -398,7 +403,7 @@ type CollectionAction<TModelMembers> =
     CollectionKeys<TModelMembers> extends never
         ? {}
         : {
-            all<TKey extends CollectionKeys<TModelMembers>>(
+            every<TKey extends CollectionKeys<TModelMembers>>(
                 key: TKey,
                 fn: AssociatedFilter<TModelMembers[TKey]>
             ): Predicate;
