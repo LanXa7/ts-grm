@@ -70,11 +70,14 @@ export interface TupleContract extends Node {
     readonly exprs: ReadonlyArray<AbstractExpr<any>>;
 }
 
-function toTuple<
+export function toTuple<
     TExpressions extends AtLeastTwo<ExpressionLike> 
 >(
     matchable: ExprTupleMatchable<TExpressions>
 ): ExprTupleImpl<TExpressions> {
+    if (!Array.isArray(matchable)) {
+        return matchable as ExprTupleImpl<TExpressions>;
+    }
     const arr = matchable.map((v: any) => {
         if (v instanceof AbstractExpr) {
             return v;

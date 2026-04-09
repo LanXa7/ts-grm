@@ -9,6 +9,7 @@
     "types": ["node"],
     "module": "ESNext",
     "moduleResolution": "Bundler",
+    "stableTypeOrdering": true,
     
     "outDir": "./dist",
     "declaration": true,

@@ -22,6 +22,10 @@ implements AtomRootQuery<TProjection>, ast.AtomQueryContract {
         return { rootQuery: true, atomRootQuery: true };
     }
 
+    get level(): "ROOT" {
+        return "ROOT";
+    }
+
     distinct(): AtomRootQuery<TProjection> {
         return new AtomRootQueryImpl(
             this.mutableQuery,

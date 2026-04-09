@@ -10,6 +10,8 @@ export type QueryContract = AtomQueryContract | MergedQueryContract;
 
 export interface AtomQueryContract extends Node {
 
+    readonly level: "ROOT" | "SUB" | "BASE";
+
     readonly kind: "ATOM";
 
     readonly tables: ReadonlyArray<AbstractTable>;
@@ -32,6 +34,8 @@ export interface AtomQueryContract extends Node {
 }
 
 export interface MergedQueryContract extends Node {
+
+    readonly level: "ROOT" | "SUB" | "BASE";
 
     readonly kind: MergedQueryKind;
 

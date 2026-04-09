@@ -11,6 +11,10 @@ implements metadata.BaseQueryImplementor<TProjection> {
         baseQuery: TProjection | true; 
     };
 
+    get level(): "BASE" {
+        return "BASE";
+    }
+
     unionAllRecursively<
         const TModels extends AtLeastOne<AnyModel | BaseModel<any>>,
         const TPrev extends BaseTable<BaseQueryMapOf<TProjection>>

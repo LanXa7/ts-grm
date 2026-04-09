@@ -17,7 +17,7 @@ export function subQuery<
             q: MutableSubQuery,
             ...tables: {
                 [K in keyof TModels]: Table<TModels[K]>
-            } extends infer T ? T extends any[] ? T : never : never
+            } extends infer T ? T extends readonly any[] ? T : never : never
         ) => TProjection
     ]
 ): TProjection extends SubQueryProjection<infer T, infer Kind>
@@ -122,7 +122,7 @@ export type AtomTupleSubQuery<TProjection> = TupleSubQuery<TProjection> & {
     offset(offset: number): AtomTupleSubQuery<TProjection>;
 };
 
-export type SubQueryProjection<T, TKind = "EXPRSSION" | "TUPLE"> = {
+export type SubQueryProjection<T, TKind = "EXPRESSION" | "TUPLE"> = {
 
     __type(): { subQueryProjection: [T, TKind] | true; }
 };

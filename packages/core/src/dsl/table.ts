@@ -326,7 +326,7 @@ type AssociationActionImpl<
     association<
         TKey extends TAssociationKeys
     >(
-        key: TAssociationKeys,
+        key: TKey,
         filter: FilterType<TModel, MakeAssociationModel<TModel, TKey>>
     ): TableRiskWrapper<
         MakeAssociationTableMembers<
@@ -361,17 +361,22 @@ type AssociatedAction<TModelMembers> =
     AssociatedKeys<TModelMembers> extends never
         ? {}
         : {
-            exists<TKey extends AssociatedKeys<TModelMembers>>(
+            none<TKey extends AssociatedKeys<TModelMembers>>(
                 key: TKey,
-                fn?: AssociatedFilter<TModelMembers[TKey]> | undefined
+                fn?: AssociatedFilter<TModelMembers[TKey]>
             ): Predicate;
 
-            none<TKey extends AssociatedKeys<TModelMembers>>(
+            some<TKey extends AssociatedKeys<TModelMembers>>(
+                key: TKey,
+                fn?: AssociatedFilter<TModelMembers[TKey]>
+            ): Predicate;
+
+            noneIf<TKey extends AssociatedKeys<TModelMembers>>(
                 key: TKey,
                 fn: AssociatedFilter<TModelMembers[TKey]>
             ): Predicate | undefined;
 
-            some<TKey extends AssociatedKeys<TModelMembers>>(
+            someIf<TKey extends AssociatedKeys<TModelMembers>>(
                 key: TKey,
                 fn: AssociatedFilter<TModelMembers[TKey]>
             ): Predicate | undefined;
@@ -410,7 +415,7 @@ type CollectionAction<TModelMembers> =
 
             size<TKey extends CollectionKeys<TModelMembers>>(
                 key: TKey,
-                fn: AssociatedFilter<TModelMembers[TKey]>
+                fn?: AssociatedFilter<TModelMembers[TKey]>
             ): Expression<number>;
         };
 

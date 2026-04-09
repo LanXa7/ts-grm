@@ -28,9 +28,10 @@ export interface ExprTuple<TExpressions extends ExpressionLike[]> {
     notInSubQuery(subQuery: TupleSubQuery<TExpressions>): Predicate;
 }
 
-export type ExprTupleMatchable<TExpressions> =
-    {
-        [K in keyof TExpressions]: 
+export type ExprTupleMatchable<TExpressions extends ExpressionLike[]> =
+    ExprTuple<TExpressions> 
+    | {
+        readonly [K in keyof TExpressions]: 
             TExpressions[K] extends Expression<infer T>
             ? NonNullable<T> | Expression<NonNullable<T>>
             : never

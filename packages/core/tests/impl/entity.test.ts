@@ -279,6 +279,41 @@ describe("EntityTest", () => {
                 },
             ]
         });
+        expectStorage(orderItemEntity.prop("orderId.x").toStorage(strategy)).toEqual({
+            "kind": "COLUMN",
+            "name": "order_x",
+            "referencedProp": "Order.id.x",
+            "referencedColumnName": "X"
+        });
+        expectStorage(orderItemEntity.prop("orderId.y").toStorage(strategy)).toEqual({
+            "kind": "COLUMNS",
+            "arr": [
+                {
+                    "kind": "COLUMN",
+                    "name": "order_y_a",
+                    "referencedProp": "Order.id.y.a",
+                    "referencedColumnName": "A"
+                },
+                {
+                    "kind": "COLUMN",
+                    "name": "order_y_b",
+                    "referencedProp": "Order.id.y.b",
+                    "referencedColumnName": "B"
+                }
+            ]
+        });
+        expectStorage(orderItemEntity.prop("orderId.y.a").toStorage(strategy)).toEqual({
+            "kind": "COLUMN",
+            "name": "order_y_a",
+            "referencedProp": "Order.id.y.a",
+            "referencedColumnName": "A"
+        });
+        expectStorage(orderItemEntity.prop("orderId.y.b").toStorage(strategy)).toEqual({
+            "kind": "COLUMN",
+            "name": "order_y_b",
+            "referencedProp": "Order.id.y.b",
+            "referencedColumnName": "B"
+        });
     });
 
     it("inheritance", () => {

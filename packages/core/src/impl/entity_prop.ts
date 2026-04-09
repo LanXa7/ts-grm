@@ -56,6 +56,8 @@ export class EntityProp {
 
     private _override = false;
 
+    private _scalarIndex: number | undefined = undefined;
+
     private static readonly _EMPTY_PROP_MAP: ReadonlyMap<string, EntityProp> = 
         new Map<string, EntityProp>();
 
@@ -141,6 +143,25 @@ export class EntityProp {
             }
         }
         return flattenScalarProps;
+    }
+
+    get scalarIndex(): number {
+        let scalarIndex = this._scalarIndex;
+        if (scalarIndex != null) {
+            return scalarIndex;
+        }
+        if (this.scalarType == null) {
+            scalarIndex = -1;
+        } else {
+            scalarIndex = 0;
+            for (const prop of this.rootProp.flattenScalarProps.values()) {
+                if (this == prop) {
+                    break;
+                }
+                scalarIndex++;
+            }
+        }
+        return this._scalarIndex = scalarIndex;
     }
 
     get targetEntity(): Entity | undefined {
@@ -607,6 +628,18 @@ export class EntityProp {
             };
         } else if (this.referenceKeyProp != null) {
             this._storage = this.referenceKeyProp.toStorage(strategy);
+        } else if (this.parentProp != null) {
+            const rootColumns = this.rootProp.toStorage(strategy) as Columns;
+            if (this.props == null) {
+                this._storage = rootColumns[this.scalarIndex];
+            } else {
+                const arr: Array<Column> = [];
+                for (const subProp of this.flattenScalarProps.values()) {
+                    arr.push(rootColumns[subProp.scalarIndex]!);
+                }
+                (arr as any).kind = "COLUMNS";
+                this._storage = arr as any as Columns;
+            }
         } else {
             const baseStorage = this._getBaseStorage();
             if (baseStorage != null) {

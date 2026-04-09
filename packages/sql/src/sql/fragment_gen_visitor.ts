@@ -108,6 +108,15 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
     }
 
     visitAtomQuery(query: ast.AtomQueryContract): void {
+        if (query.level === "SUB" && this._compositeStack.currentOrUndefined?.kind !== "SUB_QUERY") {
+            using _ = this._compositeStack.with(new Scope("SUB_QUERY"));
+            this._visitAtomQuery(query);
+        } else {
+            this._visitAtomQuery(query);
+        }
+    }
+    
+    private _visitAtomQuery(query: ast.AtomQueryContract): void {
 
         using _ = this._precedenceStack.with(Precedence.ROOT);
         using __ = this._compositeStack.with(new Query());
@@ -193,6 +202,15 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
     }
 
     visitMergedQuery(query: ast.MergedQueryContract): void {
+        if (query.level === "SUB") {
+            using _ = this._compositeStack.with(new Scope("SUB_QUERY"));
+            this._visitMergedQuery(query);
+        } else {
+            this._visitMergedQuery(query);
+        }
+    }
+
+    private _visitMergedQuery(query: ast.MergedQueryContract): void {
         using _ = this._compositeStack.with(new Scope(query.kind));
         for (const qry of query.queries) {
             this._compositeStack.current.separator();
@@ -239,7 +257,6 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
         this._compositeStack.current.add(pred.neg ? " not in" : " in");
 
         using __ = this._precedenceStack.with(Precedence.ROOT);
-        using ___ = this._compositeStack.with(new Scope("VALUES"));
         
         pred.subQuery.accept(this);
     }
@@ -264,7 +281,6 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
         pred.expr.accept(this);
         this._compositeStack.current.add(pred.neg ? " not in" : " in");
         using __ = this._precedenceStack.with(Precedence.ROOT);
-        using ___ = this._compositeStack.with(new Scope("VALUES"));
         pred.subQuery.accept(this);
     }
 
@@ -303,7 +319,7 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
 
     visitExistsPred(pred: ast.ExistsPred): void {
         using _ = this._precedenceStack.with(Precedence.UNARY);
-        this._compositeStack.current.add(pred.neg ? " not exists" : "exists")
+        this._compositeStack.current.add(pred.neg ? "not exists" : "exists")
         pred.subQuery.accept(this);
     }
 

@@ -18,6 +18,10 @@ export abstract class AbstractTupleSubQueryImpl {
         };
     }
 
+    get level(): "SUB" {
+        return "SUB";
+    }
+
     asValue(): this {
         return this;
     }
@@ -47,6 +51,10 @@ export abstract class AbstractExprSubQueryImpl extends ast.AbstractExpr<any> {
             subQueryLike: true,
             expressionSubQuery: true
         };
+    }
+
+    get level(): "SUB" {
+        return "SUB";
     }
 
     asValue(): this {
@@ -84,6 +92,10 @@ export abstract class AbstractNumSubQueryImpl extends ast.AbstractNumExpr<any> {
         };
     }
 
+    get level(): "SUB" {
+        return "SUB";
+    }
+
     asValue(): this {
         return this;
     }
@@ -117,6 +129,10 @@ export abstract class AbstractStrSubQueryImpl extends ast.AbstractStrExpr {
             subQueryLike: true,
             expressionSubQuery: true
         };
+    }
+
+    get level(): "SUB" {
+        return "SUB";
     }
 
     asValue(): this {

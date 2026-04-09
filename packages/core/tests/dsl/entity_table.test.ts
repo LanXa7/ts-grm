@@ -1,5 +1,5 @@
 import { Entity } from "@/impl";
-import { AUTHOR, BOOK, BOOK_STORE, ORDER_ITEM } from "../model/model";
+import { AUTHOR, BOOK, BOOK_STORE, ORDER, ORDER_ITEM } from "../model/model";
 import { describe, expect, it } from "vitest";
 import { EntityTable } from "@/dsl/table";
 import { AbstractNumExpr } from "@/impl/ast/num_expr";
@@ -370,5 +370,128 @@ describe("RuntimeTableTest", () => {
         expect(table.orderId().x instanceof AbstractNumExpr).toEqual(true);
         expect(table.orderId().y().a instanceof AbstractNumExpr).toEqual(true);
         expect(table.orderId().y().b instanceof AbstractNumExpr).toEqual(true);
+    });
+
+    it("order", () => {
+        const table = Entity.of(ORDER).table(undefined) as any as EntityTable<typeof ORDER>;
+        expectCode(table.constructor.toString(), `
+            class ThisClass extends $baseClass {
+                constructor(entity, options) {
+                    super(entity, options);
+                }
+                _id = undefined;
+                _name = undefined;
+                _items = undefined;
+                _items_LEFT = undefined;
+                id() {
+                    const self = this;
+                    let embedded = this._id;
+                    if (embedded == null) {
+                        this._id = embedded = new class {
+                            _x = undefined;
+                            _y = undefined;
+                            get x() {
+                                let expr = this._x;
+                                if (expr == null) {
+                                    this._x = expr = $createTableProp(self, ThisClass.__id_x);
+                                }
+                                return expr;
+                            }
+                            y() {
+                                let embedded = this._y;
+                                if (embedded == null) {
+                                    this._y = embedded = new class {
+                                        _a = undefined;
+                                        _b = undefined;
+                                        get a() {
+                                            let expr = this._a;
+                                            if (expr == null) {
+                                                this._a = expr = $createTableProp(self, ThisClass.__id_y_a);
+                                            }
+                                            return expr;
+                                        }
+                                        get b() {
+                                            let expr = this._b;
+                                            if (expr == null) {
+                                                this._b = expr = $createTableProp(self, ThisClass.__id_y_b);
+                                            }
+                                            return expr;
+                                        }
+                                    };
+                                }
+                                return embedded;
+                            }
+                        };
+                    }
+                    return embedded;
+                }
+                get name() {
+                    let expr = this._name;
+                    if (expr == null) {
+                        this._name = expr = $createTableProp(this, ThisClass.__name);
+                    }
+                    return expr;
+                }
+                items(options) {
+                    const joinType = typeof options === "string" ? options : options?.joinType ?? "INNER";
+                    const filter = typeof options === "object" ? options?.filter : undefined;
+                    const ignoreTargetFilters = typeof options === "object" ? options?.ignoreTargetFilters ?? false : false;
+                    if (filter == null && joinType === "INNER") {
+                        let join = this._items;
+                        if (join == null) {
+                            this._items = join = ThisClass.__items.targetEntity.table({
+                                parent: this, 
+                                joinType, 
+                                joinProp: ThisClass.__items.mappedByProp, 
+                                isJoinPropInverse: true, 
+                                isTargetFilterIgnored: ignoreTargetFilters
+                            });
+                        }
+                        return join;
+                    }
+                    if (filter == null && joinType === "LEFT") {
+                        let join = this._items_LEFT;
+                        if (join == null) {
+                            this._items_LEFT = join = ThisClass.__items.targetEntity.table({
+                                parent: this, 
+                                joinType, 
+                                joinProp: ThisClass.__items.mappedByProp, 
+                                isJoinPropInverse: true, 
+                                isTargetFilterIgnored: ignoreTargetFilters
+                            });
+                        }
+                        return join;
+                    }
+                    return ThisClass.__items.targetEntity.table({
+                        parent: this, 
+                        joinType, 
+                        joinProp: ThisClass.__items.mappedByProp, 
+                        isJoinPropInverse: true, 
+                        isTargetFilterIgnored: ignoreTargetFilters, 
+                        filter
+                    });
+                }
+                tags(options) {
+                    const joinType = typeof options === "string" ? options : options?.joinType ?? "INNER";
+                    const filter = typeof options === "object" ? options?.filter : undefined;
+                    const ignoreTargetFilters = typeof options === "object" ? options?.ignoreTargetFilters ?? false : false;
+                    return this.association("tags", {joinType, ignoreTargetFilters}).target(filter);
+                }
+                comments(options) {
+                    const joinType = typeof options === "string" ? options : options?.joinType ?? "INNER";
+                    const filter = typeof options === "object" ? options?.filter : undefined;
+                    const ignoreTargetFilters = typeof options === "object" ? options?.ignoreTargetFilters ?? false : false;
+                    return this.association("comments", {joinType, ignoreTargetFilters}).target(filter);
+                }
+                static __id_x = $entity.expandedPropMap.get("id.x");
+                static __id_y_a = $entity.expandedPropMap.get("id.y.a");
+                static __id_y_b = $entity.expandedPropMap.get("id.y.b");
+                static __name = $entity.expandedPropMap.get("name");
+                static __items = $entity.expandedPropMap.get("items");
+            }
+        `);
+        expect(table.id().x instanceof AbstractNumExpr).toEqual(true);
+        expect(table.id().y().a instanceof AbstractNumExpr).toEqual(true);
+        expect(table.id().y().b instanceof AbstractNumExpr).toEqual(true);
     });
 });

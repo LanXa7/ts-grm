@@ -207,6 +207,7 @@ export const ORDER = model("Order", "id", class {
 
 export const ORDER_ITEM = model("OrderItem", "id", class {
     id = prop.i64()
+    productName = prop.str()
     order = prop.m2o(ORDER)
     .joinColumns({
         columns: [

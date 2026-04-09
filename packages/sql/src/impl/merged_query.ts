@@ -11,6 +11,10 @@ export class MergedRootQueryImpl<
     __type(): { rootQuery: TProjection | true; } {
         return { rootQuery: true };
     }
+
+    get level(): "ROOT" {
+        return "ROOT";
+    }
     
     fetchList(): Promise<Array<RowTypeOf<TProjection>>> {
         throw new Error();
@@ -145,6 +149,10 @@ implements ast.MergedQueryContract {
         readonly queries: ReadonlyArray<ast.QueryContract>
     ) {
         super();
+    }
+
+    get level(): "SUB" {
+        return "SUB";
     }
 
     accept(visitor: ast.Visitor): void {

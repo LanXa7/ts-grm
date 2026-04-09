@@ -48,6 +48,10 @@ export class Composite extends Fragment {
         }
     }
 
+    get kind(): ScopeKind | undefined {
+        return undefined;
+    }
+
     static of(o: any, sqlClient: SqlClient, metadata: BaseQueryMetadata | undefined): Composite {
         const preVisitor = new PreVisitor(sqlClient as SqlClientImplementor);
         (o as ast.Node).accept(preVisitor);
@@ -64,15 +68,19 @@ export class Composite extends Fragment {
 export class Scope extends Composite {
 
     constructor(
-        readonly kind: ScopeKind,
+        private readonly _kind: ScopeKind,
         readonly pretty?: boolean
     ) {
         super();
     }
 
+    override get kind(): ScopeKind {
+        return this._kind;
+    }
+
     separator(): this {
         if (this._isDirty) {
-            switch (this.kind) {
+            switch (this._kind) {
                 case "AND":
                     this.add(Separator.AND);
                     break;
@@ -103,12 +111,12 @@ export class Scope extends Composite {
 
     into(builder: SqlBuilder): void {
         using _ = builder.withPretty(this.pretty);
-        if (this.kind === "NO_INDENT_PAREN") {
+        if (this._kind === "NO_INDENT_PAREN") {
             builder.sql("(");
             this._renderChildren(builder);
             builder.sql(")");
         } else if (builder.pretty) {
-            if (this.kind === "VALUES") {
+            if (this._kind === "VALUES" || this._kind === "SUB_QUERY") {
                 builder.sql("(\n");
                 this._renderChildren(builder);
                 builder.sql("\n)");
@@ -118,7 +126,7 @@ export class Scope extends Composite {
                 builder.sql("\n");
             }
         } else {
-            if (this.kind === "VALUES") {
+            if (this._kind === "VALUES" || this._kind === "SUB_QUERY") {
                 builder.sql("(");
                 this._renderChildren(builder);
                 builder.sql(")");
@@ -135,7 +143,7 @@ export class Scope extends Composite {
         }
         if (builder.pretty) {
             let indent = true;
-            switch (this.kind) {
+            switch (this._kind) {
                 case "UNION":
                 case "UNION_ALL":
                 case "MINUS":
@@ -177,6 +185,7 @@ export type ScopeKind =
     "INDENT" 
     | "COMMA" 
     | "VALUES" 
+    | "SUB_QUERY"
     | "AND" 
     | "OR" 
     | "UNION" 

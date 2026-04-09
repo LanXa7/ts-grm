@@ -3,7 +3,7 @@ import { Composite } from "@/sql/fragment";
 import { SqlBuilder } from "@/sql/sql_builder";
 import { newSqlClient } from "@/sql_client";
 import { ast, dto, RootQuery } from "@ts-grm/core";
-import { AUTHOR, BOOK, BOOK_STORE, COMMENT, PAPER_BOOK, PHYSICAL_BOOK_STORE, TREE_NODE } from "../model/model";
+import { AUTHOR, BOOK, BOOK_STORE, COMMENT, ORDER, ORDER_ITEM, PAPER_BOOK, PHYSICAL_BOOK_STORE, TREE_NODE } from "../model/model";
 import { AtomRootQueryImpl } from "@/impl/atom_root_query_impl";
 import { MergedRootQueryImpl } from "@/impl/merged_query";
 
@@ -53,6 +53,16 @@ export const SIMPLE_TREE_NODE_VIEW = dto.view(
 export const SIMPLE_AUTHOR_VIEW = dto.view(
     AUTHOR,
     $ => $.id.name($ => $.allScalars())
+);
+
+export const SIMPLE_ORDER_VIEW = dto.view(
+    ORDER,
+    $ => $.allScalars()
+);
+
+export const SIMPLE_ITEM_VIEW = dto.view(
+    ORDER_ITEM,
+    $ => $.id.productName
 );
 
 export const SIMPLE_COMMENT_VIEW = dto.view(

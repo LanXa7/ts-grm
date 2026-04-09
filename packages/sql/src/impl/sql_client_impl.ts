@@ -29,7 +29,7 @@ import type {
     metadata,
     AnyAssociationModel
 } from "@ts-grm/core";
-import { suppressUnused, ast } from "@ts-grm/core";
+import { suppressUnused, ast, dsl } from "@ts-grm/core";
 import { MutableRootQueryImpl } from "./mutable_root_query_impl";
 import { AtomRootQueryImpl } from "./atom_root_query_impl";
 import { AbstractRootQueryProjection, AbstractSubQueryProjection, ExpressionSubQueryProjection, MapBaseQueryProjection } from "./query_projection";
@@ -162,6 +162,13 @@ class QueryFactoryImpl implements ast.QueryFactory {
         const fnArgs: Array<any> = [ mutableQuery, ...tables ];
         const fn = args[args.length - 1] as Function;
         const projection = fn.apply(undefined, fnArgs) as AbstractSubQueryProjection<TProjection, any>;
+        if (projection == null) {
+            return new AtomNumSubQueryImpl(
+                mutableQuery, 
+                new ExpressionSubQueryProjection(dsl.constant(1) as Expression<any>), 
+                undefined
+            ) as any;
+        }
         if (projection.kind === "SUB_ARRAY") {
             return new AtomTupleSubQueryImpl(mutableQuery, projection, undefined) as any;
         }

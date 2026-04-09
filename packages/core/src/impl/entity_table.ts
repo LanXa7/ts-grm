@@ -13,7 +13,7 @@ import { FetchedViewImpl } from "./fetched_view_impl";
 import { TypedBaseTable } from "./base_table";
 import { ArgumentError, StateError } from "@/error/common";
 import { ModelContract } from "./model_contract";
-import { BaseQuerySelectMapArgs, dsl, ExpressionLike, ExprTuple } from "@/dsl";
+import { BaseQuerySelectMapArgs, dsl, Expression, ExpressionLike, ExprTuple } from "@/dsl";
 import { BaseModelImplementor } from "./base_query_implementor";
 import { AnyModel } from "@/schema/model";
 import { AbstractPred, ConstantPred } from "./ast/pred";
@@ -21,7 +21,7 @@ import { IsPred } from "./ast/is_pred";
 import { AssociationEntity, AssociationProp } from "./association_entity";
 import { AbstractAssociationTable } from "./association_table";
 import { AbstractExpr, AbstractNumExpr, AtomQueryContract } from "./ast";
-import { ExprTupleImpl } from "./ast/tuple";
+import { toTuple } from "./ast/tuple";
 import { capitalize } from "./util";
 import { getQueryFactory } from "./ast/query_factory";
 import { metadata } from "..";
@@ -239,27 +239,9 @@ export abstract class AbstractEntityTable implements AbstractTable {
         return inverseAssociation;
     }
 
-    exists(
-        propName: string,
-        fn?: (table: AbstractEntityTable) => Predicate | undefined
-    ): Predicate {
-        const prop = this.__entity.prop(propName);
-        const targetEntity = prop.targetEntity 
-            ?? makeErr(() => new ArgumentError(
-                `Illegal argument "${prop.toString()}", it is not association property`
-            ));
-        const subQuery = getQueryFactory().createAtomSubQuery(targetEntity.model, (q, table) => {
-            if (fn != null) {
-                const pred = fn(table as any as metadata.AbstractEntityTable);
-                q.where(pred as Predicate | null | undefined);
-            }
-        });
-        return exists(subQuery);
-    }
-
     none(
         propName: string, 
-        fn: (table: AbstractEntityTable) => Predicate | undefined
+        filter: (table: AbstractEntityTable) => Predicate | undefined
     ): Predicate | undefined {
         const prop = this.__entity.prop(propName);
         const targetEntity = prop.targetEntity 
@@ -267,9 +249,50 @@ export abstract class AbstractEntityTable implements AbstractTable {
                 `Illegal argument "${prop.toString()}", it is not association property`
             ));
         const subQuery = getQueryFactory().createAtomSubQuery(targetEntity.model, (q, table) => {
-            if (fn != null) {
-                const pred = fn(table as any as metadata.AbstractEntityTable);
-                q.where(pred as Predicate | null | undefined);
+            q.where(this._associatedPred(prop, table as any as AbstractEntityTable));
+            if (filter != null) {
+                const pred = filter(table as any as metadata.AbstractEntityTable) as Predicate | null | undefined;
+                q.where(pred);
+            }
+        });
+        return notExists(subQuery);
+    }
+
+    some(
+        propName: string, 
+        filter: (table: AbstractEntityTable) => Predicate | undefined
+    ): Predicate | undefined {
+        const prop = this.__entity.prop(propName);
+        const targetEntity = prop.targetEntity 
+            ?? makeErr(() => new ArgumentError(
+                `Illegal argument "${prop.toString()}", it is not association property`
+            ));
+        const subQuery = getQueryFactory().createAtomSubQuery(targetEntity.model, (q, table) => {
+            q.where(this._associatedPred(prop, table as any as AbstractEntityTable));
+            if (filter != null) {
+                const pred = filter(table as any as metadata.AbstractEntityTable) as Predicate | null | undefined;
+                q.where(pred);
+            }
+        });
+        return exists(subQuery);
+    }
+
+    noneIf(
+        propName: string, 
+        filter?: (table: AbstractEntityTable) => Predicate | undefined
+    ): Predicate | undefined {
+        const prop = this.__entity.prop(propName);
+        const targetEntity = prop.targetEntity 
+            ?? makeErr(() => new ArgumentError(
+                `Illegal argument "${prop.toString()}", it is not association property`
+            ));
+        const subQuery = getQueryFactory().createAtomSubQuery(targetEntity.model, (q, table) => {
+            if (filter != null) {
+                const pred = filter(table as any as metadata.AbstractEntityTable) as Predicate | null | undefined;
+                if (pred != null) {
+                    q.where(this._associatedPred(prop, table as any as AbstractEntityTable));
+                    q.where(pred);
+                }
             }
         });
         if ((subQuery as any as AtomQueryContract).wherePred == null) {
@@ -278,9 +301,9 @@ export abstract class AbstractEntityTable implements AbstractTable {
         return notExists(subQuery);
     }
 
-    some(
+    someIf(
         propName: string, 
-        fn: (table: AbstractEntityTable) => Predicate | undefined
+        filter?: (table: AbstractEntityTable) => Predicate | undefined
     ): Predicate | undefined {
         const prop = this.__entity.prop(propName);
         const targetEntity = prop.targetEntity 
@@ -288,9 +311,12 @@ export abstract class AbstractEntityTable implements AbstractTable {
                 `Illegal argument "${prop.toString()}", it is not association property`
             ));
         const subQuery = getQueryFactory().createAtomSubQuery(targetEntity.model, (q, table) => {
-            if (fn != null) {
-                const pred = fn(table as any as metadata.AbstractEntityTable);
-                q.where(pred as Predicate | null | undefined);
+            if (filter != null) {
+                const pred = filter(table as any as metadata.AbstractEntityTable) as Predicate | null | undefined;
+                if (pred != null) {
+                    q.where(this._associatedPred(prop, table as any as AbstractEntityTable));
+                    q.where(pred);
+                }
             }
         });
         if ((subQuery as any as AtomQueryContract).wherePred == null) {
@@ -301,8 +327,9 @@ export abstract class AbstractEntityTable implements AbstractTable {
 
     every(
         propName: string, 
-        fn: (table: AbstractEntityTable) => Predicate | undefined
+        filter: (table: AbstractEntityTable) => Predicate | undefined
     ): Predicate | undefined {
+
         const prop = this.__entity.prop(propName);
         if (prop.associationType !== "ONE_TO_MANY" && prop.associationType !== "MANY_TO_MANY") {
             throw new ArgumentError(
@@ -310,10 +337,15 @@ export abstract class AbstractEntityTable implements AbstractTable {
             );
         }
         const subQuery = getQueryFactory().createAtomSubQuery(prop.targetEntity!.model, (q, table) => {
-            if (fn != null) {
-                const pred = not(fn(table as any as metadata.AbstractEntityTable));
-                q.where(pred as Predicate | null | undefined);
+            if (filter == null) {
+                throw new ArgumentError(`The filter for "every" must be specified`);
             }
+            const pred = filter(table as any as metadata.AbstractEntityTable) as Predicate | null | undefined;
+            if (pred == null) {
+                throw new ArgumentError(`The filter for "every" must return valid predicate`);
+            }
+            q.where(this._associatedPred(prop, table as any as AbstractEntityTable));
+            q.where(not(pred));
         });
         if ((subQuery as any as AtomQueryContract).wherePred == null) {
             return undefined;
@@ -323,7 +355,7 @@ export abstract class AbstractEntityTable implements AbstractTable {
 
     size(
         propName: string, 
-        fn: (table: AbstractEntityTable) => Predicate | undefined
+        filter?: (table: AbstractEntityTable) => Predicate | undefined
     ): AbstractNumExpr<number> {
         const prop = this.__entity.prop(propName);
         if (prop.associationType !== "ONE_TO_MANY" && prop.associationType !== "MANY_TO_MANY") {
@@ -332,13 +364,42 @@ export abstract class AbstractEntityTable implements AbstractTable {
             );
         }
         const subQuery = getQueryFactory().createAtomSubQuery(prop.targetEntity!.model, (q, table) => {
-            if (fn != null) {
-                const pred = fn(table as any as metadata.AbstractEntityTable);
-                q.where(pred as Predicate | null | undefined);
+            q.where(this._associatedPred(prop, table as any as AbstractEntityTable));
+            if (filter != null) {
+                const pred = filter(table as any as metadata.AbstractEntityTable) as Predicate | null | undefined;
+                q.where(pred);
             }
             return q.select(count());
         });
         return subQuery as any as AbstractNumExpr<any>;
+    }
+
+    private _associatedPred(
+        prop: EntityProp,
+        targetTable: AbstractEntityTable
+    ): Predicate {
+        if (prop.storageType === "COLUMN" || prop.storageType === "COLUMNS") {
+            const targetKeyProp = prop.targetKeyProp!;
+            if (targetKeyProp!.props == null) {
+                return (targetTable as any)[targetKeyProp!.name].eq(
+                    (this as any)[prop.referenceKeyProp!.name]
+                );
+            }
+            const targetKeyAst = (targetTable as any)[targetKeyProp.name]();
+            const thisKeyAst = (this as any)[prop.referenceKeyProp!.name]();
+            return AbstractEntityTable.expandTuple(targetKeyAst, targetKeyProp).eq(
+                AbstractEntityTable.expandTuple(thisKeyAst, prop.referenceKeyProp!)
+            )
+        }
+        const exprOrTuple = targetTable.__inverseAssociatedKey(this.__entity.model, prop.name);
+        const thisKeyProp = prop.thisKeyProp ?? this.__entity.idProp;
+        if (thisKeyProp.props == null) {
+            return (exprOrTuple as Expression<any>).eq((this as any)[thisKeyProp.name]);
+        }
+        const ast = (this as any)[thisKeyProp.name]();
+        return (exprOrTuple as ExprTuple<any>).eq(
+            AbstractEntityTable.expandTuple(ast, thisKeyProp)
+        );
     }
 
     __to(castTo: Entity): AbstractEntityTable {
@@ -518,24 +579,7 @@ export abstract class AbstractEntityTable implements AbstractTable {
         if (keyProp.flattenScalarProps.size === 0) {
             return exprOrEmbedded as AbstractExpr<any>;
         }
-        const expressions = Array<AbstractExpr<any>>();
-        for (const key of keyProp.flattenScalarProps.keys()) {
-            let prev = exprOrEmbedded;
-            const parts = key.split('.');
-            const size = parts.length;
-            for (let i = 0; i < size; i++) {
-                if (i + 1 == size) {
-                    prev = prev[parts[i]!];
-                } else {
-                    prev = prev[parts[i]!]();
-                }
-            }
-            expressions.push(prev as AbstractExpr<any>);
-        }
-        if (expressions.length === 1) {
-            return expressions[0]!;
-        }
-        return new ExprTupleImpl(expressions);
+        return AbstractEntityTable.expandTuple(exprOrEmbedded, keyProp);
     }
 
     private _validateToThisProp(
@@ -552,6 +596,24 @@ export abstract class AbstractEntityTable implements AbstractTable {
                 }" is not the target of "${prop.toString()}"`
             );
         }
+    }
+
+    static expandTuple(ast: any, prop: EntityProp): ExprTuple<ExpressionLike[]> {
+        const arr: Array<Expression<any>> = [];
+        for (const subProp of prop.flattenScalarProps.values()) {
+            const parts = subProp.subPath.split('.');
+            const size = parts.length;
+            let prev = ast;
+            for (let i = 0; i < size; i++) {
+                if (i + 1 === size) {
+                    prev = prev[parts[i]!]!;
+                } else {
+                    prev = prev[parts[i]!]();
+                }
+            }
+            arr.push(prev as Expression<any>);
+        }
+        return toTuple(arr as any);
     }
 }
 
