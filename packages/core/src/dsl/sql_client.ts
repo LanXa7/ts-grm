@@ -11,10 +11,25 @@ export interface SqlClient {
 
     __type(): { sqlClient: undefined };
 
-    findNonNull<V extends View<any, any>>(
+    findOne<V extends View<any, any>>(
         view: V,
         criteria: Criteria<ModelOf<V>>
     ): Promise<TypeOf<V>>;
+
+    findOneOrNull<V extends View<any, any>>(
+        view: V,
+        criteria: Criteria<ModelOf<V>>
+    ): Promise<TypeOf<V> | null>;
+
+    findOneOrDefined<V extends View<any, any>>(
+        view: V,
+        criteria: Criteria<ModelOf<V>>
+    ): Promise<TypeOf<V> | undefined>;
+
+    findMany<V extends View<any, any>>(
+        view: V,
+        criteria: Criteria<ModelOf<V>>
+    ): Promise<Array<TypeOf<V>>>;
 
     createQuery<
         const TModels extends AtLeastOne<AnyModel | BaseModel<any> | AnyAssociationModel>,

@@ -389,7 +389,7 @@ export type TimeUnit =
 export type MakeType<T, TNullity extends NullityType> =
     TNullity extends "NONNULL"
         ? T
-        : T | null | undefined;
+        : T | null;
 
 export type MakeExpression<TProp, TNullity extends NullityType> =
     TProp extends I64Prop<infer R, infer Nullity>

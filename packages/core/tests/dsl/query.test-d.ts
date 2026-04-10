@@ -46,6 +46,28 @@ describe("QueryTest", () => {
         }>();
     });
 
+    it("TestNullExpr", async() => {
+
+        const rows = await sqlClient().createQuery(BOOK, (q, book) => {
+            q.where(book.storeId.eq("2"));
+            q.orderBy(book.price.desc());
+            return q.select(book.storeId);
+        }).fetchList();
+
+        expectTypeOf<typeof rows[0]>().toEqualTypeOf<string | null>();
+    });
+
+    it("TestUndefinedExpr", async() => {
+
+        const rows = await sqlClient().createQuery(BOOK, (q, book) => {
+            q.where(book.storeId.eq("2"));
+            q.orderBy(book.price.desc());
+            return q.select(book.storeId);
+        }).fetchList({nullAsUndefined: true});
+
+        expectTypeOf<typeof rows[0]>().toEqualTypeOf<string | undefined>();
+    });
+
     it("TestRootQueryByArray", async () => {
         
         const rows = await sqlClient().createQuery(BOOK, AUTHOR, (q, book, author) => {
@@ -88,7 +110,29 @@ describe("QueryTest", () => {
                 fn: string;
                 ln: string;
             };
-        } | null | undefined]>();
+        } | null]>();
+    });
+
+    it("TestRootQueryByArray2WithNullAsUndefined", async () => {
+        
+        const rows = await sqlClient().createQuery(BOOK, (q, book) => {
+            q.orderBy(book.price.desc());
+            return q.select(
+                book.fetch(SIMPLE_BOOK_VIEW), 
+                book.authors("LEFT").$acceptMulti().fetch(SIMPLE_AUTHOR_VIEW)
+            );
+        }).fetchList({nullAsUndefined: true});
+
+        expectTypeOf<typeof rows[0]>().toEqualTypeOf<[{
+            id: number;
+            name: string;
+        }, {
+            id: number;
+            name: {
+                fn: string;
+                ln: string;
+            };
+        } | undefined]>();
     });
 
     it("TestRootQueryByMap", async () => {
@@ -283,7 +327,7 @@ describe("QueryTest", () => {
             );
         }).fetchList();
         expectTypeOf<typeof rows[0]>().toEqualTypeOf<[
-            number, string | null | undefined
+            number, string | null
         ]>();
     });
 

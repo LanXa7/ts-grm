@@ -49,7 +49,13 @@ export interface RootQuery<TProjection extends RootQueryProjection<any>> {
 
     __type(): { rootQuery: TProjection | true; };
 
-    fetchList(): Promise<Array<RowTypeOf<TProjection>>>;
+    fetchList<
+        TNullAsUndefined extends boolean = false
+    >(
+        options?: {
+            readonly nullAsUndefined?: TNullAsUndefined 
+        }
+    ): Promise<Array<RowTypeOf<TProjection, TNullAsUndefined>>>;
 }
 
 export interface AtomRootQuery<TProjection extends RootQueryProjection<any>>
@@ -101,18 +107,25 @@ export type RootQuerySelection<T> =
     Expression<T, any> |
     FetchedView<any, T>;
 
-export type RowTypeOf<TPojection extends RootQueryProjection<any>> =
+export type RowTypeOf<TPojection extends RootQueryProjection<any>, TNullAsUndefined extends boolean> =
     TPojection extends RootQueryProjection<infer TSelections, infer TKind>
         ? TKind extends "ONE"
-            ? SelectedTypeOf<TSelections>
+            ? SelectedTypeOf<TSelections, TNullAsUndefined>
             : {
-                [K in keyof TSelections]: SelectedTypeOf<TSelections[K]>
+                [K in keyof TSelections]: SelectedTypeOf<TSelections[K], TNullAsUndefined>
             }
         : never;
 
-type SelectedTypeOf<TSelection> =
+type SelectedTypeOf<TSelection, TNullAsUndefined extends boolean> =
     TSelection extends FetchedView<any, infer R>
-        ? R
+        ? NullAsUndefinedType<R, TNullAsUndefined>
     : TSelection extends Expression<infer R, any>
-        ? R
+        ? NullAsUndefinedType<R, TNullAsUndefined>
     : never;
+
+type NullAsUndefinedType<T, TNullAsUndefined> =
+    TNullAsUndefined extends true
+        ? null extends T
+            ? NonNullable<T> | undefined
+            : T
+        : T;

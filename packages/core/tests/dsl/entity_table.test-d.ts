@@ -17,7 +17,7 @@ test("TableMembers", () => {
     expectTypeOf<typeof authorLastName>().toEqualTypeOf<Expression<string>>();
     
     const storeId = book().storeId;
-    expectTypeOf<typeof storeId>().toEqualTypeOf<Expression<string | null | undefined, "AS_NUMBER">>();
+    expectTypeOf<typeof storeId>().toEqualTypeOf<Expression<string | null, "AS_NUMBER">>();
 
     const bookId = book().id;
     expectTypeOf<typeof bookId>().toEqualTypeOf<Expression<number>>();
@@ -26,7 +26,7 @@ test("TableMembers", () => {
     expectTypeOf<typeof storeName1>().toEqualTypeOf<Expression<string>>();
 
     const storeName2 = book().store("LEFT").name;
-    expectTypeOf<typeof storeName2>().toEqualTypeOf<Expression<string | null | undefined>>();
+    expectTypeOf<typeof storeName2>().toEqualTypeOf<Expression<string | null>>();
 
     const storeName3 = book().store({
         filter: ctx => ctx.source.name.eq(ctx.target.name)
@@ -46,5 +46,5 @@ test("TableMembers", () => {
             filter: ctx => ctx.source.name.eq(ctx.target.name().firstName)
         }
     ).$acceptMulti().name().firstName;
-    expectTypeOf<typeof weakJoinName2>().toEqualTypeOf<Expression<string | null | undefined>>();
+    expectTypeOf<typeof weakJoinName2>().toEqualTypeOf<Expression<string | null>>();
 });

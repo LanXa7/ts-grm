@@ -67,7 +67,7 @@ export type EntityTableMembers<
             view: View<TModel, X>
         ): FetchedView<
             TModel, 
-            TNullity extends "NULLABLE" ? X | null | undefined : X
+            TNullity extends "NULLABLE" ? X | null : X
         >;
 
         is<TDerivedModel extends AnyModel>(
@@ -463,7 +463,7 @@ export type NullableBaseQuerySelectMapOf<
 > = {
     readonly [K in keyof TMap]: 
         TMap[K] extends Expression<infer R, infer AsNumber> 
-            ? Expression<R | null | undefined, AsNumber>
+            ? Expression<R | null, AsNumber>
         : NullableEntityTableOf<TMap[K]>;
 };
 

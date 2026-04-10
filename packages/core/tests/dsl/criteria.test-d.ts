@@ -14,7 +14,7 @@ const SIMPLE_BOOK_VIEW = dto.view(BOOK, $ => $
 );
 
 test("TestCriteria", async () => {
-    const view = await sqlClient().findNonNull(SIMPLE_BOOK_VIEW, {
+    const view = await sqlClient().findOne(SIMPLE_BOOK_VIEW, {
         $or: [
             { name: { $icontains: "graphql" } },
             { name: { $icontains: "typescript"} }
