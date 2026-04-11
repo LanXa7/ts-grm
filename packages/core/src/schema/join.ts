@@ -1,4 +1,17 @@
-import { AnyModel, OptionalModelKey } from "./model";
+import { AnyModel, MiddleEntityJoinTargetKeys, MiddleEntityJoinThisKeys, OptionalModelKey } from "./model";
+import { AssociationType } from "./prop";
+
+export type JoinEntity<
+    TMiddleModel extends AnyModel,
+    TTargetModel extends AnyModel,
+    TAssociationType extends AssociationType,
+    TJoinThisProp extends MiddleEntityJoinThisKeys<TMiddleModel, TAssociationType>,
+    TJoinTargetProp extends MiddleEntityJoinTargetKeys<TMiddleModel, TTargetModel, TAssociationType> 
+> = {
+    readonly model: TMiddleModel,
+    readonly joinThisProp: TJoinThisProp,
+    readonly joinTargetProp: TJoinTargetProp
+};
 
 export type JoinTable<
     TModel extends AnyModel, 
@@ -6,20 +19,20 @@ export type JoinTable<
     TTargetKeyProp extends OptionalModelKey<TModel>
 > =
     {
-        name?: string,
-        joinThisColumns?: JoinColumns,
-        joinTargetColumns?: JoinColumns
+        readonly name?: string,
+        readonly joinThisColumns?: JoinColumns,
+        readonly joinTargetColumns?: JoinColumns
     } | {
-        name?: string,
-        joinThis?: {
-            keyProp?: TSourceKeyProp,
-            columns?: JoinColumns,
-            cascade?: CascadeType
+        readonly name?: string,
+        readonly joinThis?: {
+            readonly keyProp?: TSourceKeyProp,
+            readonly columns?: JoinColumns,
+            readonly cascade?: CascadeType
         }
-        joinTarget?: {
-            keyProp?: TTargetKeyProp,
-            columns?: JoinColumns,
-            cascade?: CascadeType
+        readonly joinTarget?: {
+            readonly keyProp?: TTargetKeyProp,
+            readonly columns?: JoinColumns,
+            readonly cascade?: CascadeType
         }
     };
 

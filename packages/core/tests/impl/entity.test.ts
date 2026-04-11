@@ -1,5 +1,5 @@
 import { Entity } from "@/impl/entity";
-import { PAPER_BOOK, ORDER_ITEM, BOOK, AUTHOR, TREE_NODE, BOOK_STORE, ELECTRONIC_BOOK, PDF_ELECTRONIC_BOOK, ORDER, VIP_ORDER } from "../model/model";
+import { PAPER_BOOK, ORDER_ITEM, BOOK, AUTHOR, TREE_NODE, BOOK_STORE, ELECTRONIC_BOOK, PDF_ELECTRONIC_BOOK, ORDER, VIP_ORDER, STUDENT, COURSE } from "../model/model";
 import { describe, expect, it } from "vitest";
 import { makeErr } from "@/error/util";
 import { Column, UPPER_SNAKE_CASE_DATABASE_NAMING_STRATEGY } from "@/impl";
@@ -313,6 +313,18 @@ describe("EntityTest", () => {
             "name": "order_y_b",
             "referencedProp": "Order.id.y.b",
             "referencedColumnName": "B"
+        });
+
+        const studentEntity = Entity.of(STUDENT);
+        expectStorage(studentEntity.prop("courses").toStorage(strategy)).toEqual({
+            "joinThisProp": "LearnLink.student",
+            "joinTargetProp": "LearnLink.course"
+        });
+
+        const courseEntity = Entity.of(COURSE);
+        expectStorage(courseEntity.prop("students").toStorage(strategy)).toEqual({
+            "joinThisProp": "LearnLink.course",
+            "joinTargetProp": "LearnLink.student"
         });
     });
 

@@ -58,10 +58,37 @@ export class SqlClientImpl implements SqlClientImplementor {
         this._configuredFilterMap = (options.filterManager as any)._toMap();
     }
 
-    findNonNull<V extends View<any, any>>(
+    findOne<V extends View<any, any>>(
         view: V,
         criteria: Criteria<ModelOf<V>>
     ): Promise<TypeOf<V>> {
+        suppressUnused(view);
+        suppressUnused(criteria);
+        throw new Error();
+    }
+
+    findOneOrNull<V extends View<any, any>>(
+        view: V,
+        criteria: Criteria<ModelOf<V>>
+    ): Promise<TypeOf<V>> {
+        suppressUnused(view);
+        suppressUnused(criteria);
+        throw new Error();
+    }
+
+    findOneOrUndefined<V extends View<any, any>>(
+        view: V,
+        criteria: Criteria<ModelOf<V>>
+    ): Promise<TypeOf<V>> {
+        suppressUnused(view);
+        suppressUnused(criteria);
+        throw new Error();
+    }
+
+    findMany<V extends View<any, any>>(
+        view: V,
+        criteria: Criteria<ModelOf<V>>
+    ): Promise<Array<TypeOf<V>>> {
         suppressUnused(view);
         suppressUnused(criteria);
         throw new Error();

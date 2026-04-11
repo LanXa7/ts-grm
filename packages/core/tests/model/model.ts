@@ -173,3 +173,28 @@ export const COMMENT = model("Comment", "id", class {
     id = prop.i64()
     name = prop.str()
 });
+
+export const STUDENT = model("Student", "id", class {
+    id = prop.i64()
+    name = prop.str()
+    courses = prop.m2m(COURSE).joinEntity({
+        model: LEARN_LINK,
+        joinThisProp: "student",
+        joinTargetProp: "course"
+    })
+    learningLinks = prop.o2m(LEARN_LINK).mappedBy("student");
+});
+
+export const COURSE = model("Course", "id", class {
+    id = prop.i64()
+    name = prop.str()
+    students = prop.m2m(STUDENT).mappedBy("courses")
+    learningLinks = prop.o2m(LEARN_LINK).mappedBy("course")
+});
+
+export const LEARN_LINK = model("LearnLink", "id", class {
+    id = prop.i64()
+    score = prop.i16().nullable()
+    student = prop.m2o(STUDENT)
+    course = prop.m2o(COURSE)
+});

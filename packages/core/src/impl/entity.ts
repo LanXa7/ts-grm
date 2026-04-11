@@ -292,6 +292,7 @@ export class Entity {
                 columnName: undefined,
                 joinColumns: undefined,
                 joinTable: undefined,
+                joinEntity: undefined,
                 mappedBy: undefined,
                 orders: undefined,
                 reference: prop.name

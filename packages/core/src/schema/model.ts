@@ -1,4 +1,4 @@
-import { AssociatedProp, EmbeddedProp, ManyToManyProp, ManyToOneProp, OneToOneProp, ScalarProp } from "@/schema/prop";
+import { AssociatedProp, AssociationType, EmbeddedProp, ManyToManyProp, ManyToOneProp, OneToOneProp, ScalarProp } from "@/schema/prop";
 import { FlattenMembers } from "@/utils";
 import { ModelContextImpl, ModelImpl } from "@/impl/model_impl";
 import { DatabaseIdentifier } from "./database_identifier";
@@ -188,7 +188,7 @@ export type CtorMembers<TCtor extends Ctor> =
 
 export type OneToOneMappedByKeys<TModel extends AnyModel> =
     TModel extends Model<any, any, infer TCtor, any, any>
-        ? MappedByKeysImpl<
+        ? ExpectedKeysImpl<
             CtorMembers<TCtor>, 
             OneToOneProp<any, any, "OWNING", any, any, any>
         > & string :
@@ -196,7 +196,7 @@ export type OneToOneMappedByKeys<TModel extends AnyModel> =
 
 export type OneToManyMappedByKeys<TModel extends AnyModel> =
     TModel extends Model<any, any, infer TCtor, any, any>
-        ? MappedByKeysImpl<
+        ? ExpectedKeysImpl<
             CtorMembers<TCtor>, 
             ManyToOneProp<any, any, "OWNING", any, any, any>
         > & string :
@@ -204,13 +204,43 @@ export type OneToManyMappedByKeys<TModel extends AnyModel> =
 
 export type ManyToManyMappedByKeys<TModel extends AnyModel> =
     TModel extends Model<any, any, infer TCtor, any, any>
-        ? MappedByKeysImpl<
+        ? ExpectedKeysImpl<
             CtorMembers<TCtor>, 
             ManyToManyProp<any, any, "OWNING", any, any, any>
         > & string :
         never;
 
-type MappedByKeysImpl<
+export type MiddleEntityJoinThisKeys<
+    TModel extends AnyModel, 
+    TAssociationType extends AssociationType
+> =
+    TModel extends Model<any, any, infer TCtor, any, any>
+        ? ExpectedKeysImpl<
+            CtorMembers<TCtor>, 
+            TAssociationType extends "ONE_TO_ONE"
+                ? OneToOneProp<any, any, "OWNING", any, any, any>
+            : TAssociationType extends "ONE_TO_MANY"
+                ? OneToOneProp<any, any, "OWNING", any, any, any>
+            : ManyToOneProp<any, any, "OWNING", any, any, any>
+        > & string :
+        never;
+
+export type MiddleEntityJoinTargetKeys<
+    TMiddleModel extends AnyModel,
+    TTargetModel extends AnyModel,
+    TAssociationType extends AssociationType
+> = TMiddleModel extends Model<any, any, infer TCtor, any, any>
+        ? ExpectedKeysImpl<
+            CtorMembers<TCtor>, 
+            TAssociationType extends "ONE_TO_ONE"
+                ? OneToOneProp<TTargetModel, any, "OWNING", any, any, any>
+            : TAssociationType extends "MANY_TO_ONE"
+                ? OneToOneProp<TTargetModel, any, "OWNING", any, any, any>
+            : ManyToOneProp<TTargetModel, any, "OWNING", any, any, any>
+        > & string :
+        never;
+
+type ExpectedKeysImpl<
     TModelMembers, 
     TExpectedProp extends AssociatedProp<any, any, "OWNING", any, any, any>
 > = 

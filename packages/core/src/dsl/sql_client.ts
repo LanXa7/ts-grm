@@ -21,7 +21,7 @@ export interface SqlClient {
         criteria: Criteria<ModelOf<V>>
     ): Promise<TypeOf<V> | null>;
 
-    findOneOrDefined<V extends View<any, any>>(
+    findOneOrUndefined<V extends View<any, any>>(
         view: V,
         criteria: Criteria<ModelOf<V>>
     ): Promise<TypeOf<V> | undefined>;

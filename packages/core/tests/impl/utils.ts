@@ -19,12 +19,17 @@ export function expectStorage(storage: PropStorage | undefined): JestAssertion {
             kind: "COLUMNS",
             arr: storage.map(columnJson)
         }
+        : storage.kind === "MIDDLE_ENTITY"
+            ? { 
+                joinThisProp: storage.joinThisProp.toString(),
+                joinTargetProp: storage.joinTargetProp.toString()
+            }
         : storage.kind === "MIDDLE_TABLE" 
             ? {
                 ...storage,
                 toThisColumns: storage.toThisColumns.map(columnJson),
                 toTargetColumns: storage.toTargetColumns.map(columnJson)
             }
-            : columnJson(storage);
+        : columnJson(storage);
     return expect(json);
 }

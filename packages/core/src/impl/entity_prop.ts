@@ -6,7 +6,7 @@ import { dedent, makeErr } from "@/error/util";
 import { EntityPropOrder } from "./entity_prop_order";
 import { StateError } from "@/error/common";
 import { DatabaseNamingStrategy, isIllegal, fixColumn, fixColumnArr, notEmpty } from "./strategy";
-import { Column, Columns, MiddleTable, PropStorage, StorageType } from "./storage";
+import { Column, Columns, MiddelEntity, MiddleTable, PropStorage, StorageType } from "./storage";
 
 export class EntityProp {
 
@@ -617,15 +617,25 @@ export class EntityProp {
         if (this._data.mappedBy != null) {
             const mappedBy = this.oppositeProp;
             const mappedByStorage = mappedBy!.toStorage(strategy);
-            if (mappedByStorage == null || mappedByStorage.kind !== "MIDDLE_TABLE") {
+            if (mappedByStorage == null) {
                 this._storage = undefined;
-            } else {
+            } else if (mappedByStorage.kind === "MIDDLE_TABLE") {
                 this._storage = {
                     ...mappedByStorage,
                     toThisColumns: mappedByStorage.toTargetColumns,
                     toTargetColumns: mappedByStorage.toThisColumns
                 };
-            };
+            } else if (mappedByStorage.kind === "MIDDLE_ENTITY") {
+                this._storage = {
+                    ...mappedByStorage,
+                    joinThisProp: mappedByStorage.joinTargetProp,
+                    joinTargetProp: mappedByStorage.joinThisProp
+                };
+            } else {
+                this._storage = undefined;
+            }
+        } else if (this._data.joinEntity != null) {
+            this._storage = this._getBaseStorage();
         } else if (this.referenceKeyProp != null) {
             this._storage = this.referenceKeyProp.toStorage(strategy);
         } else if (this.parentProp != null) {
@@ -727,7 +737,9 @@ export class EntityProp {
     }
 
     private _createBaseStorage(): PropStorage | undefined {
-        if (this.scalarType != null) {
+        if (this._data.joinEntity != null) {
+            return this._createMiddleEntity();
+        } else if (this.scalarType != null) {
             if (this.referenceProp != null) {
                 const targetKeyProp = this.referenceProp.targetKeyProp;
                 return {
@@ -799,6 +811,81 @@ export class EntityProp {
         }
         (columns as any).kind = "COLUMNS";
         return columns as any as Columns;
+    }
+
+    private _createMiddleEntity(): MiddelEntity {
+        const joinEntity = this._data.joinEntity!;
+        const entity = Entity.of(joinEntity.model);
+        const joinThisProp = entity.prop(joinEntity.joinThisProp);
+        if (joinThisProp.targetEntity !== this.declaringEntity) {
+            throw new PropError(
+                this.declaringEntity.name,
+                this.name,
+                `The target entity of joinThisProp "${
+                    joinThisProp.toString()
+                }" must be "${this.declaringEntity.name}"`
+            );
+        }
+        const joinTargetProp = entity.prop(joinEntity.joinTargetProp);
+        if (joinTargetProp.targetEntity !== this.targetEntity) {
+            throw new PropError(
+                this.declaringEntity.name,
+                this.name,
+                `The target entity of joinTargetProp "${
+                    joinThisProp.toString()
+                }" must be "${this.targetEntity!.name}"`
+            );
+        }
+        const joinThisAssociationType: AssociationType = 
+            this.associationType === "ONE_TO_MANY" || this.associationType === "ONE_TO_ONE"
+                ? "ONE_TO_ONE"
+                : "MANY_TO_ONE";
+        const joinTargetAssociationType: AssociationType = 
+            this.associationType === "MANY_TO_ONE" || this.associationType === "ONE_TO_ONE"
+                ? "ONE_TO_ONE"
+                : "MANY_TO_ONE";
+        if (joinThisProp.associationType !== joinThisAssociationType) {
+            throw new PropError(
+                this.declaringEntity.name,
+                this.name,
+                `The association type of joinThisProp "${
+                    joinThisProp.toString()
+                }" must be "${joinThisAssociationType}"`
+            );
+        }
+        if (joinTargetProp.associationType !== joinTargetAssociationType) {
+            throw new PropError(
+                this.declaringEntity.name,
+                this.name,
+                `The association type of joinTargetProp "${
+                    joinThisProp.toString()
+                }" must be "${joinTargetAssociationType}"`
+            );
+        }
+        if (joinThisProp._data.mappedBy != null) {
+            throw new PropError(
+                this.declaringEntity.name,
+                this.name,
+                `The joinThisProp "${
+                    joinThisProp.toString()
+                }" cannot be inverse property(with "mappedBy")`
+            );
+        }
+        if (joinTargetProp._data.mappedBy != null) {
+            throw new PropError(
+                this.declaringEntity.name,
+                this.name,
+                `The joinTargetProp "${
+                    joinThisProp.toString()
+                }" cannot be inverse property(with "mappedBy")`
+            );
+        }
+        return {
+            kind: "MIDDLE_ENTITY",
+            entity,
+            joinThisProp,
+            joinTargetProp
+        };
     }
 
     private _collectJoinColumns(

@@ -7,9 +7,11 @@ import {
     RequiredModelKey, 
     OneToManyMappedByKeys, 
     OneToOneMappedByKeys, 
-    OptionalModelKey 
+    OptionalModelKey, 
+    MiddleEntityJoinThisKeys,
+    MiddleEntityJoinTargetKeys
 } from "@/schema/model";
-import { CascadeType, JoinTable, JoinColumns } from "./join";
+import { CascadeType, JoinTable, JoinColumns, JoinEntity } from "./join";
 import { FlattenMembers } from "@/utils";
 import { ArgumentError } from "@/error/common";
 
@@ -362,6 +364,36 @@ export class ConfigurableOneToOneProp<
             joinTable: joinTableDataOf(options, this.targetModel)
         });
     }
+
+    joinEntity<
+        TMiddleModel extends AnyModel,
+        TJoinThisProp extends MiddleEntityJoinThisKeys<TMiddleModel, "ONE_TO_ONE">,
+        TJoinTargetProp extends MiddleEntityJoinTargetKeys<TMiddleModel, TModel, "ONE_TO_ONE">
+    >(
+        options: JoinEntity<
+            TMiddleModel, 
+            TModel,
+            "ONE_TO_ONE",
+            TJoinThisProp, 
+            TJoinTargetProp
+        >
+    ): OneToOneProp<
+        TargetModelOf<AllModelMembers<TMiddleModel>[TJoinTargetProp]>,
+        TNullity,
+        "OWNING",
+        true,
+        TargetKeyOf<AllModelMembers<TMiddleModel>[TJoinThisProp]>,
+        TargetKeyOf<AllModelMembers<TMiddleModel>[TJoinTargetProp]>
+    > {
+        return new OneToOneProp({
+            ...this.__data,
+            joinEntity: {
+                model: options.model,
+                joinThisProp: options.joinThisProp,
+                joinTargetProp: options.joinTargetProp
+            }
+        });
+    }
 }
 
 export class ManyToOneProp<
@@ -490,6 +522,36 @@ export class ConfigurableManyToOneProp<
             joinColumns: joinColumnsDataOf(options, this.__data.targetModel)
         });
     }
+
+    joinEntity<
+        TMiddleModel extends AnyModel,
+        TJoinSourceProp extends MiddleEntityJoinThisKeys<TMiddleModel, "MANY_TO_ONE">,
+        TJoinTargetProp extends MiddleEntityJoinTargetKeys<TMiddleModel, TModel, "MANY_TO_ONE"> 
+    >(
+        options: JoinEntity<
+            TMiddleModel, 
+            TModel,
+            "MANY_TO_ONE",
+            TJoinSourceProp, 
+            TJoinTargetProp
+        >
+    ): ManyToOneProp<
+        TargetModelOf<AllModelMembers<TMiddleModel>[TJoinTargetProp]>,
+        TNullity,
+        "OWNING",
+        true,
+        TargetKeyOf<AllModelMembers<TMiddleModel>[TJoinSourceProp]>,
+        TargetKeyOf<AllModelMembers<TMiddleModel>[TJoinTargetProp]>
+    > {
+        return new ManyToOneProp({
+            ...this.__data,
+            joinEntity: {
+                model: options.model,
+                joinThisProp: options.joinThisProp,
+                joinTargetProp: options.joinTargetProp
+            }
+        });
+    }
 }
 
 export class OneToManyProp<
@@ -565,6 +627,36 @@ export class ConfigurableOneToManyProp<
         super(data);
     }
 
+    joinEntity<
+        TMiddleModel extends AnyModel,
+        TJoinSourceProp extends MiddleEntityJoinThisKeys<TMiddleModel, "ONE_TO_MANY">,
+        TJoinTargetProp extends MiddleEntityJoinTargetKeys<TMiddleModel, TModel, "ONE_TO_MANY"> 
+    >(
+        options: JoinEntity<
+            TMiddleModel, 
+            TModel,
+            "ONE_TO_MANY",
+            TJoinSourceProp, 
+            TJoinTargetProp
+        >
+    ): OneToManyProp<
+        TargetModelOf<AllModelMembers<TMiddleModel>[TJoinTargetProp]>,
+        TNullity,
+        "OWNING",
+        true,
+        TargetKeyOf<AllModelMembers<TMiddleModel>[TJoinSourceProp]>,
+        TargetKeyOf<AllModelMembers<TMiddleModel>[TJoinTargetProp]>
+    > {
+        return new OneToManyProp({
+            ...this.__data,
+            joinEntity: {
+                model: options.model,
+                joinThisProp: options.joinThisProp,
+                joinTargetProp: options.joinTargetProp
+            }
+        });
+    }
+
     mappedBy<TMappedBy extends OneToManyMappedByKeys<TModel>>(
         mappedBy: TMappedBy
     ): OneToManyProp<
@@ -580,7 +672,7 @@ export class ConfigurableOneToManyProp<
 
     override orderBy(
         ...orders: ModelOrder<TModel>[]
-    ): ConfigurableOneToManyProp<
+    ): OneToManyProp<
         TModel, 
         TNullity, 
         TDirection, 
@@ -588,7 +680,7 @@ export class ConfigurableOneToManyProp<
         TBackOptionalModelKey, 
         TTargetOptionalModelKey
     > {
-        return new ConfigurableOneToManyProp(
+        return new OneToManyProp(
             {...this.__data, orders: [...orders] as ReadonlyArray<any> }
         );
     }
@@ -683,6 +775,36 @@ export class ConfigurableManyToManyProp<
         });
     }
 
+    joinEntity<
+        TMiddleModel extends AnyModel,
+        TJoinSourceProp extends MiddleEntityJoinThisKeys<TMiddleModel, "MANY_TO_MANY">,
+        TJoinTargetProp extends MiddleEntityJoinTargetKeys<TMiddleModel, TModel, "MANY_TO_MANY"> 
+    >(
+        options: JoinEntity<
+            TMiddleModel, 
+            TModel,
+            "MANY_TO_MANY",
+            TJoinSourceProp, 
+            TJoinTargetProp
+        >
+    ): ManyToManyProp<
+        TargetModelOf<AllModelMembers<TMiddleModel>[TJoinTargetProp]>,
+        TNullity,
+        "OWNING",
+        true,
+        TargetKeyOf<AllModelMembers<TMiddleModel>[TJoinSourceProp]>,
+        TargetKeyOf<AllModelMembers<TMiddleModel>[TJoinTargetProp]>
+    > {
+        return new ManyToManyProp({
+            ...this.__data,
+            joinEntity: {
+                model: options.model,
+                joinThisProp: options.joinThisProp,
+                joinTargetProp: options.joinTargetProp
+            }
+        });
+    }
+
     orderBy(
         ...orders: ModelOrder<TModel>[]
     ): ConfigurableManyToManyProp<
@@ -729,6 +851,7 @@ export type PropData = {
     readonly columnName: string | undefined;
     readonly joinColumns: ForeignKeyData | undefined;
     readonly joinTable: JoinTableData | undefined;
+    readonly joinEntity: JoinEntityData | undefined;
     readonly mappedBy: string | undefined,
     readonly orders: ReadonlyArray<{
         readonly path: string;
@@ -742,6 +865,12 @@ export type JoinTableData = {
     readonly name: string | undefined;
     readonly joinThis: ForeignKeyData | undefined;
     readonly joinTarget: ForeignKeyData | undefined;
+};
+
+export type JoinEntityData = {
+    readonly model: AnyModel;
+    readonly joinThisProp: string;
+    readonly joinTargetProp: string;
 };
 
 export type ForeignKeyData = {
@@ -770,6 +899,7 @@ const EMPTY_PROP_DEFINITION_DATA: PropData = {
     columnName: undefined,
     joinColumns: undefined,
     joinTable: undefined,
+    joinEntity: undefined,
     mappedBy: undefined,
     orders: undefined,
     reference: undefined,

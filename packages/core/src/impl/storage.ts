@@ -1,14 +1,17 @@
+import { Entity } from ".";
 import { EntityProp } from "./entity_prop";
 
 export type StorageType = "NONE" 
     | Column["kind"] 
     | Columns["kind"] 
-    | MiddleTable["kind"];
+    | MiddleTable["kind"]
+    | MiddelEntity["kind"];
 
 export type PropStorage = 
     Column 
     | Columns 
-    | MiddleTable;
+    | MiddleTable
+    | MiddelEntity;
 
 export type Column = {
     readonly kind: "COLUMN";
@@ -27,3 +30,10 @@ export type MiddleTable = {
     readonly toThisColumns: ReadonlyArray<Column>;
     readonly toTargetColumns: ReadonlyArray<Column>;
 }
+
+export type MiddelEntity = {
+    readonly kind: "MIDDLE_ENTITY";
+    readonly entity: Entity;
+    readonly joinThisProp: EntityProp;
+    readonly joinTargetProp: EntityProp;
+};
