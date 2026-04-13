@@ -317,14 +317,14 @@ describe("EntityTest", () => {
 
         const studentEntity = Entity.of(STUDENT);
         expectStorage(studentEntity.prop("courses").toStorage(strategy)).toEqual({
-            "joinThisProp": "LearnLink.student",
-            "joinTargetProp": "LearnLink.course"
+            "joinThisProp": "LearningLink.student",
+            "joinTargetProp": "LearningLink.course"
         });
 
         const courseEntity = Entity.of(COURSE);
         expectStorage(courseEntity.prop("students").toStorage(strategy)).toEqual({
-            "joinThisProp": "LearnLink.course",
-            "joinTargetProp": "LearnLink.student"
+            "joinThisProp": "LearningLink.course",
+            "joinTargetProp": "LearningLink.student"
         });
     });
 

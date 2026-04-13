@@ -77,7 +77,7 @@ export class PreVisitor extends ast.AbstractVisitor {
             table = table.__joinOperation!.parent;
             column = expr.table.__joinOperation!.joinProp!.sub(prop.subPath).toStorage(this._strategy) as metadata.Column;
         } else {
-            if (!prop.isAssociationProp) {
+            if (!prop.isMiddleTableProp) {
                 table = (table as metadata.AbstractEntityTable).__to(
                     (prop as metadata.EntityProp).declaringEntity
                 );

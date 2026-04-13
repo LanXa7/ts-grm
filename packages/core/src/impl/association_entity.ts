@@ -142,7 +142,7 @@ export class AssociationEntity {
 
 export interface AssociationProp {
 
-    readonly isAssociationProp: boolean;
+    readonly isMiddleTableProp: true;
 
     readonly declaredEntity: AssociationEntity;
 
@@ -195,7 +195,7 @@ class AssociationPropImpl implements AssociationProp {
     ) {
     }
 
-    get isAssociationProp(): true {
+    get isMiddleTableProp(): true {
         return true;
     }
     

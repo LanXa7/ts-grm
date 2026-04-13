@@ -78,13 +78,14 @@ function writeRootMember(
     if (typeof member === "object" && isEmptyShape(member)) {
         return;
     }
+    const keyStr = key.startsWith("←") ? `"${key}"` : key;
     writer.separator();
     if (typeof member === "number") {
-        writer.code(key).code(": reader.get(").code(`${member}`).code(")");
+        writer.code(keyStr).code(": reader.get(").code(`${member}`).code(")");
     } else if (nullAsUndefined) {
-        writer.code(key).code(": undefined");
+        writer.code(keyStr).code(": undefined");
     } else {
-        writer.code(key).code(": null");
+        writer.code(keyStr).code(": null");
     }
 }
 

@@ -1,15 +1,16 @@
 import { ArgumentError } from "@/error/common";
-import { Dto, DtoField } from "./dto";
+import { Dto, DtoField, FetchProp } from "./dto";
 import { Entity } from "./entity";
-import { EntityProp } from "./entity_prop";
 import { dtoField } from "./dto_builder";
 import { createRowReader, RowReader } from "./row_reader";
 import { makeErr } from "@/error/util";
+import { EntityProp } from ".";
 
 export function dtoMapper(dto: Dto, nullAsUndefined: boolean): DtoMapper {
     const mapper = new Mapper(
         dto.entity ?? makeErr(() => new ArgumentError(`"dto.entity" must be specified`)), 
         nullAsUndefined,
+        undefined,
         undefined
     );
     for (const field of dto.fields) {
@@ -25,7 +26,8 @@ export class DtoMapper {
     constructor(
         readonly entity: Entity,
         readonly nullAsUndefined: boolean,
-        readonly associatedProp: EntityProp | undefined,
+        readonly associatedProp: FetchProp | undefined,
+        readonly bridgeProp: EntityProp | undefined,
         readonly fields: ReadonlyArray<DtoMapperField>
     ) {}
 
@@ -40,7 +42,9 @@ export class DtoMapper {
 
 export type DtoMapperField = {
 
-    readonly prop: EntityProp;
+    readonly prop: FetchProp;
+
+    readonly bridgeProp: EntityProp | undefined;
 
     readonly paths: ReadonlyArray<Path>;
 
@@ -70,7 +74,8 @@ class Mapper {
     constructor(
         readonly entity: Entity,
         readonly nullAsUndefined: boolean,
-        readonly associatedProp: EntityProp | undefined
+        readonly associatedProp: FetchProp | undefined,
+        readonly bridgeProp: EntityProp | undefined
     ) {}
 
     add(dtoField: DtoField) {
@@ -83,7 +88,7 @@ class Mapper {
 
         this.dependencyWriter = { indices: [], parent: this.dependencyWriter };
         try {
-            this._addImplicitFields(dtoField.entityProp);
+            this._addImplicitFields(dtoField.prop);
         } finally {
             if (this.dependencyWriter.indices!.length !== 0) {
                 dependencies = this.dependencyWriter.indices;
@@ -99,12 +104,12 @@ class Mapper {
         }
     }
 
-    private _addImplicitFields(prop: EntityProp) {
+    private _addImplicitFields(prop: FetchProp) {
         const referenceKeyProp = prop.referenceKeyProp;
         if (referenceKeyProp != null) {
             this._addImpl(dtoField(referenceKeyProp), false);
         } else if (prop.targetEntity != null) {
-            let keyProp = prop.declaringEntity.idProp;
+            let keyProp = prop.thisKeyProp ?? prop.declaringEntity!.idProp;
             // TODO: backProp may not be id property
             this._addImpl(dtoField(keyProp), false);
         }
@@ -112,7 +117,7 @@ class Mapper {
 
     private _addImpl(dtoField: DtoField, mapPath: boolean) {
         let field: MapperField | undefined = undefined;
-        if (dtoField.dto == null || dtoField.entityProp.targetEntity != null) {
+        if (dtoField.dto == null || dtoField.prop.targetEntity != null) {
             field = this._field(dtoField);
             if (mapPath) {
                 field.path(dtoField.path);
@@ -146,7 +151,8 @@ class Mapper {
                 this.nullAsUndefined,
                 this.fieldMap.size, 
                 () => this.columnIndex++,
-                dtoField.entityProp, 
+                dtoField.prop, 
+                dtoField.bridgeProp,
                 dtoField.recursiveDepth,
                 this.dependencyReader?.indices
             );
@@ -162,6 +168,7 @@ class Mapper {
             this.entity,
             this.nullAsUndefined,
             this.associatedProp,
+            this.bridgeProp,
             fields
         );
     }
@@ -220,6 +227,7 @@ class Mapper {
             this.entity,
             this.nullAsUndefined,
             recursiveField.prop,
+            recursiveField.bridgeProp,
             newFields
         );
     }
@@ -254,14 +262,15 @@ class MapperField {
         nullAsUndefined: boolean,
         readonly index: number,
         readonly columnIndexAllocator: () => number,
-        readonly prop: EntityProp,
+        readonly prop: FetchProp,
+        readonly bridgeProp: EntityProp | undefined,
         readonly recursiveDepth: number | undefined,
         readonly dependencies: ReadonlyArray<number> | undefined
     ) {
         if (prop.targetEntity == null || recursiveDepth != null) {
             this.subMapper = undefined;
         } else {
-            this.subMapper = new Mapper(prop.targetEntity, nullAsUndefined, prop);
+            this.subMapper = new Mapper(prop.targetEntity, nullAsUndefined, prop, bridgeProp);
         }
     }
 
@@ -287,6 +296,7 @@ class MapperField {
         });
         return {
             prop: this.prop,
+            bridgeProp: this.bridgeProp,
             paths,
             subMapper: this.subMapper?.toDtoMapper(),
             recursiveDepth: this.recursiveDepth,
@@ -300,7 +310,7 @@ class MapperField {
 }
 
 function dtoFieldKey(field: DtoField): string {
-    let key = field.entityProp.toString();
+    let key = field.prop.toString();
     if (field.orders != null) {
         key += JSON.stringify(field.orders);
     }

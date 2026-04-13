@@ -1,7 +1,7 @@
 import { describe, it, expectTypeOf } from "vitest";
 import { dto } from "@/schema/dto";
 import type { TypeOf } from "@/schema/dto";
-import { BOOK, BOOK_STORE, ELECTRONIC_BOOK, PAPER_BOOK, ORDER_ITEM, ORDER, PDF_ELECTRONIC_BOOK, TREE_NODE, AUTHOR } from "../model/model";
+import { BOOK, BOOK_STORE, ELECTRONIC_BOOK, PAPER_BOOK, ORDER_ITEM, ORDER, PDF_ELECTRONIC_BOOK, TREE_NODE, AUTHOR, STUDENT, COURSE } from "../model/model";
 
 describe("ViewShapeTest", () => {
     function make<T>(): T {
@@ -531,5 +531,41 @@ describe("ViewShapeTest", () => {
             nameFirstName: string;
             nameLastName: string;
         }>();
+    });
+
+    it("testJoinEntity", () => {
+        const view = dto.view(
+            STUDENT, 
+            $ => $.id.name.courses(
+                $ => $.allScalars()
+            )
+        );
+        type ViewType = TypeOf<typeof view>;
+        expectTypeOf<ViewType>().toEqualTypeOf<{
+            id: number,
+            name: string,
+            courses: {
+                id: number,
+                name: string
+            }[]
+        }>;
+    });
+
+    it("testInverseJoinEntity", () => {
+        const view = dto.view(
+            COURSE, 
+            $ => $.id.name.students(
+                $ => $.allScalars()
+            )
+        );
+        type ViewType = TypeOf<typeof view>;
+        expectTypeOf<ViewType>().toEqualTypeOf<{
+            id: number,
+            name: string,
+            students: {
+                id: number,
+                name: string
+            }[]
+        }>;
     });
 });

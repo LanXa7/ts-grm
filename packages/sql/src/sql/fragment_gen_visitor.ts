@@ -329,7 +329,7 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
             if (field.columnIndex == null) {
                 continue;
             }
-            const column = field.prop.toStorage(this._strategy) as metadata.Column;
+            const column = (field.prop as metadata.EntityProp).toStorage(this._strategy) as metadata.Column;
             this._compositeStack.current.separator();
             const realTable = this._toRealTable(table.__to(field.prop.declaringEntity));
             this._compositeStack.current.add(this._createColumn(realTable, column.name));
@@ -346,7 +346,7 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
                 .joinProp!.sub(prop.subPath)
                 .toStorage(this._strategy) as metadata.Column;
         } else {
-            if (!prop.isAssociationProp) {
+            if (!prop.isMiddleTableProp) {
                 table = (table as metadata.AbstractEntityTable).__to(
                     (prop as metadata.EntityProp).declaringEntity
                 );

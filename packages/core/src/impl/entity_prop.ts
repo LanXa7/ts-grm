@@ -58,6 +58,10 @@ export class EntityProp {
 
     private _scalarIndex: number | undefined = undefined;
 
+    private _middleEntity: MiddelEntity | undefined = undefined;
+
+    private _middleEntityResolved = false;
+
     private static readonly _EMPTY_PROP_MAP: ReadonlyMap<string, EntityProp> = 
         new Map<string, EntityProp>();
 
@@ -93,7 +97,11 @@ export class EntityProp {
         this._targetKeyProp = undefined;
     }
 
-    get isAssociationProp(): false {
+    get isEntityProp(): true {
+        return true;
+    }
+
+    get isMiddleTableProp(): false {
         return false;
     }
 
@@ -590,20 +598,24 @@ export class EntityProp {
     get storageType(): StorageType {
         let storageType = this._storageType;
         if (storageType == null) {
-            const baseStorage = this._getBaseStorage();
-            if (baseStorage != null) {
-                storageType = baseStorage.kind;
-            } else if (this._referenceKeyProp != null) {
-                storageType = this._referenceKeyProp._getBaseStorage()?.kind ?? "NONE";
-            } else if (this._mappedByProp != null) {
-                const baseStorage = this._mappedByProp._getBaseStorage();
-                if (baseStorage?.kind === "MIDDLE_TABLE") {
-                    storageType = "MIDDLE_TABLE";
+            if (this.middleEntity != null) {
+                storageType = "MIDDLE_ENTITY";
+            } else {
+                const baseStorage = this._getBaseStorage();
+                if (baseStorage != null) {
+                    storageType = baseStorage.kind;
+                } else if (this._referenceKeyProp != null) {
+                    storageType = this._referenceKeyProp._getBaseStorage()?.kind ?? "NONE";
+                } else if (this._mappedByProp != null) {
+                    const baseStorage = this._mappedByProp._getBaseStorage();
+                    if (baseStorage?.kind === "MIDDLE_TABLE") {
+                        storageType = "MIDDLE_TABLE";
+                    } else {
+                        storageType = "NONE";
+                    }
                 } else {
                     storageType = "NONE";
                 }
-            } else {
-                storageType = "NONE";
             }
             this._storageType = storageType;
         }
@@ -615,24 +627,22 @@ export class EntityProp {
             return this._storage;
         }
         if (this._data.mappedBy != null) {
-            const mappedBy = this.oppositeProp;
-            const mappedByStorage = mappedBy!.toStorage(strategy);
-            if (mappedByStorage == null) {
-                this._storage = undefined;
-            } else if (mappedByStorage.kind === "MIDDLE_TABLE") {
-                this._storage = {
-                    ...mappedByStorage,
-                    toThisColumns: mappedByStorage.toTargetColumns,
-                    toTargetColumns: mappedByStorage.toThisColumns
-                };
-            } else if (mappedByStorage.kind === "MIDDLE_ENTITY") {
-                this._storage = {
-                    ...mappedByStorage,
-                    joinThisProp: mappedByStorage.joinTargetProp,
-                    joinTargetProp: mappedByStorage.joinThisProp
-                };
+            const mappedBy = this._mappedByProp!;
+            if (mappedBy._data.joinEntity != null) {
+                this._storage = this.middleEntity;
             } else {
-                this._storage = undefined;
+                const mappedByStorage = mappedBy.toStorage(strategy);
+                if (mappedByStorage == null) {
+                    this._storage = undefined;
+                } else if (mappedByStorage.kind === "MIDDLE_TABLE") {
+                    this._storage = {
+                        ...mappedByStorage,
+                        toThisColumns: mappedByStorage.toTargetColumns,
+                        toTargetColumns: mappedByStorage.toThisColumns
+                    };
+                } else {
+                    this._storage = undefined;
+                }
             }
         } else if (this._data.joinEntity != null) {
             this._storage = this._getBaseStorage();
@@ -738,7 +748,7 @@ export class EntityProp {
 
     private _createBaseStorage(): PropStorage | undefined {
         if (this._data.joinEntity != null) {
-            return this._createMiddleEntity();
+            return this.middleEntity;
         } else if (this.scalarType != null) {
             if (this.referenceProp != null) {
                 const targetKeyProp = this.referenceProp.targetKeyProp;
@@ -813,8 +823,33 @@ export class EntityProp {
         return columns as any as Columns;
     }
 
-    private _createMiddleEntity(): MiddelEntity {
-        const joinEntity = this._data.joinEntity!;
+    get middleEntity(): MiddelEntity | undefined {
+        if (this._middleEntityResolved) {
+            return this._middleEntity;
+        }
+        let middleEntity: MiddelEntity | undefined;
+        if (this._mappedByProp != null) {
+            middleEntity = this._mappedByProp.middleEntity;
+            if (middleEntity != null) {
+                middleEntity = {
+                    ...middleEntity,
+                    joinThisProp: middleEntity.joinTargetProp,
+                    joinTargetProp: middleEntity.joinThisProp
+                };
+            }
+        } else {
+            middleEntity = this._createMiddleEntity();
+        }
+        this._middleEntity = middleEntity;
+        this._middleEntityResolved = true;
+        return middleEntity;
+    }
+
+    private _createMiddleEntity(): MiddelEntity | undefined {
+        const joinEntity = this._data.joinEntity;
+        if (joinEntity == null) {
+            return undefined;
+        }
         const entity = Entity.of(joinEntity.model);
         const joinThisProp = entity.prop(joinEntity.joinThisProp);
         if (joinThisProp.targetEntity !== this.declaringEntity) {

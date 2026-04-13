@@ -1,10 +1,10 @@
+import { FetchProp } from "./dto";
 import { DtoMapper, DtoMapperField } from "./dto_mapper";
-import { EntityProp } from "./entity_prop";
 
 export type Shape = {
     [key: string]: ShapeMember;
 } & {
-    __implicit?: { [key: string]: number };
+    __implicit?: { [key: string]: number | { __array: Shape } };
 };
 
 export type ShapeMember = 
@@ -22,16 +22,17 @@ export function isEmptyShape(shape: Shape): boolean {
 }
 
 export function buildShape(
-    mapper: DtoMapper,
-): Shape {
-    return buildShapeNodeImpl(mapper);
-}
-
-function buildShapeNodeImpl(
     mapper: DtoMapper
 ): Shape {
+    return buildShapeImpl(mapper, undefined);
+}
+
+function buildShapeImpl(
+    mapper: DtoMapper,
+    field: DtoMapperField | undefined
+): Shape {
     const shape: Shape = {};
-    shapeScope = ShapeScope.create(mapper, shape, shapeScope);
+    shapeScope = new ShapeScope(mapper, shape, shapeScope, field, undefined);
     try {
         fillShapeNode(mapper);
     } finally {
@@ -59,7 +60,7 @@ function fillShapeNode(
 function handleExplictField(field: DtoMapperField) {
     for (const path of field.paths) {
         if (typeof path === 'string') {
-            shapeScope!.shape[path] = buildShapeMember(field, false)
+            shapeScope!.shape[path] = buildShapeMember(field, false);
         } else {
             const oldScope = shapeScope!;
             let scope = oldScope;
@@ -82,7 +83,7 @@ function handleExplictField(field: DtoMapperField) {
             try {
                 scope!.shape[path[max]!] = buildShapeMember(
                     field, 
-                    oldScope.mapper !== scope.mapper
+                    isColumnIgnored(oldScope, scope)
                 );
             } finally {
                 shapeScope = oldScope;
@@ -93,28 +94,28 @@ function handleExplictField(field: DtoMapperField) {
 
 function buildShapeMember(
     field: DtoMapperField,
-    ignoreColumnIndex: boolean
+    ignoreColumnIndex: boolean,
 ): ShapeMember | undefined {
     if (field.subMapper) {
         if (isCollection(field.prop)) {
             return field.recursiveDepth != null 
                 ? { 
                     ...recursive,
-                    __array: buildShapeNodeImpl(field.subMapper)
+                    __array: buildShapeImpl(field.subMapper, field)
                 } : { 
-                    __array: buildShapeNodeImpl(field.subMapper)
+                    __array: buildShapeImpl(field.subMapper, field)
                 };
         } 
         if (isReference(field.prop)) {
             return field.recursiveDepth != null 
                 ? {
                     ...recursive,
-                    __ref: buildShapeNodeImpl(field.subMapper)
+                    __ref: buildShapeImpl(field.subMapper, field)
                 } : {
-                    __ref: buildShapeNodeImpl(field.subMapper)
+                    __ref: buildShapeImpl(field.subMapper, field)
                 };
         }
-        return buildShapeNodeImpl(field.subMapper);
+        return buildShapeImpl(field.subMapper, field);
     }
     if (ignoreColumnIndex) {
         return undefined;
@@ -122,37 +123,52 @@ function buildShapeMember(
     return field.columnIndex;
 }
 
-function isCollection(prop: EntityProp): boolean {
+function isCollection(prop: FetchProp): boolean {
     return prop.associationType === "ONE_TO_MANY" 
         || prop.associationType === "MANY_TO_MANY";
 }
 
-function isReference(prop: EntityProp): boolean {
+function isReference(prop: FetchProp): boolean {
     return prop.associationType == "ONE_TO_ONE" 
         || prop.associationType == "MANY_TO_ONE";
+}
+
+function isColumnIgnored(
+    oldScope: ShapeScope,
+    scope: ShapeScope
+) {
+    if (oldScope.mapper === scope.mapper) {
+        return false;
+    }
+    const middleEntity = scope.field?.bridgeProp?.middleEntity;
+    if (middleEntity != null) {
+        if (scope.parent!.mapper.entity === middleEntity.joinThisProp.targetEntity
+            && oldScope.mapper.entity === middleEntity.joinTargetProp.targetEntity
+        ) {
+            return false;
+        }
+    }
+    return true;
 }
 
 let shapeScope: ShapeScope | undefined = undefined;
 
 class ShapeScope {
 
-    private readonly modelScope: ShapeScope;
+    private readonly _modelScope: ShapeScope;
 
-    private constructor(
+    constructor(
         readonly mapper: DtoMapper,
         readonly shape: Shape,
         readonly parent: ShapeScope | undefined,
+        readonly field: DtoMapperField | undefined,
         modelScope: ShapeScope | undefined
     ) {
-        this.modelScope = modelScope ?? this;
+        this._modelScope = modelScope ?? this;
     }
 
-    static create(
-        mapper: DtoMapper, 
-        shape: Shape,
-        parent: ShapeScope | undefined
-    ) {
-        return new ShapeScope(mapper, shape, parent, undefined);
+    get modelScope(): ShapeScope {
+        return this._modelScope;
     }
 
     fold(foldShape: Shape): ShapeScope {
@@ -160,13 +176,14 @@ class ShapeScope {
             this.mapper,
             foldShape,
             this,
-            this.modelScope
+            undefined,
+            this._modelScope
         );
     }
 
-    get implicit(): {[key: string]: number} {
-        this.modelScope._reachable();
-        return this.modelScope._getImplicit();   
+    get implicit(): {[key: string]: number | { __array: Shape }} {
+        this._modelScope._reachable();
+        return this._modelScope._getImplicit();   
     }
 
     private _reachable() {
@@ -174,14 +191,14 @@ class ShapeScope {
         if (parent == null) {
             return;
         }
-        parent.modelScope._reachable();
-        const name = this.mapper.associatedProp!.name;
-        if (parent.modelScope.shape[name] != this.shape) {
-            parent.modelScope.shape[name] = this.shape;
+        parent._modelScope._reachable();
+        const name = this.mapper?.bridgeProp?.name ?? this.mapper.associatedProp!.name;
+        if (parent._modelScope.shape[name] != this.shape) {
+            parent._modelScope.shape[name] = this.shape;
         }
     }
 
-    private _getImplicit(): {[key: string]: number} {
+    private _getImplicit(): {[key: string]: number | { __array: Shape } } {
         let i = this.shape.__implicit;
         if (i == null) {
             this.shape.__implicit = i = {};

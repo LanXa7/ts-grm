@@ -1,7 +1,7 @@
 import { ArgumentError, StateError } from "@/error/common";
 import { Entity } from "./entity";
 import { EntityProp } from "./entity_prop";
-import { Dto, DtoField } from "./dto";
+import { Dto, DtoField, InverseFetchProp } from "./dto";
 import { capitalize } from "./util";
 import { makeErr } from "@/error/util";
 
@@ -141,7 +141,7 @@ class DtoBuilder {
             throw new ArgumentError(`The property ${prop.toString()} is not recursive`);
         }
         for (const field of this.fields) {
-            if (field.entityProp === prop) {
+            if (field.prop === prop) {
                 throw new StateError(
                     `Cannot fetch the property ${prop.toString()} recursively 
                     because annother dto field fetches the association unrecursively`
@@ -150,7 +150,8 @@ class DtoBuilder {
         }
         const field: DtoField = {
             path: alias,
-            entityProp: prop,
+            prop: prop,
+            bridgeProp: undefined,
             dto: undefined,
             fetchType: undefined,
             orders: undefined,
@@ -273,6 +274,26 @@ export function dtoField(
     prop: EntityProp, 
     fn?: TypedDtoBuilderFn
 ): DtoField {
+    if (prop.storageType === "MIDDLE_ENTITY") {
+        const middleEntity = prop.middleEntity!;
+        const middleBuilder = createTypedDtoBuilder(middleEntity.entity);
+        (middleBuilder as any).flat({
+            prop: middleEntity.joinTargetProp.name,
+            prefix: ""
+        }, fn);
+        const middleDto = middleBuilder.__unwrap().build();
+        return {
+            path: prop.name,
+            prop: InverseFetchProp.of(middleEntity.joinThisProp),
+            bridgeProp: prop,
+            dto: middleDto,
+            fetchType: undefined,
+            orders: undefined,
+            recursiveDepth: undefined,
+            nullable: prop.nullable,
+            dependency: undefined
+        };
+    }
     if (prop.targetEntity != null) {
         if (fn == null) {
             throw new ArgumentError(`Cannot add association property 
@@ -283,7 +304,8 @@ export function dtoField(
         const childDto = childBuilder.__unwrap().build();
         return {
             path: prop.name,
-            entityProp: prop,
+            prop: prop,
+            bridgeProp: undefined,
             dto: childDto,
             fetchType: undefined,
             orders: undefined,
@@ -301,7 +323,8 @@ export function dtoField(
         const childDto = childBuilder.__unwrap().build();
         return {
             path: prop.name,
-            entityProp: prop,
+            prop: prop,
+            bridgeProp: undefined,
             dto: childDto,
             fetchType: undefined,
             orders: undefined,
@@ -318,7 +341,8 @@ export function dtoField(
     }
     return {
         path: prop.name,
-        entityProp: prop,
+        prop: prop,
+        bridgeProp: undefined,
         dto: undefined,
         fetchType: undefined,
         orders: undefined,
@@ -402,8 +426,8 @@ function flattenDto(
                 ...field,
                 path: flattenPath(field.path, prefix, depth),
                 dto: field.dto != null && (
-                    field.entityProp.associationType === "MANY_TO_ONE" 
-                        || field.entityProp.associationType === "ONE_TO_MANY"
+                    field.prop.associationType === "MANY_TO_ONE" 
+                        || field.prop.associationType === "ONE_TO_MANY"
                     )
                     ? flattenDto(field.dto, prefix, depth + 1)
                     : field.dto
@@ -435,7 +459,10 @@ function flattenPath(
         return path;
     }
     const finalPath = ["..", ...arr];
-    finalPath[matchedCount + 1] = `${prefix}${capitalize(finalPath[matchedCount + 1]!)}`;
+    finalPath[matchedCount + 1] = 
+        prefix === "" 
+            ? finalPath[matchedCount + 1]!
+            : `${prefix}${capitalize(finalPath[matchedCount + 1]!)}`;
     return finalPath;
 }
 

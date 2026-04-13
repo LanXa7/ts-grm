@@ -25,7 +25,7 @@ export function createTableProp(
         );
     }
     const isAssociation = table instanceof AbstractAssociationTable;
-    if (isAssociation !== prop.isAssociationProp) {
+    if (isAssociation !== prop.isMiddleTableProp) {
         throw new ArgumentError(
             `The property "${prop.toString()}" is not ${
                 isAssociation ? "association" : "entity"
