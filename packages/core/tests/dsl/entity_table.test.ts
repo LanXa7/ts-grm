@@ -1,5 +1,5 @@
 import { Entity } from "@/impl";
-import { AUTHOR, BOOK, BOOK_STORE, ORDER, ORDER_ITEM } from "../model/model";
+import { AUTHOR, BOOK, BOOK_STORE, ORDER, ORDER_ITEM, STUDENT } from "../model/model";
 import { describe, expect, it } from "vitest";
 import { EntityTable } from "@/dsl/table";
 import { AbstractNumExpr } from "@/impl/ast/num_expr";
@@ -493,5 +493,116 @@ describe("RuntimeTableTest", () => {
         expect(table.id().x instanceof AbstractNumExpr).toEqual(true);
         expect(table.id().y().a instanceof AbstractNumExpr).toEqual(true);
         expect(table.id().y().b instanceof AbstractNumExpr).toEqual(true);
+    });
+
+    it("student", () => {
+        const table = Entity.of(STUDENT).table(undefined) as any as EntityTable<typeof STUDENT>;
+        expectCode(table.constructor.toString(), `
+            class ThisClass extends $baseClass {
+                constructor(entity, options) {
+                    super(entity, options);
+                }
+                _id = undefined;
+                _name = undefined;
+                _courses = undefined;
+                _courses_LEFT = undefined;
+                _learningLinks = undefined;
+                _learningLinks_LEFT = undefined;
+                get id() {
+                    let expr = this._id;
+                    if (expr == null) {
+                        this._id = expr = $createTableProp(this, ThisClass.__id);
+                    }
+                    return expr;
+                }
+                get name() {
+                    let expr = this._name;
+                    if (expr == null) {
+                        this._name = expr = $createTableProp(this, ThisClass.__name);
+                    }
+                    return expr;
+                }
+                courses(options) {
+                    const joinType = typeof options === "string" ? options : options?.joinType ?? "INNER";
+                    const filter = typeof options === "object" ? options?.filter : undefined;
+                    const ignoreTargetFilters = typeof options === "object" ? options?.ignoreTargetFilters ?? false : false;
+                    if (filter == null && joinType === "INNER") {
+                        let join = this._courses;
+                        if (join == null) {
+                            this._courses = join = ThisClass.__courses.middleEntity.entity.table({
+                                joinType, 
+                                joinProp: ThisClass.__courses.joinThisProp, 
+                                isJoinPropInverse: true, 
+                                isTargetFilterIgnored: ignoreTargetFilters
+                            }).course(options);
+                        }
+                        return join;
+                    }
+                    if (filter == null && joinType === "LEFT") {
+                        let join = this._courses_LEFT;
+                        if (join == null) {
+                            this._courses_LEFT = join = ThisClass.__courses.middleEntity.entity.table({
+                                joinType, 
+                                joinProp: ThisClass.__courses.joinThisProp, 
+                                isJoinPropInverse: true, 
+                                isTargetFilterIgnored: ignoreTargetFilters
+                            }).course(options);
+                        }
+                        return join;
+                    }
+                    return ThisClass.__courses.middleEntity.entity.table({
+                        joinType, 
+                        joinProp: ThisClass.__courses.joinThisProp, 
+                        isJoinPropInverse: true, 
+                        isTargetFilterIgnored: ignoreTargetFilters
+                    }).course(options);
+                }
+                learningLinks(options) {
+                    const joinType = typeof options === "string" ? options : options?.joinType ?? "INNER";
+                    const filter = typeof options === "object" ? options?.filter : undefined;
+                    const ignoreTargetFilters = typeof options === "object" ? options?.ignoreTargetFilters ?? false : false;
+                    if (filter == null && joinType === "INNER") {
+                        let join = this._learningLinks;
+                        if (join == null) {
+                            this._learningLinks = join = ThisClass.__learningLinks.targetEntity.table({
+                                parent: this, 
+                                joinType, 
+                                joinProp: ThisClass.__learningLinks.mappedByProp, 
+                                isJoinPropInverse: true, 
+                                isTargetFilterIgnored: ignoreTargetFilters
+                            });
+                        }
+                        return join;
+                    }
+                    if (filter == null && joinType === "LEFT") {
+                        let join = this._learningLinks_LEFT;
+                        if (join == null) {
+                            this._learningLinks_LEFT = join = ThisClass.__learningLinks.targetEntity.table({
+                                parent: this, 
+                                joinType, 
+                                joinProp: ThisClass.__learningLinks.mappedByProp, 
+                                isJoinPropInverse: true, 
+                                isTargetFilterIgnored: ignoreTargetFilters
+                            });
+                        }
+                        return join;
+                    }
+                    return ThisClass.__learningLinks.targetEntity.table({
+                        parent: this, 
+                        joinType, 
+                        joinProp: ThisClass.__learningLinks.mappedByProp, 
+                        isJoinPropInverse: true, 
+                        isTargetFilterIgnored: ignoreTargetFilters, 
+                        filter
+                    });
+                }
+                static __id = $entity.expandedPropMap.get("id");
+                static __name = $entity.expandedPropMap.get("name");
+                static __courses = $entity.expandedPropMap.get("courses");
+                static __learningLinks = $entity.expandedPropMap.get("learningLinks");
+            }
+        `);
+        expect(table.courses()).toBeInstanceOf(AbstractEntityTable);
+        expect(table.courses().$acceptMulti().name).toBeInstanceOf(AbstractStrExpr);
     });
 });

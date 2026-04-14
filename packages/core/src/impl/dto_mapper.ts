@@ -155,7 +155,7 @@ class Mapper {
                     }" and "${
                         (dtoField.bridgeProp ?? field.prop).toString()
                     }" cannot be fetched together`
-                );        
+                );
             }
             return field;
         }

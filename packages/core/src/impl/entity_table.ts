@@ -753,7 +753,7 @@ function writeAssociationProp(prop: EntityProp, writer: CodeWriter) {
                 writeNoFilterJoin(prop, true, writer);
             }).newLine();
             writer.code("return ");
-            writeJoinTable(prop, true, writer);
+            writeJoinedTable(prop, true, writer);
             writer.newLine(";");
         }
     }).newLine();
@@ -775,17 +775,39 @@ function writeNoFilterJoin(
             .code(prop.name)
             .codeIf("_LEFT", left)
             .code(" = join = ")
-        writeJoinTable(prop, false, writer);
+        writeJoinedTable(prop, false, writer);
         writer.newLine(";");
     }).newLine();
     writer.code("return join").newLine(";");
 }
 
-function writeJoinTable(
+function writeJoinedTable(
     prop: EntityProp,
     useFilter: boolean, 
     writer: CodeWriter
 ) {
+    if (prop.middleEntity != null) {
+        writer.code("ThisClass.__")
+            .code(prop.name)
+            .code(".middleEntity.entity.table");
+        writer.scope("PARENTHESES", () => {
+            writer.scope("CURLY_BRACKETS", () => {
+                writer
+                .code("joinType")
+                .separator()
+                .code("joinProp: ThisClass.__").code(prop.name).code(".joinThisProp")
+                .separator()
+                .code("isJoinPropInverse: true")
+                .separator()
+                .code("isTargetFilterIgnored: ignoreTargetFilters");
+            });
+        });
+        writer
+            .code(".")
+            .code(prop.middleEntity.joinTargetProp.name)
+            .code("(options)");
+        return;
+    }
     writer.code("ThisClass.__")
             .code(prop.name)
             .code(".targetEntity.table");
