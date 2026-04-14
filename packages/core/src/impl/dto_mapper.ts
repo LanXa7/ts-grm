@@ -1,4 +1,4 @@
-import { ArgumentError } from "@/error/common";
+import { ArgumentError, StateError } from "@/error/common";
 import { Dto, DtoField, FetchProp } from "./dto";
 import { Entity } from "./entity";
 import { dtoField } from "./dto_builder";
@@ -146,18 +146,29 @@ class Mapper {
     private _field(dtoField: DtoField) {
         const key = dtoFieldKey(dtoField);
         let field = this.fieldMap.get(key);
-        if (field == null) {
-            field = new MapperField(
-                this.nullAsUndefined,
-                this.fieldMap.size, 
-                () => this.columnIndex++,
-                dtoField.prop, 
-                dtoField.bridgeProp,
-                dtoField.recursiveDepth,
-                this.dependencyReader?.indices
-            );
-            this.fieldMap.set(key, field);
+        if (field != null) {
+            if (field.prop === dtoField.prop
+            && field.bridgeProp != dtoField.bridgeProp) {
+                throw new StateError(
+                    `The property "${
+                        (field.bridgeProp ?? field.prop).toString()
+                    }" and "${
+                        (dtoField.bridgeProp ?? field.prop).toString()
+                    }" cannot be fetched together`
+                );        
+            }
+            return field;
         }
+        field = new MapperField(
+            this.nullAsUndefined,
+            this.fieldMap.size, 
+            () => this.columnIndex++,
+            dtoField.prop, 
+            dtoField.bridgeProp,
+            dtoField.recursiveDepth,
+            this.dependencyReader?.indices
+        );
+        this.fieldMap.set(key, field);
         return field;
     }
 

@@ -1,3 +1,4 @@
+import { StateError } from "@/error/common";
 import { FetchProp } from "./dto";
 import { DtoMapper, DtoMapperField } from "./dto_mapper";
 
@@ -60,7 +61,7 @@ function fillShapeNode(
 function handleExplictField(field: DtoMapperField) {
     for (const path of field.paths) {
         if (typeof path === 'string') {
-            shapeScope!.shape[path] = buildShapeMember(field, false);
+            shapeScope!.assign(path, buildShapeMember(field, false));
         } else {
             const oldScope = shapeScope!;
             let scope = oldScope;
@@ -74,16 +75,19 @@ function handleExplictField(field: DtoMapperField) {
                 } else {
                     let foldShape = scope.shape[path[i]!] as Shape;
                     if (foldShape == null) {
-                        scope.shape[path[i]!] = foldShape = {};
+                        scope.assign(path[i]!, foldShape = {});
                     }
                     scope = scope.fold(foldShape);
                 }
             }
             shapeScope = scope;
             try {
-                scope!.shape[path[max]!] = buildShapeMember(
-                    field, 
-                    isColumnIgnored(oldScope, scope)
+                scope!.assign(
+                    path[max]!, 
+                    buildShapeMember(
+                        field, 
+                        isColumnIgnored(oldScope, scope)
+                    )
                 );
             } finally {
                 shapeScope = oldScope;
@@ -94,7 +98,7 @@ function handleExplictField(field: DtoMapperField) {
 
 function buildShapeMember(
     field: DtoMapperField,
-    ignoreColumnIndex: boolean,
+    ignoreColumnIndex: boolean
 ): ShapeMember | undefined {
     if (field.subMapper) {
         if (isCollection(field.prop)) {
@@ -193,8 +197,8 @@ class ShapeScope {
         }
         parent._modelScope._reachable();
         const name = this.mapper?.bridgeProp?.name ?? this.mapper.associatedProp!.name;
-        if (parent._modelScope.shape[name] != this.shape) {
-            parent._modelScope.shape[name] = this.shape;
+        if (parent._modelScope.shape[name] !== this.shape) {
+            parent._modelScope.assign(name, this.shape);
         }
     }
 
@@ -204,6 +208,24 @@ class ShapeScope {
             this.shape.__implicit = i = {};
         }
         return i;
+    }
+
+    assign(key: string, member: ShapeMember) {
+        if (typeof this.shape[key] === "number") {
+            throw new StateError(
+                `Conflict mapping for "${
+                    this.toString()
+                }.${key}"`
+            );
+        }
+        this.shape[key] = member;
+    }
+
+    toString(): string {
+        if (this.field == null) {
+            return this.mapper.entity.name;
+        }
+        return `${this.parent!.toString()}.${this.field.prop.name}`;
     }
 };
 
