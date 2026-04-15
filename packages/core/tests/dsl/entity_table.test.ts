@@ -530,8 +530,9 @@ describe("RuntimeTableTest", () => {
                         let join = this._courses;
                         if (join == null) {
                             this._courses = join = ThisClass.__courses.middleEntity.entity.table({
+                                parent: this, 
                                 joinType, 
-                                joinProp: ThisClass.__courses.joinThisProp, 
+                                joinProp: ThisClass.__courses.middleEntity.joinThisProp, 
                                 isJoinPropInverse: true, 
                                 isTargetFilterIgnored: ignoreTargetFilters
                             }).course(options);
@@ -542,8 +543,9 @@ describe("RuntimeTableTest", () => {
                         let join = this._courses_LEFT;
                         if (join == null) {
                             this._courses_LEFT = join = ThisClass.__courses.middleEntity.entity.table({
+                                parent: this, 
                                 joinType, 
-                                joinProp: ThisClass.__courses.joinThisProp, 
+                                joinProp: ThisClass.__courses.middleEntity.joinThisProp, 
                                 isJoinPropInverse: true, 
                                 isTargetFilterIgnored: ignoreTargetFilters
                             }).course(options);
@@ -551,8 +553,9 @@ describe("RuntimeTableTest", () => {
                         return join;
                     }
                     return ThisClass.__courses.middleEntity.entity.table({
+                        parent: this, 
                         joinType, 
-                        joinProp: ThisClass.__courses.joinThisProp, 
+                        joinProp: ThisClass.__courses.middleEntity.joinThisProp, 
                         isJoinPropInverse: true, 
                         isTargetFilterIgnored: ignoreTargetFilters
                     }).course(options);

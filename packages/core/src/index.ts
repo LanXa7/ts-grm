@@ -9,9 +9,39 @@ export { ExpressionOrder } from "./dsl";
 export { TB_INHERIT, DV_ABSTRACT, DV_MODEL_NAME } from "./schema/model";
 export * as metadata from "./impl";
 export * as ast from "./impl/ast";
-export type { OrderNullsType } from "./schema/order";
-export type { Model, AnyModel, TableOptions } from "./schema/model";
-export type { PropData } from "./schema/prop";
+export type { OrderNullsType, ModelOrder } from "./schema/order";
+export type { 
+    Model, 
+    AnyModel, 
+    TableOptions, 
+    Ctor, 
+    CtorMembers, 
+    AllModelMembers, 
+    DeclaredModelMembers,
+    ModelIdKey,
+    RequiredModelKey,
+    OptionalModelKey,
+    OneToOneMappedByKeys,
+    OneToManyMappedByKeys,
+    ManyToManyMappedByKeys,
+    MiddleEntityJoinThisKeys,
+    MiddleEntityJoinTargetKeys
+} from "./schema/model";
+export type { 
+    PropData,
+    AssociatedProp, 
+    AssociationType, 
+    EmbeddedProp, 
+    ManyToManyProp, 
+    ConfigurableManyToManyProp,
+    ManyToOneProp, 
+    ConfigurableManyToOneProp,
+    OneToOneProp, 
+    ConfigurableOneToOneProp,
+    OneToManyProp,
+    ConfigurableOneToManyProp,
+    ScalarProp
+} from "./schema/prop";
 export type { TypeOf, View, ModelOf } from "./schema/dto";
 export type  {
     SqlClient, 

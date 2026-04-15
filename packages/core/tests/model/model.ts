@@ -178,12 +178,12 @@ export const STUDENT = model("Student", "id", class {
     id = prop.i64()
     name = prop.str()
     courses = prop.m2m(COURSE).joinEntity({
-        model: LEARN_LINK,
+        model: LEARNING_LINK,
         joinThisProp: "student",
         joinTargetProp: "course"
     })
     // With learningLinks
-    learningLinks = prop.o2m(LEARN_LINK).mappedBy("student")
+    learningLinks = prop.o2m(LEARNING_LINK).mappedBy("student")
 });
 
 export const COURSE = model("Course", "id", class {
@@ -193,7 +193,7 @@ export const COURSE = model("Course", "id", class {
     // Without learningLinks
 });
 
-export const LEARN_LINK = model("LearningLink", "id", class {
+export const LEARNING_LINK = model("LearningLink", "id", class {
     id = prop.i64()
     score = prop.i16().nullable()
     student = prop.m2o(STUDENT)

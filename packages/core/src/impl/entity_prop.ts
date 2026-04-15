@@ -405,6 +405,11 @@ export class EntityProp {
     }
 
     private _resolveTargetKeyProps() {
+        if (this._middleEntity != null) {
+            this._thisKeyProp = this._middleEntity.joinThisProp.targetKeyProp;
+            this._targetKeyProp = this._middleEntity.joinTargetProp.targetKeyProp;
+            return;
+        }
         if (this._mappedByProp != null) {
             this._thisKeyProp = this._mappedByProp._targetKeyProp;
             this._targetKeyProp = this._mappedByProp._thisKeyProp;

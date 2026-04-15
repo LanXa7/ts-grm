@@ -537,9 +537,26 @@ export abstract class AbstractEntityTable implements AbstractTable {
         const parentEntity = Entity.of(parentModel);
         const prop = parentEntity.prop(toThisPropName);
         this._validateToThisProp(prop);
-        const keyProp = prop.thisKeyProp ?? prop.declaringEntity.idProp;
+        let keyProp: EntityProp;
         let exprOrEmbedded: any;
-        if (prop.storageType === "MIDDLE_TABLE") {
+        if (prop.storageType === "MIDDLE_ENTITY") {
+            keyProp = prop.middleEntity!.joinThisProp.referenceKeyProp!;
+            const backTable = prop.middleEntity!.entity.table({
+                parent: this,
+                joinType: "INNER",
+                joinProp: prop.middleEntity?.joinTargetProp,
+                isJoinPropInverse: true,
+                isTargetFilterIgnored: false,
+                castToEntity: undefined,
+                weakJoinModel: undefined,
+                filter: undefined
+            });
+            exprOrEmbedded = 
+                keyProp.props != null
+                    ? (backTable as any)[keyProp.name]()
+                    : (backTable as any)[keyProp.name];
+        } else if (prop.storageType === "MIDDLE_TABLE") {
+            keyProp = prop.thisKeyProp ?? prop.declaringEntity.idProp;
             const association = this._inverseAssociation(parentModel, toThisPropName);
             const name = `target${capitalize(keyProp.name)}`;
             exprOrEmbedded = 
@@ -547,6 +564,7 @@ export abstract class AbstractEntityTable implements AbstractTable {
                     ? (association as any)[name]()
                     : (association as any)[name];
         } else {
+            keyProp = prop.thisKeyProp ?? prop.declaringEntity.idProp;
             let backTable: AbstractEntityTable;
             if (prop.mappedByProp != null) {
                 backTable = parentEntity.table({
@@ -570,6 +588,7 @@ export abstract class AbstractEntityTable implements AbstractTable {
                     weakJoinModel: undefined,
                     filter: undefined
                 });
+                keyProp = prop.thisKeyProp ?? prop.declaringEntity.idProp;
             }
             exprOrEmbedded = 
                 keyProp.props != null
@@ -793,9 +812,11 @@ function writeJoinedTable(
         writer.scope("PARENTHESES", () => {
             writer.scope("CURLY_BRACKETS", () => {
                 writer
+                .code("parent: this")
+                .separator()
                 .code("joinType")
                 .separator()
-                .code("joinProp: ThisClass.__").code(prop.name).code(".joinThisProp")
+                .code("joinProp: ThisClass.__").code(prop.name).code(".middleEntity.joinThisProp")
                 .separator()
                 .code("isJoinPropInverse: true")
                 .separator()
