@@ -394,7 +394,6 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
 
     visitSubQueryExpr(expr: ast.SubQueryExprContract): void {
         this._compositeStack.current.add(expr.op.toLowerCase());
-        using _ = this._compositeStack.with(new Scope("VALUES"));
         expr.subQuery.accept(this);
     }
 

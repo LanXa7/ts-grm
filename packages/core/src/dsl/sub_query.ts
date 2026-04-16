@@ -16,7 +16,7 @@ export function subQuery<
         fn: (
             q: MutableSubQuery,
             ...tables: {
-                [K in keyof TModels]: Table<TModels[K]>
+                [K in keyof TModels]: Table<TModels[K], true>
             } extends infer T ? T extends readonly any[] ? T : never : never
         ) => TProjection
     ]
