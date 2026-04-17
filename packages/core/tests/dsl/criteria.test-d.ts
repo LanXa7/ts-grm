@@ -5,7 +5,7 @@ import { BOOK } from "../model/model";
 import { expectTypeOf } from "vitest";
 
 function sqlClient(): SqlClient {
-    throw new Error();
+    throw new Error("Not implemented");
 }
 
 const SIMPLE_BOOK_VIEW = dto.view(BOOK, $ => $

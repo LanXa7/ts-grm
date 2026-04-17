@@ -295,7 +295,8 @@ export class Entity {
                 joinEntity: undefined,
                 mappedBy: undefined,
                 orders: undefined,
-                reference: prop.name
+                reference: prop.name,
+                calcuated: undefined
             }, undefined);
             (referenceKeyProp as any)._setReferenceProp(prop);
             newProps.push(referenceKeyProp);

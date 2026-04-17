@@ -72,7 +72,7 @@ export type TypeOf<T> =
 
 export type ViewNullType = "NULL" | "UNDEFINED";
 
-type ViewBuilder<
+export type ViewBuilder<
     TModel extends AnyModel,
     TMembers, 
     TViewNullType extends ViewNullType,

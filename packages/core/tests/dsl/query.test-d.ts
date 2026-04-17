@@ -10,7 +10,7 @@ import { expectTypeOf, describe, it } from "vitest";
 describe("QueryTest", () => {
     
     function sqlClient(): SqlClient {
-        throw new Error();
+        throw new Error("Not implemented");
     }
 
     const SIMPLE_BOOK_VIEW = dto.view(BOOK, $ => $

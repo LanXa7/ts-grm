@@ -5,7 +5,7 @@ import { BOOK, BOOK_STORE, ELECTRONIC_BOOK, PAPER_BOOK, ORDER_ITEM, ORDER, PDF_E
 
 describe("ViewShapeTest", () => {
     function make<T>(): T {
-        throw new Error();
+        throw new Error("Not implemented");
     }
 
     type ElementOf<T> = 

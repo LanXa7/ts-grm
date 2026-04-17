@@ -9,11 +9,15 @@ import {
     OneToOneMappedByKeys, 
     ManyToManyMappedByKeys, 
     MiddleEntityJoinThisKeys,
-    MiddleEntityJoinTargetKeys
+    MiddleEntityJoinTargetKeys,
+    CalcuatorSourceKeys
 } from "@/schema/model";
 import { CascadeType, JoinTable, JoinColumns, JoinEntity } from "./join";
 import { FlattenMembers } from "@/utils";
 import { ArgumentError } from "@/error/common";
+import { SimpleDataTypeOf, View } from "./dto";
+import { IsNull } from "@/dsl/utils";
+import { SqlClient } from "@/dsl";
 
 export const prop = {
 
@@ -65,7 +69,9 @@ export const prop = {
 
     o2m: o2mCreator(),
 
-    m2m: m2mCreator()
+    m2m: m2mCreator(),
+
+    calculated: calculatedCreator()
 } as const;
 
 export class Prop<T, TNullity extends NullityType> {
@@ -821,6 +827,152 @@ export class ConfigurableManyToManyProp<
     }
 }
 
+export class CalculatedValueProp<
+    T, TNullity extends NullityType = "NONNULL"
+> extends Prop<T, TNullity> {
+
+    override __type(): {
+        readonly prop: TNullity | true;
+        readonly calculatedValueProp: TNullity | true;
+    } {
+        return { 
+            prop: true, 
+            calculatedValueProp: true
+        };
+    }
+
+    constructor(data: PropData) {
+        super(data);
+    }
+}
+
+export class CalculatedReferenceProp<
+    TModel extends AnyModel,
+    TNullity extends NullityType
+> extends Prop<TModel, TNullity> {
+
+    override __type(): {
+        readonly prop: TNullity | true;
+        readonly calculatedReferenceProp: [TModel, TNullity] | true;
+    } {
+        return { 
+            prop: true, 
+            calculatedReferenceProp: true
+        };
+    }
+
+    constructor(data: PropData) {
+        super(data);
+    }
+}
+
+export class CalculatedCollectionProp<
+    TModel extends AnyModel
+> extends Prop<TModel, "NONNULL"> {
+
+    override __type(): {
+        readonly prop: "NONNULL" | true;
+        readonly calculatedCollectionProp: [TModel, "NONNULL"] | true;
+    } {
+        return { 
+            prop: true, 
+            calculatedCollectionProp: true
+        };
+    }
+
+    constructor(data: PropData) {
+        super(data);
+    }
+}
+
+export class ValueCalcuator<TValue> {
+
+    private constructor(
+        readonly sourceModel: () => AnyModel,
+        readonly sourceKeyPropName: string | undefined,
+        readonly fn: ValueCalcuatorFn<any, TValue>
+    ) {}
+
+    static of<
+        TSourceModel extends AnyModel,
+        TValue,
+        TSourceKeyProp extends CalcuatorSourceKeys<TSourceModel> & string = ModelIdKey<TSourceModel>
+    >(
+        options: {
+            readonly sourceModel: () => TSourceModel,
+            readonly sourceKeyProp?: TSourceKeyProp,
+            readonly fn: ValueCalcuatorFn<
+                SimpleDataTypeOf<AllModelMembers<TSourceModel>[TSourceKeyProp], "UNDEFINED">, 
+                TValue
+            >
+        }
+    ): ValueCalcuator<TValue> {
+        return new ValueCalcuator(
+            options.sourceModel,
+            options.sourceKeyProp,
+            options.fn
+        );
+    }
+}
+
+export class TargetCalcuator<TTargetModel extends AnyModel> {
+
+    private constructor(
+        readonly sourceModel: () => AnyModel,
+        readonly sourceKeyPropName: string | undefined,
+        readonly fn: TargetCalcuatorFn<any, TTargetModel>
+    ) {}
+
+    static of<
+        TSourceModel extends AnyModel,
+        TTargetModel extends AnyModel,
+        TSourceKeyProp extends keyof CalcuatorSourceKeys<TSourceModel> & string = ModelIdKey<TSourceModel>
+    >(
+        options: {
+            readonly sourceModel: () => TSourceModel,
+            readonly sourceKeyProp?: TSourceKeyProp,
+            readonly targetModel: () => TTargetModel,
+            readonly fn: TargetCalcuatorFn<
+                SimpleDataTypeOf<AllModelMembers<TSourceModel>[TSourceKeyProp], "UNDEFINED">, 
+                TTargetModel
+            >
+        }
+    ): TargetCalcuator<TTargetModel> {
+        return new TargetCalcuator(
+            options.sourceModel,
+            options.sourceKeyProp,
+            options.fn
+        );
+    }
+}
+
+export type ValueCalcuatorFn<TKey, TValue> =
+    (
+        ctx: ValueCalcuatorContext<TKey>
+    ) => Promise<ReadonlyArray<[TKey, TValue]>>;
+
+export type ValueCalcuatorContext<
+    TKey
+> = {
+    readonly sqlClient: SqlClient;
+    readonly keys: ReadonlyArray<TKey>;
+};
+
+export type TargetCalcuatorFn<TKey, TTargetModel extends AnyModel> =
+    <X>(
+        ctx: TargetCalcuatorContext<TKey, TTargetModel, X>
+    ) => Promise<ReadonlyArray<[TKey, X]>>;
+
+export type TargetCalcuatorContext<
+    TKey, 
+    TTargetModel extends AnyModel, 
+    X
+> = {
+    readonly sqlClient: SqlClient;
+    readonly keys: ReadonlyArray<TKey>;
+    readonly view: View<TTargetModel, X>;
+};
+
 export type AssociationType = "ONE_TO_ONE" | "ONE_TO_MANY" | "MANY_TO_ONE" | "MANY_TO_MANY";
 
 export type NullityType = "NONNULL" | "NULLABLE" | "INPUT_NONNULL";
@@ -859,6 +1011,13 @@ export type PropData = {
         readonly nulls: OrderNullsType;
     }> | undefined;
     readonly reference: string | undefined;
+    readonly calcuated: {
+        readonly kind: "VALUE",
+        readonly calculator: ValueCalcuator<any>
+    } | {
+        readonly kind: "NONNULL_REFERENCE" | "NULLABLE_REFERENCE" | "COLLECTION",
+        readonly calculator: TargetCalcuator<any>
+    } | undefined;
 };
 
 export type JoinTableData = {
@@ -903,6 +1062,7 @@ const EMPTY_PROP_DEFINITION_DATA: PropData = {
     mappedBy: undefined,
     orders: undefined,
     reference: undefined,
+    calcuated: undefined
 }
 
 export type TargetModelOf<TProp> =
@@ -1172,6 +1332,31 @@ export type M2MCreator = {
     >;
 };
 
+export type CalculatedCreator = {
+
+    value<R>(
+        calculator: ValueCalcuator<R>
+    ): CalculatedValueProp<R, IsNull<R> extends true ? "NULLABLE" : "NONNULL">;
+
+    nonnullReference<
+        TTargetModel extends AnyModel
+    >(
+        calculator: TargetCalcuator<TTargetModel>
+    ): CalculatedReferenceProp<TTargetModel, "NONNULL">;
+
+    nullableReference<
+        TTargetModel extends AnyModel
+    >(
+        calculator: TargetCalcuator<TTargetModel>
+    ): CalculatedReferenceProp<TTargetModel, "NULLABLE">;
+
+    collection<
+        TTargetModel extends AnyModel
+    >(
+        calculator: TargetCalcuator<TTargetModel>
+    ): CalculatedCollectionProp<TTargetModel>;
+};
+
 type SelfJoinColumnsOptions<
     TTargetKeyProp extends string
 > = {
@@ -1412,4 +1597,68 @@ function m2mCreator(): M2MCreator {
 
     (m2m as any).self = self;
     return m2m as M2MCreator;
+}
+
+function calculatedCreator(): CalculatedCreator {
+
+    function value<R>(
+        calculator: ValueCalcuator<R>
+    ): CalculatedValueProp<R, IsNull<R> extends true ? "NULLABLE" : "NONNULL"> {
+        return new CalculatedValueProp({
+            ...EMPTY_PROP_DEFINITION_DATA,
+            calcuated: {
+                kind: "VALUE",
+                calculator
+            }
+        });
+    }
+
+    function nonnullReference<
+        TTargetModel extends AnyModel
+    >(
+        calculator: TargetCalcuator<TTargetModel>
+    ): CalculatedReferenceProp<TTargetModel, "NONNULL"> {
+        return new CalculatedReferenceProp({
+            ...EMPTY_PROP_DEFINITION_DATA,
+            calcuated: {
+                kind: "NONNULL_REFERENCE",
+                calculator
+            }
+        });
+    }
+
+    function nullableReference<
+        TTargetModel extends AnyModel
+    >(
+        calculator: TargetCalcuator<TTargetModel>
+    ): CalculatedReferenceProp<TTargetModel, "NULLABLE"> {
+        return new CalculatedReferenceProp({
+            ...EMPTY_PROP_DEFINITION_DATA,
+            calcuated: {
+                kind: "NULLABLE_REFERENCE",
+                calculator
+            }
+        });
+    }
+
+    function collection<
+        TTargetModel extends AnyModel
+    >(
+        calculator: TargetCalcuator<TTargetModel>
+    ): CalculatedCollectionProp<TTargetModel> {
+        return new CalculatedCollectionProp({
+            ...EMPTY_PROP_DEFINITION_DATA,
+            calcuated: {
+                kind: "NONNULL_REFERENCE",
+                calculator
+            }
+        });
+    }
+
+    return {
+        value,
+        nonnullReference,
+        nullableReference,
+        collection
+    };
 }

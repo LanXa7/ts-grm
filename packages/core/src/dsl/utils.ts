@@ -20,3 +20,10 @@ export class ExpressionOrder {
 
 export type AtLeastOne<T> = [T, ...T[]];
 export type AtLeastTwo<T> = [T, T, ...[]];
+
+export type IsNull<T> = 
+    null extends T
+        ? true
+    : undefined extends T
+        ? true
+    : false;

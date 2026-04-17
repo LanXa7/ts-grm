@@ -253,6 +253,20 @@ type ExpectedKeysImpl<
         }[keyof TModelMembers] :
         never;
 
+export type CalcuatorSourceKeys<
+    TModelMembers
+> =
+    TModelMembers extends object 
+    ? { 
+        [K in keyof TModelMembers]: 
+            TModelMembers[K] extends ScalarProp<any, any>
+                ? K
+            : TModelMembers[K] extends EmbeddedProp<any, any, any>
+                ? K
+            : never
+    }[keyof TModelMembers] :
+    never;
+
 export type TableOptions<TSuperModel extends AnyModel | never> = 
     DatabaseIdentifier<string> | {
         readonly name?: typeof TB_INHERIT

@@ -1,7 +1,7 @@
 import { CombinedNullity, I64Prop, NullityType, ScalarProp } from "@/schema/prop";
 import { CompilationError } from "@/utils"
 import { ExpressionSubQuery } from "./sub_query";
-import { AtLeastOne, ExpressionOrder } from "./utils";
+import { AtLeastOne, ExpressionOrder, IsNull } from "./utils";
 import { AbstractStrExpr, ConcatExpr } from "@/impl/ast/str_expr";
 import { ArgumentError } from "@/error/common";
 import { getInternalFactory } from "@/impl/ast/internal_factory";
@@ -30,13 +30,6 @@ export type Predicate = AnyExpression<boolean>;
 type NonNull<T> = Exclude<T, null | undefined>;
 
 type Nullable<T> = T | null | undefined;
-
-type IsNull<T> = 
-    null extends T
-        ? true
-    : undefined extends T
-        ? true
-    : false;
 
 type AnyExpression<T, TAsNumber extends AsNumberBound<T> = ""> = {
     

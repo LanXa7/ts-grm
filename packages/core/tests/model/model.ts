@@ -1,5 +1,28 @@
+import { dsl } from "@/dsl";
 import { DV_MODEL_NAME, model } from "@/schema/model";
-import { prop } from "@/schema/prop";
+import { prop, TargetCalcuator } from "@/schema/prop";
+
+const NEWEST_BOOK_CALCUATOR = TargetCalcuator.of({
+    sourceModel: () => BOOK_STORE,
+    targetModel: () => BOOK,
+    fn: ctx => {
+        return ctx.sqlClient.createQuery(BOOK, (q, book) => {
+            q.where(
+                dsl.tuple(book.name, book.edition).inSubQuery(
+                    dsl.subQuery(BOOK, (q, book) => {
+                        q.where(book.storeId.in(...ctx.keys));
+                        q.groupBy(book.storeId);
+                        return q.select(book.name, dsl.max(book.edition).asNonNull());
+                    })
+                )
+            );
+            return q.select(
+                book.storeId.asNonNull(),
+                book.fetch(ctx.view)
+            )
+        }).fetchList();
+    }
+});
 
 export const BOOK_STORE = model("BookStore", "id", class {
     id = prop.i64().asString()
@@ -8,6 +31,7 @@ export const BOOK_STORE = model("BookStore", "id", class {
     books = prop.o2m(BOOK)
         .mappedBy("store")
         .orderBy("name", { path: "edition", desc: true })
+    newestBooks = prop.calculated.collection(NEWEST_BOOK_CALCUATOR);
 });
 
 export const BOOK = model("Book", "id", class {
@@ -73,7 +97,7 @@ export const AUTHOR = model("Author", "id", class {
         firstName: prop.str(),
         lastName: prop.str()
     })
-    books = prop.m2m(BOOK).mappedBy("authors");
+    books = prop.m2m(BOOK).mappedBy("authors")
 }, ctx => ctx.unique("name.firstName", "name.lastName"));
 
 export const TREE_NODE = model("TreeNode", "id", class {

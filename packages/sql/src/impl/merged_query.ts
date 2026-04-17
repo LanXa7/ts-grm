@@ -16,7 +16,7 @@ export class MergedRootQueryImpl<
         return "ROOT";
     }
     
-    fetchList(): Promise<Array<RowTypeOf<TProjection>>> {
+    fetchList(): Promise<Array<RowTypeOf<TProjection, false>>> {
         throw new Error();
     }
 
