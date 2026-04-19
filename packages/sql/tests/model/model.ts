@@ -114,6 +114,7 @@ export const BOOK = model("Book", "id",
             joinThisColumns: ["book_id"],
             joinTargetColumns: ["author_id"]
         }).orderBy("name.firstName", "name.lastName")
+        bookCount = prop.formula.sql(BOOK_AUTHOR_COUNT_FORMULA)
     }, 
     ctx => {
         ctx.table({
