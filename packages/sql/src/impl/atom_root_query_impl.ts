@@ -1,4 +1,4 @@
-import { ast, ExpressionOrder, metadata, AtomRootQuery, RootQueryProjection, RowTypeOf } from "@ts-grm/core";
+import { ast, ExpressionOrder, metadata, AtomRootQuery, RootQueryProjection, RowTypeOf, suppressUnused } from "@ts-grm/core";
 import { MutableRootQueryImpl } from "./mutable_root_query_impl";
 import { AbstractRootQueryProjection } from "./query_projection";
 
@@ -50,7 +50,12 @@ implements AtomRootQuery<TProjection>, ast.AtomQueryContract {
         );
     }
 
-    fetchList(): Promise<Array<RowTypeOf<TProjection>>> {
+    fetchList<TNullAsUndefined extends boolean = false>(
+        options?: {
+            readonly nullAsUndefined?: TNullAsUndefined;
+        }
+    ): Promise<Array<RowTypeOf<TProjection, TNullAsUndefined>>> {
+        suppressUnused(options);
         throw new Error();
     }
 

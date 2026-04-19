@@ -2,14 +2,15 @@ import { AssociationModel } from "@/dsl";
 import { AnyModel, OptionalModelKey } from "@/schema/model";
 import { AssociationEntity, Entity, EntityProp } from ".";
 import { makeErr } from "@/error/util";
+import { JoinPolicyType } from "@/dsl/table";
 
 export class AssociationModelImpl<
     TSourceModel extends AnyModel,
     TSourceKey extends OptionalModelKey<TSourceModel>,
     TTargetModel extends AnyModel,
     TTargetKey extends OptionalModelKey<TTargetModel>,
-    TMultiAccepted extends boolean
-> implements AssociationModel<TSourceModel, TSourceKey, TTargetModel, TTargetKey, TMultiAccepted> {
+    TJoinPolicy extends JoinPolicyType
+> implements AssociationModel<TSourceModel, TSourceKey, TTargetModel, TTargetKey, TJoinPolicy> {
 
     __type(): {
         readonly associationModel: [
@@ -17,7 +18,7 @@ export class AssociationModelImpl<
             TSourceKey, 
             TTargetModel, 
             TTargetKey,
-            TMultiAccepted
+            TJoinPolicy
         ] | true;
     } {
         return { associationModel: true };

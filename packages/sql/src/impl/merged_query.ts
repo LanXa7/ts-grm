@@ -1,4 +1,4 @@
-import { ast, BaseQuery, BaseQueryMapOf, RootQuery, RootQueryProjection, RowTypeOf } from "@ts-grm/core";
+import { ast, BaseQuery, BaseQueryMapOf, RootQuery, RootQueryProjection, RowTypeOf, suppressUnused } from "@ts-grm/core";
 import { AbstractBaseQueryImpl } from "./abstract_base_query_impl";
 import { AbstractDtSubQueryImpl, AbstractExprSubQueryImpl, AbstractNumSubQueryImpl, AbstractStrSubQueryImpl, AbstractTupleSubQueryImpl } from "./abstract_sub_query_impl";
 import { SqlClientImplementor } from "@/sql_client";
@@ -16,7 +16,12 @@ export class MergedRootQueryImpl<
         return "ROOT";
     }
     
-    fetchList(): Promise<Array<RowTypeOf<TProjection, false>>> {
+    fetchList<TNullAsUndefined extends boolean = false>(
+        options?: {
+            readonly nullAsUndefined?: TNullAsUndefined;
+        }
+    ): Promise<Array<RowTypeOf<TProjection, TNullAsUndefined>>> {
+        suppressUnused(options);
         throw new Error();
     }
 

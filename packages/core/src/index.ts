@@ -40,8 +40,39 @@ export type {
     ConfigurableOneToOneProp,
     OneToManyProp,
     ConfigurableOneToManyProp,
-    ScalarProp
+    ScalarProp,
+    TsFormulaProp,
+    SqlFormulaProp,
+    CalculatedValueProp,
+    ParameterizedCalculatedValueProp,
+    CalculatedReferenceProp,
+    ParameterizedCalculatedReferenceProp,
+    CalculatedCollectionProp,
+    ParameterizedCalculatedCollectionProp,
+    O2OCreator,
+    O2MCreator,
+    M2OCreator,
+    M2MCreator,
+    FormulaCreator,
+    CalculatedCreator
 } from "./schema/prop";
+export type { 
+    SqlFormulaFn,
+    ValueCalculatorContext,
+    ParameterizedValueCalculatorContext,
+    TargetCalculatorContext, 
+    ParameterizedTargetCalculatorContext,
+    ValueCalculatorFn,
+    ParameterizedValueCalculatorFn,
+    TargetCalculatorFn,
+    ParameterizedTargetCalculatorFn
+} from "./schema/computed";
+export {
+    ValueCalculator,
+    ParameterizedValueCalculator,
+    TargetCalculator,
+    ParameterizedTargetCalculator
+} from "./schema/computed"
 export type { TypeOf, View, ModelOf } from "./schema/dto";
 export type  {
     SqlClient, 

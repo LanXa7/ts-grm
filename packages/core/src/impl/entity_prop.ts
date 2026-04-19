@@ -282,8 +282,12 @@ export class EntityProp {
         if (data.mappedBy != null) {
             this.raise `The "mappedBy" cannot be specified for non-association property.`;
         }
-        if (data.scalarType == null && data.props == null && data.reference == null && data.calcuated == null) {
-            this.raise `Either "scalarType", "props", or "reference" 
+        if (data.scalarType == null && 
+            data.props == null && 
+            data.formulaData == null && 
+            data.calculatorData == null &&
+            data.reference == null) {
+            this.raise `Either "scalarType", "props", "formulaData", "calculatorData", or "reference" 
             must be specified for non-association property.`;
         }
         if (data.scalarType != null && data.props != null) {

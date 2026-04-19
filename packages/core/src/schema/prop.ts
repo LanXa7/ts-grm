@@ -9,15 +9,14 @@ import {
     OneToOneMappedByKeys, 
     ManyToManyMappedByKeys, 
     MiddleEntityJoinThisKeys,
-    MiddleEntityJoinTargetKeys,
-    CalcuatorSourceKeys
+    MiddleEntityJoinTargetKeys
 } from "@/schema/model";
 import { CascadeType, JoinTable, JoinColumns, JoinEntity } from "./join";
 import { FlattenMembers } from "@/utils";
 import { ArgumentError } from "@/error/common";
-import { SimpleDataTypeOf, View } from "./dto";
 import { IsNull } from "@/dsl/utils";
-import { SqlClient } from "@/dsl";
+import { ParameterizedTargetCalculator, ParameterizedValueCalculator, SqlFormula, TargetCalculator, TsFormula, ValueCalculator } from "./computed";
+import { z } from "zod"; 
 
 export const prop = {
 
@@ -70,6 +69,8 @@ export const prop = {
     o2m: o2mCreator(),
 
     m2m: m2mCreator(),
+
+    formula: formulaCreator(),
 
     calculated: calculatedCreator()
 } as const;
@@ -827,17 +828,79 @@ export class ConfigurableManyToManyProp<
     }
 }
 
-export class CalculatedValueProp<
-    T, TNullity extends NullityType = "NONNULL"
+export class TsFormulaProp<
+    T, 
+    TNullity extends NullityType = "NONNULL"
 > extends Prop<T, TNullity> {
+ 
+    override __type(): {
+        readonly prop: TNullity | true;
+        readonly tsFormulaProp: TNullity | true;
+    } {
+        return { 
+            prop: true, 
+            tsFormulaProp: true
+        };
+    }
+
+    constructor(data: PropData) {
+        super(data);
+    }
+}
+
+export class SqlFormulaProp<
+    T, 
+    TNullity extends NullityType = "NONNULL"
+> extends Prop<T, TNullity> {
+ 
+    override __type(): {
+        readonly prop: TNullity | true;
+        readonly sqlFormulaProp: TNullity | true;
+    } {
+        return { 
+            prop: true, 
+            sqlFormulaProp: true
+        };
+    }
+
+    constructor(data: PropData) {
+        super(data);
+    }
+}
+
+export class CalculatedValueProp<
+    TValue, 
+    TNullity extends NullityType
+> extends Prop<TValue, TNullity> {
 
     override __type(): {
         readonly prop: TNullity | true;
-        readonly calculatedValueProp: TNullity | true;
+        readonly calculatedValueProp: [TValue, TNullity] | true;
     } {
         return { 
             prop: true, 
             calculatedValueProp: true
+        };
+    }
+
+    constructor(data: PropData) {
+        super(data);
+    }
+}
+
+export class ParameterizedCalculatedValueProp<
+    TParameter,
+    TValue, 
+    TNullity extends NullityType
+> extends Prop<TValue, TNullity> {
+
+    override __type(): {
+        readonly prop: TNullity | true;
+        readonly parameterizedCalculatedValueProp: [TParameter, TValue, TNullity] | true;
+    } {
+        return { 
+            prop: true, 
+            parameterizedCalculatedValueProp: true
         };
     }
 
@@ -866,6 +929,27 @@ export class CalculatedReferenceProp<
     }
 }
 
+export class ParameterizedCalculatedReferenceProp<
+    TParameter,
+    TModel extends AnyModel,
+    TNullity extends NullityType
+> extends Prop<TModel, TNullity> {
+
+    override __type(): {
+        readonly prop: TNullity | true;
+        readonly parameterizedCalculatedReferenceProp: [TParameter, TModel, TNullity] | true;
+    } {
+        return { 
+            prop: true, 
+            parameterizedCalculatedReferenceProp: true
+        };
+    }
+
+    constructor(data: PropData) {
+        super(data);
+    }
+}
+
 export class CalculatedCollectionProp<
     TModel extends AnyModel
 > extends Prop<TModel, "NONNULL"> {
@@ -885,93 +969,25 @@ export class CalculatedCollectionProp<
     }
 }
 
-export class ValueCalcuator<TValue> {
+export class ParameterizedCalculatedCollectionProp<
+    TParameter,
+    TModel extends AnyModel
+> extends Prop<TModel, "NONNULL"> {
 
-    private constructor(
-        readonly sourceModel: () => AnyModel,
-        readonly sourceKeyPropName: string | undefined,
-        readonly fn: ValueCalcuatorFn<any, TValue>
-    ) {}
+    override __type(): {
+        readonly prop: "NONNULL" | true;
+        readonly parameterizedCalculatedCollectionProp: [TParameter, TModel, "NONNULL"] | true;
+    } {
+        return { 
+            prop: true, 
+            parameterizedCalculatedCollectionProp: true
+        };
+    }
 
-    static of<
-        TSourceModel extends AnyModel,
-        TValue,
-        TSourceKeyProp extends CalcuatorSourceKeys<TSourceModel> & string = ModelIdKey<TSourceModel>
-    >(
-        options: {
-            readonly sourceModel: () => TSourceModel,
-            readonly sourceKeyProp?: TSourceKeyProp,
-            readonly fn: ValueCalcuatorFn<
-                SimpleDataTypeOf<AllModelMembers<TSourceModel>[TSourceKeyProp], "UNDEFINED">, 
-                TValue
-            >
-        }
-    ): ValueCalcuator<TValue> {
-        return new ValueCalcuator(
-            options.sourceModel,
-            options.sourceKeyProp,
-            options.fn
-        );
+    constructor(data: PropData) {
+        super(data);
     }
 }
-
-export class TargetCalcuator<TTargetModel extends AnyModel> {
-
-    private constructor(
-        readonly sourceModel: () => AnyModel,
-        readonly sourceKeyPropName: string | undefined,
-        readonly fn: TargetCalcuatorFn<any, TTargetModel>
-    ) {}
-
-    static of<
-        TSourceModel extends AnyModel,
-        TTargetModel extends AnyModel,
-        TSourceKeyProp extends keyof CalcuatorSourceKeys<TSourceModel> & string = ModelIdKey<TSourceModel>
-    >(
-        options: {
-            readonly sourceModel: () => TSourceModel,
-            readonly sourceKeyProp?: TSourceKeyProp,
-            readonly targetModel: () => TTargetModel,
-            readonly fn: TargetCalcuatorFn<
-                SimpleDataTypeOf<AllModelMembers<TSourceModel>[TSourceKeyProp], "UNDEFINED">, 
-                TTargetModel
-            >
-        }
-    ): TargetCalcuator<TTargetModel> {
-        return new TargetCalcuator(
-            options.sourceModel,
-            options.sourceKeyProp,
-            options.fn
-        );
-    }
-}
-
-export type ValueCalcuatorFn<TKey, TValue> =
-    (
-        ctx: ValueCalcuatorContext<TKey>
-    ) => Promise<ReadonlyArray<[TKey, TValue]>>;
-
-export type ValueCalcuatorContext<
-    TKey
-> = {
-    readonly sqlClient: SqlClient;
-    readonly keys: ReadonlyArray<TKey>;
-};
-
-export type TargetCalcuatorFn<TKey, TTargetModel extends AnyModel> =
-    <X>(
-        ctx: TargetCalcuatorContext<TKey, TTargetModel, X>
-    ) => Promise<ReadonlyArray<[TKey, X]>>;
-
-export type TargetCalcuatorContext<
-    TKey, 
-    TTargetModel extends AnyModel, 
-    X
-> = {
-    readonly sqlClient: SqlClient;
-    readonly keys: ReadonlyArray<TKey>;
-    readonly view: View<TTargetModel, X>;
-};
 
 export type AssociationType = "ONE_TO_ONE" | "ONE_TO_MANY" | "MANY_TO_ONE" | "MANY_TO_MANY";
 
@@ -1011,12 +1027,21 @@ export type PropData = {
         readonly nulls: OrderNullsType;
     }> | undefined;
     readonly reference: string | undefined;
-    readonly calcuated: {
-        readonly kind: "VALUE",
-        readonly calculator: ValueCalcuator<any>
+    readonly formulaData: {
+        readonly kind: "TS";
+        readonly formula: TsFormula<any>;
     } | {
-        readonly kind: "NONNULL_REFERENCE" | "NULLABLE_REFERENCE" | "COLLECTION",
-        readonly calculator: TargetCalcuator<any>
+        readonly kind: "SQL";
+        readonly formula: SqlFormula<any>;
+    } | undefined;
+    readonly calculatorData: {
+        readonly kind: "VALUE";
+        readonly parameterType: z.ZodType | undefined;
+        readonly calculator: ValueCalculator<any> | ParameterizedValueCalculator<any, any>;
+    } | {
+        readonly kind: "NONNULL_REFERENCE" | "NULLABLE_REFERENCE" | "COLLECTION";
+        readonly parameterType: z.ZodType | undefined;
+        readonly calculator: TargetCalculator<any> | ParameterizedTargetCalculator<any, any>;
     } | undefined;
 };
 
@@ -1047,7 +1072,8 @@ export type ScalarType =
     "STR" 
     | "I8" | "I16" | "I32" | "I64" 
     | "F32" | "F64" | "NUM" 
-    | "DATE";
+    | "DATE"
+    | "BOOL";
 
 const EMPTY_PROP_DEFINITION_DATA: PropData = {
     nullity: "NONNULL",
@@ -1062,7 +1088,8 @@ const EMPTY_PROP_DEFINITION_DATA: PropData = {
     mappedBy: undefined,
     orders: undefined,
     reference: undefined,
-    calcuated: undefined
+    formulaData: undefined,
+    calculatorData: undefined
 }
 
 export type TargetModelOf<TProp> =
@@ -1332,29 +1359,92 @@ export type M2MCreator = {
     >;
 };
 
+export type FormulaCreator = {
+
+    ts<R>(
+        formula: TsFormula<R>
+    ): TsFormulaProp<
+        NonNullable<R>,
+        IsNull<R> extends true ? "NULLABLE" : "NONNULL"
+    >;
+
+    sql<R>(
+        formula: SqlFormula<R>
+    ): SqlFormulaProp<
+        NonNullable<R>,
+        IsNull<R> extends true ? "NULLABLE" : "NONNULL"
+    >;
+};
+
 export type CalculatedCreator = {
 
     value<R>(
-        calculator: ValueCalcuator<R>
-    ): CalculatedValueProp<R, IsNull<R> extends true ? "NULLABLE" : "NONNULL">;
+        calculator: ValueCalculator<R>
+    ): CalculatedValueProp<
+        NonNullable<R>, 
+        IsNull<R> extends true ? "NULLABLE" : "NONNULL"
+    >;
+
+    value<TParameter, R>(
+        calculator: ParameterizedValueCalculator<TParameter, R>
+    ): ParameterizedCalculatedValueProp<
+        TParameter, 
+        NonNullable<R>,
+        IsNull<R> extends true ? "NULLABLE" : "NONNULL"
+    >;
 
     nonnullReference<
         TTargetModel extends AnyModel
     >(
-        calculator: TargetCalcuator<TTargetModel>
-    ): CalculatedReferenceProp<TTargetModel, "NONNULL">;
+        calculator: TargetCalculator<TTargetModel>
+    ): CalculatedReferenceProp<
+        TTargetModel, 
+        "NONNULL"
+    >;
+
+    nonnullReference<
+        TParameter,
+        TTargetModel extends AnyModel
+    >(
+        calculator: ParameterizedTargetCalculator<TParameter, TTargetModel>
+    ): ParameterizedCalculatedReferenceProp<
+        TParameter, 
+        TTargetModel, 
+        "NONNULL"
+    >;
 
     nullableReference<
         TTargetModel extends AnyModel
     >(
-        calculator: TargetCalcuator<TTargetModel>
-    ): CalculatedReferenceProp<TTargetModel, "NULLABLE">;
+        calculator: TargetCalculator<TTargetModel>
+    ): CalculatedReferenceProp<
+        TTargetModel, 
+        "NULLABLE"
+    >;
+
+    nullableReference<
+        TParameter,
+        TTargetModel extends AnyModel
+    >(
+        calculator: ParameterizedTargetCalculator<TParameter, TTargetModel>
+    ): ParameterizedCalculatedReferenceProp<
+        TParameter,
+        TTargetModel, 
+        "NULLABLE"
+    >;
 
     collection<
         TTargetModel extends AnyModel
     >(
-        calculator: TargetCalcuator<TTargetModel>
+        calculator: TargetCalculator<TTargetModel>
     ): CalculatedCollectionProp<TTargetModel>;
+
+    collection<
+        TParameter,
+        TTargetModel extends AnyModel
+    >(
+        calculator: ParameterizedTargetCalculator<TParameter, TTargetModel>
+    ): ParameterizedCalculatedCollectionProp<TParameter, TTargetModel>;
 };
 
 type SelfJoinColumnsOptions<
@@ -1599,57 +1689,125 @@ function m2mCreator(): M2MCreator {
     return m2m as M2MCreator;
 }
 
+function formulaCreator(): FormulaCreator {
+
+    function ts<R>(
+        formula: TsFormula<R>
+    ): TsFormulaProp<
+        NonNullable<R>, 
+        IsNull<R> extends true ? "NULLABLE" : "NONNULL"
+    > {
+        return new TsFormulaProp({
+            ...EMPTY_PROP_DEFINITION_DATA,
+            formulaData: {
+                kind: "TS",
+                formula
+            }
+        });
+    }
+
+    function sql<R>(
+        formula: SqlFormula<R>
+    ): SqlFormulaProp<
+        NonNullable<R>,
+        IsNull<R> extends true ? "NULLABLE" : "NONNULL"
+    > {
+        return new SqlFormulaProp({
+            ...EMPTY_PROP_DEFINITION_DATA,
+            formulaData: {
+                kind: "SQL",
+                formula
+            }
+        });
+    }
+
+    return {
+        ts,
+        sql
+    };
+}
+
 function calculatedCreator(): CalculatedCreator {
 
-    function value<R>(
-        calculator: ValueCalcuator<R>
-    ): CalculatedValueProp<R, IsNull<R> extends true ? "NULLABLE" : "NONNULL"> {
+    function value(calculator: any): any {
+        if (calculator instanceof ParameterizedValueCalculator) {
+            return new ParameterizedCalculatedValueProp({
+                ...EMPTY_PROP_DEFINITION_DATA,
+                calculatorData: {
+                    kind: "VALUE",
+                    parameterType: calculator.parameterType,
+                    calculator
+                }
+            });
+        }
         return new CalculatedValueProp({
             ...EMPTY_PROP_DEFINITION_DATA,
-            calcuated: {
+            calculatorData: {
                 kind: "VALUE",
+                parameterType: undefined,
                 calculator
             }
         });
     }
 
-    function nonnullReference<
-        TTargetModel extends AnyModel
-    >(
-        calculator: TargetCalcuator<TTargetModel>
-    ): CalculatedReferenceProp<TTargetModel, "NONNULL"> {
+    function nonnullReference(calculator: any): any {
+        if (calculator instanceof ParameterizedTargetCalculator) {
+            return new ParameterizedCalculatedCollectionProp({
+                ...EMPTY_PROP_DEFINITION_DATA,
+                calculatorData: {
+                    kind: "NONNULL_REFERENCE",
+                    parameterType: calculator.parameterType,
+                    calculator
+                }
+            });
+        }
         return new CalculatedReferenceProp({
             ...EMPTY_PROP_DEFINITION_DATA,
-            calcuated: {
+            calculatorData: {
                 kind: "NONNULL_REFERENCE",
+                parameterType: undefined,
                 calculator
             }
         });
     }
 
-    function nullableReference<
-        TTargetModel extends AnyModel
-    >(
-        calculator: TargetCalcuator<TTargetModel>
-    ): CalculatedReferenceProp<TTargetModel, "NULLABLE"> {
+    function nullableReference(calculator: any): any {
+        if (calculator instanceof ParameterizedTargetCalculator) {
+            return new ParameterizedCalculatedCollectionProp({
+                ...EMPTY_PROP_DEFINITION_DATA,
+                calculatorData: {
+                    kind: "NULLABLE_REFERENCE",
+                    parameterType: calculator.parameterType,
+                    calculator
+                }
+            });
+        }
         return new CalculatedReferenceProp({
             ...EMPTY_PROP_DEFINITION_DATA,
-            calcuated: {
+            calculatorData: {
                 kind: "NULLABLE_REFERENCE",
+                parameterType: undefined,
                 calculator
             }
         });
     }
 
-    function collection<
-        TTargetModel extends AnyModel
-    >(
-        calculator: TargetCalcuator<TTargetModel>
-    ): CalculatedCollectionProp<TTargetModel> {
+    function collection(calculator: any): any {
+        if (calculator instanceof ParameterizedTargetCalculator) {
+            return new ParameterizedCalculatedCollectionProp({
+                ...EMPTY_PROP_DEFINITION_DATA,
+                calculatorData: {
+                    kind: "COLLECTION",
+                    parameterType: calculator.parameterType,
+                    calculator
+                }
+            });
+        }
         return new CalculatedCollectionProp({
             ...EMPTY_PROP_DEFINITION_DATA,
-            calcuated: {
-                kind: "NONNULL_REFERENCE",
+            calculatorData: {
+                kind: "COLLECTION",
+                parameterType: undefined,
                 calculator
             }
         });

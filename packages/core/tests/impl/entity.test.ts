@@ -17,12 +17,13 @@ describe("EntityTest", () => {
         expect(
             [...paperBookEntity.allPropMap.keys()].sort()
         ).toEqual(
-            ["id", "name", "edition", "price", "store", "storeId", "authors", "size"].sort()
+            ["id", "name", "edition", "price", "store", "storeId", "authors", "authorCount",
+                "size"].sort()
         ); 
         expect(
             [...paperBookEntity.expandedPropMap.keys()].sort()
         ).toEqual(
-            ["id", "name", "edition", "price", "store", "storeId", "authors", 
+            ["id", "name", "edition", "price", "store", "storeId", "authors", "authorCount", 
                 "size", "size.width", "size.height"].sort()
         ); 
 

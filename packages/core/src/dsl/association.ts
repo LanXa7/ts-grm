@@ -1,7 +1,7 @@
 import { Entity, EntityProp } from "@/impl";
 import { AllModelMembers, AnyModel, RequiredModelKey } from "@/schema/model";
 import { AssociatedProp, CombinedNullity, EmbeddedProp, NullityType, ReferenceProp } from "@/schema/prop";
-import { EntityTableMembers, FilterType } from "./table";
+import { EntityTableMembers, FilterType, JoinPolicyType } from "./table";
 import { MakeExpression } from "./expression";
 import { AssociationModelImpl } from "@/impl/association_model_impl";
 
@@ -10,7 +10,7 @@ export interface AssociationModel<
     TSourceKey extends keyof AllModelMembers<TSourceModel> & string,
     TTargetModel extends AnyModel,
     TTargetKey extends keyof AllModelMembers<TTargetModel> & string,
-    TMultiAccepted extends boolean
+    TJoinPolicy extends JoinPolicyType
 > {
     __type(): {
         readonly associationModel: [
@@ -18,7 +18,7 @@ export interface AssociationModel<
             TSourceKey, 
             TTargetModel, 
             TTargetKey,
-            TMultiAccepted
+            TJoinPolicy
         ] | true;
     };
 
@@ -76,8 +76,8 @@ export type MakeAssociationModel<
             TargetModel,
             RequiredModelKey<TargetModel, TargetKey>,
             AllModelMembers<TModel>[TAssociationKey] extends ReferenceProp<any, any, any, any, any, any>
-                ? true
-                : false
+                ? "ARBITRARY"
+                : "REFERENCE"
         >
         : never;
 
@@ -101,8 +101,8 @@ export type MakeAssociationTableMembers<
             RequiredModelKey<TargetModel, TargetKey>,
             TNullity,
             AllModelMembers<TModel>[TAssociationKey] extends ReferenceProp<any, any, any, any, any, any>
-                ? true
-                : false
+                ? "ARBITRARY"
+                : "REFERENCE"
         >
         : never;
 
@@ -114,7 +114,7 @@ export type AssociationTable<
         infer SourceKey,
         infer TargetModel,
         infer TargetKey,
-        infer MultiAccepted
+        infer JoinPolicy
     >
         ? AssociationTableMembers<
             SourceModel, 
@@ -122,7 +122,7 @@ export type AssociationTable<
             TargetModel, 
             TargetKey,
             "NONNULL",
-            MultiAccepted
+            JoinPolicy
         > 
         : never;
       
@@ -132,7 +132,7 @@ export type AssociationTableMembers<
     TTargetModel extends AnyModel,
     TTargetKey extends keyof AllModelMembers<TTargetModel> & string,
     TNullity extends NullityType,
-    TMultiAccepted extends boolean
+    TJoinPolicy extends JoinPolicyType
 > = {
 
     __type(): {
@@ -141,26 +141,26 @@ export type AssociationTableMembers<
 
     source(
         filter?: FilterType<
-            AssociationModel<TSourceModel, TSourceKey, TTargetModel, TSourceKey, TMultiAccepted>, 
+            AssociationModel<TSourceModel, TSourceKey, TTargetModel, TSourceKey, TJoinPolicy>, 
             TSourceModel
         >
     ): EntityTableMembers<
         TSourceModel, 
         AllModelMembers<TSourceModel>,
         TNullity,
-        TMultiAccepted
+        TJoinPolicy
     >;
 
     target(
         filter?: FilterType<
-            AssociationModel<TSourceModel, TSourceKey, TTargetModel, TSourceKey, TMultiAccepted>, 
+            AssociationModel<TSourceModel, TSourceKey, TTargetModel, TSourceKey, TJoinPolicy>, 
             TTargetModel
         >
     ): EntityTableMembers<
         TTargetModel,
         AllModelMembers<TTargetModel>,
         TNullity,
-        TMultiAccepted
+        TJoinPolicy
     >;
 } & {
     readonly [K in `source${Capitalize<TSourceKey>}`]: 
