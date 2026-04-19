@@ -1,11 +1,11 @@
 import { dsl } from "@/dsl";
 import { dto } from "@/index";
-import { ParameterizedTargetCalculator, SqlFormula, TargetCalculator, TsFormula } from "@/schema/computed";
+import { SqlFormula, TsFormula, Calculator } from "@/schema/computed";
 import { DV_MODEL_NAME, model } from "@/schema/model";
 import { prop } from "@/schema/prop";
 import { z } from "zod"; 
 
-const BOOK_STORE_NEWEST_BOOK_CALCULATOR = TargetCalculator.of({
+const BOOK_STORE_NEWEST_BOOK_CALCULATOR = Calculator.targetOf({
     sourceModel: () => BOOK_STORE,
     targetModel: () => BOOK,
     fn: ctx => {
@@ -27,7 +27,7 @@ const BOOK_STORE_NEWEST_BOOK_CALCULATOR = TargetCalculator.of({
     }
 });
 
-const BOOK_STORE_SPECIFIED_BOOK_CALCULATOR = ParameterizedTargetCalculator.of({
+const BOOK_STORE_SPECIFIED_BOOK_CALCULATOR = Calculator.parameterizedTargetOf({
     parameterType: z.object({
         minEdition: z.number().nullable(),
         maxEdition: z.number().nullable()
@@ -54,8 +54,8 @@ export const BOOK_STORE = model("BookStore", "id", class {
     books = prop.o2m(BOOK)
         .mappedBy("store")
         .orderBy("name", { path: "edition", desc: true })
-    newestBooks = prop.calculated.collection(BOOK_STORE_NEWEST_BOOK_CALCULATOR);
-    specifiedBooks = prop.calculated.collection(BOOK_STORE_SPECIFIED_BOOK_CALCULATOR);
+    newestBooks = prop.calculated.collection(BOOK_STORE_NEWEST_BOOK_CALCULATOR)
+    specifiedBooks = prop.calculated.collection(BOOK_STORE_SPECIFIED_BOOK_CALCULATOR)
 });
 
 const BOOK_AUTHOR_COUNT_FORMULA: SqlFormula<number> = 

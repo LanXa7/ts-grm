@@ -12,7 +12,7 @@ export class TsFormula<TValue> {
     ) {}
 
     static of<
-        TData,
+        TData, 
         TValue
     >(
         options: {
@@ -38,7 +38,7 @@ export class SqlFormula<TValue> {
     }
 
     static of<
-        TSourceModel extends AnyModel,
+        TSourceModel extends AnyModel, 
         TValue
     >(options: {
         readonly sourceModel: () => TSourceModel,
@@ -54,15 +54,13 @@ export class SqlFormula<TValue> {
 export type SqlFormulaFn<TSourceModel extends AnyModel, TValue> =
     (table: EntityTable<TSourceModel, "NONE">) => Expression<TValue>;
 
-export class ValueCalculator<TValue> {
+export abstract class Calculator {
 
-    private constructor(
-        readonly sourceModel: () => AnyModel,
-        readonly sourceKeyPropName: string | undefined,
-        readonly fn: ValueCalculatorFn<any, TValue>
-    ) {}
+    protected constructor() {}
 
-    static of<
+    abstract get isParameterized(): boolean;
+
+    static valueOf<
         TSourceModel extends AnyModel,
         TValue,
         TSourceKeyProp extends CalcuatorSourceKeys<TSourceModel> & string = ModelIdKey<TSourceModel>
@@ -76,36 +74,14 @@ export class ValueCalculator<TValue> {
             >
         }
     ): ValueCalculator<TValue> {
-        return new ValueCalculator(
+        return new (ValueCalculator as any)(
             options.sourceModel,
             options.sourceKeyProp,
             options.fn
         );
     }
-}
 
-export type ValueCalculatorFn<TKey, TValue> =
-    (
-        ctx: ValueCalculatorContext<TKey>
-    ) => Promise<ReadonlyArray<[TKey, TValue]>>;
-
-export type ValueCalculatorContext<
-    TKey
-> = {
-    readonly sqlClient: SqlClient;
-    readonly keys: ReadonlyArray<TKey>;
-};
-
-export class ParameterizedValueCalculator<TParameter, TValue> {
-
-    private constructor(
-        readonly parameterType: z.ZodType,
-        readonly sourceModel: () => AnyModel,
-        readonly sourceKeyPropName: string | undefined,
-        readonly fn: ParameterizedValueCalculatorFn<TParameter, any, TValue>
-    ) {}
-
-    static of<
+    static parameterizedValueOf<
         TParameterSchema extends z.ZodType,
         TSourceModel extends AnyModel,
         TValue,
@@ -122,12 +98,106 @@ export class ParameterizedValueCalculator<TParameter, TValue> {
             >
         }
     ): ParameterizedValueCalculator<z.infer<TParameterSchema>, TValue> {
-        return new ParameterizedValueCalculator(
+        return new (ParameterizedValueCalculator as any)(
             options.parameterType,
             options.sourceModel,
             options.sourceKeyProp,
             options.fn
         );
+    }
+
+    static targetOf<
+        TSourceModel extends AnyModel,
+        TTargetModel extends AnyModel,
+        TSourceKeyProp extends keyof CalcuatorSourceKeys<TSourceModel> & string = ModelIdKey<TSourceModel>
+    >(
+        options: {
+            readonly sourceModel: () => TSourceModel,
+            readonly sourceKeyProp?: TSourceKeyProp,
+            readonly targetModel: () => TTargetModel,
+            readonly fn: TargetCalculatorFn<
+                SimpleDataTypeOf<AllModelMembers<TSourceModel>[TSourceKeyProp], "UNDEFINED">, 
+                TTargetModel
+            >
+        }
+    ): TargetCalculator<TTargetModel> {
+        return new (TargetCalculator as any)(
+            options.sourceModel,
+            options.sourceKeyProp,
+            options.fn
+        );
+    }
+
+    static parameterizedTargetOf<
+        TParameterSchema extends z.ZodType,
+        TSourceModel extends AnyModel,
+        TTargetModel extends AnyModel,
+        TSourceKeyProp extends keyof CalcuatorSourceKeys<TSourceModel> & string = ModelIdKey<TSourceModel>
+    >(
+        options: {
+            readonly parameterType: TParameterSchema,
+            readonly sourceModel: () => TSourceModel,
+            readonly sourceKeyProp?: TSourceKeyProp,
+            readonly targetModel: () => TTargetModel,
+            readonly fn: ParameterizedTargetCalculatorFn<
+                z.infer<TParameterSchema>,
+                SimpleDataTypeOf<AllModelMembers<TSourceModel>[TSourceKeyProp], "UNDEFINED">, 
+                TTargetModel
+            >
+        }
+    ): ParameterizedTargetCalculator<
+        z.infer<TParameterSchema>,
+        TTargetModel
+    > {
+        return new (ParameterizedTargetCalculator as any)(
+            options.parameterType,
+            options.sourceModel,
+            options.sourceKeyProp,
+            options.fn
+        );
+    }
+}
+
+export class ValueCalculator<TValue> extends Calculator {
+
+    private constructor(
+        readonly sourceModel: () => AnyModel,
+        readonly sourceKeyPropName: string | undefined,
+        readonly fn: ValueCalculatorFn<any, TValue>
+    ) {
+        super();
+    }
+
+    get isParameterized(): false {
+        return false;
+    }
+}
+
+export type ValueCalculatorFn<TKey, TValue> =
+    (
+        ctx: ValueCalculatorContext<TKey>
+    ) => Promise<ReadonlyArray<[TKey, TValue]>>;
+
+export type ValueCalculatorContext<
+    TKey
+> = {
+    readonly sqlClient: SqlClient;
+    readonly keys: ReadonlyArray<TKey>;
+};
+
+export class ParameterizedValueCalculator<TParameter, TValue> extends Calculator {
+
+    private constructor(
+        readonly parameterType: z.ZodType,
+        readonly sourceModel: () => AnyModel,
+        readonly sourceKeyPropName: string | undefined,
+        readonly fn: ParameterizedValueCalculatorFn<TParameter, any, TValue>
+    ) {
+        super();
+    }
+
+    get isParameterized(): true {
+        return true;
     }
 }
 
@@ -145,38 +215,18 @@ export type ParameterizedValueCalculatorFn<TParameter, TKey, TValue> =
         ctx: ParameterizedValueCalculatorContext<TParameter, TKey>
     ) => Promise<ReadonlyArray<[TKey, TValue]>>;
 
-export class TargetCalculator<TTargetModel extends AnyModel> {
+export class TargetCalculator<TTargetModel extends AnyModel> extends Calculator {
 
     private constructor(
         readonly sourceModel: () => AnyModel,
         readonly sourceKeyPropName: string | undefined,
         readonly fn: TargetCalculatorFn<any, TTargetModel>
-    ) {}
+    ) {
+        super();
+    }
 
     get isParameterized(): false {
         return false;
-    }
-
-    static of<
-        TSourceModel extends AnyModel,
-        TTargetModel extends AnyModel,
-        TSourceKeyProp extends keyof CalcuatorSourceKeys<TSourceModel> & string = ModelIdKey<TSourceModel>
-    >(
-        options: {
-            readonly sourceModel: () => TSourceModel,
-            readonly sourceKeyProp?: TSourceKeyProp,
-            readonly targetModel: () => TTargetModel,
-            readonly fn: TargetCalculatorFn<
-                SimpleDataTypeOf<AllModelMembers<TSourceModel>[TSourceKeyProp], "UNDEFINED">, 
-                TTargetModel
-            >
-        }
-    ): TargetCalculator<TTargetModel> {
-        return new TargetCalculator(
-            options.sourceModel,
-            options.sourceKeyProp,
-            options.fn
-        );
     }
 }
 
@@ -198,46 +248,19 @@ export type TargetCalculatorContext<
 export class ParameterizedTargetCalculator<
     TParameter,
     TTargetModel extends AnyModel
-> {
+> extends Calculator {
 
     private constructor(
         readonly parameterType: z.ZodType,
         readonly sourceModel: () => AnyModel,
         readonly sourceKeyPropName: string | undefined,
         readonly fn: ParameterizedTargetCalculatorFn<TParameter, any, TTargetModel>
-    ) {}
+    ) {
+        super();
+    }
 
     get isParameterized(): true {
         return true;
-    }
-
-    static of<
-        TParameterSchema extends z.ZodType,
-        TSourceModel extends AnyModel,
-        TTargetModel extends AnyModel,
-        TSourceKeyProp extends keyof CalcuatorSourceKeys<TSourceModel> & string = ModelIdKey<TSourceModel>
-    >(
-        options: {
-            readonly parameterType: TParameterSchema,
-            readonly sourceModel: () => TSourceModel,
-            readonly sourceKeyProp?: TSourceKeyProp,
-            readonly targetModel: () => TTargetModel,
-            readonly fn: ParameterizedTargetCalculatorFn<
-                z.infer<TParameterSchema>,
-                SimpleDataTypeOf<AllModelMembers<TSourceModel>[TSourceKeyProp], "UNDEFINED">, 
-                TTargetModel
-            >
-        }
-    ): ParameterizedTargetCalculator<
-        z.infer<TParameterSchema>,
-        TTargetModel
-    > {
-        return new ParameterizedTargetCalculator(
-            options.parameterType,
-            options.sourceModel,
-            options.sourceKeyProp,
-            options.fn
-        );
     }
 }
 

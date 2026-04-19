@@ -1,4 +1,47 @@
-import {DV_ABSTRACT, DV_MODEL_NAME, model, prop, TB_INHERIT} from "@ts-grm/core";
+import { dsl, DV_ABSTRACT, DV_MODEL_NAME, model, Calculator, prop, TB_INHERIT, TsFormula, SqlFormula, dto } from "@ts-grm/core";
+import { z } from "zod";
+
+const BOOK_STORE_NEWEST_BOOK_CALCULATOR = Calculator.targetOf({
+    sourceModel: () => BOOK_STORE,
+    targetModel: () => BOOK,
+    fn: ctx => {
+        return ctx.sqlClient.createQuery(BOOK, (q, book) => {
+            q.where(
+                dsl.tuple(book.name, book.edition).inSubQuery(
+                    dsl.subQuery(BOOK, (q, book) => {
+                        q.where(book.storeId.in(...ctx.keys));
+                        q.groupBy(book.storeId);
+                        return q.select(book.name, dsl.max(book.edition).asNonNull());
+                    })
+                )
+            );
+            return q.select(
+                book.storeId.asNonNull(),
+                book.fetch(ctx.view)
+            )
+        }).fetchList();
+    }
+});
+
+const BOOK_STORE_SPECIFIED_BOOK_CALCULATOR = Calculator.parameterizedTargetOf({
+    parameterType: z.object({
+        minEdition: z.number().nullable(),
+        maxEdition: z.number().nullable()
+    }),
+    sourceModel: () => BOOK_STORE,
+    targetModel: () => BOOK,
+    fn: ctx => {
+        return ctx.sqlClient.createQuery(BOOK, (q, book) => {
+            q.where(book.storeId.in(...ctx.keys));
+            q.where(book.edition.gteIf(ctx.parameter.minEdition));
+            q.where(book.edition.lteIf(ctx.parameter.maxEdition));
+            return q.select(
+                book.storeId.asNonNull(),
+                book.fetch(ctx.view)
+            )
+        }).fetchList();
+    }
+});
 
 export const BOOK_STORE = model(
     "BookStore", 
@@ -9,6 +52,8 @@ export const BOOK_STORE = model(
         version = prop.i32()
         books = prop.o2m(BOOK).mappedBy("store")
             .orderBy("name", { path: "edition", desc: true })
+        newestBooks = prop.calculated.collection(BOOK_STORE_NEWEST_BOOK_CALCULATOR)
+        specifiedBooks = prop.calculated.collection(BOOK_STORE_SPECIFIED_BOOK_CALCULATOR)
     },
     ctx => {
         ctx.table({
@@ -40,6 +85,20 @@ export const ONLINE_BOOK_STORE = model.extends(BOOK_STORE)(
         discriminatorValue: DV_MODEL_NAME
     })
 );
+
+const BOOK_AUTHOR_COUNT_FORMULA: SqlFormula<number> = 
+    SqlFormula.of({
+        sourceModel: () => BOOK,
+        fn: book => dsl.subQuery(
+            dsl.associationModel(BOOK, "authors"), 
+            (q, assoication) => {
+                q.where(
+                    assoication.sourceId.eq(book.id)
+                );
+                return q.select(dsl.count());
+            }
+        )
+    });
 
 export const BOOK = model("Book", "id", 
     class {
@@ -115,13 +174,20 @@ export const PDF_ELECTRONIC_BOOK = model.extends(ELECTRONIC_BOOK)(
     }
 );
 
+const AUTHOR_FULL_NAME_FORMULA: TsFormula<string> = 
+    TsFormula.of({
+        view: () => dto.view(AUTHOR, $ => $.name($ => $.firstName.lastName)),
+        fn: data => `${data.name.firstName} ${data.name.lastName}`
+    });
+
 export const AUTHOR = model("Author", "id", class {
     id = prop.i64()
     name = prop.embedded({
         firstName: prop.str(),
         lastName: prop.str()
     })
-    books = prop.m2m(BOOK).mappedBy("authors");
+    books = prop.m2m(BOOK).mappedBy("authors")
+    fullName = prop.formula.ts(AUTHOR_FULL_NAME_FORMULA)
 });
 
 export const TREE_NODE = model(

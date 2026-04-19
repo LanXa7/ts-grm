@@ -57,6 +57,7 @@ export type {
     CalculatedCreator
 } from "./schema/prop";
 export type { 
+    TsFormulaFn,
     SqlFormulaFn,
     ValueCalculatorContext,
     ParameterizedValueCalculatorContext,
@@ -68,6 +69,9 @@ export type {
     ParameterizedTargetCalculatorFn
 } from "./schema/computed";
 export {
+    TsFormula,
+    SqlFormula,
+    Calculator,
     ValueCalculator,
     ParameterizedValueCalculator,
     TargetCalculator,
