@@ -397,6 +397,38 @@ describe("ViewShapeTest", () => {
         }>();
     });
 
+    it("testDefaultReference", () => {
+
+        const view = dto.view(BOOK, $ => $.store());
+
+        type ViewType = TypeOf<typeof view>;
+
+        expectTypeOf<ViewType>().toEqualTypeOf<{
+            store: {
+                id: string;
+                name: string;
+                version: number;
+            } | null;
+        }>();
+    });
+
+    it("testDefaultCollection", () => {
+        
+        const view = dto.view(BOOK, $ => $.authors());
+
+        type ViewType = TypeOf<typeof view>;
+
+        expectTypeOf<ViewType>().toEqualTypeOf<{
+            authors: {
+                id: number;
+                name: {
+                    firstName: string;
+                    lastName: string;
+                }
+            }[];
+        }>();
+    });
+
     it("testDefaultEmbedded", () => {
         
         const view = dto.view(BOOK, $ => $
@@ -567,5 +599,37 @@ describe("ViewShapeTest", () => {
                 name: string
             }[]
         }>;
+    });
+
+    it("caclulated", () => {
+        const view = dto.view(BOOK_STORE, $ => $
+            .id
+            .newestBooks($ => $.id.name)
+            .specifiedBooks(
+                {minEdition: 3, maxEdition: 4}
+            ).$as("middleBooks")
+            .specifiedBooks(
+                {maxEdition: 4}, 
+                $ => $.id.name
+            ).$as("oldestBooks")
+        );
+        type ViewType = TypeOf<typeof view>;
+        expectTypeOf<ViewType>().toEqualTypeOf<{
+            id: string;
+            middleBooks: {
+                id: number;
+                name: string;
+                edition: number;
+                price: number;
+            }[];
+            newestBooks: {
+                id: number;
+                name: string;
+            }[];
+            oldestBooks: {
+                id: number;
+                name: string;
+            }[];
+        }>();
     });
 });

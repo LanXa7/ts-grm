@@ -828,17 +828,34 @@ export class ConfigurableManyToManyProp<
     }
 }
 
+export abstract class FormulaProp<
+    T, 
+    TNullity extends NullityType
+> extends Prop<T, TNullity> {
+
+    abstract __type(): {
+        readonly prop: TNullity | true;
+        readonly formulaProp: [T, TNullity] | true;
+    };
+
+    constructor(data: PropData) {
+        super(data);
+    }
+}
+
 export class TsFormulaProp<
     T, 
-    TNullity extends NullityType = "NONNULL"
-> extends Prop<T, TNullity> {
+    TNullity extends NullityType
+> extends FormulaProp<T, TNullity> {
  
     override __type(): {
         readonly prop: TNullity | true;
+        readonly formulaProp: [T, TNullity] | true;
         readonly tsFormulaProp: TNullity | true;
     } {
         return { 
             prop: true, 
+            formulaProp: true,
             tsFormulaProp: true
         };
     }
@@ -850,15 +867,17 @@ export class TsFormulaProp<
 
 export class SqlFormulaProp<
     T, 
-    TNullity extends NullityType = "NONNULL"
-> extends Prop<T, TNullity> {
+    TNullity extends NullityType
+> extends FormulaProp<T, TNullity> {
  
     override __type(): {
         readonly prop: TNullity | true;
+        readonly formulaProp: [T, TNullity] | true;
         readonly sqlFormulaProp: TNullity | true;
     } {
         return { 
             prop: true, 
+            formulaProp: true,
             sqlFormulaProp: true
         };
     }

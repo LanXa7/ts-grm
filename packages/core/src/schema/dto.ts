@@ -1,6 +1,6 @@
 import { AtLeastOne } from "../dsl/utils";
 import { AllModelMembers, AnyModel, DerivedModel, Extends, RequiredModelKey, ModelName, ModelSuperNames } from "@/schema/model";
-import { CollectionProp, EmbeddedProp, NullityOf, ReferenceProp, DirectTypeOf, ScalarProp, NullityType, AssociatedProp, Prop } from "@/schema/prop";
+import { CollectionProp, EmbeddedProp, NullityOf, ReferenceProp, DirectTypeOf, ScalarProp, NullityType, AssociatedProp, Prop, FormulaProp, CalculatedValueProp, ParameterizedCalculatedValueProp, CalculatedReferenceProp, ParameterizedCalculatedReferenceProp, CalculatedCollectionProp, ParameterizedCalculatedCollectionProp } from "@/schema/prop";
 import { Prettify, UnionToIntersection } from "@/utils";
 import { ModelOrder } from "./order";
 import { EntityTable } from "../dsl/table";
@@ -98,8 +98,8 @@ export type ViewBuilder<
                 K & string
             >
         : TMembers[K] extends ReferenceProp<infer R, infer Nullity, any, any, any, any>
-            ? <X>(
-                fn: (
+            ? <X = AllScalarsType<AllModelMembers<R>, TViewNullType>>(
+                fn?: (
                     builder: ViewBuilder<R, AllModelMembers<R>, TViewNullType, {}, {}, any, any>
                 ) => ViewBuilder<R, AllModelMembers<R>, TViewNullType, X, any, any, any>
             ) => ViewBuilder<
@@ -117,8 +117,8 @@ export type ViewBuilder<
                 K & string
             >
         : TMembers[K] extends CollectionProp<infer R>
-            ? <X>(
-                fn: (
+            ? <X = AllScalarsType<AllModelMembers<R>, TViewNullType>>(
+                fn?: (
                     builder: ViewBuilder<R, AllModelMembers<R>, TViewNullType, {}, {}, any, any>
                 ) => ViewBuilder<R, AllModelMembers<R>, TViewNullType, X, any, any, any>
             ) => ViewBuilder<
@@ -137,6 +137,140 @@ export type ViewBuilder<
             >
         : TMembers[K] extends EmbeddedProp<infer R, infer Nullity, any>
             ? EmbeddedMethods<TModel, TMembers, TViewNullType, TCurrent, TRecursiveKindMap, K, R, Nullity>
+        : TMembers[K] extends FormulaProp<infer R, infer Nullity>
+            ? ViewBuilder<
+                TModel,
+                TMembers, 
+                TViewNullType,
+                TransformedType<
+                    TViewNullType,
+                    TCurrent, 
+                    XTypeOfView<K, R, Nullity, TViewNullType>, 
+                    TRecursiveKindMap
+                >,
+                TRecursiveKindMap,
+                TMembers[K],
+                K & string
+            >
+        : TMembers[K] extends CalculatedValueProp<infer R, infer Nullity>
+            ? ViewBuilder<
+                TModel,
+                TMembers, 
+                TViewNullType,
+                TransformedType<
+                    TViewNullType,
+                    TCurrent, 
+                    XTypeOfView<K, R, Nullity, TViewNullType>, 
+                    TRecursiveKindMap
+                >,
+                TRecursiveKindMap,
+                TMembers[K],
+                K & string
+            >
+        : TMembers[K] extends ParameterizedCalculatedValueProp<
+            infer Parameter, 
+            infer R, 
+            infer Nullity
+        >
+            ? (parameter: Parameter) => ViewBuilder<
+                TModel,
+                TMembers, 
+                TViewNullType,
+                TransformedType<
+                    TViewNullType,
+                    TCurrent, 
+                    XTypeOfView<K, R, Nullity, TViewNullType>, 
+                    TRecursiveKindMap
+                >,
+                TRecursiveKindMap,
+                TMembers[K],
+                K & string
+            >
+        : TMembers[K] extends CalculatedReferenceProp<infer R, infer Nullity>
+            ? <X = AllScalarsType<AllModelMembers<R>, TViewNullType>>(
+                fn?: (
+                    builder: ViewBuilder<R, AllModelMembers<R>, TViewNullType, {}, {}, any, any>
+                ) => ViewBuilder<R, AllModelMembers<R>, TViewNullType, X, any, any, any>
+            ) => ViewBuilder<
+                TModel,
+                TMembers,
+                TViewNullType,
+                TransformedType<
+                    TViewNullType,
+                    TCurrent, 
+                    XTypeOfView<K, X, Nullity, TViewNullType>, 
+                    TRecursiveKindMap
+                >,
+                TRecursiveKindMap,
+                TMembers[K],
+                K & string
+            >
+        : TMembers[K] extends ParameterizedCalculatedReferenceProp<
+            infer Parameter, 
+            infer R, 
+            infer Nullity
+        >
+            ? <X = AllScalarsType<AllModelMembers<R>, TViewNullType>>(
+                parameter: Parameter,
+                fn?: (
+                    builder: ViewBuilder<R, AllModelMembers<R>, TViewNullType, {}, {}, any, any>
+                ) => ViewBuilder<R, AllModelMembers<R>, TViewNullType, X, any, any, any>
+            ) => ViewBuilder<
+                TModel,
+                TMembers,
+                TViewNullType,
+                TransformedType<
+                    TViewNullType,
+                    TCurrent, 
+                    XTypeOfView<K, X, Nullity, TViewNullType>, 
+                    TRecursiveKindMap
+                >,
+                TRecursiveKindMap,
+                TMembers[K],
+                K & string
+            >
+        : TMembers[K] extends CalculatedCollectionProp<infer R>
+            ? <X = AllScalarsType<AllModelMembers<R>, TViewNullType>>(
+                fn?: (
+                    builder: ViewBuilder<R, AllModelMembers<R>, TViewNullType, {}, {}, any, any>
+                ) => ViewBuilder<R, AllModelMembers<R>, TViewNullType, X, any, any, any>
+            ) => ViewBuilder<
+                TModel,
+                TMembers,
+                TViewNullType,
+                TransformedType<
+                    TViewNullType,
+                    TCurrent, 
+                    XTypeOfView<K, X[], "NONNULL", TViewNullType>, 
+                    TRecursiveKindMap
+                >,
+                TRecursiveKindMap,
+                TMembers[K],
+                K & string
+            >
+        : TMembers[K] extends ParameterizedCalculatedCollectionProp<
+            infer Parameter,
+            infer R
+        >
+            ? <X = AllScalarsType<AllModelMembers<R>, TViewNullType>>(
+                parameter: Parameter,
+                fn?: (
+                    builder: ViewBuilder<R, AllModelMembers<R>, TViewNullType, {}, {}, any, any>
+                ) => ViewBuilder<R, AllModelMembers<R>, TViewNullType, X, any, any, any>
+            ) => ViewBuilder<
+                TModel,
+                TMembers,
+                TViewNullType,
+                TransformedType<
+                    TViewNullType,
+                    TCurrent, 
+                    XTypeOfView<K, X[], "NONNULL", TViewNullType>, 
+                    TRecursiveKindMap
+                >,
+                TRecursiveKindMap,
+                TMembers[K],
+                K & string
+            >
         : never
 }
 & AllScalars<TModel, TMembers, TViewNullType, TCurrent, TRecursiveKindMap>

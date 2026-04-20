@@ -29,8 +29,8 @@ const BOOK_STORE_NEWEST_BOOK_CALCULATOR = Calculator.targetOf({
 
 const BOOK_STORE_SPECIFIED_BOOK_CALCULATOR = Calculator.parameterizedTargetOf({
     parameterType: z.object({
-        minEdition: z.number().nullable(),
-        maxEdition: z.number().nullable()
+        minEdition: z.number().nullish(),
+        maxEdition: z.number().nullish()
     }),
     sourceModel: () => BOOK_STORE,
     targetModel: () => BOOK,
@@ -132,7 +132,7 @@ export const PDF_ELECTRONIC_BOOK = model.extends(ELECTRONIC_BOOK)(
 
 const AUTHOR_FULL_NAME_FORMULA: TsFormula<string> = 
     TsFormula.of({
-        view: () => dto.view(AUTHOR, $ => $.name($ => $.firstName.lastName)),
+        view: () => dto.view(AUTHOR, $ => $.name()),
         fn: data => `${data.name.firstName} ${data.name.lastName}`
     });
 
