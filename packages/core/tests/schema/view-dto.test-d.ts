@@ -601,17 +601,36 @@ describe("ViewShapeTest", () => {
         }>;
     });
 
+    it("tsFormula", () => {
+        const view = dto.view(AUTHOR, $ => $
+            .id
+            .fullName
+        );
+        type ViewType = TypeOf<typeof view>;
+        expectTypeOf<ViewType>().toEqualTypeOf<{
+            id: number;
+            fullName: string;
+        }>();
+    });
+
+    it("sqlFormula", () => {
+        const view = dto.view(BOOK, $ => $
+            .id
+            .authorCount
+        );
+        type ViewType = TypeOf<typeof view>;
+        expectTypeOf<ViewType>().toEqualTypeOf<{
+            id: number;
+            authorCount: number;
+        }>();
+    });
+
     it("caclulated", () => {
         const view = dto.view(BOOK_STORE, $ => $
             .id
             .newestBooks($ => $.id.name)
-            .specifiedBooks(
-                {minEdition: 3, maxEdition: 4}
-            ).$as("middleBooks")
-            .specifiedBooks(
-                {maxEdition: 4}, 
-                $ => $.id.name
-            ).$as("oldestBooks")
+            .specifiedBooks({minEdition: 3, maxEdition: 4}).$as("middleBooks")
+            .specifiedBooks({maxEdition: 4}, $ => $.id.name).$as("oldestBooks")
         );
         type ViewType = TypeOf<typeof view>;
         expectTypeOf<ViewType>().toEqualTypeOf<{
