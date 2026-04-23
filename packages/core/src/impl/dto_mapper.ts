@@ -105,6 +105,36 @@ class Mapper {
     }
 
     private _addImplicitFields(prop: FetchProp) {
+        if (prop.isEntityProp) {
+            const entityProp = prop as EntityProp;
+            if (entityProp.formulaData?.kind === "TS") {
+                const view = entityProp.formulaData.formula.view();
+                for (const field of view.mapper.fields) {
+                    let dtoField: DtoField = {
+                        path: undefined,
+                        prop: field.prop,
+                        bridgeProp: field.bridgeProp,
+                        dto: undefined,
+                        fetchType: undefined,
+                        orders: undefined,
+                        recursiveDepth: field.recursiveDepth,
+                        nullable: false,
+                        dependency: undefined
+                    };
+                    if (field.paths.length === 0) {
+                        this._addImpl(dtoField, false);
+                    } else {
+                        for (const path of field.paths) {
+                            const newPath = typeof path === "string"
+                                ? [`<implicit:${prop.name}>`, path]
+                                : [`<implicit:${prop.name}>`, ...path];
+                            this._addImpl({...dtoField, path: newPath}, true);
+                        }
+                    }
+                }
+                return;
+            }
+        }
         const referenceKeyProp = prop.referenceKeyProp;
         if (referenceKeyProp != null) {
             this._addImpl(dtoField(referenceKeyProp), false);

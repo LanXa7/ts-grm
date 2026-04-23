@@ -253,7 +253,7 @@ type ExpectedKeysImpl<
         }[keyof TModelMembers] :
         never;
 
-export type CalcuatorSourceKeys<
+export type CalculatorSourceKeys<
     TModelMembers
 > =
     TModelMembers extends object 

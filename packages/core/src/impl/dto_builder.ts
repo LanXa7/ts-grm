@@ -199,7 +199,7 @@ class DtoBuilder {
                 ? field.path
                 : field.path.join(".");
             if (this.addedPaths.has(key)) {
-                throw new StateError(`Cannot add the DTO path "${field.path}"`);
+                throw new StateError(`Cannot add the DTO path "${field.path}" twice`);
             }
             this.addedPaths.add(key);
         }
@@ -295,12 +295,8 @@ export function dtoField(
         };
     }
     if (prop.targetEntity != null) {
-        if (fn == null) {
-            throw new ArgumentError(`Cannot add association property 
-                "${prop.toString()}" without child DTO lambda`);
-        }
         const childBuilder = createTypedDtoBuilder(prop.targetEntity);
-        fn(childBuilder);
+        (fn ?? ($ => ($ as any).allScalars()))(childBuilder);
         const childDto = childBuilder.__unwrap().build();
         return {
             path: prop.name,

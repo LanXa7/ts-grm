@@ -15,7 +15,7 @@ import { CascadeType, JoinTable, JoinColumns, JoinEntity } from "./join";
 import { FlattenMembers } from "@/utils";
 import { ArgumentError } from "@/error/common";
 import { IsNull } from "@/dsl/utils";
-import { ParameterizedTargetCalculator, ParameterizedValueCalculator, SqlFormula, TargetCalculator, TsFormula, ValueCalculator } from "./computed";
+import { Calculator, ParameterizedTargetCalculator, ParameterizedValueCalculator, SqlFormula, TargetCalculator, TsFormula, ValueCalculator } from "./computed";
 import { z } from "zod"; 
 
 export const prop = {
@@ -1046,22 +1046,8 @@ export type PropData = {
         readonly nulls: OrderNullsType;
     }> | undefined;
     readonly reference: string | undefined;
-    readonly formulaData: {
-        readonly kind: "TS";
-        readonly formula: TsFormula<any>;
-    } | {
-        readonly kind: "SQL";
-        readonly formula: SqlFormula<any>;
-    } | undefined;
-    readonly calculatorData: {
-        readonly kind: "VALUE";
-        readonly parameterType: z.ZodType | undefined;
-        readonly calculator: ValueCalculator<any> | ParameterizedValueCalculator<any, any>;
-    } | {
-        readonly kind: "NONNULL_REFERENCE" | "NULLABLE_REFERENCE" | "COLLECTION";
-        readonly parameterType: z.ZodType | undefined;
-        readonly calculator: TargetCalculator<any> | ParameterizedTargetCalculator<any, any>;
-    } | undefined;
+    readonly formulaData: FormulaData | undefined;
+    readonly calculatorData: CalculatorData | undefined;
 };
 
 export type JoinTableData = {
@@ -1086,6 +1072,20 @@ export type JoinColumnData = {
     readonly columnName: string;
     readonly referencedSubPath: string | undefined;
 }
+
+export type FormulaData = {
+    readonly kind: "TS";
+    readonly formula: TsFormula<any>;
+} | {
+    readonly kind: "SQL";
+    readonly formula: SqlFormula<any>;
+};
+
+export type CalculatorData = {
+    readonly kind: "VALUE" |  "NONNULL_REFERENCE" | "NULLABLE_REFERENCE" | "COLLECTION";
+    readonly parameterType: z.ZodType | undefined;
+    readonly calculator: Calculator;
+};
 
 export type ScalarType = 
     "STR" 

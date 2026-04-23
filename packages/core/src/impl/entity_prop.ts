@@ -1,4 +1,4 @@
-import { AssociationType, JoinColumnData, Prop, PropData, ScalarType } from "@/schema/prop";
+import { AssociationType, CalculatorData, FormulaData, JoinColumnData, Prop, PropData, ScalarType } from "@/schema/prop";
 import { Entity } from "./entity";
 import { PropError } from "@/error/metadata_error";
 import { ModelImpl } from "./model_impl";
@@ -208,6 +208,14 @@ export class EntityProp {
         if (this.associationType === "MANY_TO_ONE" || this.associationType === "ONE_TO_ONE") {
             return this._data.joinColumns?.keyProp ?? this._targetEntity?.idKey;
         }
+    }
+
+    get formulaData(): FormulaData | undefined {
+        return this._data.formulaData;
+    }
+
+    get calculatorData(): CalculatorData | undefined {
+        return this._data.calculatorData;
     }
 
     get span(): number {

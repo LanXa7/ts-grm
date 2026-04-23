@@ -1,15 +1,16 @@
 import { StateError } from "@/error/common";
 import { FetchProp } from "./dto";
 import { DtoMapper, DtoMapperField } from "./dto_mapper";
+import { EntityProp } from "./entity_prop";
 
 export type Shape = {
     [key: string]: ShapeMember;
 } & {
-    __implicit?: { [key: string]: number | { __array: Shape } };
+    __implicit?: { [key: string]: number };
 };
 
 export type ShapeMember = 
-    (number | undefined)
+    (number | string | undefined)
     | Shape
     | { __array: Shape }
     | { __ref: Shape };
@@ -73,9 +74,20 @@ function handleExplictField(field: DtoMapperField) {
                     }
                     scope = scope.parent;
                 } else {
-                    let foldShape = scope.shape[path[i]!] as Shape;
+                    const implicitName = 
+                        path[i]!.startsWith("<implicit:") && path[i]!.endsWith(">")
+                            ? path[i]!.substring(10, path[i]!.length - 1)
+                            : undefined;
+                    let foldShape: Shape | undefined = 
+                        implicitName != null
+                            ? scope.implicit[implicitName] as Shape
+                            : scope.shape[path[i]!] as Shape;
                     if (foldShape == null) {
-                        scope.assign(path[i]!, foldShape = {});
+                        if (implicitName != null) {
+                            scope.implicit[implicitName] = foldShape = {};
+                        } else {
+                            scope.assign(path[i]!, foldShape = {});
+                        }
                     }
                     scope = scope.fold(foldShape);
                 }
@@ -123,6 +135,9 @@ function buildShapeMember(
     }
     if (ignoreColumnIndex) {
         return undefined;
+    }
+    if (field.prop.isEntityProp && (field.prop as EntityProp).formulaData?.kind === "TS") {
+        return field.prop.name;
     }
     return field.columnIndex;
 }
@@ -185,7 +200,7 @@ class ShapeScope {
         );
     }
 
-    get implicit(): {[key: string]: number | { __array: Shape }} {
+    get implicit(): {[key: string]: ShapeMember } {
         this._modelScope._reachable();
         return this._modelScope._getImplicit();   
     }
@@ -202,7 +217,7 @@ class ShapeScope {
         }
     }
 
-    private _getImplicit(): {[key: string]: number | { __array: Shape } } {
+    private _getImplicit(): {[key: string]: ShapeMember } {
         let i = this.shape.__implicit;
         if (i == null) {
             this.shape.__implicit = i = {};

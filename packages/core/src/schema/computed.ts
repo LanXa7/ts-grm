@@ -1,5 +1,5 @@
 import { EntityTable, Expression, SqlClient } from "@/dsl";
-import { AllModelMembers, AnyModel, CalcuatorSourceKeys, ModelIdKey } from "./model";
+import { AllModelMembers, AnyModel, CalculatorSourceKeys, ModelIdKey } from "./model";
 import { SimpleDataTypeOf, View } from "./dto";
 import { AbstractEntityTable } from "@/impl";
 import { z } from "zod";
@@ -63,7 +63,7 @@ export abstract class Calculator {
     static valueOf<
         TSourceModel extends AnyModel,
         TValue,
-        TSourceKeyProp extends CalcuatorSourceKeys<TSourceModel> & string = ModelIdKey<TSourceModel>
+        TSourceKeyProp extends CalculatorSourceKeys<TSourceModel> & string = ModelIdKey<TSourceModel>
     >(
         options: {
             readonly sourceModel: () => TSourceModel,
@@ -85,7 +85,7 @@ export abstract class Calculator {
         TParameterSchema extends z.ZodType,
         TSourceModel extends AnyModel,
         TValue,
-        TSourceKeyProp extends CalcuatorSourceKeys<TSourceModel> & string = ModelIdKey<TSourceModel>
+        TSourceKeyProp extends CalculatorSourceKeys<TSourceModel> & string = ModelIdKey<TSourceModel>
     >(
         options: {
             readonly parameterType: TParameterSchema,
@@ -109,7 +109,7 @@ export abstract class Calculator {
     static targetOf<
         TSourceModel extends AnyModel,
         TTargetModel extends AnyModel,
-        TSourceKeyProp extends keyof CalcuatorSourceKeys<TSourceModel> & string = ModelIdKey<TSourceModel>
+        TSourceKeyProp extends keyof CalculatorSourceKeys<TSourceModel> & string = ModelIdKey<TSourceModel>
     >(
         options: {
             readonly sourceModel: () => TSourceModel,
@@ -132,7 +132,7 @@ export abstract class Calculator {
         TParameterSchema extends z.ZodType,
         TSourceModel extends AnyModel,
         TTargetModel extends AnyModel,
-        TSourceKeyProp extends keyof CalcuatorSourceKeys<TSourceModel> & string = ModelIdKey<TSourceModel>
+        TSourceKeyProp extends keyof CalculatorSourceKeys<TSourceModel> & string = ModelIdKey<TSourceModel>
     >(
         options: {
             readonly parameterType: TParameterSchema,
