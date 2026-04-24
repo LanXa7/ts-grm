@@ -56,9 +56,12 @@ export type SqlFormulaFn<TSourceModel extends AnyModel, TValue> =
 
 export abstract class Calculator {
 
-    protected constructor() {}
+    protected constructor(
+        readonly sourceModel: () => AnyModel,
+        readonly sourceKeyPropName: string | undefined,
+    ) {}
 
-    abstract get isParameterized(): boolean;
+    abstract get parameterType(): z.ZodType | undefined;
 
     static valueOf<
         TSourceModel extends AnyModel,
@@ -124,6 +127,7 @@ export abstract class Calculator {
         return new (TargetCalculator as any)(
             options.sourceModel,
             options.sourceKeyProp,
+            options.targetModel,
             options.fn
         );
     }
@@ -153,6 +157,7 @@ export abstract class Calculator {
             options.parameterType,
             options.sourceModel,
             options.sourceKeyProp,
+            options.targetModel,
             options.fn
         );
     }
@@ -161,15 +166,15 @@ export abstract class Calculator {
 export class ValueCalculator<TValue> extends Calculator {
 
     private constructor(
-        readonly sourceModel: () => AnyModel,
-        readonly sourceKeyPropName: string | undefined,
+        sourceModel: () => AnyModel,
+        sourceKeyPropName: string | undefined,
         readonly fn: ValueCalculatorFn<any, TValue>
     ) {
-        super();
+        super(sourceModel, sourceKeyPropName);
     }
 
-    get isParameterized(): false {
-        return false;
+    get parameterType(): undefined {
+        return undefined;
     }
 }
 
@@ -189,15 +194,11 @@ export class ParameterizedValueCalculator<TParameter, TValue> extends Calculator
 
     private constructor(
         readonly parameterType: z.ZodType,
-        readonly sourceModel: () => AnyModel,
-        readonly sourceKeyPropName: string | undefined,
+        sourceModel: () => AnyModel,
+        sourceKeyPropName: string | undefined,
         readonly fn: ParameterizedValueCalculatorFn<TParameter, any, TValue>
     ) {
-        super();
-    }
-
-    get isParameterized(): true {
-        return true;
+        super(sourceModel, sourceKeyPropName);
     }
 }
 
@@ -218,15 +219,16 @@ export type ParameterizedValueCalculatorFn<TParameter, TKey, TValue> =
 export class TargetCalculator<TTargetModel extends AnyModel> extends Calculator {
 
     private constructor(
-        readonly sourceModel: () => AnyModel,
-        readonly sourceKeyPropName: string | undefined,
+        sourceModel: () => AnyModel,
+        sourceKeyPropName: string | undefined,
+        readonly targetModel:() => AnyModel,
         readonly fn: TargetCalculatorFn<any, TTargetModel>
     ) {
-        super();
+        super(sourceModel, sourceKeyPropName);
     }
 
-    get isParameterized(): false {
-        return false;
+    get parameterType(): undefined {
+        return undefined;
     }
 }
 
@@ -252,15 +254,12 @@ export class ParameterizedTargetCalculator<
 
     private constructor(
         readonly parameterType: z.ZodType,
-        readonly sourceModel: () => AnyModel,
-        readonly sourceKeyPropName: string | undefined,
+        sourceModel: () => AnyModel,
+        sourceKeyPropName: string | undefined,
+        readonly targetModel: () => AnyModel,
         readonly fn: ParameterizedTargetCalculatorFn<TParameter, any, TTargetModel>
     ) {
-        super();
-    }
-
-    get isParameterized(): true {
-        return true;
+        super(sourceModel, sourceKeyPropName);
     }
 }
 

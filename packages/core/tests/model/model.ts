@@ -47,6 +47,12 @@ const BOOK_STORE_SPECIFIED_BOOK_CALCULATOR = Calculator.parameterizedTargetOf({
     }
 });
 
+const BOOK_STORE_BOOK_NAMES_FORMULA: TsFormula<ReadonlyArray<string>> =
+    TsFormula.of({
+        view: () => dto.view(BOOK_STORE, $ => $.newestBooks($ => $.name)),
+        fn: data => data.newestBooks.map(book => book.name)
+    });
+
 export const BOOK_STORE = model("BookStore", "id", class {
     id = prop.i64().asString()
     name = prop.str()
@@ -54,6 +60,7 @@ export const BOOK_STORE = model("BookStore", "id", class {
     books = prop.o2m(BOOK)
         .mappedBy("store")
         .orderBy("name", { path: "edition", desc: true })
+    bookNames = prop.formula.ts(BOOK_STORE_BOOK_NAMES_FORMULA);
     newestBooks = prop.calculated.collection(BOOK_STORE_NEWEST_BOOK_CALCULATOR)
     specifiedBooks = prop.calculated.collection(BOOK_STORE_SPECIFIED_BOOK_CALCULATOR)
 });

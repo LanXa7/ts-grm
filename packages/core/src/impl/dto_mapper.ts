@@ -56,7 +56,7 @@ export type DtoMapperField = {
 
     readonly isDependent: boolean;
 
-    readonly columnIndex: number | undefined;
+    readonly columnIndex: number | string | undefined;
 }
 
 export type Path = string | ReadonlyArray<string>;
@@ -257,7 +257,7 @@ class Mapper {
             const newField: DtoMapperField = {
                 ...field,
                 recursiveDepth: undefined,
-                columnIndex: field.columnIndex != null 
+                columnIndex: typeof field.columnIndex === "number" 
                     ? field.columnIndex + columnIndexDelta 
                     : undefined,
                 dependencies: field.dependencies?.map(i => i + indexDelta)

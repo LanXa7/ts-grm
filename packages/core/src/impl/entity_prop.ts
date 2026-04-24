@@ -1,12 +1,14 @@
 import { AssociationType, CalculatorData, FormulaData, JoinColumnData, Prop, PropData, ScalarType } from "@/schema/prop";
 import { Entity } from "./entity";
 import { PropError } from "@/error/metadata_error";
-import { ModelImpl } from "./model_impl";
+import { AnyModelImpl, ModelImpl } from "./model_impl";
 import { dedent, makeErr } from "@/error/util";
 import { EntityPropOrder } from "./entity_prop_order";
 import { StateError } from "@/error/common";
 import { DatabaseNamingStrategy, isIllegal, fixColumn, fixColumnArr, notEmpty } from "./strategy";
 import { Column, Columns, MiddelEntity, MiddleTable, PropStorage, StorageType } from "./storage";
+import { ParameterizedTargetCalculator, TargetCalculator } from "@/schema/computed";
+import { z } from "zod";
 
 export class EntityProp {
 
@@ -81,7 +83,25 @@ export class EntityProp {
         } else {
             this._props = undefined;
         }
-        if (_data.targetModel != null) {
+        if (_data.calculatorData != null) {
+            const calculator = _data.calculatorData.calculator;
+            const sourceEntity = (calculator.sourceModel() as AnyModelImpl).toUnresolvedEntity();
+            const declaringEntity = this.declaringEntity;
+            if (declaringEntity != sourceEntity && !declaringEntity.ancestors.has(sourceEntity)) {
+                this.raise `The source model of calculator is "${
+                    sourceEntity.name
+                }" which is not the declaring entity "${
+                    declaringEntity.name
+                }" or its ancestor entity`;
+            }
+            if (calculator instanceof TargetCalculator) {
+                this._targetEntity = (calculator.targetModel() as AnyModelImpl).toUnresolvedEntity();
+            } else if (calculator instanceof ParameterizedTargetCalculator) {
+                this._targetEntity = (calculator.targetModel() as AnyModelImpl).toUnresolvedEntity();
+            } else {
+                this._targetEntity = undefined;
+            }
+        } else if (_data.targetModel != null) {
             const targetModel: ModelImpl<any, any, any, any, any> =
                 typeof _data.targetModel === "function"
                     ? _data.targetModel() as ModelImpl<any, any, any, any, any>
@@ -216,6 +236,10 @@ export class EntityProp {
 
     get calculatorData(): CalculatorData | undefined {
         return this._data.calculatorData;
+    }
+
+    get parameterType(): z.ZodType | undefined {
+        return this._data.calculatorData?.parameterType;
     }
 
     get span(): number {
@@ -417,6 +441,11 @@ export class EntityProp {
     }
 
     private _resolveTargetKeyProps() {
+        if (this._data.calculatorData?.calculator != null) {
+            this._thisKeyProp = this._data.calculatorData.calculator.sourceKeyPropName != null
+                ? this.declaringEntity.prop(this._data.calculatorData.calculator.sourceKeyPropName)
+                : this.declaringEntity.idProp;
+        }
         if (this._middleEntity != null) {
             this._thisKeyProp = this._middleEntity.joinThisProp.targetKeyProp;
             this._targetKeyProp = this._middleEntity.joinTargetProp.targetKeyProp;

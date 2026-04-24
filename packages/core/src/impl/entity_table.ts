@@ -881,6 +881,9 @@ function writePropMeta(prop: EntityProp, writer: CodeWriter) {
         }
         return;
     }
+    if (prop.calculatorData != null) {
+        return;
+    }
     if (prop.storageType === "MIDDLE_TABLE") {
         return;
     }
