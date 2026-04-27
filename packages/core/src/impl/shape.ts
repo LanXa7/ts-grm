@@ -144,12 +144,15 @@ function buildShapeMember(
 
 function isCollection(prop: FetchProp): boolean {
     return prop.associationType === "ONE_TO_MANY" 
-        || prop.associationType === "MANY_TO_MANY";
+        || prop.associationType === "MANY_TO_MANY"
+        || prop.calculatorData?.kind === "COLLECTION";
 }
 
 function isReference(prop: FetchProp): boolean {
-    return prop.associationType == "ONE_TO_ONE" 
-        || prop.associationType == "MANY_TO_ONE";
+    return prop.associationType === "ONE_TO_ONE" 
+        || prop.associationType === "MANY_TO_ONE"
+        || prop.calculatorData?.kind === "NONNULL_REFERENCE"
+        || prop.calculatorData?.kind === "NULLABLE_REFERENCE";
 }
 
 function isColumnIgnored(

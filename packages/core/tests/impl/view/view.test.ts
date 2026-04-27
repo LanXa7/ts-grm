@@ -1332,11 +1332,11 @@ describe("TestView", () => {
                 read(parent, reader) {
                     const dto = {
                     };
-                    parent.dto.parentId = reader.get(0);
-                    parent.dto.parentName = reader.get(1);
                     const implicit = {
                         _2: reader.get(2)
                     };
+                    parent.dto.parentId = reader.get(0);
+                    parent.dto.parentName = reader.get(1);
                     return { reader: this, parent, dto, implicit };
                 }
             }
@@ -1708,11 +1708,11 @@ describe("TestView", () => {
                         orderId: null, 
                         order: null
                     };
-                    this._orderId_y(dto).a = reader.get(0);
-                    this._orderId_y(dto).b = reader.get(1);
                     const implicit = {
                         _2: reader.get(2)
                     };
+                    this._orderId_y(dto).a = reader.get(0);
+                    this._orderId_y(dto).b = reader.get(1);
                     return { reader: this, parent, dto, implicit };
                 }
                 _orderId(dto) {

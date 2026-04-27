@@ -29,6 +29,9 @@ export function createRowReader(mapper: DtoMapper): RowReader {
         .scope("CURLY_BRACKETS", () => {
             writeRead(shape, mapper, writer);
             writeFold("", shape, mapper.nullAsUndefined, writer);
+            if (shape.__implicit != null) {
+                writeFold("_implicit", shape.__implicit, mapper.nullAsUndefined, writer);
+            }
         });
     const cls = new Function("$baseClass", writer.toString())(RowReader);
     return new cls();
@@ -52,20 +55,22 @@ function writeRead(
                 }
             })
             .newLine(";");
+        if (implicit != null) {
+            writer
+                .code("const implicit = ")
+                .scope("CURLY_BRACKETS", () => {
+                    for (const key in implicit) {
+                        writeRootMember(key, implicit[key], mapper.nullAsUndefined, writer);
+                    }
+                })
+                .newLine(";");
+        }
         writeDepthAssignments(mapper, writer);
         if (implicit == null) {
             writer.code("return { reader: this, parent, dto, implicit: undefined };");
             return;
         }
-        writer
-            .code("const implicit = ")
-            .scope("CURLY_BRACKETS", () => {
-                for (const key in implicit) {
-                    writeRootMember(key, implicit[key], mapper.nullAsUndefined, writer);
-                }
-            })
-            .newLine(";")
-            .code("return { reader: this, parent, dto, implicit };");
+        writer.code("return { reader: this, parent, dto, implicit };");
     }).newLine();
 }
 
@@ -106,15 +111,23 @@ function writeDepthAssignments(
             }
             const parents: Array<string> = [];
             for (const part of path) {
-                if (part !== "..") {
+                if (part === "..") {
+                    parents.push("parent");
+                } else if (part.startsWith("<implicit:") && part.endsWith(">")) {
+                    parents.push("implicit");
+                } else {
                     break;
                 }
-                parents.push("parent");
             }
             const dto = parents.length === 0
                 ? "dto" 
-                : `${parents.join(".")}.dto`;
-            const foldKeys = path.slice(parents.length, path.length - 1);
+                : parents[0] === "implicit"
+                    ? `${parents.join(".")}`
+                    : `${parents.join(".")}.dto`;
+            const foldKeys =
+                parents[0] === "implicit" 
+                    ? ["implicit", path[0]!.substring(10, path[0]!.length - 1), ...path.slice(parents.length, path.length - 1)]
+                    : path.slice(parents.length, path.length - 1);
             const target = foldKeys.length === 0
                 ? dto
                 : `this._${foldKeys.join("_")}(${dto})`;
@@ -136,6 +149,9 @@ function writeFold(
     nullAsUndefined: boolean,
     writer: CodeWriter
 ) {
+    const parameterName = contextPath.startsWith("_implicit")
+        ? "implicit"
+        : "dto";
     for (const key in shape) {
         if (key === "__implicit") {
             continue;
@@ -150,9 +166,9 @@ function writeFold(
         if (isEmptyShape(member)) {
             continue;
         }
-        writer.code(contextPath).code("_").code(key).code("(dto) ");
+        writer.code(contextPath).code("_").code(key).code("(").code(parameterName).code(") ");
         writer.scope("CURLY_BRACKETS", () => {
-            const parent = contextPath !== "" ? `this.${contextPath}(dto)` : "dto";
+            const parent = contextPath !== "" && contextPath !== "_implicit" ? `this.${contextPath}(${parameterName})` : parameterName;
             writer.code(`let o = ${parent}.${key}`).newLine(";");
             writer.code("if (o == null) ").scope("CURLY_BRACKETS", () => {
                 writer.code(`${parent}.${key} = o = `);

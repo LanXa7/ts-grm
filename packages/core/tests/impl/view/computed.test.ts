@@ -1,8 +1,9 @@
 import { dto } from "@/index";
 import { describe, expect, it } from "vitest";
 import { AUTHOR, BOOK, BOOK_STORE } from "../../model/model";
-import { mapperJson } from "./utils";
+import { makeReader, mapperJson } from "./utils";
 import { buildShape } from "@/impl/shape";
+import { expectCode } from "../../utils";
 
 describe("ComputedTest", () => {
 
@@ -51,6 +52,57 @@ describe("ComputedTest", () => {
                         "firstName": 1,
                         "lastName": 2
                     }
+                }
+            }
+        });
+        expectCode(view.mapper.rowReader.constructor.toString(), `
+            class extends $baseClass {
+                read(parent, reader) {
+                    const dto = {
+                        id: reader.get(0), 
+                        fullName: null
+                    };
+                    const implicit = {
+                        fullName: null
+                    };
+                    this._implicit_fullName_name(implicit).firstName = reader.get(1);
+                    this._implicit_fullName_name(implicit).lastName = reader.get(2);
+                    return { reader: this, parent, dto, implicit };
+                }
+                _implicit_fullName(implicit) {
+                    let o = implicit.fullName;
+                    if (o == null) {
+                        implicit.fullName = o = {
+                            name: null
+                        };
+                    }
+                    return o;
+                }
+                _implicit_fullName_name(implicit) {
+                    let o = this._implicit_fullName(implicit).name;
+                    if (o == null) {
+                        this._implicit_fullName(implicit).name = o = {
+                            firstName: null, 
+                            lastName: null
+                        };
+                    }
+                    return o;
+                }
+            }
+        `);
+        const row = view.mapper.rowReader.read(
+            undefined,
+            makeReader(1, "Alex", "Banks")
+        );
+        expect(row.dto).toEqual({
+            id: 1,
+            fullName: null
+        });
+        expect(row.implicit).toEqual({
+            fullName: {
+                name: {
+                    firstName: "Alex",
+                    lastName: "Banks"
                 }
             }
         });
@@ -113,6 +165,74 @@ describe("ComputedTest", () => {
             },
             "fullName": "fullName"
         });
+        expectCode(view.mapper.rowReader.constructor.toString(), `
+            class extends $baseClass {
+                read(parent, reader) {
+                    const dto = {
+                        id: reader.get(0), 
+                        name: null, 
+                        fullName: null
+                    };
+                    const implicit = {
+                        fullName: null
+                    };
+                    this._implicit_fullName_name(implicit).firstName = reader.get(1);
+                    this._name(dto).firstName = reader.get(1);
+                    this._implicit_fullName_name(implicit).lastName = reader.get(2);
+                    this._name(dto).lastName = reader.get(2);
+                    return { reader: this, parent, dto, implicit };
+                }
+                _name(dto) {
+                    let o = dto.name;
+                    if (o == null) {
+                        dto.name = o = {
+                            firstName: null, 
+                            lastName: null
+                        };
+                    }
+                    return o;
+                }
+                _implicit_fullName(implicit) {
+                    let o = implicit.fullName;
+                    if (o == null) {
+                        implicit.fullName = o = {
+                            name: null
+                        };
+                    }
+                    return o;
+                }
+                _implicit_fullName_name(implicit) {
+                    let o = this._implicit_fullName(implicit).name;
+                    if (o == null) {
+                        this._implicit_fullName(implicit).name = o = {
+                            firstName: null, 
+                            lastName: null
+                        };
+                    }
+                    return o;
+                }
+            }
+        `);
+        const row = view.mapper.rowReader.read(
+            undefined,
+            makeReader(1, "Alex", "Banks")
+        );
+        expect(row.dto).toEqual({
+            id: 1,
+            name: {
+                firstName: "Alex",
+                lastName: "Banks"
+            },
+            fullName: null
+        });
+        expect(row.implicit).toEqual({
+            fullName: {
+                name: {
+                    firstName: "Alex",
+                    lastName: "Banks"
+                }
+            }
+        });
     });
 
     it("foldTsFormula", () => {
@@ -167,6 +287,66 @@ describe("ComputedTest", () => {
                 }
             }
         });
+        expectCode(view.mapper.rowReader.constructor.toString(), `
+            class extends $baseClass {
+                read(parent, reader) {
+                    const dto = {
+                        id: reader.get(0), 
+                        formula: null
+                    };
+                    const implicit = {
+                        fullName: null
+                    };
+                    this._implicit_fullName_name(implicit).firstName = reader.get(1);
+                    this._implicit_fullName_name(implicit).lastName = reader.get(2);
+                    return { reader: this, parent, dto, implicit };
+                }
+                _formula(dto) {
+                    let o = dto.formula;
+                    if (o == null) {
+                        dto.formula = o = {
+                            fn: null
+                        };
+                    }
+                    return o;
+                }
+                _implicit_fullName(implicit) {
+                    let o = implicit.fullName;
+                    if (o == null) {
+                        implicit.fullName = o = {
+                            name: null
+                        };
+                    }
+                    return o;
+                }
+                _implicit_fullName_name(implicit) {
+                    let o = this._implicit_fullName(implicit).name;
+                    if (o == null) {
+                        this._implicit_fullName(implicit).name = o = {
+                            firstName: null, 
+                            lastName: null
+                        };
+                    }
+                    return o;
+                }
+            }
+        `);
+        const row = view.mapper.rowReader.read(
+            undefined,
+            makeReader(1, "Alex", "Banks")
+        );
+        expect(row.dto).toEqual({
+            id: 1,
+            formula: null
+        });
+        expect(row.implicit).toEqual({
+            fullName: {
+                name: {
+                    firstName: "Alex",
+                    lastName: "Banks"
+                }
+            }
+        });
     });
 
     it("sqlFormula", () => {
@@ -182,6 +362,14 @@ describe("ComputedTest", () => {
             ]
         });
         expect(buildShape(view.mapper)).toEqual({"authorCount":0});
+        const row = view.mapper.rowReader.read(
+            undefined,
+            makeReader(2)
+        );
+        expect(row.dto).toEqual({
+            authorCount: 2
+        });
+        expect(row.implicit).toEqual(undefined);
     });
 
     it("targetCalculator", () => {
@@ -222,12 +410,27 @@ describe("ComputedTest", () => {
         });
         expect(buildShape(view.mapper)).toEqual({
             "newestBooks": {
-                "id": 0,
-                "name": 1
+                "__array": {
+                    "id": 0,
+                    "name": 1
+                }
             },
             "__implicit": {
                 "_0": 0
             }
         });
+        expectCode(view.mapper.rowReader.constructor.toString(), `
+            class extends $baseClass {
+                read(parent, reader) {
+                    const dto = {
+                        newestBooks: null
+                    };
+                    const implicit = {
+                        _0: reader.get(0)
+                    };
+                    return { reader: this, parent, dto, implicit };
+                }
+            }
+        `);
     });
 });
