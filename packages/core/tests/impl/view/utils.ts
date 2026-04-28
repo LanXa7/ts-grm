@@ -8,6 +8,7 @@ export function mapperJson(mapper: DtoMapper): any {
         fields: mapper.fields.map(f => {
             return {
                 prop: f.prop.toString(),
+                parameter: f.parameter,
                 paths: f.paths,
                 subMapper: f.subMapper != null
                     ? mapperJson(f.subMapper)

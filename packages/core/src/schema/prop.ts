@@ -1081,8 +1081,11 @@ export type FormulaData = {
     readonly formula: SqlFormula<any>;
 };
 
+export type CalculatorKind = 
+    "VALUE" |  "NONNULL_REFERENCE" | "NULLABLE_REFERENCE" | "COLLECTION";
+
 export type CalculatorData = {
-    readonly kind: "VALUE" |  "NONNULL_REFERENCE" | "NULLABLE_REFERENCE" | "COLLECTION";
+    readonly kind: CalculatorKind;
     readonly parameterType: z.ZodType | undefined;
     readonly calculator: Calculator;
 };

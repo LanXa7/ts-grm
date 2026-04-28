@@ -29,16 +29,16 @@ const BOOK_STORE_NEWEST_BOOK_CALCULATOR = Calculator.targetOf({
 
 const BOOK_STORE_SPECIFIED_BOOK_CALCULATOR = Calculator.parameterizedTargetOf({
     parameterType: z.object({
-        minEdition: z.number().nullish(),
-        maxEdition: z.number().nullish()
+        minPrice: z.number().nullish(),
+        maxPrice: z.number().nullish()
     }),
     sourceModel: () => BOOK_STORE,
     targetModel: () => BOOK,
     fn: ctx => {
         return ctx.sqlClient.createQuery(BOOK, (q, book) => {
             q.where(book.storeId.in(...ctx.keys));
-            q.where(book.edition.gteIf(ctx.parameter.minEdition));
-            q.where(book.edition.lteIf(ctx.parameter.maxEdition));
+            q.where(book.price.gteIf(ctx.parameter.minPrice));
+            q.where(book.price.lteIf(ctx.parameter.maxPrice));
             return q.select(
                 book.storeId.asNonNull(),
                 book.fetch(ctx.view)

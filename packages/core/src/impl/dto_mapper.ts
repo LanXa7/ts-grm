@@ -44,6 +44,8 @@ export type DtoMapperField = {
 
     readonly prop: FetchProp;
 
+    readonly parameter: any;
+
     readonly bridgeProp: EntityProp | undefined;
 
     readonly paths: ReadonlyArray<Path>;
@@ -119,7 +121,8 @@ class Mapper {
                         orders: undefined,
                         recursiveDepth: field.recursiveDepth,
                         nullable: false,
-                        dependency: undefined
+                        dependency: undefined,
+                        parameter: undefined
                     };
                     if (field.paths.length === 0) {
                         this._addImpl(dtoField, false);
@@ -194,6 +197,7 @@ class Mapper {
             this.fieldMap.size, 
             () => this.columnIndex++,
             dtoField.prop, 
+            dtoField.parameter,
             dtoField.bridgeProp,
             dtoField.recursiveDepth,
             this.dependencyReader?.indices
@@ -304,6 +308,7 @@ class MapperField {
         readonly index: number,
         readonly columnIndexAllocator: () => number,
         readonly prop: FetchProp,
+        readonly parameter: any,
         readonly bridgeProp: EntityProp | undefined,
         readonly recursiveDepth: number | undefined,
         readonly dependencies: ReadonlyArray<number> | undefined
@@ -337,6 +342,7 @@ class MapperField {
         });
         return {
             prop: this.prop,
+            parameter: this.parameter,
             bridgeProp: this.bridgeProp,
             paths,
             subMapper: this.subMapper?.toDtoMapper(),

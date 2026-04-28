@@ -433,4 +433,13 @@ describe("ComputedTest", () => {
             }
         `);
     });
+
+    it("parameterizedTargetCalculator", () => {
+        const view = dto.view(BOOK_STORE, $ => $
+            .id
+            .specifiedBooks({maxPrice: 20}).$as("cheapBooks")
+            .specifiedBooks({minPrice: 60}, $ => $.id.name).$as("expensiveBooks")
+        );
+        console.log(JSON.stringify(mapperJson(view.mapper)));
+    });
 });

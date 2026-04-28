@@ -32,6 +32,8 @@ export type DtoField = {
     readonly nullable: boolean;
 
     readonly dependency: Dto | undefined;
+
+    readonly parameter: any;
 };
 
 export type FetchProp = EntityProp | InverseFetchProp;

@@ -20,8 +20,6 @@ class DtoBuilder {
 
     private readonly fields: Array<DtoField> = [];
 
-    private readonly addedPaths = new Set<string>();
-
     private lastPropName: string | undefined = undefined;
 
     constructor(
@@ -39,9 +37,9 @@ class DtoBuilder {
         );
     }
 
-    add(prop: EntityProp, fn?: TypedDtoBuilderFn) {
-        const field = dtoField(prop, fn);
-        this._addField(field);
+    add(prop: EntityProp, fn?: TypedDtoBuilderFn, parameter?: any) {
+        const field = dtoField(prop, fn, parameter);
+        this.fields.push(field);
         this.lastPropName = prop.name;
     }
 
@@ -60,7 +58,7 @@ class DtoBuilder {
                 path: undefined,
                 dto: flattenDto(field.dto, prefix, 0)
             };
-            this._addField(convertedField);
+            this.fields.push(convertedField);
         } else {
             for (const nestedField of field.dto!.fields) {
                 const convertedNestedField = {
@@ -69,7 +67,7 @@ class DtoBuilder {
                         ? withPrefix(prefix, nestedField.path)
                         : undefined
                 }
-                this._addField(convertedNestedField);
+                this.fields.push(convertedNestedField);
             }
         }
         this.lastPropName = undefined;
@@ -94,7 +92,7 @@ class DtoBuilder {
             };
         });
         for (const foldField of foldFields) {
-            this._addField(foldField);
+            this.fields.push(foldField);
         }
         this.lastPropName = undefined;
     }
@@ -157,9 +155,10 @@ class DtoBuilder {
             orders: undefined,
             recursiveDepth: depth,
             nullable: prop.nullable,
-            dependency: undefined
+            dependency: undefined,
+            parameter: undefined
         };
-        this._addField(field);
+        this.fields.push(field);
     }
 
     $as(alias: string) {
@@ -179,31 +178,30 @@ class DtoBuilder {
             renamedFields.unshift(rename(field, alias));
         }
         for (const renamedField of renamedFields) {
-            this._addField(renamedField);
+            this.fields.push(renamedField);
         }
         this.lastPropName = alias;
     }
 
     build(): Dto {
+        const absPaths = new Set<string>();
+        for (const field of this.fields) {
+            const path = field.path;
+            if (path == null) {
+                continue;
+            }
+            const absPath = typeof path === "string" ? path : path.join(".");
+            if (absPaths.has(absPath)) {
+                throw new ArgumentError(`Duplicated DTO path "${absPath}"`);
+            }
+            absPaths.add(absPath);
+        }
         return {
             entity: this.source instanceof Entity
                 ? this.source
                 : undefined,
             fields: this.fields
         };
-    }
-
-    private _addField(field: DtoField) {
-        if (field.path != null) {
-            const key = typeof field.path === "string"
-                ? field.path
-                : field.path.join(".");
-            if (this.addedPaths.has(key)) {
-                throw new StateError(`Cannot add the DTO path "${field.path}" twice`);
-            }
-            this.addedPaths.add(key);
-        }
-        this.fields.push(field);
     }
 }
 
@@ -259,8 +257,20 @@ const typedDtoBuilderHandler: ProxyHandler<DtoBuilder> = {
                 }
                 const entityProp = target.prop(prop);
                 if (entityProp.props != null || entityProp.targetEntity != null) {
+                    if (entityProp.calculatorData?.parameterType != null) {
+                        return (parameter: any, fn?: TypedDtoBuilderFn) => {
+                            target.add(entityProp, fn, parameter);
+                            return receiver;
+                        }    
+                    }
                     return (fn?: TypedDtoBuilderFn) => {
                         target.add(entityProp, fn);
+                        return receiver;
+                    }
+                }
+                if (entityProp.parameterType != null) {
+                    return (parameter: any) => {
+                        target.add(entityProp, undefined, parameter);
                         return receiver;
                     }
                 }
@@ -272,7 +282,8 @@ const typedDtoBuilderHandler: ProxyHandler<DtoBuilder> = {
 
 export function dtoField(
     prop: EntityProp, 
-    fn?: TypedDtoBuilderFn
+    fn?: TypedDtoBuilderFn,
+    parameter?: any
 ): DtoField {
     if (prop.storageType === "MIDDLE_ENTITY") {
         const middleEntity = prop.middleEntity!;
@@ -291,7 +302,8 @@ export function dtoField(
             orders: undefined,
             recursiveDepth: undefined,
             nullable: prop.nullable,
-            dependency: undefined
+            dependency: undefined,
+            parameter: undefined
         };
     }
     if (prop.targetEntity != null) {
@@ -307,7 +319,8 @@ export function dtoField(
             orders: undefined,
             recursiveDepth: undefined,
             nullable: prop.nullable,
-            dependency: undefined
+            dependency: undefined,
+            parameter
         };
     }
     if (prop.props != null) {
@@ -326,7 +339,8 @@ export function dtoField(
             orders: undefined,
             recursiveDepth: undefined,
             nullable: prop.nullable,
-            dependency: undefined
+            dependency: undefined,
+            parameter: undefined
         };
     }
     if (fn != null) {
@@ -344,7 +358,8 @@ export function dtoField(
         orders: undefined,
         recursiveDepth: undefined,
         nullable: false,
-        dependency: undefined
+        dependency: undefined,
+        parameter
     };
 }
 

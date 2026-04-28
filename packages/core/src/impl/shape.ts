@@ -2,6 +2,7 @@ import { StateError } from "@/error/common";
 import { FetchProp } from "./dto";
 import { DtoMapper, DtoMapperField } from "./dto_mapper";
 import { EntityProp } from "./entity_prop";
+import { CalculatorKind } from "@/schema/prop";
 
 export type Shape = {
     [key: string]: ShapeMember;
@@ -145,14 +146,29 @@ function buildShapeMember(
 function isCollection(prop: FetchProp): boolean {
     return prop.associationType === "ONE_TO_MANY" 
         || prop.associationType === "MANY_TO_MANY"
-        || prop.calculatorData?.kind === "COLLECTION";
+        || isCalculatorKindEquals(prop, "COLLECTION");
 }
 
 function isReference(prop: FetchProp): boolean {
     return prop.associationType === "ONE_TO_ONE" 
         || prop.associationType === "MANY_TO_ONE"
-        || prop.calculatorData?.kind === "NONNULL_REFERENCE"
-        || prop.calculatorData?.kind === "NULLABLE_REFERENCE";
+        || isCalculatorKindEquals(prop, "NONNULL_REFERENCE", "NULLABLE_REFERENCE");
+}
+
+function isCalculatorKindEquals(prop: FetchProp, ...kinds: Array<CalculatorKind>): boolean {
+    if (!prop.isEntityProp) {
+        return false;
+    }
+    const kind = (prop as EntityProp).calculatorData?.kind;
+    if (kind == null) {
+        return false;
+    }
+    for (const k of kinds) {
+        if (k == kind) {
+            return true;
+        }
+    }
+    return false;
 }
 
 function isColumnIgnored(

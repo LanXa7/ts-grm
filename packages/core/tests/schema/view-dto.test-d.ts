@@ -629,23 +629,23 @@ describe("ViewShapeTest", () => {
         const view = dto.view(BOOK_STORE, $ => $
             .id
             .newestBooks($ => $.id.name)
-            .specifiedBooks({minEdition: 3, maxEdition: 4}).$as("middleBooks")
-            .specifiedBooks({maxEdition: 4}, $ => $.id.name).$as("oldestBooks")
+            .specifiedBooks({maxPrice: 20}).$as("cheapBooks")
+            .specifiedBooks({minPrice: 60}, $ => $.id.name).$as("expensiveBooks")
         );
         type ViewType = TypeOf<typeof view>;
         expectTypeOf<ViewType>().toEqualTypeOf<{
             id: string;
-            middleBooks: {
+            newestBooks: {
+                id: number;
+                name: string;
+            }[];
+            cheapBooks: {
                 id: number;
                 name: string;
                 edition: number;
                 price: number;
             }[];
-            newestBooks: {
-                id: number;
-                name: string;
-            }[];
-            oldestBooks: {
+            expensiveBooks: {
                 id: number;
                 name: string;
             }[];
