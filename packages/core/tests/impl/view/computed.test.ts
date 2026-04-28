@@ -440,6 +440,135 @@ describe("ComputedTest", () => {
             .specifiedBooks({maxPrice: 20}).$as("cheapBooks")
             .specifiedBooks({minPrice: 60}, $ => $.id.name).$as("expensiveBooks")
         );
-        console.log(JSON.stringify(mapperJson(view.mapper)));
+        expect(JSON.stringify(mapperJson(view.mapper)), `
+            {
+                "entity": "BookStore",
+                "fields": [
+                    {
+                        "prop": "BookStore.id",
+                        "paths": ["id"],
+                        "isDependent": true,
+                        "columnIndex": 0
+                    },
+                    {
+                        "prop": "BookStore.specifiedBooks",
+                        "parameter": {"maxPrice": 20},
+                        "paths": ["cheapBooks"],
+                        "subMapper": {
+                            "entity": "Book",
+                            "associatedProp": "BookStore.specifiedBooks",
+                            "fields": [
+                                {
+                                    "prop": "Book.id",
+                                    "paths": ["id"],
+                                    "columnIndex": 0
+                                },
+                                {
+                                    "prop": "Book.name",
+                                    "paths": ["name"],
+                                    "columnIndex": 1
+                                },
+                                {
+                                    "prop": "Book.edition",
+                                    "paths": ["edition"],
+                                    "columnIndex": 2
+                                },
+                                {
+                                    "prop": "Book.price",
+                                    "paths": ["price"],
+                                    "columnIndex": 3
+                                }
+                            ]
+                        },
+                        "dependencies": [0]
+                    },
+                    {
+                        "prop": "BookStore.specifiedBooks",
+                        "parameter": {"minPrice": 60},
+                        "paths": ["expensiveBooks"],
+                        "subMapper": {
+                            "entity": "Book",
+                            "associatedProp": "BookStore.specifiedBooks",
+                            "fields": [
+                                {
+                                    "prop": "Book.id",
+                                    "paths": ["id"],
+                                    "columnIndex": 0
+                                },
+                                {
+                                    "prop": "Book.name",
+                                    "paths": ["name"],
+                                    "columnIndex": 1
+                                }
+                            ]
+                        },
+                        "dependencies": [0]
+                    }
+                ]
+            }
+        `);
+        expect(buildShape(view.mapper)).toEqual({
+            "id": 0,
+            "cheapBooks": {
+                "__array": {
+                    "id": 0,
+                    "name": 1,
+                    "edition": 2,
+                    "price": 3
+                }
+            },
+            "expensiveBooks": {
+                "__array": {
+                    "id": 0,
+                    "name": 1
+                }
+            }
+        });
+        expectCode(view.mapper.rowReader.constructor.toString(), `
+            class extends $baseClass {
+                read(parent, reader) {
+                    const dto = {
+                        id: reader.get(0), 
+                        cheapBooks: null, 
+                        expensiveBooks: null
+                    };
+                    return { reader: this, parent, dto, implicit: undefined };
+                }
+            }
+        `);
+        const cheapBooksMapper = view
+            .mapper
+            .fields
+            .find(f => f.prop.name === "specifiedBooks" && f.parameter.maxPrice != null)!
+            .subMapper!;
+        expectCode(cheapBooksMapper.rowReader.constructor.toString(), `
+            class extends $baseClass {
+                read(parent, reader) {
+                    const dto = {
+                        id: reader.get(0), 
+                        name: reader.get(1), 
+                        edition: reader.get(2), 
+                        price: reader.get(3)
+                    };
+                    return { reader: this, parent, dto, implicit: undefined };
+                }
+            }
+        `);
+        const expensiveBooksMapper = view
+            .mapper
+            .fields
+            .find(f => f.prop.name === "specifiedBooks" && f.parameter.minPrice != null)!
+            .subMapper!;
+        expectCode(expensiveBooksMapper.rowReader.constructor.toString(), `
+            class extends $baseClass {
+                read(parent, reader) {
+                    const dto = {
+                        id: reader.get(0), 
+                        name: reader.get(1)
+                    };
+                    return { reader: this, parent, dto, implicit: undefined };
+                }
+            }
+        `);
     });
 });
