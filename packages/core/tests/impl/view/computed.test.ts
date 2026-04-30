@@ -571,4 +571,59 @@ describe("ComputedTest", () => {
             }
         `);
     });
+
+    it("formulaBasedOnCalculator", () => {
+        const view = dto.view(BOOK_STORE, $ => $
+            .id
+            .bookNames
+        );
+        expect(mapperJson(view.mapper)).toEqual({
+            "entity": "BookStore",
+            "fields": [
+                {
+                    "prop": "BookStore.id",
+                    "paths": [
+                        "id"
+                    ],
+                    "isDependent": true,
+                    "columnIndex": 0
+                },
+                {
+                    "prop": "BookStore.newestBooks",
+                    "paths": [
+                        [
+                            "<implicit:bookNames>",
+                            "newestBooks"
+                        ]
+                    ],
+                    "subMapper": {
+                        "entity": "Book",
+                        "associatedProp": "BookStore.newestBooks",
+                        "fields": [
+                            {
+                                "prop": "Book.name",
+                                "paths": [
+                                    "name"
+                                ],
+                                "columnIndex": 0
+                            }
+                        ]
+                    },
+                    "dependencies": [
+                        0
+                    ],
+                    "isDependent": true
+                },
+                {
+                    "prop": "BookStore.bookNames",
+                    "paths": [
+                        "bookNames"
+                    ],
+                    "dependencies": [
+                        1
+                    ]
+                }
+            ]
+        });
+    });
 });

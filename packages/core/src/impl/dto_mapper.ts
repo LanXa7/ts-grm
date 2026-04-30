@@ -5,6 +5,8 @@ import { dtoField } from "./dto_builder";
 import { createRowReader, RowReader } from "./row_reader";
 import { makeErr } from "@/error/util";
 import { EntityProp } from ".";
+import { ReferenceFetchType } from "@/schema/dto";
+import { EntityPropOrder } from "./entity_prop_order";
 
 export function dtoMapper(dto: Dto, nullAsUndefined: boolean): DtoMapper {
     const mapper = new Mapper(
@@ -46,9 +48,15 @@ export type DtoMapperField = {
 
     readonly parameter: any;
 
+    readonly nullable: boolean;
+
     readonly bridgeProp: EntityProp | undefined;
 
     readonly paths: ReadonlyArray<Path>;
+
+    readonly fetchType: ReferenceFetchType | undefined;
+
+    readonly orders: ReadonlyArray<EntityPropOrder> | undefined;
 
     readonly subMapper: DtoMapper | undefined;
 
@@ -112,26 +120,18 @@ class Mapper {
             if (entityProp.formulaData?.kind === "TS") {
                 const view = entityProp.formulaData.formula.view();
                 for (const field of view.mapper.fields) {
-                    let dtoField: DtoField = {
-                        path: undefined,
-                        prop: field.prop,
-                        bridgeProp: field.bridgeProp,
-                        dto: undefined,
-                        fetchType: undefined,
-                        orders: undefined,
-                        recursiveDepth: field.recursiveDepth,
-                        nullable: false,
-                        dependency: undefined,
-                        parameter: undefined
-                    };
                     if (field.paths.length === 0) {
-                        this._addImpl(dtoField, false);
+                        continue;
+                    }
+                    let dtoField: DtoField = toDtoField(field);
+                    if (field.paths.length === 0) {
+                        this._add(dtoField, false);
                     } else {
                         for (const path of field.paths) {
                             const newPath = typeof path === "string"
                                 ? [`<implicit:${prop.name}>`, path]
                                 : [`<implicit:${prop.name}>`, ...path];
-                            this._addImpl({...dtoField, path: newPath}, true);
+                            this._add({...dtoField, path: newPath}, true);
                         }
                     }
                 }
@@ -140,11 +140,11 @@ class Mapper {
         }
         const referenceKeyProp = prop.referenceKeyProp;
         if (referenceKeyProp != null) {
-            this._addImpl(dtoField(referenceKeyProp), false);
+            this._add(dtoField(referenceKeyProp), false);
         } else if (prop.targetEntity != null) {
             let keyProp = prop.thisKeyProp ?? prop.declaringEntity!.idProp;
             // TODO: backProp may not be id property
-            this._addImpl(dtoField(keyProp), false);
+            this._add(dtoField(keyProp), false);
         }
     }
 
@@ -197,7 +197,10 @@ class Mapper {
             this.fieldMap.size, 
             () => this.columnIndex++,
             dtoField.prop, 
+            dtoField.fetchType,
+            dtoField.orders,
             dtoField.parameter,
+            dtoField.nullable,
             dtoField.bridgeProp,
             dtoField.recursiveDepth,
             this.dependencyReader?.indices
@@ -308,7 +311,10 @@ class MapperField {
         readonly index: number,
         readonly columnIndexAllocator: () => number,
         readonly prop: FetchProp,
+        readonly fetchType: ReferenceFetchType | undefined,
+        readonly orders: ReadonlyArray<EntityPropOrder> | undefined,
         readonly parameter: any,
+        readonly nullable: boolean,
         readonly bridgeProp: EntityProp | undefined,
         readonly recursiveDepth: number | undefined,
         readonly dependencies: ReadonlyArray<number> | undefined
@@ -344,8 +350,11 @@ class MapperField {
             prop: this.prop,
             parameter: this.parameter,
             bridgeProp: this.bridgeProp,
+            nullable: this.nullable,
             paths,
             subMapper: this.subMapper?.toDtoMapper(),
+            fetchType: this.fetchType,
+            orders: this.orders,
             recursiveDepth: this.recursiveDepth,
             dependencies: this.dependencies,
             isDependent: this.isDependent,
@@ -378,6 +387,7 @@ function embeddedPath(
     const arr2 = typeof path2 === "string" ? [path2] : path2;
     return [...arr1, ...arr2];
 }
+
 type DepenencyWriter = {
     indices: Array<number>;
     parent: DepenencyWriter | undefined;
@@ -386,4 +396,42 @@ type DepenencyWriter = {
 type DependencyReader = {
     indices: ReadonlyArray<number> | undefined;
     parent: DependencyReader | undefined;
+}
+
+function toDto(
+    mapper: DtoMapper
+): Dto {
+    return {
+        entity: mapper.entity,
+        fields: mapper.fields.map(f => toDtoField(f))
+    };
+}
+
+function toDtoField(
+    field: DtoMapperField
+): DtoField {
+    const paths = [...field.paths].sort(
+        (a, b) => pathWeight(a) - pathWeight(b)
+    );
+    return {
+        path: paths.length === 0 ? undefined : paths[0]!,
+        prop: field.prop,
+        bridgeProp: field.bridgeProp,
+        dto: field.subMapper != null ? toDto(field.subMapper) : undefined,
+        fetchType: field.fetchType,
+        orders: field.orders,
+        recursiveDepth: field.recursiveDepth,
+        nullable: field.nullable,
+        parameter: field.parameter
+    };
+}
+
+function pathWeight(path: Path): number {
+    if (typeof path === "string") {
+        return 1;
+    }
+    if (path[0] === "..") {
+        return path.length + 3;
+    }
+    return path.length;
 }

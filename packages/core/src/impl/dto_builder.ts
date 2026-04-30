@@ -155,7 +155,6 @@ class DtoBuilder {
             orders: undefined,
             recursiveDepth: depth,
             nullable: prop.nullable,
-            dependency: undefined,
             parameter: undefined
         };
         this.fields.push(field);
@@ -302,7 +301,6 @@ export function dtoField(
             orders: undefined,
             recursiveDepth: undefined,
             nullable: prop.nullable,
-            dependency: undefined,
             parameter: undefined
         };
     }
@@ -319,7 +317,6 @@ export function dtoField(
             orders: undefined,
             recursiveDepth: undefined,
             nullable: prop.nullable,
-            dependency: undefined,
             parameter
         };
     }
@@ -339,7 +336,6 @@ export function dtoField(
             orders: undefined,
             recursiveDepth: undefined,
             nullable: prop.nullable,
-            dependency: undefined,
             parameter: undefined
         };
     }
@@ -358,7 +354,6 @@ export function dtoField(
         orders: undefined,
         recursiveDepth: undefined,
         nullable: false,
-        dependency: undefined,
         parameter
     };
 }
