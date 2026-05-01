@@ -123,7 +123,7 @@ class Mapper {
                     if (field.paths.length === 0) {
                         continue;
                     }
-                    let dtoField: DtoField = toDtoField(field);
+                    let dtoField = toDtoFields(field, false)[0]!;
                     if (field.paths.length === 0) {
                         this._add(dtoField, false);
                     } else {
@@ -401,20 +401,22 @@ type DependencyReader = {
 function toDto(
     mapper: DtoMapper
 ): Dto {
+    const dtoFields: Array<DtoField> = [];
+    for (const field of mapper.fields) {
+        dtoFields.push(...toDtoFields(field, true));
+    }
     return {
         entity: mapper.entity,
-        fields: mapper.fields.map(f => toDtoField(f))
+        fields: dtoFields
     };
 }
 
-function toDtoField(
-    field: DtoMapperField
-): DtoField {
-    const paths = [...field.paths].sort(
-        (a, b) => pathWeight(a) - pathWeight(b)
-    );
-    return {
-        path: paths.length === 0 ? undefined : paths[0]!,
+function toDtoFields(
+    field: DtoMapperField,
+    assignPath: boolean
+): ReadonlyArray<DtoField> {
+    const dtoField: DtoField = {
+        path: undefined,
         prop: field.prop,
         bridgeProp: field.bridgeProp,
         dto: field.subMapper != null ? toDto(field.subMapper) : undefined,
@@ -424,14 +426,10 @@ function toDtoField(
         nullable: field.nullable,
         parameter: field.parameter
     };
-}
-
-function pathWeight(path: Path): number {
-    if (typeof path === "string") {
-        return 1;
+    if (field.paths.length === 0 || !assignPath) {
+        return [dtoField];
     }
-    if (path[0] === "..") {
-        return path.length + 3;
-    }
-    return path.length;
+    return field.paths.map(path => {
+        return { ...dtoField, path };
+    });
 }

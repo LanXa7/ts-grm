@@ -582,19 +582,14 @@ describe("ComputedTest", () => {
             "fields": [
                 {
                     "prop": "BookStore.id",
-                    "paths": [
-                        "id"
-                    ],
+                    "paths": ["id"],
                     "isDependent": true,
                     "columnIndex": 0
                 },
                 {
                     "prop": "BookStore.newestBooks",
                     "paths": [
-                        [
-                            "<implicit:bookNames>",
-                            "newestBooks"
-                        ]
+                        ["<implicit:bookNames>", "newestBooks"]
                     ],
                     "subMapper": {
                         "entity": "Book",
@@ -602,28 +597,21 @@ describe("ComputedTest", () => {
                         "fields": [
                             {
                                 "prop": "Book.name",
-                                "paths": [
-                                    "name"
-                                ],
+                                "paths": ["name"],
                                 "columnIndex": 0
                             }
                         ]
                     },
-                    "dependencies": [
-                        0
-                    ],
+                    "dependencies": [0],
                     "isDependent": true
                 },
                 {
                     "prop": "BookStore.bookNames",
-                    "paths": [
-                        "bookNames"
-                    ],
-                    "dependencies": [
-                        1
-                    ]
+                    "paths": ["bookNames"],
+                    "dependencies": [1]
                 }
             ]
         });
+        console.log(JSON.stringify(buildShape(view.mapper)));
     });
 });
