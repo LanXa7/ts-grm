@@ -53,6 +53,7 @@ function createDefaultOptions(): SqlClientOptions {
             pretty: false,
             parameter: "PLACEHOLDER"
         },
-        filterManager: new FilterManager()
+        filterManager: new FilterManager(),
+        entityManager: undefined
     };
 }

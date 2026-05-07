@@ -76,8 +76,9 @@ export {
     ParameterizedValueCalculator,
     TargetCalculator,
     ParameterizedTargetCalculator
-} from "./schema/computed"
+} from "./schema/computed";
 export type { TypeOf, View, ModelOf } from "./schema/dto";
+export { EntityManager } from "./schema/entity_manager";
 export type  {
     SqlClient, 
     Criteria, 

@@ -1,4 +1,4 @@
-import { metadata } from "@ts-grm/core";
+import { EntityManager, metadata } from "@ts-grm/core";
 import { FilterManager } from "./filter";
 
 export type SqlClientOptions = {
@@ -10,6 +10,8 @@ export type SqlClientOptions = {
     readonly sqlLogger: SqlLogger;
 
     readonly filterManager: FilterManager;
+
+    readonly entityManager: EntityManager | undefined;
 };
 
 export type SqlLogger = {

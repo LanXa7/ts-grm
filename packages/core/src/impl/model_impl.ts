@@ -1,4 +1,4 @@
-import { ArgumentError } from "@/error/common";
+import { ArgumentError, StateError } from "@/error/common";
 import { Entity } from "@/impl/entity";
 import { AnyModel, Ctor, CtorMembers, Model, ModelContext, TableOptions, UniqueKeys } from "@/schema/model";
 import { ModelContract } from "./model_contract";
@@ -36,6 +36,10 @@ export class ModelImpl<
         readonly superModel: AnyModel | undefined,
         readonly options: ModelOptions
     ) {
+        if (ALL_MODEL_MAP.has(name)) {
+            throw new StateError(`Duplicate models with same name: "${name}"`);
+        }
+        ALL_MODEL_MAP.set(name, this);
         if (superModel != null) {
             const superImpl = superModel as ModelImpl<any, any, any, any, any>;
             let derivedModels = superImpl._derivedModels;
@@ -126,3 +130,5 @@ let _nextModelIdentifier = 0;
 export function allocateModelIdentifier(): number {
     return ++_nextModelIdentifier;
 }
+
+export const ALL_MODEL_MAP = new Map<string, AnyModelImpl>();
