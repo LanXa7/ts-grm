@@ -54,7 +54,8 @@ export type {
     M2OCreator,
     M2MCreator,
     FormulaCreator,
-    CalculatedCreator
+    CalculatedCreator,
+    ScalarType
 } from "./schema/prop";
 export type { 
     TsFormulaFn,
@@ -79,6 +80,7 @@ export {
 } from "./schema/computed";
 export type { TypeOf, View, ModelOf } from "./schema/dto";
 export { EntityManager } from "./schema/entity_manager";
+export type { CascadeType } from "./schema/join";
 export type  {
     SqlClient, 
     Criteria, 

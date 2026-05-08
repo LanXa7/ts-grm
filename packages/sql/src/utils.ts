@@ -1,3 +1,4 @@
+import { EntityManager } from "@ts-grm/core";
 import { FilterManager } from "./cfg";
 
 export type DeepPartial<T> = 
@@ -14,7 +15,7 @@ export function merge<T>(
     if (value == null) {
         return defaultValue;
     }
-    if (value.constructor === FilterManager) {
+    if (CLASSES.has(value.constructor)) {
         return value as T;
     }
     if (typeof value !== "object") {
@@ -26,3 +27,8 @@ export function merge<T>(
     }
     return mergedObj as T;
 }
+
+const CLASSES = new Set<any>([
+    FilterManager,
+    EntityManager
+]);

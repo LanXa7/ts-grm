@@ -45,4 +45,6 @@ export interface SqlClient {
             ) => TProjection
         ]
     ): AtomRootQuery<TProjection>;
+
+    createSchema(): Promise<void>;
 }

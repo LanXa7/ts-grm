@@ -160,6 +160,10 @@ export class SqlClientImpl implements SqlClientImplementor {
         }
         return filters;
     }
+
+    async createSchema(): Promise<void> {
+        
+    }
 }
 
 class QueryFactoryImpl implements ast.QueryFactory {

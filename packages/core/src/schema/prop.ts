@@ -20,8 +20,8 @@ import { z } from "zod";
 
 export const prop = {
 
-    str(): ScalarProp<string> {
-        return new ScalarProp({...EMPTY_PROP_DEFINITION_DATA, scalarType: "STR"});
+    str(): StrProp {
+        return new StrProp({...EMPTY_PROP_DEFINITION_DATA, scalarType: "STR"});
     },
 
     i8(): ScalarProp<number> {
@@ -108,6 +108,31 @@ export class ScalarProp<
 
     nullable(): ScalarProp<T, "NULLABLE"> {
         return new ScalarProp({...this.__data, nullity: "NULLABLE"})
+    }
+}
+
+export class StrProp<
+    TNullity extends NullityType = "NONNULL"
+> extends ScalarProp<string, TNullity> {
+
+    override __type(): {
+        readonly prop: TNullity | true;
+        readonly scalarProp: TNullity | true;
+        readonly strProp: TNullity | true;
+    } {
+        return { 
+            prop: true, 
+            scalarProp: true,
+            strProp: true
+        };
+    }
+
+    override nullable(): StrProp<"NULLABLE"> {
+        return new StrProp({...this.__data, nullity: "NULLABLE"});
+    }
+
+    length(length: number): StrProp<TNullity> {
+        return new StrProp({...this.__data, length});
     }
 }
 
@@ -1032,6 +1057,7 @@ export type EmbeddedMember =
 export type PropData = {
     readonly nullity: NullityType;
     readonly scalarType: ScalarType | undefined;
+    readonly length: number | undefined;
     readonly props: Record<string, Prop<any, any>> | undefined;
     readonly targetModel: ModelRef<AnyModel> | undefined;
     readonly associationType: AssociationType | undefined;
@@ -1100,6 +1126,7 @@ export type ScalarType =
 const EMPTY_PROP_DEFINITION_DATA: PropData = {
     nullity: "NONNULL",
     scalarType: undefined,
+    length: undefined,
     props: undefined,
     targetModel: undefined,
     associationType: undefined,

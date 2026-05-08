@@ -9,6 +9,7 @@ import { DatabaseNamingStrategy, isIllegal, fixColumn, fixColumnArr, notEmpty } 
 import { Column, Columns, MiddelEntity, MiddleTable, PropStorage, StorageType } from "./storage";
 import { ParameterizedTargetCalculator, TargetCalculator } from "@/schema/computed";
 import { z } from "zod";
+import { CascadeType } from "@/schema/join";
 
 export class EntityProp {
 
@@ -19,6 +20,8 @@ export class EntityProp {
     private _rootProp: EntityProp | undefined = undefined;
 
     private _scalarType: ScalarType | undefined = undefined;
+
+    private _length: number | undefined = undefined;
 
     readonly associationType: AssociationType | undefined = undefined;
 
@@ -77,6 +80,7 @@ export class EntityProp {
         this.nullable = _data.nullity !== "NONNULL";
         this.inputNonNull = _data.nullity != "NULLABLE";   
         this._scalarType = _data.scalarType; 
+        this._length = _data.length;
         this.associationType = _data.associationType;
         if (_data.props != null) {
             this._props = this._createProps(_data.props);
@@ -135,6 +139,10 @@ export class EntityProp {
 
     get scalarType(): ScalarType | undefined {
         return this._scalarType;
+    }
+
+    get length(): number | undefined {
+        return this._length;
     }
 
     get props(): ReadonlyMap<string, EntityProp> | undefined {
@@ -287,6 +295,17 @@ export class EntityProp {
     get targetKeyProp(): EntityProp | undefined {
         this.resolve(2);
         return this._targetKeyProp;
+    }
+
+    get cascadeType(): CascadeType {
+        return this._data.joinTable?.joinTarget?.cascade 
+            ?? this._data.joinColumns?.cascade 
+            ?? "NONE";
+    }
+
+    get backCascascadeType(): CascadeType {
+        return this._data.joinTable?.joinThis?.cascade
+            ?? "NONE";
     }
 
     private validateData() {

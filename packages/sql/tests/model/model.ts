@@ -249,7 +249,8 @@ export const ORDER = model("Order", "id", class {
                 {columnName: "order_x", referencedSubPath: "x"},
                 {columnName: "order_y_a", referencedSubPath: "y.a"},
                 {columnName: "order_y_b", referencedSubPath: "y.b"}
-            ]
+            ],
+            cascade: "DELETE"
         },
         joinTarget: {
             keyProp: "id",
