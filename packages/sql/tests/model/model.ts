@@ -117,6 +117,7 @@ export const BOOK = model("Book", "id",
         bookCount = prop.formula.sql(BOOK_AUTHOR_COUNT_FORMULA)
     }, 
     ctx => {
+        ctx.unique("name", "edition");
         ctx.table({
             discriminator: "TYPE",
             discriminatorValue: DV_MODEL_NAME

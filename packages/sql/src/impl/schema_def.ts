@@ -42,7 +42,11 @@ export class TableDefImpl implements TableDef {
 
     private _columns: Array<ColumnDefImpl> | undefined = undefined;
 
-    private readonly _constraints: Array<ConstraintDef> = []; 
+    private readonly _simpleConstraints: Array<SimpleContraintDef> = [];
+
+    private readonly _foreignKeyConstraints: Array<ForeignKeyConstraintDef> = [];
+
+    private _constraints: ReadonlyArray<ConstraintDef> | undefined = undefined; 
 
     constructor(
         readonly entity: metadata.Entity | undefined,
@@ -58,7 +62,14 @@ export class TableDefImpl implements TableDef {
     }
 
     get constraints(): ReadonlyArray<ConstraintDef> {
-        return this._constraints;
+        let constraints = this._constraints;
+        if (constraints == null) {
+            const arr: Array<ConstraintDef> = [];
+            arr.push(...this._simpleConstraints);
+            arr.push(...this._foreignKeyConstraints);
+            this._constraints = constraints = arr;
+        }
+        return constraints;
     }
 
     addColumnDef(column: ColumnDefImpl) {
@@ -67,7 +78,12 @@ export class TableDefImpl implements TableDef {
     }
 
     addConstriantDef(constraint: ConstraintDef) {
-        this._constraints.push(constraint);
+        this._constraints = undefined;
+        if (constraint.kind === "FOREIGN_KEY") {
+            this._foreignKeyConstraints.push(constraint);
+        } else {
+            this._simpleConstraints.push(constraint);
+        }
     }
 
     referencedColumnDef(name: string): ColumnDefImpl {
@@ -76,6 +92,15 @@ export class TableDefImpl implements TableDef {
             throw new err.StateError(`There is no referenced column name "${name}" in referenced table "${this.name}"`);
         }
         return columnDef;
+    }
+
+    findColumnDefByProp(prop: metadata.EntityProp): ColumnDefImpl {
+        for (const columnDef of this._columnMap.values()) {
+            if (columnDef.prop === prop) {
+                return columnDef;
+            }
+        }
+        throw new err.StateError(`There is no property "${prop.toString()}" in the table "${this.name}"`);
     }
 
     toJSON(): any {
