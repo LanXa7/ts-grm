@@ -77,6 +77,23 @@ class SchemaCreatorExecutor {
             }
         }
         this._processProp(entity.idProp, tableDefImpl);
+        const discriminator = entity.tableSettings.discriminator;
+        if (discriminator != null) {
+            tableDefImpl.addColumnDef(
+                new ColumnDefImpl(
+                    tableDefImpl,
+                    undefined,
+                    discriminator.name,
+                    undefined,
+                    discriminator.type === "string" ? "STR" : "I32",
+                    false,
+                    discriminator.type === "string"
+                        ? entity.discriminatorValues.map(v => (v as string).length).reduce((a, b) => Math.max(a, b), 0)
+                        : undefined,
+                    undefined
+                )
+            );
+        }
         for (const prop of entity.declaredPropMap.values()) {
             if (prop != entity.idProp && prop.referenceProp == null) {    
                 this._processProp(prop, tableDefImpl);
@@ -124,15 +141,16 @@ class SchemaCreatorExecutor {
                 referencedTableDef != null
                     ? referencedTableDef.referencedColumnDef(column.referencedColumnName!)
                     : undefined;
+            const condition = tableDefImpl.entity != null && tableDefImpl.entity !== scalarProp.declaringEntity;
             const columnDefImpl = new ColumnDefImpl(
                 tableDefImpl,
                 scalarProp,
                 column.name,
                 referenceColumnDef,
                 scalarProp.scalarType!,
-                (scalarProp.nullable && !scalarProp.inputNonNull) 
-                    || (tableDefImpl.entity != null && tableDefImpl.entity !== scalarProp.declaringEntity),
-                scalarProp.length
+                (scalarProp.nullable && !scalarProp.inputNonNull) || condition,
+                scalarProp.length,
+                condition ? subEntities(scalarProp.declaringEntity) : undefined
             );
             tableDefImpl.addColumnDef(columnDefImpl);
             if (foreignKeyBuilder != null) {
@@ -174,7 +192,8 @@ class SchemaCreatorExecutor {
                 referencedColumnDef,
                 referencedColumnDef.type,
                 referencedColumnDef.nullable,
-                referencedColumnDef.length
+                referencedColumnDef.length,
+                undefined
             );
             tableDefImpl.addColumnDef(columnDefImpl);
             thisForeignKeyBuilder.add(columnDefImpl, referencedColumnDef);
@@ -188,7 +207,8 @@ class SchemaCreatorExecutor {
                 referencedColumnDef,
                 referencedColumnDef.type,
                 referencedColumnDef.nullable,
-                referencedColumnDef.length
+                referencedColumnDef.length,
+                undefined
             );
             tableDefImpl.addColumnDef(columnDefImpl);
             targetForeignKeyBuilder.add(columnDefImpl, referencedColumnDef);
@@ -255,7 +275,7 @@ class SchemaCreatorExecutor {
                     .get(superEntity.tableEntity)!
                 : undefined;
         for (const columnDef of tableDefImpl.columns) {
-            if (columnDef.prop.rootProp !== idProp) {
+            if (columnDef.prop?.rootProp !== idProp) {
                 continue;
             }
             idColumnDefs.push(columnDef);
@@ -274,6 +294,14 @@ class SchemaCreatorExecutor {
         });
         if (idForeignKeyBuilder != null) {
             tableDefImpl.addConstriantDef(idForeignKeyBuilder.build());
+        }
+        const discriminator = tableDefImpl.entity.tableSettings.discriminator;
+        if (discriminator != null) {
+            tableDefImpl.addConstriantDef({
+                kind: "CHECK",
+                column: tableDefImpl.referencedColumnDef(discriminator.name),
+                values: tableDefImpl.entity.discriminatorValues
+            });
         }
         for (const constraint of tableDefImpl.entity.uniqueConstraints) {
             const columnDefs: Array<ColumnDefImpl> = [];   
@@ -337,4 +365,19 @@ class ForeignKeyBuilder {
             implicit: this._inheritance ? "INHERITANCE" : undefined
         };
     }
+}
+
+function subEntities(
+    entity: metadata.Entity
+): ReadonlyArray<metadata.Entity> | undefined {
+    const arr: Array<metadata.Entity> = [];
+    if (entity.tableSettings.discriminatorValue != null) {
+        arr.push(entity);
+    }
+    for (const descendant of entity.descendants) {
+        if (descendant.tableSettings.discriminatorValue != null) {
+            arr.push(descendant);
+        }
+    }
+    return arr.length != 0 ? arr : undefined;
 }

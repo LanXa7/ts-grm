@@ -120,6 +120,7 @@ export const ELECTRONIC_BOOK = model.extends(BOOK)(
         address = prop.str();
     },
     ctx => ctx.table({
+        discriminator: "TYPE",
         name: {
             idMapping: "ELECTRONIC_BOOK"
         },

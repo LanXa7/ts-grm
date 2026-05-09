@@ -135,7 +135,6 @@ export const PAPER_BOOK = model.extends(BOOK)(
     },
     ctx => {
         ctx.table({
-            discriminator: "PB_TYPE",
             discriminatorValue: DV_MODEL_NAME,
             name: {
                 idMapping: "PB_ID"
@@ -167,7 +166,6 @@ export const PDF_ELECTRONIC_BOOK = model.extends(ELECTRONIC_BOOK)(
     },
     ctx => {
         ctx.table({
-            discriminator: "PEB_TYPE",
             discriminatorValue: DV_MODEL_NAME,
             name: {
                 idMapping: "PEB_ID"

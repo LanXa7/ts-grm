@@ -72,7 +72,6 @@ export class Entity {
         this.superEntity = superModel !== undefined
             ? Entity.of(superModel)
             : undefined;
-        
         this.tableSettings = this._createTableSettings(_options.tableOptions);
         this.identity = ++Entity._nextIdentity;
         this.tableEntity = this.tableSettings.sharedTable
@@ -539,43 +538,48 @@ export class Entity {
                 name = this.superEntity.tableSettings.discriminator!.name;
             }
             settings.discriminator = { name, type };
-        } else if (this.superEntity != null) {
-            settings.discriminator = this.superEntity.tableSettings.discriminator;
         }
 
-        if (settings.discriminator != null) {
-            let discriminatorValue = typeof options === "string"
-                ? null
-                : options?.discriminatorValue;
-            if (discriminatorValue == null || discriminatorValue === "") {
+        let discriminatorValue = typeof options === "string"
+            ? null
+            : options?.discriminatorValue;
+        if (discriminatorValue == null || discriminatorValue === "") {
+            throw new ModelError(
+                this.name,
+                dedent `the "discriminatorValue" of table options must be specified 
+                because the current model requires polymorphism". 
+                Even if the model is intended to be abstract, 
+                it must be explicitly specified using the imported constant from
+                "import { DV_ABSTRACT } from '@ts-grm/core'";`  
+            );
+        }
+        if (discriminatorValue !== DV_ABSTRACT) {
+            if (discriminatorValue === DV_MODEL_NAME) {
+                discriminatorValue = this.name;
+            }
+            const discriminatorType = settings.discriminator?.type 
+                ?? this.superEntity?._discriminiatorType()
+                ?? "string"; 
+            if (typeof discriminatorValue !== discriminatorType) {
                 throw new ModelError(
                     this.name,
-                    dedent `the "discriminatorValue" of table options must be specified 
-                    because the current model requires polymorphism". 
-                    Even if the model is intended to be abstract, 
-                    it must be explicitly specified using the imported constant from
-                    "import { DV_ABSTRACT } from '@ts-grm/core'";`  
+                    dedent `the "discriminatorValue" of table options is specified 
+                    as ${
+                        typeof discriminatorValue === "string"
+                            ? `"${discriminatorValue}"`
+                            : discriminatorValue
+                    } but the "discriminator.type" is "${discriminatorType}"`  
                 );
             }
-            if (discriminatorValue !== DV_ABSTRACT) {
-                if (discriminatorValue === DV_MODEL_NAME) {
-                    discriminatorValue = this.name;
-                }
-                if (typeof discriminatorValue !== settings.discriminator.type) {
-                    throw new ModelError(
-                        this.name,
-                        dedent `the "discriminatorValue" of table options is specified 
-                        as ${
-                            typeof discriminatorValue === "string"
-                                ? `"${discriminatorValue}"`
-                                : discriminatorValue
-                        } but the "discriminator.type" is "${settings.discriminator.type}"`  
-                    );
-                }
-                settings.discriminatorValue = discriminatorValue;
-            }
+            settings.discriminatorValue = discriminatorValue;
         }
         return settings;
+    }
+
+    private _discriminiatorType(): "string" | "number" {
+        return this.tableSettings.discriminator?.type 
+            ?? this.superEntity?._discriminiatorType()
+            ?? "string";
     }
 }
 

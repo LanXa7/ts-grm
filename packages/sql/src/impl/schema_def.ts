@@ -20,6 +20,8 @@ export interface ColumnDef {
     readonly nullable: boolean;
 
     readonly length: number | undefined;
+
+    readonly when: ReadonlyArray<metadata.Entity> | undefined;
 }
 
 export type ConstraintDef = SimpleContraintDef | ForeignKeyConstraintDef;
@@ -31,6 +33,10 @@ export type SimpleContraintDef = {
     readonly kind: "UNIQUE";
     readonly columns: ReadonlyArray<ColumnDef>;
     readonly implicit: "ASSOCIATION" | "MIDDLE_ENEITY" | undefined;
+} | {
+    readonly kind: "CHECK";
+    readonly column: ColumnDef;
+    readonly values: ReadonlyArray<string | number>;
 };
 
 export type ForeignKeyConstraintDef = {
@@ -120,10 +126,16 @@ export class TableDefImpl implements TableDef {
                         referencedColumns: c.referencedColumns.map(c => c.name),
                         cascade: c.cascade
                     }
-                    : { 
-                        kind: c.kind, 
-                        columns: c.columns.map(c => c.name) 
-                    }
+                    : c.kind === "CHECK"
+                        ? {
+                            kind: c.kind,
+                            column: c.column.name,
+                            values: c.values
+                        }
+                        : { 
+                            kind: c.kind, 
+                            columns: c.columns.map(c => c.name) 
+                        }
             )
         };
     }
@@ -133,12 +145,13 @@ export class ColumnDefImpl implements ColumnDef {
 
     constructor(
         readonly declaringTable: TableDefImpl,
-        readonly prop: metadata.EntityProp,
+        readonly prop: metadata.EntityProp | undefined,
         readonly name: string,
         readonly referenceColumnDef: ColumnDefImpl | undefined,
         readonly type: ScalarType,
         readonly nullable: boolean,
-        readonly length: number | undefined
+        readonly length: number | undefined,
+        readonly when: ReadonlyArray<metadata.Entity> | undefined
     ) {}
 
     toJSON(): any {
@@ -147,7 +160,8 @@ export class ColumnDefImpl implements ColumnDef {
             referenceName: this.referenceColumnDef?.name,
             type: this.type,
             nullable: this.nullable,
-            length: this.length
+            length: this.length,
+            when: this.when?.map(e => e.tableSettings.discriminatorValue!)
         };
     }
 }

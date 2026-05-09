@@ -22,6 +22,12 @@ describe.sequential("SchemaCreatorTest", () => {
                         "nullable": false
                     },
                     {
+                        "name": "TYPE",
+                        "type": "STR",
+                        "nullable": false,
+                        "length": 17
+                    },
+                    {
                         "name": "NAME",
                         "type": "STR",
                         "nullable": false
@@ -34,23 +40,34 @@ describe.sequential("SchemaCreatorTest", () => {
                     {
                         "name": "CITY",
                         "type": "STR",
-                        "nullable": true
+                        "nullable": true,
+                        "when": ["PhysicalBookStore"]
                     },
                     {
                         "name": "STREET",
                         "type": "STR",
-                        "nullable": true
+                        "nullable": true,
+                        "when": ["PhysicalBookStore"]
                     },
                     {
                         "name": "URL",
                         "type": "STR",
-                        "nullable": true
+                        "nullable": true,
+                        "when": ["OnlineBookStore"]
                     }
                 ],
                 "constraints": [
                     {
                         "kind": "PRIMARY_KEY",
                         "columns": ["ID"]
+                    },
+                    {
+                        "kind": "CHECK",
+                        "column": "TYPE",
+                        "values": [
+                            "PhysicalBookStore",
+                            "OnlineBookStore"
+                        ]
                     }
                 ]
             },
@@ -61,6 +78,12 @@ describe.sequential("SchemaCreatorTest", () => {
                         "name": "ID",
                         "type": "I64",
                         "nullable": false
+                    },
+                    {
+                        "name": "TYPE",
+                        "type": "STR",
+                        "nullable": false,
+                        "length": 17
                     },
                     {
                         "name": "NAME",
@@ -88,6 +111,16 @@ describe.sequential("SchemaCreatorTest", () => {
                     {
                         "kind": "PRIMARY_KEY",
                         "columns": ["ID"]
+                    },
+                    {
+                        "kind": "CHECK",
+                        "column": "TYPE",
+                        "values": [
+                            "Book",
+                            "PaperBook",
+                            "ElectronicBook",
+                            "PdfElectronicBook"
+                        ]
                     },
                     {
                         "kind": "UNIQUE",
@@ -203,6 +236,12 @@ describe.sequential("SchemaCreatorTest", () => {
                         "nullable": false
                     },
                     {
+                        "name": "EB_TYPE",
+                        "type": "STR",
+                        "nullable": false,
+                        "length": 17
+                    },
+                    {
                         "name": "ADDRESS",
                         "type": "STR",
                         "nullable": false
@@ -212,6 +251,14 @@ describe.sequential("SchemaCreatorTest", () => {
                     {
                         "kind": "PRIMARY_KEY",
                         "columns": ["EB_ID"]
+                    },
+                    {
+                        "kind": "CHECK",
+                        "column": "EB_TYPE",
+                        "values": [
+                            "ElectronicBook",
+                            "PdfElectronicBook"
+                        ]
                     },
                     {
                         "kind": "FOREIGN_KEY",
@@ -259,6 +306,12 @@ describe.sequential("SchemaCreatorTest", () => {
                         "nullable": false
                     },
                     {
+                        "name": "TYPE",
+                        "type": "STR",
+                        "nullable": false,
+                        "length": 12
+                    },
+                    {
                         "name": "NAME",
                         "type": "STR",
                         "nullable": false
@@ -274,6 +327,14 @@ describe.sequential("SchemaCreatorTest", () => {
                     {
                         "kind": "PRIMARY_KEY",
                         "columns": ["ID"]
+                    },
+                    {
+                        "kind": "CHECK",
+                        "column": "TYPE",
+                        "values": [
+                            "Organization",
+                            "Group"
+                        ]
                     },
                     {
                         "kind": "FOREIGN_KEY",
