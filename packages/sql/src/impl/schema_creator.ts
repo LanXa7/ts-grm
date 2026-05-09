@@ -328,7 +328,7 @@ class SchemaCreatorExecutor {
         tableDefImpl.addConstriantDef({
             kind: "UNIQUE",
             columns: columnDefImpls,
-            implicit: "MIDDLE_ENEITY"
+            implicit: "MIDDLE_ENTITY"
         });
     }
 }

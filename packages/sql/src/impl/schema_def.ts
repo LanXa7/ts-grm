@@ -32,7 +32,7 @@ export type SimpleContraintDef = {
 } | {
     readonly kind: "UNIQUE";
     readonly columns: ReadonlyArray<ColumnDef>;
-    readonly implicit: "ASSOCIATION" | "MIDDLE_ENEITY" | undefined;
+    readonly implicit: "ASSOCIATION" | "MIDDLE_ENTITY" | undefined;
 } | {
     readonly kind: "CHECK";
     readonly column: ColumnDef;
