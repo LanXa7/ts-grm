@@ -40,8 +40,8 @@ class SchemaCreatorExecutor {
         for (const entity of await entityManager.entities()) {
             for (const prop of entity.declaredPropMap.values()) {
                 const middleEntity = prop.middleEntity;
-                if (middleEntity != null) {
-                    
+                if (middleEntity != null && prop.mappedByProp == null) {
+                    this._addMiddleEntityUniqueConstraints(middleEntity);
                 }
             }
         }
@@ -65,14 +65,31 @@ class SchemaCreatorExecutor {
         }
         for (const prop of entity.declaredPropMap.values()) {
             const targetEntity = prop.targetEntity;
-            if (targetEntity != null && prop.middleEntity != null) {
+            if (targetEntity != null 
+                && prop.mappedByProp == null
+                && (
+                    prop.storageType === "COLUMN" 
+                    || prop.storageType === "COLUMNS" 
+                    || prop.middleEntity != null
+                )
+            ) {
                 this._processEntity(targetEntity);
             }
         }
         this._processProp(entity.idProp, tableDefImpl);
         for (const prop of entity.declaredPropMap.values()) {
-            if (prop != entity.idProp) {    
+            if (prop != entity.idProp && prop.referenceProp == null) {    
                 this._processProp(prop, tableDefImpl);
+            }
+        }
+        for (const prop of entity.declaredPropMap.values()) {
+            if (prop != entity.idProp && prop.referenceProp != null) {    
+                this._processProp(prop, tableDefImpl);
+            }
+        }
+        for (const prop of entity.declaredPropMap.values()) {
+            if (prop.middleEntity != null && prop.mappedByProp == null) {    
+                this._processEntity(prop.middleEntity.entity);
             }
         }
     }
@@ -84,12 +101,7 @@ class SchemaCreatorExecutor {
         if (prop.isOverride && prop.declaringEntity.tableSettings.sharedTable) {
             return;
         }
-        const scalaProps = 
-            prop.scalarType != null
-                ? [prop]
-            : prop.props != null
-                ? Array.from(prop.flattenScalarProps.values())
-            : undefined;
+        const scalaProps = prop.scalarProps;
         if (scalaProps == null) {
             if (prop.mappedByProp == null && prop.storageType === "MIDDLE_TABLE") {
                 this._processMiddleTable(prop);
@@ -104,7 +116,7 @@ class SchemaCreatorExecutor {
         }
         let foreignKeyBuilder = 
             referencedTableDef != null
-                ? new ForeignKeyBuilder(referenceProp!.cascadeType)
+                ? new ForeignKeyBuilder(referenceProp!.cascadeType, false)
                 : undefined; 
         for (const scalarProp of scalaProps) {
             const column = scalarProp.toStorage(this._strategy) as metadata.Column;
@@ -151,8 +163,8 @@ class SchemaCreatorExecutor {
             );
             this.tableMap.set(prop, tableDefImpl);
         }
-        const thisForeignKeyBuilder = new ForeignKeyBuilder(prop.backCascascadeType);
-        const targetForeignKeyBuilder = new ForeignKeyBuilder(prop.cascadeType);
+        const thisForeignKeyBuilder = new ForeignKeyBuilder(prop.backCascascadeType, false);
+        const targetForeignKeyBuilder = new ForeignKeyBuilder(prop.cascadeType, false);
         for (const toThisColumn of middleTable.toThisColumns) {
             const referencedColumnDef = toThisTableDefImpl.referencedColumnDef(toThisColumn.referencedColumnName!);
             const columnDefImpl = new ColumnDefImpl(
@@ -186,13 +198,15 @@ class SchemaCreatorExecutor {
         if (prop.associationType === "ONE_TO_ONE" || prop.associationType === "MANY_TO_ONE") {
             tableDefImpl.addConstriantDef({
                 kind: "UNIQUE",
-                columns: thisForeignKeyBuilder.columns
+                columns: thisForeignKeyBuilder.columns,
+                implicit: "ASSOCIATION"
             });
         }
         if (prop.associationType === "ONE_TO_ONE" || prop.associationType === "ONE_TO_MANY") {
             tableDefImpl.addConstriantDef({
                 kind: "UNIQUE",
-                columns: targetForeignKeyBuilder.columns
+                columns: targetForeignKeyBuilder.columns,
+                implicit: "ASSOCIATION"
             });
         }
     }
@@ -225,16 +239,14 @@ class SchemaCreatorExecutor {
         const idColumnDefs: Array<ColumnDefImpl> = [];
         const idForeignKeyBuilder = 
             idProp.isOverride
-                ? new ForeignKeyBuilder("DELETE")
+                ? new ForeignKeyBuilder("DELETE", true)
                 : undefined;
         const superEntity = idForeignKeyBuilder != null 
             ? tableDefImpl.entity.superEntity!.tableEntity :
             undefined;
         const superIdScalarProps =
             superEntity != null
-                ? superEntity.idProp.props != null
-                    ? Array.from(superEntity.idProp.flattenScalarProps.values())
-                    : [superEntity.idProp]
+                ? superEntity.idProp.scalarProps
                 : undefined;
         const superTableDefImpl = 
             superEntity != null
@@ -270,13 +282,26 @@ class SchemaCreatorExecutor {
             }
             tableDefImpl.addConstriantDef({
                 kind: "UNIQUE",
-                columns: columnDefs
+                columns: columnDefs,
+                implicit: undefined
             });
         }
     }
 
-    private _addMiddleEntityUniqueConstraints(middleEntity: metadata.MiddleTable) {
-
+    private _addMiddleEntityUniqueConstraints(middleEntity: metadata.MiddelEntity) {
+        const tableDefImpl = this.tableMap.get(middleEntity.entity.tableEntity)!;
+        const columnDefImpls: Array<ColumnDefImpl> = [];
+        for (const prop of middleEntity.joinThisProp.referenceKeyProp!.scalarProps!) {
+            columnDefImpls.push(tableDefImpl.findColumnDefByProp(prop));
+        }
+        for (const prop of middleEntity.joinTargetProp.referenceKeyProp!.scalarProps!) {
+            columnDefImpls.push(tableDefImpl.findColumnDefByProp(prop));
+        }
+        tableDefImpl.addConstriantDef({
+            kind: "UNIQUE",
+            columns: columnDefImpls,
+            implicit: "MIDDLE_ENEITY"
+        });
     }
 }
 
@@ -287,7 +312,8 @@ class ForeignKeyBuilder {
     private readonly _referencedColumns: Array<ColumnDefImpl> = [];
 
     constructor(
-        private readonly _cascade: CascadeType
+        private readonly _cascade: CascadeType,
+        private readonly _inheritance: boolean
     ) {}
 
     add(
@@ -307,7 +333,8 @@ class ForeignKeyBuilder {
             kind: "FOREIGN_KEY",
             columns: this._columns,
             referencedColumns: this._referencedColumns,
-            cascade: this._cascade
+            cascade: this._cascade,
+            implicit: this._inheritance ? "INHERITANCE" : undefined
         };
     }
 }

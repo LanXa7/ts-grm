@@ -657,6 +657,10 @@ describe.sequential("SchemaCreatorTest", () => {
                         "columns": ["ID"]
                     },
                     {
+                        "kind": "UNIQUE",
+                        "columns": ["STUDENT_ID", "COURSE_ID"]
+                    },
+                    {
                         "kind": "FOREIGN_KEY",
                         "columns": ["STUDENT_ID"],
                         "referencedColumns": ["ID"],

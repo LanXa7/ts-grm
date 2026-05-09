@@ -33,6 +33,8 @@ export class EntityProp {
 
     private _flattenScalarProps: ReadonlyMap<string, EntityProp> | undefined = undefined;
 
+    private _scalarProps: ReadonlyArray<EntityProp> | undefined = undefined;
+
     private _targetEntity: Entity | undefined = undefined;
 
     private _orders:  ReadonlyArray<EntityPropOrder> | undefined = undefined;
@@ -179,6 +181,21 @@ export class EntityProp {
             }
         }
         return flattenScalarProps;
+    }
+
+    get scalarProps(): ReadonlyArray<EntityProp> | undefined {
+        let scalarProps = this._scalarProps;
+        if (scalarProps == null) {
+            if (this.scalarType != null) {
+                scalarProps = [this];
+            } else if (this.props != null) {
+                scalarProps = Array.from(this.flattenScalarProps.values());
+            } else {
+                scalarProps = [];
+            }
+            this._scalarProps = scalarProps;
+        }
+        return scalarProps.length === 0 ? undefined : scalarProps;
     }
 
     get scalarIndex(): number {
@@ -812,6 +829,9 @@ export class EntityProp {
     }
 
     private _createBaseStorage(): PropStorage | undefined {
+        if (this._data.calculatorData != null) {
+            return undefined;
+        }
         if (this._data.joinEntity != null) {
             return this.middleEntity;
         } else if (this.scalarType != null) {

@@ -13,7 +13,7 @@ export {
     LOWER_SNAKE_CASE_DATABASE_NAMING_STRATEGY 
 } from "./strategy";
 export { allocateModelIdentifier } from "./model_impl";
-export type { StorageType, PropStorage, Column, Columns, MiddleTable } from "./storage";
+export type { StorageType, PropStorage, Column, Columns, MiddleTable, MiddelEntity } from "./storage";
 export type { DatabaseNamingStrategy } from "./strategy";
 export type { AbstractTable } from "./abstract_table";
 export type { TypedBaseTable } from "./base_table";

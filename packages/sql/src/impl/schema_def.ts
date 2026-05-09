@@ -25,8 +25,12 @@ export interface ColumnDef {
 export type ConstraintDef = SimpleContraintDef | ForeignKeyConstraintDef;
 
 export type SimpleContraintDef = {
-    readonly kind: "PRIMARY_KEY" | "UNIQUE" | "INDEX";
+    readonly kind: "PRIMARY_KEY" | "INDEX";
     readonly columns: ReadonlyArray<ColumnDef>;
+} | {
+    readonly kind: "UNIQUE";
+    readonly columns: ReadonlyArray<ColumnDef>;
+    readonly implicit: "ASSOCIATION" | "MIDDLE_ENEITY" | undefined;
 };
 
 export type ForeignKeyConstraintDef = {
@@ -34,6 +38,7 @@ export type ForeignKeyConstraintDef = {
     readonly columns: ReadonlyArray<ColumnDef>;
     readonly referencedColumns: ReadonlyArray<ColumnDef>;
     readonly cascade: CascadeType;
+    readonly implicit: "INHERITANCE" | undefined;
 };
 
 export class TableDefImpl implements TableDef {
