@@ -763,15 +763,15 @@ describe.sequential("SchemaCreatorTest", () => {
                 NAME text not null, 
                 VERSION integer not null, 
 
-                -- When the "TYPE" is "PhysicalBookStore
+                -- When the "TYPE" is "PhysicalBookStore"
                 -- The implicit nullity in the derived table is non-null
                 CITY text null, 
 
-                -- When the "TYPE" is "PhysicalBookStore
+                -- When the "TYPE" is "PhysicalBookStore"
                 -- The implicit nullity in the derived table is non-null
                 STREET text null, 
 
-                -- When the "TYPE" is "OnlineBookStore
+                -- When the "TYPE" is "OnlineBookStore"
                 -- The implicit nullity in the derived table is non-null
                 URL text null
             );

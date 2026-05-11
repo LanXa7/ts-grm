@@ -1,4 +1,4 @@
-import { ast, err } from "@ts-grm/core";
+import { ast, err, TransactionOptions } from "@ts-grm/core";
 import { Driver } from "./deriver";
 import { NodeRender, NodeRenderContext } from "./node_render";
 import { Precedence } from "@/sql/precedence";
@@ -37,6 +37,13 @@ export class SqliteDriver implements Driver {
             default:
                 return "text";
         }
+    }
+
+    execute<R>(
+        options: TransactionOptions, 
+        fn: () => Promise<R>
+    ): Promise<R> {
+        throw new Error();
     }
 }
 

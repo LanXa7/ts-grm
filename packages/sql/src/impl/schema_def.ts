@@ -238,7 +238,7 @@ function appendTo(
             entity.tableSettings.discriminator!.name
         }" is "${
             derivedEntity.tableSettings.discriminatorValue
-        }`);
+        }"`);
         if (!prop.nullable || prop.inputNonNull) {
             writer.code("\n-- The implicit nullity in the derived table is non-null\n")
         }

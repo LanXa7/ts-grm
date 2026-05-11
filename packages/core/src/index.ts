@@ -83,6 +83,9 @@ export { EntityManager } from "./schema/entity_manager";
 export type { CascadeType } from "./schema/join";
 export type  {
     SqlClient, 
+    Propagation,
+    Isolation,
+    TransactionOptions,
     Criteria, 
     AtLeastOne,
     RootQuery,

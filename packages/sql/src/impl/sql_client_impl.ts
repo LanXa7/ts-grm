@@ -27,9 +27,12 @@ import type {
     AtomTupleSubQuery,
     AtomBaseQuery,
     metadata,
-    AnyAssociationModel
+    AnyAssociationModel,
+    Isolation,
+    Propagation,
+    TransactionOptions
 } from "@ts-grm/core";
-import { suppressUnused, ast, dsl } from "@ts-grm/core";
+import { suppressUnused, ast, dsl, err } from "@ts-grm/core";
 import { MutableRootQueryImpl } from "./mutable_root_query_impl";
 import { AtomRootQueryImpl } from "./atom_root_query_impl";
 import { AbstractRootQueryProjection, AbstractSubQueryProjection, ExpressionSubQueryProjection, MapBaseQueryProjection } from "./query_projection";
@@ -39,6 +42,7 @@ import { toTables } from "./utils";
 import { MergedBaseQueryImpl, MergedDtSubQueryImpl, MergedExprSubQueryImpl, MergedNumSubQueryImpl, MergedRootQueryImpl, MergedStrSubQueryImpl, MergedTupleSubQueryImpl } from "./merged_query";
 import { MutableSubQueryImpl } from "./mutable_sub_query_impl";
 import { AtomDtSubQueryImpl, AtomNumSubQueryImpl, AtomStrSubQueryImpl, AtomExprSubQueryImpl, AtomTupleSubQueryImpl } from "./atom_sub_query_impl";
+import { ParseOptions } from "node:querystring";
 
 export class SqlClientImpl implements SqlClientImplementor {
 
@@ -161,8 +165,49 @@ export class SqlClientImpl implements SqlClientImplementor {
         return filters;
     }
 
-    async createSchema(): Promise<void> {
-        
+    execute<R>(
+        options: Propagation | Isolation | number | Partial<TransactionOptions> | (() => Promise<R>),
+        fn?: () => Promise<R>
+    ): Promise<R> {
+        let propagation: Propagation = "REQUIRED";
+        let isolation: Isolation = "READ_COMMITTED";
+        let timeout = 0;
+        let func: () => Promise<R>;
+        if (typeof options === "function") {
+            func = options;
+        } else {
+            func = fn!; 
+            if (typeof options === "string") {
+                switch (options) {
+                    case "READ_UNCOMMITTED":
+                    case "READ_COMMITTED":
+                    case "REPEATABLE_READ":
+                    case "SERIALIZABLE":
+                        isolation = options;
+                        break;
+                    default:
+                        propagation = options;
+                }
+            } else {
+                if (typeof options === "number") {
+                    timeout = options;
+                } else {
+                    if (options.propagation != null) {
+                        propagation = options.propagation;
+                    }
+                    if (options.isolation != null) {
+                        isolation = options.isolation;
+                    }
+                    if (options.timeout != null) {
+                        timeout = options.timeout;
+                    }
+                }
+                if (timeout < 0) {
+                    throw new err.ArgumentError(`The argument cannot be negative number, but it is ${timeout}`);
+                }
+            }
+        }
+        return this.driver.execute({propagation, isolation, timeout}, func);
     }
 }
 

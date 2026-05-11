@@ -1,5 +1,6 @@
 import { ColumnDef } from "@/impl/schema_def";
 import { NodeRender } from "./node_render";
+import { TransactionOptions } from "@ts-grm/core";
 
 export interface Driver {
 
@@ -12,4 +13,9 @@ export interface Driver {
     readonly isRecursiveKeywordRequired: boolean;
 
     typeName(columnDef: ColumnDef): string;
+
+    execute<R>(
+        options: TransactionOptions,
+        fn: () => Promise<R>
+    ): Promise<R>;
 }

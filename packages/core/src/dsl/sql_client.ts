@@ -46,5 +46,48 @@ export interface SqlClient {
         ]
     ): AtomRootQuery<TProjection>;
 
-    createSchema(): Promise<void>;
+    execute<R>(
+        fn: () => Promise<R>
+    ): Promise<R>;
+
+    execute<R>(
+        propagation: Propagation,
+        fn: () => Promise<R>
+    ): Promise<R>;
+
+    execute<R>(
+        isolation: Isolation,
+        fn: () => Promise<R>
+    ): Promise<R>;
+
+    execute<R>(
+        timeout: number,
+        fn: () => Promise<R>
+    ): Promise<R>;
+
+    execute<R>(
+        options: Partial<TransactionOptions>,
+        fn: () => Promise<R>
+    ): Promise<R>;
 }
+
+export type Propagation =
+    "REQUIRED"
+    | "REQUIRES_NEW"
+    | "NOT_SUPPORTED"
+    | "NEVER"
+    | "MANDATORY"
+    | "NESTED";
+
+export type Isolation =
+    "READ_UNCOMMITTED" 
+    | "READ_COMMITTED" 
+    | "REPEATABLE_READ"
+    | "SERIALIZABLE";
+
+export type TransactionOptions =
+    {
+        readonly propagation: Propagation;
+        readonly isolation: Isolation;
+        readonly timeout: number;
+    };
