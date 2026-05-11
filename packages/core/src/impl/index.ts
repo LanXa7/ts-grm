@@ -21,3 +21,4 @@ export type { JoinOperation, JoinFilter } from "./entity_table";
 export type { BaseQueryImplementor, BaseModelImplementor } from "./base_query_implementor";
 export type { ShadowAnchor } from "./shadow_anchor";
 export type { ModelContract } from "./model_contract";
+export { CodeWriter } from "./code_writer";

@@ -176,7 +176,7 @@ class SchemaCreatorExecutor {
         let tableDefImpl = this.tableMap.get(prop);
         if (tableDefImpl == null) {
             tableDefImpl = new TableDefImpl(
-                undefined,
+                prop,
                 middleTable.name
             );
             this.tableMap.set(prop, tableDefImpl);
@@ -251,7 +251,8 @@ class SchemaCreatorExecutor {
             }
             tableDefImpl.addConstriantDef({
                 kind: "PRIMARY_KEY",
-                columns: columnDefs
+                columns: columnDefs,
+                implicit: "MIDDLE_TABLE"
             });
             return;
         }
@@ -290,7 +291,8 @@ class SchemaCreatorExecutor {
         }
         tableDefImpl.addConstriantDef({
             kind: "PRIMARY_KEY",
-            columns: idColumnDefs
+            columns: idColumnDefs,
+            implicit: undefined
         });
         if (idForeignKeyBuilder != null) {
             tableDefImpl.addConstriantDef(idForeignKeyBuilder.build());
@@ -300,7 +302,8 @@ class SchemaCreatorExecutor {
             tableDefImpl.addConstriantDef({
                 kind: "CHECK",
                 column: tableDefImpl.referencedColumnDef(discriminator.name),
-                values: tableDefImpl.entity.discriminatorValues
+                values: tableDefImpl.entity.discriminatorValues,
+                implicit: "POLYMORPHISM"
             });
         }
         for (const constraint of tableDefImpl.entity.uniqueConstraints) {

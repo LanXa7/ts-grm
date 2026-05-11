@@ -46,4 +46,4 @@ export type JoinColumn = string | {
     referencedSubPath: string
 };
 
-export type CascadeType = "NONE" | "UPDATE" | "DELETE" | "GRM_DELETE";
+export type CascadeType = "NONE" | "SET_NULL" | "DELETE" | "GRM_DELETE" | "GRM_SET_NULL";

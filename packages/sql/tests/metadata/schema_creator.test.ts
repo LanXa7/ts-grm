@@ -3,6 +3,7 @@ import { createSchema } from "@/impl/schema_creator";
 import { newSqlClient, SqlClientImplementor } from "@/sql_client";
 import { EntityManager } from "@ts-grm/core";
 import { describe, it, expect } from "vitest";
+import { expectCode, removeUndefined } from "../utils";
 
 describe.sequential("SchemaCreatorTest", () => {
 
@@ -12,7 +13,7 @@ describe.sequential("SchemaCreatorTest", () => {
 
     it("tables", async() => {
         const tableDefs = await createSchema(sqlClient);
-        expect(tableDefs.map(t => (t as any).toJSON())).toEqual([
+        expect(removeUndefined(tableDefs.map(t => (t as any).toJSON()))).toEqual([
             {
                 "name": "BOOK_STORE",
                 "columns": [
@@ -67,7 +68,8 @@ describe.sequential("SchemaCreatorTest", () => {
                         "values": [
                             "PhysicalBookStore",
                             "OnlineBookStore"
-                        ]
+                        ],
+                        "implicit": "POLYMORPHISM"
                     }
                 ]
             },
@@ -120,7 +122,8 @@ describe.sequential("SchemaCreatorTest", () => {
                             "PaperBook",
                             "ElectronicBook",
                             "PdfElectronicBook"
-                        ]
+                        ],
+                        "implicit": "POLYMORPHISM"
                     },
                     {
                         "kind": "UNIQUE",
@@ -179,7 +182,8 @@ describe.sequential("SchemaCreatorTest", () => {
                 "constraints": [
                     {
                         "kind": "PRIMARY_KEY",
-                        "columns": ["BOOK_ID", "AUTHOR_ID"]
+                        "columns": ["BOOK_ID", "AUTHOR_ID"],
+                        "implicit": "MIDDLE_TABLE"
                     },
                     {
                         "kind": "FOREIGN_KEY",
@@ -223,7 +227,8 @@ describe.sequential("SchemaCreatorTest", () => {
                         "kind": "FOREIGN_KEY",
                         "columns": ["PB_ID"],
                         "referencedColumns": ["ID"],
-                        "cascade": "DELETE"
+                        "cascade": "DELETE",
+                        "implicit": "INHERITANCE"
                     }
                 ]
             },
@@ -258,13 +263,15 @@ describe.sequential("SchemaCreatorTest", () => {
                         "values": [
                             "ElectronicBook",
                             "PdfElectronicBook"
-                        ]
+                        ],
+                        "implicit": "POLYMORPHISM"
                     },
                     {
                         "kind": "FOREIGN_KEY",
                         "columns": ["EB_ID"],
                         "referencedColumns": ["ID"],
-                        "cascade": "DELETE"
+                        "cascade": "DELETE",
+                        "implicit": "INHERITANCE"
                     }
                 ]
             },
@@ -293,7 +300,8 @@ describe.sequential("SchemaCreatorTest", () => {
                         "kind": "FOREIGN_KEY",
                         "columns": ["PEB_ID"],
                         "referencedColumns": ["EB_ID"],
-                        "cascade": "DELETE"
+                        "cascade": "DELETE",
+                        "implicit": "INHERITANCE"
                     }
                 ]
             },
@@ -334,7 +342,8 @@ describe.sequential("SchemaCreatorTest", () => {
                         "values": [
                             "Organization",
                             "Group"
-                        ]
+                        ],
+                        "implicit": "POLYMORPHISM"
                     },
                     {
                         "kind": "FOREIGN_KEY",
@@ -372,7 +381,8 @@ describe.sequential("SchemaCreatorTest", () => {
                         "kind": "FOREIGN_KEY",
                         "columns": ["ID"],
                         "referencedColumns": ["ID"],
-                        "cascade": "DELETE"
+                        "cascade": "DELETE",
+                        "implicit": "INHERITANCE"
                     }
                 ]
             },
@@ -399,7 +409,8 @@ describe.sequential("SchemaCreatorTest", () => {
                         "kind": "FOREIGN_KEY",
                         "columns": ["ID"],
                         "referencedColumns": ["ID"],
-                        "cascade": "DELETE"
+                        "cascade": "DELETE",
+                        "implicit": "INHERITANCE"
                     }
                 ]
             },
@@ -503,7 +514,8 @@ describe.sequential("SchemaCreatorTest", () => {
                             "order_y_b",
                             "tag_low",
                             "tag_high"
-                        ]
+                        ],
+                        "implicit": "MIDDLE_TABLE"
                     },
                     {
                         "kind": "FOREIGN_KEY",
@@ -581,7 +593,8 @@ describe.sequential("SchemaCreatorTest", () => {
                             "order_y_a",
                             "order_y_b",
                             "COMMENT_ID"
-                        ]
+                        ],
+                        "implicit": "MIDDLE_TABLE"
                     },
                     {
                         "kind": "FOREIGN_KEY",
@@ -719,7 +732,8 @@ describe.sequential("SchemaCreatorTest", () => {
                     },
                     {
                         "kind": "UNIQUE",
-                        "columns": ["STUDENT_ID", "COURSE_ID"]
+                        "columns": ["STUDENT_ID", "COURSE_ID"],
+                        "implicit": "MIDDLE_ENTITY"
                     },
                     {
                         "kind": "FOREIGN_KEY",
@@ -736,5 +750,364 @@ describe.sequential("SchemaCreatorTest", () => {
                 ]
             }
         ]);
+    });
+    
+    it("sql", async () => {
+        const tableDefs = await createSchema(sqlClient);
+        const sql = tableDefs.map(td => td.toStatements(sqlClient.driver).join(";\n\n")).join(";\n\n");
+        expectCode(sql, `
+            -- Entity table for "BookStore"
+            create table BOOK_STORE(
+                ID integer not null, 
+                TYPE text not null, 
+                NAME text not null, 
+                VERSION integer not null, 
+
+                -- When the "TYPE" is "PhysicalBookStore
+                -- The implicit nullity in the derived table is non-null
+                CITY text null, 
+
+                -- When the "TYPE" is "PhysicalBookStore
+                -- The implicit nullity in the derived table is non-null
+                STREET text null, 
+
+                -- When the "TYPE" is "OnlineBookStore
+                -- The implicit nullity in the derived table is non-null
+                URL text null
+            );
+
+            alter table BOOK_STORE
+                add constraint BOOK_STORE_constraint_1
+                    primary key(ID);
+
+            -- Implicit check constraint for polymorphism
+            alter table BOOK_STORE
+                add constraint BOOK_STORE_constraint_2
+                    check(TYPE in('PhysicalBookStore', 'OnlineBookStore'));
+
+            -- Entity table for "Book"
+            create table BOOK(
+                ID integer not null, 
+                TYPE text not null, 
+                NAME text not null, 
+                EDITION integer not null, 
+                PRICE real not null, 
+                STORE_ID integer null
+            );
+
+            alter table BOOK
+                add constraint BOOK_constraint_1
+                    primary key(ID);
+
+            -- Implicit check constraint for polymorphism
+            alter table BOOK
+                add constraint BOOK_constraint_2
+                    check(TYPE in('Book', 'PaperBook', 'ElectronicBook', 'PdfElectronicBook'));
+
+            alter table BOOK
+                add constraint BOOK_constraint_3
+                    unique(NAME, EDITION);
+
+            alter table BOOK
+                add constraint BOOK_constraint_4
+                    foreign key(STORE_ID)
+                        references BOOK_STORE(ID)
+                            on delete cascade;
+
+            -- Entity table for "Author"
+            create table AUTHOR(
+                ID integer not null, 
+                FIRST_NAME text not null, 
+                LAST_NAME text not null
+            );
+
+            alter table AUTHOR
+                add constraint AUTHOR_constraint_1
+                    primary key(ID);
+
+            -- Middle table for "Book.authors"
+            create table book_author_mapping(
+                BOOK_ID integer not null, 
+                AUTHOR_ID integer not null
+            );
+
+            -- Implicit primary key constraint for middle table
+            alter table book_author_mapping
+                add constraint book_author_mapping_constraint_1
+                    primary key(BOOK_ID, AUTHOR_ID);
+
+            alter table book_author_mapping
+                add constraint book_author_mapping_constraint_2
+                    foreign key(BOOK_ID)
+                        references BOOK(ID);
+
+            alter table book_author_mapping
+                add constraint book_author_mapping_constraint_3
+                    foreign key(AUTHOR_ID)
+                        references AUTHOR(ID);
+
+            -- Entity table for "PaperBook"
+            create table PAPER_BOOK(
+                PB_ID integer not null, 
+                WIDTH integer not null, 
+                HEIGHT integer not null
+            );
+
+            alter table PAPER_BOOK
+                add constraint PAPER_BOOK_constraint_1
+                    primary key(PB_ID);
+
+            -- Implicit foreign key constraint for inheritance
+            alter table PAPER_BOOK
+                add constraint PAPER_BOOK_constraint_2
+                    foreign key(PB_ID)
+                        references BOOK(ID)
+                            on delete cascade;
+
+            -- Entity table for "ElectronicBook"
+            create table ELECTRONIC_BOOK(
+                EB_ID integer not null, 
+                EB_TYPE text not null, 
+                ADDRESS text not null
+            );
+
+            alter table ELECTRONIC_BOOK
+                add constraint ELECTRONIC_BOOK_constraint_1
+                    primary key(EB_ID);
+
+            -- Implicit check constraint for polymorphism
+            alter table ELECTRONIC_BOOK
+                add constraint ELECTRONIC_BOOK_constraint_2
+                    check(EB_TYPE in('ElectronicBook', 'PdfElectronicBook'));
+
+            -- Implicit foreign key constraint for inheritance
+            alter table ELECTRONIC_BOOK
+                add constraint ELECTRONIC_BOOK_constraint_3
+                    foreign key(EB_ID)
+                        references BOOK(ID)
+                            on delete cascade;
+
+            -- Entity table for "PdfElectronicBook"
+            create table PDF_ELECTRONIC_BOOK(
+                PEB_ID integer not null, 
+                PDF_VERSION text null
+            );
+
+            alter table PDF_ELECTRONIC_BOOK
+                add constraint PDF_ELECTRONIC_BOOK_constraint_1
+                    primary key(PEB_ID);
+
+            -- Implicit foreign key constraint for inheritance
+            alter table PDF_ELECTRONIC_BOOK
+                add constraint PDF_ELECTRONIC_BOOK_constraint_2
+                    foreign key(PEB_ID)
+                        references ELECTRONIC_BOOK(EB_ID)
+                            on delete cascade;
+
+            -- Entity table for "TreeNode"
+            create table TREE_NODE(
+                ID integer not null, 
+                TYPE text not null, 
+                NAME text not null, 
+                PARENT_NODE_ID integer not null
+            );
+
+            alter table TREE_NODE
+                add constraint TREE_NODE_constraint_1
+                    primary key(ID);
+
+            -- Implicit check constraint for polymorphism
+            alter table TREE_NODE
+                add constraint TREE_NODE_constraint_2
+                    check(TYPE in('Organization', 'Group'));
+
+            alter table TREE_NODE
+                add constraint TREE_NODE_constraint_3
+                    foreign key(PARENT_NODE_ID)
+                        references TREE_NODE(ID);
+
+            -- Entity table for "Organization"
+            create table ORGANIZATION(
+                ID integer not null, 
+                LOCATION text not null, 
+                KIND text not null
+            );
+
+            alter table ORGANIZATION
+                add constraint ORGANIZATION_constraint_1
+                    primary key(ID);
+
+            -- Implicit foreign key constraint for inheritance
+            alter table ORGANIZATION
+                add constraint ORGANIZATION_constraint_2
+                    foreign key(ID)
+                        references TREE_NODE(ID)
+                            on delete cascade;
+
+            -- Entity table for "Group"
+            create table GROUP(
+                ID integer not null, 
+                EMAIL text not null
+            );
+
+            alter table GROUP
+                add constraint GROUP_constraint_1
+                    primary key(ID);
+
+            -- Implicit foreign key constraint for inheritance
+            alter table GROUP
+                add constraint GROUP_constraint_2
+                    foreign key(ID)
+                        references TREE_NODE(ID)
+                            on delete cascade;
+
+            -- Entity table for "Order"
+            create table ORDER(
+                X integer not null, 
+                A integer not null, 
+                B integer not null, 
+                NAME text not null
+            );
+
+            alter table ORDER
+                add constraint ORDER_constraint_1
+                    primary key(X, A, B);
+
+            -- Entity table for "Tag"
+            create table TAG(
+                LOW integer not null, 
+                HIGH integer not null, 
+                NAME text not null
+            );
+
+            alter table TAG
+                add constraint TAG_constraint_1
+                    primary key(LOW, HIGH);
+
+            -- Middle table for "Order.tags"
+            create table ORDER_TAG_MAPPING(
+                order_x integer not null, 
+                order_y_a integer not null, 
+                order_y_b integer not null, 
+                tag_low integer not null, 
+                tag_high integer not null
+            );
+
+            -- Implicit primary key constraint for middle table
+            alter table ORDER_TAG_MAPPING
+                add constraint ORDER_TAG_MAPPING_constraint_1
+                    primary key(order_x, order_y_a, order_y_b, tag_low, tag_high);
+
+            alter table ORDER_TAG_MAPPING
+                add constraint ORDER_TAG_MAPPING_constraint_2
+                    foreign key(order_x, order_y_a, order_y_b)
+                        references ORDER(X, A, B)
+                            on delete cascade;
+
+            alter table ORDER_TAG_MAPPING
+                add constraint ORDER_TAG_MAPPING_constraint_3
+                    foreign key(tag_low, tag_high)
+                        references TAG(LOW, HIGH);
+
+            -- Entity table for "Comment"
+            create table COMMENT(
+                ID integer not null, 
+                NAME text not null, 
+                TEXT text not null
+            );
+
+            alter table COMMENT
+                add constraint COMMENT_constraint_1
+                    primary key(ID);
+
+            -- Middle table for "Order.comments"
+            create table ORDER_COMMENT_MAPPING(
+                order_x integer not null, 
+                order_y_a integer not null, 
+                order_y_b integer not null, 
+                COMMENT_ID integer not null
+            );
+
+            -- Implicit primary key constraint for middle table
+            alter table ORDER_COMMENT_MAPPING
+                add constraint ORDER_COMMENT_MAPPING_constraint_1
+                    primary key(order_x, order_y_a, order_y_b, COMMENT_ID);
+
+            alter table ORDER_COMMENT_MAPPING
+                add constraint ORDER_COMMENT_MAPPING_constraint_2
+                    foreign key(order_x, order_y_a, order_y_b)
+                        references ORDER(X, A, B);
+
+            alter table ORDER_COMMENT_MAPPING
+                add constraint ORDER_COMMENT_MAPPING_constraint_3
+                    foreign key(COMMENT_ID)
+                        references COMMENT(ID);
+
+            -- Entity table for "OrderItem"
+            create table ORDER_ITEM(
+                ID integer not null, 
+                PRODUCT_NAME text not null, 
+                order_x integer not null, 
+                order_y_a integer not null, 
+                order_y_b integer not null
+            );
+
+            alter table ORDER_ITEM
+                add constraint ORDER_ITEM_constraint_1
+                    primary key(ID);
+
+            alter table ORDER_ITEM
+                add constraint ORDER_ITEM_constraint_2
+                    foreign key(order_x, order_y_a, order_y_b)
+                        references ORDER(X, A, B)
+                            on delete cascade;
+
+            -- Entity table for "Student"
+            create table STUDENT(
+                ID integer not null, 
+                NAME text not null
+            );
+
+            alter table STUDENT
+                add constraint STUDENT_constraint_1
+                    primary key(ID);
+
+            -- Entity table for "Course"
+            create table COURSE(
+                ID integer not null, 
+                NAME text not null
+            );
+
+            alter table COURSE
+                add constraint COURSE_constraint_1
+                    primary key(ID);
+
+            -- Entity table for "LearningLink"
+            create table LEARNING_LINK(
+                ID integer not null, 
+                SCORE integer null, 
+                STUDENT_ID integer not null, 
+                COURSE_ID integer not null
+            );
+
+            alter table LEARNING_LINK
+                add constraint LEARNING_LINK_constraint_1
+                    primary key(ID);
+
+            -- Implicit unique constraint for middle table
+            alter table LEARNING_LINK
+                add constraint LEARNING_LINK_constraint_2
+                    unique(STUDENT_ID, COURSE_ID);
+
+            alter table LEARNING_LINK
+                add constraint LEARNING_LINK_constraint_3
+                    foreign key(STUDENT_ID)
+                        references STUDENT(ID);
+
+            alter table LEARNING_LINK
+                add constraint LEARNING_LINK_constraint_4
+                    foreign key(COURSE_ID)
+                        references COURSE(ID)
+        `);
     });
 });

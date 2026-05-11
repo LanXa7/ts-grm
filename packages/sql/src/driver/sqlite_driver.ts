@@ -3,6 +3,7 @@ import { Driver } from "./deriver";
 import { NodeRender, NodeRenderContext } from "./node_render";
 import { Precedence } from "@/sql/precedence";
 import { Scope } from "@/sql/fragment";
+import { ColumnDef } from "@/impl/schema_def";
 
 export class SqliteDriver implements Driver {
 
@@ -20,6 +21,22 @@ export class SqliteDriver implements Driver {
 
     get isRecursiveKeywordRequired() {
         return true;
+    }
+
+    typeName(columnDef: ColumnDef): string {
+        switch (columnDef.type) {
+            case "BOOL":
+            case "I8":
+            case "I16":
+            case "I16":
+            case "I32":
+            case "I64":
+                return "integer";
+            case "NUM":
+                return "real";
+            default:
+                return "text";
+        }
     }
 }
 
