@@ -66,41 +66,41 @@ export abstract class AbstractTransactionManager<TContext extends TransactionCon
         if (prevForSavepoint) {
             return transactionStorage.run(ctx, async () => {
                 let result: R;
-                this.begin(ctx);
+                await this.begin(ctx);
                 try {
                     result = await fn();
                 } catch (ex) {
-                    this.rollback(ctx);
+                    await this.rollback(ctx);
                     throw ex;
                 }
-                this.commit(ctx);
+                await this.commit(ctx);
                 return result;
             });
         }
         if (isolation == null) {
             return transactionStorage.run(ctx, async () => {
-                this.open(ctx);
+                await this.open(ctx);
                 try {
                     return await fn();
                 } finally {
-                    this.close(ctx);
+                    await this.close(ctx);
                 }
             });
         }
         return transactionStorage.run(ctx, async () => {
             let result: R;
-            this.open(ctx);
+            await this.open(ctx);
             try {
-                this.begin(ctx);
+                await this.begin(ctx);
                 try {
                     result = await fn();
                 } catch (ex) {
-                    this.rollback(ctx);
+                    await this.rollback(ctx);
                     throw ex;
                 }
-                this.commit(ctx);
+                await this.commit(ctx);
             } finally {
-                this.close(ctx);
+                await this.close(ctx);
             }
             return result;
         });
