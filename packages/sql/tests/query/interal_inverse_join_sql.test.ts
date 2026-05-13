@@ -1,16 +1,21 @@
 import { newSqlClient } from "@/sql_client";
-import { describe, it } from "vitest";
-import { SIMPLE_AUTHOR_VIEW, SIMPLE_BOOK_VIEW, SIMPLE_COMMENT_VIEW, SIMPLE_STORE_VIEW, sql, sqlClient } from "./utils";
+import { describe, it, afterAll } from "vitest";
+import { SIMPLE_AUTHOR_VIEW, SIMPLE_BOOK_VIEW, SIMPLE_COMMENT_VIEW, SIMPLE_STORE_VIEW, sql } from "./utils";
 import { FilterManager } from "@/cfg";
 import { AUTHOR, BOOK, BOOK_STORE, COMMENT, ORDER } from "../model/model";
 import { dsl, Expression, ExprTuple, metadata } from "@ts-grm/core";
-import { expectCode } from "../utils";
+import { expectCode, useSqlClient } from "../utils";
 
 // Internal API, not public API for users
 // This internal API is used to implements association fetch
 // and primsa/mongo style predicate such as "none", "some", "every" 
 // even it the association is not bidirectional
 describe("InternalInverseJoinSqlTest", () => {
+
+    const [sqlClient, cleanup] = useSqlClient();
+    afterAll(() => {
+        cleanup();
+    });
 
     // All global filters should be ignored by internal inverse join
     // That means filters will be only applied to root table.

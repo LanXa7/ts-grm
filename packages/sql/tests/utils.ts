@@ -1,4 +1,26 @@
+import { SqliteDriver } from "@/driver/sqlite_driver";
+import { newSqlClient, SqlClientImplementor } from "@/sql_client";
+import { EntityManager, SqlClient } from "@ts-grm/core";
+import Database from "better-sqlite3";
 import { expect } from "vitest";
+
+export function useSqlClient<TImplementor extends boolean = false>(
+    _?: TImplementor
+): [
+    TImplementor extends true 
+        ? SqlClientImplementor
+        : SqlClient, 
+    () => void
+] {
+    const database = new Database(":memory:");
+    const sqlClient = newSqlClient(new SqliteDriver(database), {
+        entityManager: EntityManager.of(__dirname, "./model"),
+        sqlLogger: {
+            pretty: true
+        }
+    });
+    return [sqlClient as SqlClientImplementor, () => { database.close(); }]
+}
 
 export function expectCode(actual: string, expected: string) {
     const normalizedExpected = normalizeCode(expected);

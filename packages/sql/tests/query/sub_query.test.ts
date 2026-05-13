@@ -1,10 +1,15 @@
-import { describe, it } from "vitest";
-import { SIMPLE_BOOK_VIEW, sql, sqlClient } from "./utils";
+import { describe, it, afterAll } from "vitest";
+import { SIMPLE_BOOK_VIEW, sql } from "./utils";
 import { AUTHOR, BOOK, ORDER, ORDER_ITEM } from "../model/model";
 import { dsl } from "@ts-grm/core";
-import { expectCode } from "../utils";
+import { expectCode, useSqlClient } from "../utils";
 
 describe("SubQueryTest", () => {
+
+    const [sqlClient, cleanup] = useSqlClient();
+    afterAll(() => {
+        cleanup();
+    });
     
     it("inExprSubQuery", () => {
         const q = sqlClient.createQuery(BOOK, (q, book) => {

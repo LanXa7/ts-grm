@@ -1,15 +1,22 @@
-import { ast, err, TransactionOptions } from "@ts-grm/core";
+import { ast, err } from "@ts-grm/core";
 import { Driver } from "./deriver";
 import { NodeRender, NodeRenderContext } from "./node_render";
 import { Precedence } from "@/sql/precedence";
 import { Scope } from "@/sql/fragment";
 import { ColumnDef } from "@/impl/schema_def";
+import { TransactionManager } from "@/transaction/transaction_manger";
+import { SqliteTransactionManager } from "@/transaction/sqlite_transaction_manager";
+import { Database } from "better-sqlite3";
 
 export class SqliteDriver implements Driver {
 
     readonly nodeRender: NodeRender = nodeRender;
 
-    constructor() {}
+    readonly transactionManager: TransactionManager;
+
+    constructor(readonly database: Database) {
+        this.transactionManager = new SqliteTransactionManager(database);
+    }
 
     get name(): string {
         return "sqlite";
@@ -37,13 +44,6 @@ export class SqliteDriver implements Driver {
             default:
                 return "text";
         }
-    }
-
-    execute<R>(
-        options: TransactionOptions, 
-        fn: () => Promise<R>
-    ): Promise<R> {
-        throw new Error();
     }
 }
 

@@ -1,9 +1,14 @@
-import { describe, it } from "vitest";
-import { SIMPLE_COURSE_VIEW, SIMPLE_STUDENT_VIEW, sql, sqlClient } from "./utils";
+import { describe, it, afterAll } from "vitest";
+import { SIMPLE_COURSE_VIEW, SIMPLE_STUDENT_VIEW, sql } from "./utils";
 import { COURSE, STUDENT } from "../model/model";
-import { expectCode } from "../utils";
+import { expectCode, useSqlClient } from "../utils";
 
 describe("JoinEntitySqlTest", () => {
+
+    const [sqlClient, cleanup] = useSqlClient();
+    afterAll(() => {
+        cleanup();
+    });
 
     it("joinEntity", () => {
         const q = sqlClient.createQuery(STUDENT, (q, student) => {

@@ -1,15 +1,14 @@
-import { SqliteDriver } from "@/driver/sqlite_driver";
 import { createSchema } from "@/impl/schema_creator";
-import { newSqlClient, SqlClientImplementor } from "@/sql_client";
-import { EntityManager } from "@ts-grm/core";
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, afterAll } from "vitest";
 import { expectCode, removeUndefined } from "../utils";
+import { useSqlClient } from "../utils";
 
 describe.sequential("SchemaCreatorTest", () => {
 
-    const sqlClient = newSqlClient(new SqliteDriver(), {
-        entityManager: EntityManager.of(__dirname, "../model")
-    }) as SqlClientImplementor;
+    const [sqlClient, cleanup] = useSqlClient(true);
+    afterAll(() => {
+        cleanup();
+    });
 
     it("tables", async() => {
         const tableDefs = await createSchema(sqlClient);

@@ -1,11 +1,16 @@
-import { describe, it } from "vitest";
+import { describe, it, afterAll } from "vitest";
 import { AUTHOR, BOOK, BOOK_STORE, ORDER, TAG } from "../model/model";
-import { SIMPLE_BOOK_VIEW, sql, sqlClient } from "./utils";
-import { expectCode } from "../utils";
+import { SIMPLE_BOOK_VIEW, sql } from "./utils";
+import { expectCode, useSqlClient } from "../utils";
 import { FilterManager } from "@/cfg";
 import { newSqlClient } from "@/sql_client";
 
 describe("FilterSqlTest", () => {
+
+    const [sqlClient, cleanup] = useSqlClient();
+    afterAll(() => {
+        cleanup();
+    });
 
     it("globalFilter", () => {
         const filterManager = new FilterManager()

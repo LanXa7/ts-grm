@@ -1,10 +1,15 @@
 import { dsl } from "@ts-grm/core";
 import { AUTHOR, BOOK, BOOK_STORE, ELECTRONIC_BOOK, ORGANIZATION, PAPER_BOOK, PHYSICAL_BOOK_STORE, TREE_NODE } from "../model/model";
-import { describe, it } from "vitest";
-import { SIMPLE_BOOK_VIEW, SIMPLE_PAPER_BOOK_VIEW, SIMPLE_PHYSICAL_BOOK_STORE_VIEW, SIMPLE_STORE_VIEW, SIMPLE_TREE_NODE_VIEW, sql, sqlClient } from "./utils";
-import { expectCode } from "../utils";
+import { afterAll, describe, it } from "vitest";
+import { SIMPLE_BOOK_VIEW, SIMPLE_PAPER_BOOK_VIEW, SIMPLE_PHYSICAL_BOOK_STORE_VIEW, SIMPLE_STORE_VIEW, SIMPLE_TREE_NODE_VIEW, sql } from "./utils";
+import { expectCode, useSqlClient } from "../utils";
 
 describe("InheritanceBaseQuerySqlTest", () => {
+
+    const [sqlClient, cleanup] = useSqlClient();
+    afterAll(() => {
+        cleanup();
+    });
 
     it("isFunctionOfMultipleTables", () => {
         const baseBookModel = dsl.derivedModel(
