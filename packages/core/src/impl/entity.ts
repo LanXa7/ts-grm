@@ -7,9 +7,9 @@ import { capitalize } from "./util";
 import { AbstractEntityTable, createEntityTableClass, EntityTableCtor, JoinOperation } from "./entity_table";
 import { ArgumentError, StateError } from "@/error/common";
 import { ShadowAnchor } from "./shadow_anchor";
-import { DatabaseNamingStrategy } from "./strategy";
 import { Mutable } from "@/utils";
 import { AssociationEntity } from "./association_entity";
+import { DatabaseStrategy } from ".";
 
 export class Entity {
 
@@ -174,11 +174,13 @@ export class Entity {
             makeErr(`There is no property "${name}" in the model "${this.name}"`);
     }
 
-    toTableName(strategy: DatabaseNamingStrategy): string {
+    toTableName(strategy: DatabaseStrategy): string {
         return this.tableSettings.explicitName ?? (
             this.tableSettings.sharedTable 
                 ? this.superEntity!.toTableName(strategy)
-                : strategy.tableName(this)
+                : strategy.keywordStrategy.quoteIdentifier(
+                    strategy.namingStrategy.tableName(this)
+                )
         );
     }
 

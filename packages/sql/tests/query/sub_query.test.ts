@@ -94,7 +94,7 @@ describe("SubQueryTest", () => {
         expectCode(sql(q), `
             select 
                 tb_1_.NAME
-            from ORDER tb_1_
+            from "ORDER" tb_1_
             where 
                 (
                     tb_1_.A,

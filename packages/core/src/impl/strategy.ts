@@ -2,6 +2,11 @@ import { Entity } from "./entity";
 import { EntityProp } from "./entity_prop";
 import { Column, PropStorage } from "./storage";
 
+export interface DatabaseStrategy {
+    readonly namingStrategy: DatabaseNamingStrategy;
+    readonly keywordStrategy: DatabaseKeywordStrategy;
+}
+
 export interface DatabaseNamingStrategy {
 
     tableName(entity: Entity): string;
@@ -15,6 +20,11 @@ export interface DatabaseNamingStrategy {
     middleTableThisRefColumnName(prop: EntityProp): string;
 
     middleTableTargetRefColumnName(prop: EntityProp): string;
+}
+
+export interface DatabaseKeywordStrategy {
+
+    quoteIdentifier(value: string): string;
 }
 
 export class DefaultDatabaseNamingStrategy implements DatabaseNamingStrategy {

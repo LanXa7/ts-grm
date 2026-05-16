@@ -1,6 +1,6 @@
 import { ArgumentError } from "@/error/common";
 import { EntityProp } from "./entity_prop";
-import { Column, Columns, DatabaseNamingStrategy, Entity, JoinOperation, MiddleTable, StorageType } from ".";
+import { Column, Columns, DatabaseStrategy, Entity, JoinOperation, MiddleTable, StorageType } from ".";
 import { capitalize } from "./util";
 import { makeErr } from "@/error/util";
 import { AbstractAssociationTable, AssociationTableCtor, createAssociationTableClass } from "./association_table";
@@ -110,7 +110,7 @@ export class AssociationEntity {
     }
 
     toTableName(
-        strategy: DatabaseNamingStrategy
+        strategy: DatabaseStrategy
     ): string {
         const middleTable = this.originalProp.toStorage(strategy) as MiddleTable;
         return middleTable.name;
@@ -175,7 +175,7 @@ export interface AssociationProp {
     toString(): string;
 
     toStorage(
-        strategy: DatabaseNamingStrategy
+        strategy: DatabaseStrategy
     ): Column | Columns | undefined;
 }
 
@@ -185,7 +185,7 @@ class AssociationPropImpl implements AssociationProp {
 
     private _storage: Column | Columns | undefined = undefined;
 
-    private _storageResolver: DatabaseNamingStrategy | undefined = undefined;
+    private _storageResolver: DatabaseStrategy | undefined = undefined;
  
     constructor(
         readonly declaredEntity: AssociationEntity,    
@@ -258,9 +258,11 @@ class AssociationPropImpl implements AssociationProp {
     }
 
     toStorage(
-        strategy: DatabaseNamingStrategy
+        strategy: DatabaseStrategy
     ): Column | Columns | undefined {
-        if (this._storageResolver === strategy) {
+        if (this._storageResolver?.namingStrategy === strategy.namingStrategy
+            && this._storageResolver.keywordStrategy === strategy.keywordStrategy
+        ) {
             return this._storage;
         }
         this._storage = this._toStorage(strategy);
@@ -269,7 +271,7 @@ class AssociationPropImpl implements AssociationProp {
     }
 
     private _toStorage(
-        strategy: DatabaseNamingStrategy
+        strategy: DatabaseStrategy
     ): Column | Columns | undefined {
         const rootProp = this.rootProp;
         if (rootProp.referenceKeyProp != null) {

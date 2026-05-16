@@ -7,14 +7,14 @@ import { addTypeMatch } from "./utils";
 
 export class TableFragmentCreator {
 
-    private readonly _strategy: metadata.DatabaseNamingStrategy;
+    private readonly _strategy: metadata.DatabaseStrategy;
 
     constructor(
         private readonly _sqlClient: SqlClientImplementor,
         private readonly _createColumn: (realTable: RealTable, columnName: string) => Column,
         private readonly _cloneVisitor: () => FragmentGenGenVisitor
     ) {
-        this._strategy = _sqlClient.options.strategy;
+        this._strategy = _sqlClient.strategy;
     }
 
     createDefinition(table: RealTable) {

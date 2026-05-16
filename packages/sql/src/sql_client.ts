@@ -46,6 +46,8 @@ export interface SqlClientImplementor extends SqlClient {
     ): ReadonlyArray<AnyFilter>;
 
     readonly executor: Executor;
+    
+    readonly strategy: metadata.DatabaseStrategy;
 }
 
 function createDefaultOptions(): SqlClientOptions {

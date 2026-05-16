@@ -14,7 +14,7 @@ export {
 } from "./strategy";
 export { allocateModelIdentifier } from "./model_impl";
 export type { StorageType, PropStorage, Column, Columns, MiddleTable, MiddelEntity } from "./storage";
-export type { DatabaseNamingStrategy } from "./strategy";
+export type { DatabaseStrategy, DatabaseNamingStrategy, DatabaseKeywordStrategy } from "./strategy";
 export type { AbstractTable } from "./abstract_table";
 export type { TypedBaseTable } from "./base_table";
 export type { JoinOperation, JoinFilter } from "./entity_table";

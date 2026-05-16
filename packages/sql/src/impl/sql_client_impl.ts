@@ -58,11 +58,17 @@ export class SqlClientImpl implements SqlClientImplementor {
     private readonly _filterMap =
         new Map<metadata.Entity, ReadonlyArray<AnyFilter>>();
 
+    readonly strategy: metadata.DatabaseStrategy;
+
     constructor(
         readonly driver: Driver,
         readonly options: SqlClientOptions
     ) {
         this._configuredFilterMap = (options.filterManager as any)._toMap();
+        this.strategy = {
+            namingStrategy: options.strategy,
+            keywordStrategy: driver
+        };
     }
 
     findOne<V extends View<any, any>>(
@@ -368,7 +374,7 @@ class SchemaImpl implements Schema {
     execute(): Promise<void> {
         return this.sqlClient.driver.transactionManager.executeReadonly(async () => {
             for (const sql of this.sqlArray) {
-                this.sqlClient.executor.execute(sql);
+                await this.sqlClient.executor.execute(sql);
             }
         });
     }

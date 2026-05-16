@@ -15,7 +15,7 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
 
     private readonly _precedenceStack: Stack<number>;
 
-    private readonly _strategy: metadata.DatabaseNamingStrategy;
+    private readonly _strategy: metadata.DatabaseStrategy;
 
     private readonly _nodeRender: NodeRender;
 
@@ -29,7 +29,7 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
         private readonly _tableMap: ReadonlyMap<metadata.AbstractTable, RealTable>
     ) {
         super();
-        this._strategy = sqlClient.options.strategy;
+        this._strategy = sqlClient.strategy;
         this._nodeRender = sqlClient.driver.nodeRender;
         const that = this;
         this._compositeStack = new class extends Stack<Composite> {

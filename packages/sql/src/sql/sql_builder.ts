@@ -9,7 +9,7 @@ export class SqlBuilder {
         [Symbol.dispose]: (): void => {}
     };
 
-    readonly strategy: metadata.DatabaseNamingStrategy;
+    readonly strategy: metadata.DatabaseStrategy;
 
     private readonly _parts: Array<string> = [];
 
@@ -29,7 +29,7 @@ export class SqlBuilder {
         readonly parameter: SqlLoggerParameterType,
         readonly nameParameterPrefix: string | undefined
     ) {
-        this.strategy = sqlClient.options.strategy;
+        this.strategy = sqlClient.strategy;
     }
 
     static of(sqlClient: SqlClient): SqlBuilder {

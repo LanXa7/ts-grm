@@ -38,4 +38,8 @@ describe.sequential("SqliteFetchTest", () => {
             {"id":10,"name":"GraphQL in Action","edition":1}
         ]);
     });
+
+    it("m2o", async() => {
+
+    });
 });

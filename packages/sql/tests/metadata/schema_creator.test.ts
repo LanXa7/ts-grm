@@ -383,7 +383,7 @@ describe.sequential("SchemaCreatorTest", () => {
                 ]
             },
             {
-                "name": "GROUP",
+                "name": "\"GROUP\"",
                 "columns": [
                     {
                         "name": "ID",
@@ -411,7 +411,7 @@ describe.sequential("SchemaCreatorTest", () => {
                 ]
             },
             {
-                "name": "ORDER",
+                "name": "\"ORDER\"",
                 "columns": [
                     {
                         "name": "X",
@@ -751,6 +751,7 @@ describe.sequential("SchemaCreatorTest", () => {
     it("sql", async () => {
         const tableDefs = await createSchema(sqlClient);
         const sql = tableDefs.map(td => td.toStatements(sqlClient.driver).join(";\n\n")).join(";\n\n");
+        console.log(sql);
         expectCode(sql, `
             -- Entity table for "BookStore"
             create table BOOK_STORE(
@@ -769,17 +770,15 @@ describe.sequential("SchemaCreatorTest", () => {
 
                 -- When the "TYPE" is "OnlineBookStore"
                 -- The implicit nullity in the derived table is non-null
-                URL text null
+                URL text null, 
+
+                constraint BOOK_STORE_constraint_1
+                    primary key(ID), 
+
+                -- Implicit check constraint for polymorphism
+                constraint BOOK_STORE_constraint_2
+                    check(TYPE in('PhysicalBookStore', 'OnlineBookStore'))
             );
-
-            alter table BOOK_STORE
-                add constraint BOOK_STORE_constraint_1
-                    primary key(ID);
-
-            -- Implicit check constraint for polymorphism
-            alter table BOOK_STORE
-                add constraint BOOK_STORE_constraint_2
-                    check(TYPE in('PhysicalBookStore', 'OnlineBookStore'));
 
             -- Entity table for "Book"
             create table BOOK(
@@ -788,197 +787,173 @@ describe.sequential("SchemaCreatorTest", () => {
                 NAME text not null, 
                 EDITION integer not null, 
                 PRICE real not null, 
-                STORE_ID integer null
-            );
+                STORE_ID integer null, 
 
-            alter table BOOK
-                add constraint BOOK_constraint_1
-                    primary key(ID);
+                constraint BOOK_constraint_1
+                    primary key(ID), 
 
-            -- Implicit check constraint for polymorphism
-            alter table BOOK
-                add constraint BOOK_constraint_2
-                    check(TYPE in('Book', 'PaperBook', 'ElectronicBook', 'PdfElectronicBook'));
+                -- Implicit check constraint for polymorphism
+                constraint BOOK_constraint_2
+                    check(TYPE in('Book', 'PaperBook', 'ElectronicBook', 'PdfElectronicBook')), 
 
-            alter table BOOK
-                add constraint BOOK_constraint_3
-                    unique(NAME, EDITION);
+                constraint BOOK_constraint_3
+                    unique(NAME, EDITION), 
 
-            alter table BOOK
-                add constraint BOOK_constraint_4
+                constraint BOOK_constraint_4
                     foreign key(STORE_ID)
                         references BOOK_STORE(ID)
-                            on delete cascade;
+                            on delete cascade
+            );
 
             -- Entity table for "Author"
             create table AUTHOR(
                 ID integer not null, 
                 FIRST_NAME text not null, 
-                LAST_NAME text not null
-            );
+                LAST_NAME text not null, 
 
-            alter table AUTHOR
-                add constraint AUTHOR_constraint_1
-                    primary key(ID);
+                constraint AUTHOR_constraint_1
+                    primary key(ID)
+            );
 
             -- Middle table for "Book.authors"
             create table book_author_mapping(
                 BOOK_ID integer not null, 
-                AUTHOR_ID integer not null
-            );
+                AUTHOR_ID integer not null, 
 
-            -- Implicit primary key constraint for middle table
-            alter table book_author_mapping
-                add constraint book_author_mapping_constraint_1
-                    primary key(BOOK_ID, AUTHOR_ID);
+                -- Implicit primary key constraint for middle table
+                constraint book_author_mapping_constraint_1
+                    primary key(BOOK_ID, AUTHOR_ID), 
 
-            alter table book_author_mapping
-                add constraint book_author_mapping_constraint_2
+                constraint book_author_mapping_constraint_2
                     foreign key(BOOK_ID)
-                        references BOOK(ID);
+                        references BOOK(ID), 
 
-            alter table book_author_mapping
-                add constraint book_author_mapping_constraint_3
+                constraint book_author_mapping_constraint_3
                     foreign key(AUTHOR_ID)
-                        references AUTHOR(ID);
+                        references AUTHOR(ID)
+            );
 
             -- Entity table for "PaperBook"
             create table PAPER_BOOK(
                 PB_ID integer not null, 
                 WIDTH integer not null, 
-                HEIGHT integer not null
-            );
+                HEIGHT integer not null, 
 
-            alter table PAPER_BOOK
-                add constraint PAPER_BOOK_constraint_1
-                    primary key(PB_ID);
+                constraint PAPER_BOOK_constraint_1
+                    primary key(PB_ID), 
 
-            -- Implicit foreign key constraint for inheritance
-            alter table PAPER_BOOK
-                add constraint PAPER_BOOK_constraint_2
+                -- Implicit foreign key constraint for inheritance
+                constraint PAPER_BOOK_constraint_2
                     foreign key(PB_ID)
                         references BOOK(ID)
-                            on delete cascade;
+                            on delete cascade
+            );
 
             -- Entity table for "ElectronicBook"
             create table ELECTRONIC_BOOK(
                 EB_ID integer not null, 
                 EB_TYPE text not null, 
-                ADDRESS text not null
-            );
+                ADDRESS text not null, 
 
-            alter table ELECTRONIC_BOOK
-                add constraint ELECTRONIC_BOOK_constraint_1
-                    primary key(EB_ID);
+                constraint ELECTRONIC_BOOK_constraint_1
+                    primary key(EB_ID), 
 
-            -- Implicit check constraint for polymorphism
-            alter table ELECTRONIC_BOOK
-                add constraint ELECTRONIC_BOOK_constraint_2
-                    check(EB_TYPE in('ElectronicBook', 'PdfElectronicBook'));
+                -- Implicit check constraint for polymorphism
+                constraint ELECTRONIC_BOOK_constraint_2
+                    check(EB_TYPE in('ElectronicBook', 'PdfElectronicBook')), 
 
-            -- Implicit foreign key constraint for inheritance
-            alter table ELECTRONIC_BOOK
-                add constraint ELECTRONIC_BOOK_constraint_3
+                -- Implicit foreign key constraint for inheritance
+                constraint ELECTRONIC_BOOK_constraint_3
                     foreign key(EB_ID)
                         references BOOK(ID)
-                            on delete cascade;
+                            on delete cascade
+            );
 
             -- Entity table for "PdfElectronicBook"
             create table PDF_ELECTRONIC_BOOK(
                 PEB_ID integer not null, 
-                PDF_VERSION text null
-            );
+                PDF_VERSION text null, 
 
-            alter table PDF_ELECTRONIC_BOOK
-                add constraint PDF_ELECTRONIC_BOOK_constraint_1
-                    primary key(PEB_ID);
+                constraint PDF_ELECTRONIC_BOOK_constraint_1
+                    primary key(PEB_ID), 
 
-            -- Implicit foreign key constraint for inheritance
-            alter table PDF_ELECTRONIC_BOOK
-                add constraint PDF_ELECTRONIC_BOOK_constraint_2
+                -- Implicit foreign key constraint for inheritance
+                constraint PDF_ELECTRONIC_BOOK_constraint_2
                     foreign key(PEB_ID)
                         references ELECTRONIC_BOOK(EB_ID)
-                            on delete cascade;
+                            on delete cascade
+            );
 
             -- Entity table for "TreeNode"
             create table TREE_NODE(
                 ID integer not null, 
                 TYPE text not null, 
                 NAME text not null, 
-                PARENT_NODE_ID integer not null
-            );
+                PARENT_NODE_ID integer not null, 
 
-            alter table TREE_NODE
-                add constraint TREE_NODE_constraint_1
-                    primary key(ID);
+                constraint TREE_NODE_constraint_1
+                    primary key(ID), 
 
-            -- Implicit check constraint for polymorphism
-            alter table TREE_NODE
-                add constraint TREE_NODE_constraint_2
-                    check(TYPE in('Organization', 'Group'));
+                -- Implicit check constraint for polymorphism
+                constraint TREE_NODE_constraint_2
+                    check(TYPE in('Organization', 'Group')), 
 
-            alter table TREE_NODE
-                add constraint TREE_NODE_constraint_3
+                constraint TREE_NODE_constraint_3
                     foreign key(PARENT_NODE_ID)
-                        references TREE_NODE(ID);
+                        references TREE_NODE(ID)
+            );
 
             -- Entity table for "Organization"
             create table ORGANIZATION(
                 ID integer not null, 
                 LOCATION text not null, 
-                KIND text not null
-            );
+                KIND text not null, 
 
-            alter table ORGANIZATION
-                add constraint ORGANIZATION_constraint_1
-                    primary key(ID);
+                constraint ORGANIZATION_constraint_1
+                    primary key(ID), 
 
-            -- Implicit foreign key constraint for inheritance
-            alter table ORGANIZATION
-                add constraint ORGANIZATION_constraint_2
+                -- Implicit foreign key constraint for inheritance
+                constraint ORGANIZATION_constraint_2
                     foreign key(ID)
                         references TREE_NODE(ID)
-                            on delete cascade;
+                            on delete cascade
+            );
 
             -- Entity table for "Group"
-            create table GROUP(
+            create table "GROUP"(
                 ID integer not null, 
-                EMAIL text not null
-            );
+                EMAIL text not null, 
 
-            alter table GROUP
-                add constraint GROUP_constraint_1
-                    primary key(ID);
+                constraint GROUP_constraint_1
+                    primary key(ID), 
 
-            -- Implicit foreign key constraint for inheritance
-            alter table GROUP
-                add constraint GROUP_constraint_2
+                -- Implicit foreign key constraint for inheritance
+                constraint GROUP_constraint_2
                     foreign key(ID)
                         references TREE_NODE(ID)
-                            on delete cascade;
+                            on delete cascade
+            );
 
             -- Entity table for "Order"
-            create table ORDER(
+            create table "ORDER"(
                 X integer not null, 
                 A integer not null, 
                 B integer not null, 
-                NAME text not null
-            );
+                NAME text not null, 
 
-            alter table ORDER
-                add constraint ORDER_constraint_1
-                    primary key(X, A, B);
+                constraint ORDER_constraint_1
+                    primary key(X, A, B)
+            );
 
             -- Entity table for "Tag"
             create table TAG(
                 LOW integer not null, 
                 HIGH integer not null, 
-                NAME text not null
-            );
+                NAME text not null, 
 
-            alter table TAG
-                add constraint TAG_constraint_1
-                    primary key(LOW, HIGH);
+                constraint TAG_constraint_1
+                    primary key(LOW, HIGH)
+            );
 
             -- Middle table for "Order.tags"
             create table ORDER_TAG_MAPPING(
@@ -986,58 +961,51 @@ describe.sequential("SchemaCreatorTest", () => {
                 order_y_a integer not null, 
                 order_y_b integer not null, 
                 tag_low integer not null, 
-                tag_high integer not null
-            );
+                tag_high integer not null, 
 
-            -- Implicit primary key constraint for middle table
-            alter table ORDER_TAG_MAPPING
-                add constraint ORDER_TAG_MAPPING_constraint_1
-                    primary key(order_x, order_y_a, order_y_b, tag_low, tag_high);
+                -- Implicit primary key constraint for middle table
+                constraint ORDER_TAG_MAPPING_constraint_1
+                    primary key(order_x, order_y_a, order_y_b, tag_low, tag_high), 
 
-            alter table ORDER_TAG_MAPPING
-                add constraint ORDER_TAG_MAPPING_constraint_2
+                constraint ORDER_TAG_MAPPING_constraint_2
                     foreign key(order_x, order_y_a, order_y_b)
-                        references ORDER(X, A, B)
-                            on delete cascade;
+                        references "ORDER"(X, A, B)
+                            on delete cascade, 
 
-            alter table ORDER_TAG_MAPPING
-                add constraint ORDER_TAG_MAPPING_constraint_3
+                constraint ORDER_TAG_MAPPING_constraint_3
                     foreign key(tag_low, tag_high)
-                        references TAG(LOW, HIGH);
+                        references TAG(LOW, HIGH)
+            );
 
             -- Entity table for "Comment"
             create table COMMENT(
                 ID integer not null, 
                 NAME text not null, 
-                TEXT text not null
-            );
+                TEXT text not null, 
 
-            alter table COMMENT
-                add constraint COMMENT_constraint_1
-                    primary key(ID);
+                constraint COMMENT_constraint_1
+                    primary key(ID)
+            );
 
             -- Middle table for "Order.comments"
             create table ORDER_COMMENT_MAPPING(
                 order_x integer not null, 
                 order_y_a integer not null, 
                 order_y_b integer not null, 
-                COMMENT_ID integer not null
-            );
+                COMMENT_ID integer not null, 
 
-            -- Implicit primary key constraint for middle table
-            alter table ORDER_COMMENT_MAPPING
-                add constraint ORDER_COMMENT_MAPPING_constraint_1
-                    primary key(order_x, order_y_a, order_y_b, COMMENT_ID);
+                -- Implicit primary key constraint for middle table
+                constraint ORDER_COMMENT_MAPPING_constraint_1
+                    primary key(order_x, order_y_a, order_y_b, COMMENT_ID), 
 
-            alter table ORDER_COMMENT_MAPPING
-                add constraint ORDER_COMMENT_MAPPING_constraint_2
+                constraint ORDER_COMMENT_MAPPING_constraint_2
                     foreign key(order_x, order_y_a, order_y_b)
-                        references ORDER(X, A, B);
+                        references "ORDER"(X, A, B), 
 
-            alter table ORDER_COMMENT_MAPPING
-                add constraint ORDER_COMMENT_MAPPING_constraint_3
+                constraint ORDER_COMMENT_MAPPING_constraint_3
                     foreign key(COMMENT_ID)
-                        references COMMENT(ID);
+                        references COMMENT(ID)
+            );
 
             -- Entity table for "OrderItem"
             create table ORDER_ITEM(
@@ -1045,65 +1013,57 @@ describe.sequential("SchemaCreatorTest", () => {
                 PRODUCT_NAME text not null, 
                 order_x integer not null, 
                 order_y_a integer not null, 
-                order_y_b integer not null
-            );
+                order_y_b integer not null, 
 
-            alter table ORDER_ITEM
-                add constraint ORDER_ITEM_constraint_1
-                    primary key(ID);
+                constraint ORDER_ITEM_constraint_1
+                    primary key(ID), 
 
-            alter table ORDER_ITEM
-                add constraint ORDER_ITEM_constraint_2
+                constraint ORDER_ITEM_constraint_2
                     foreign key(order_x, order_y_a, order_y_b)
-                        references ORDER(X, A, B)
-                            on delete cascade;
+                        references "ORDER"(X, A, B)
+                            on delete cascade
+            );
 
             -- Entity table for "Student"
             create table STUDENT(
                 ID integer not null, 
-                NAME text not null
-            );
+                NAME text not null, 
 
-            alter table STUDENT
-                add constraint STUDENT_constraint_1
-                    primary key(ID);
+                constraint STUDENT_constraint_1
+                    primary key(ID)
+            );
 
             -- Entity table for "Course"
             create table COURSE(
                 ID integer not null, 
-                NAME text not null
-            );
+                NAME text not null, 
 
-            alter table COURSE
-                add constraint COURSE_constraint_1
-                    primary key(ID);
+                constraint COURSE_constraint_1
+                    primary key(ID)
+            );
 
             -- Entity table for "LearningLink"
             create table LEARNING_LINK(
                 ID integer not null, 
                 SCORE integer null, 
                 STUDENT_ID integer not null, 
-                COURSE_ID integer not null
-            );
+                COURSE_ID integer not null, 
 
-            alter table LEARNING_LINK
-                add constraint LEARNING_LINK_constraint_1
-                    primary key(ID);
+                constraint LEARNING_LINK_constraint_1
+                    primary key(ID), 
 
-            -- Implicit unique constraint for middle table
-            alter table LEARNING_LINK
-                add constraint LEARNING_LINK_constraint_2
-                    unique(STUDENT_ID, COURSE_ID);
+                -- Implicit unique constraint for middle table
+                constraint LEARNING_LINK_constraint_2
+                    unique(STUDENT_ID, COURSE_ID), 
 
-            alter table LEARNING_LINK
-                add constraint LEARNING_LINK_constraint_3
+                constraint LEARNING_LINK_constraint_3
                     foreign key(STUDENT_ID)
-                        references STUDENT(ID);
+                        references STUDENT(ID), 
 
-            alter table LEARNING_LINK
-                add constraint LEARNING_LINK_constraint_4
+                constraint LEARNING_LINK_constraint_4
                     foreign key(COURSE_ID)
                         references COURSE(ID)
+            )
         `);
     });
 });

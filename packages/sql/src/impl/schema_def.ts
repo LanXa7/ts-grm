@@ -138,6 +138,7 @@ export class TableDefImpl implements TableDef {
         driver: Driver
     ): ReadonlyArray<string> {
         const arr: Array<string> = [];
+        const inline = driver.requiresInlineConstraints;
         const writer = new metadata.CodeWriter();
         if (this.entity != null) {
             writer
@@ -157,14 +158,27 @@ export class TableDefImpl implements TableDef {
             for (const columnDef of this.columns) {
                 appendTo(columnDef, driver, writer);
             }
+            if (inline) {
+                let index = 0;
+                for (const constraint of this._simpleConstraints) {
+                    writer.separator().newLine();
+                    writer.code(constraintToSql(constraint, ++index, this, true));
+                }
+                for (const constraint of this._foreignKeyConstraints) {
+                    writer.separator().newLine();
+                    writer.code(constraintToSql(constraint, ++index, this, true));
+                }
+            }
         });
         arr.push(writer.toString());
-        let index = 0;
-        for (const constraint of this._simpleConstraints) {
-            arr.push(constraintToSql(constraint, ++index, this));
-        }
-        for (const constraint of this._foreignKeyConstraints) {
-            arr.push(constraintToSql(constraint, ++index, this));
+        if (!inline) {
+            let index = 0;
+            for (const constraint of this._simpleConstraints) {
+                arr.push(constraintToSql(constraint, ++index, this, false));
+            }
+            for (const constraint of this._foreignKeyConstraints) {
+                arr.push(constraintToSql(constraint, ++index, this, false));
+            }
         }
         return arr;
     }
@@ -253,7 +267,8 @@ function appendTo(
 function constraintToSql(
     constraint: ConstraintDef,
     order: number,
-    declaringTable: TableDef
+    declaringTable: TableDef,
+    inline: boolean
 ): string {
     const writer = new metadata.CodeWriter();
     switch (constraint.kind) {
@@ -278,11 +293,19 @@ function constraintToSql(
             }
             break;
     }
-    writer.code("alter table ").code(declaringTable.name)
-        .code("\n    add constraint ").code(`${declaringTable.name}_constraint_${order}`);
+    if (inline) {
+        writer.code("constraint ");
+    } else {
+        writer
+            .code("alter table ")
+            .code(declaringTable.name)
+            .code("\n    add constraint ");
+    }
+    writer.code(`${unquoteIdentifier(declaringTable.name)}_constraint_${order}`);
+    const indent = inline ? 1 : 2;
     switch (constraint.kind) {
         case "PRIMARY_KEY":
-            writer.code("\n        primary key");
+            writer.code(`${head(indent)}primary key`);
             writer.scope({kind: "PARENTHESES", multiline: false}, () => {
                 for (const columnDef of constraint.columns) {
                     writer.separator().code(columnDef.name);
@@ -290,7 +313,7 @@ function constraintToSql(
             });
             break;
         case "UNIQUE":
-            writer.code("\n        unique");
+            writer.code(`${head(indent)}unique`);
             writer.scope({kind: "PARENTHESES", multiline: false}, () => {
                 for (const columnDef of constraint.columns) {
                     writer.separator().code(columnDef.name);
@@ -298,7 +321,7 @@ function constraintToSql(
             });
             break;
         case "CHECK":
-            writer.code("\n        check(");
+            writer.code(`${head(indent)}check(`);
             writer.code(constraint.column.name).code(" in");
             writer.scope({kind: "PARENTHESES", multiline: false}, () => {
                 for (const value of constraint.values) {
@@ -313,14 +336,14 @@ function constraintToSql(
             writer.code(")");
             break;
         case "FOREIGN_KEY":
-            writer.code("\n        foreign key");
+            writer.code(`${head(indent)}foreign key`);
             writer.scope({kind: "PARENTHESES", multiline: false}, () => {
                 for (const columnDef of constraint.columns) {
                     writer.separator().code(columnDef.name);
                 }
             });
             writer
-            .code("\n            references ")
+            .code(`${head(indent + 1)}references `)
             .code(constraint.referencedColumns[0]!.declaringTable.name);
             writer.scope({kind: "PARENTHESES", multiline: false}, () => {
                 for (const columnDef of constraint.referencedColumns) {
@@ -329,13 +352,30 @@ function constraintToSql(
             });
             switch (constraint.cascade) {
                 case "DELETE":
-                    writer.code("\n                on delete cascade");
+                    writer.code(`${head(indent + 2)}on delete cascade`);
                     break;
                 case "SET_NULL":
-                    writer.code("\n                on delete set null");
+                    writer.code(`${head(indent + 2)}on delete set null`);
                     break;
             }
             break;
     }
     return writer.toString();
+}
+
+function head(indent: number): string {
+    return "\n" + "    ".repeat(indent);
+}
+
+function unquoteIdentifier(value: string): string {
+    if (value.startsWith("\"") && value.endsWith("\"")) {
+        return value.substring(1, value.length - 1);
+    }
+    if (value.startsWith("`") && value.endsWith("`")) {
+        return value.substring(1, value.length - 1);
+    }
+    if (value.startsWith("[") && value.endsWith("]")) {
+        return value.substring(1, value.length - 1);
+    }
+    return value;
 }

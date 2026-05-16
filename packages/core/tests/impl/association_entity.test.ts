@@ -1,7 +1,7 @@
 import { Entity, UPPER_SNAKE_CASE_DATABASE_NAMING_STRATEGY } from "@/impl";
 import { describe, expect, it } from "vitest";
 import { AUTHOR, BOOK, COMMENT, ORDER, TAG } from "../model/model";
-import { expectStorage } from "./utils";
+import { EMPTY_KEYWORD_STRATEGY, expectStorage } from "./utils";
 
 describe("AssociationEntityTest", () => {
 
@@ -33,7 +33,11 @@ describe("AssociationEntityTest", () => {
         expect(targetKeyProp.referenceProp).toBe(targetProp);
         expect(targetKeyProp.targetKeyProp).toBe(undefined);
        
-        const strategy = UPPER_SNAKE_CASE_DATABASE_NAMING_STRATEGY;
+        const strategy = {
+            namingStrategy: UPPER_SNAKE_CASE_DATABASE_NAMING_STRATEGY,
+            keywordStrategy: EMPTY_KEYWORD_STRATEGY
+        };
+
         expectStorage(sourceProp.toStorage(strategy)).toEqual({
             "kind": "COLUMN",
             "name": "BOOK_ID",
@@ -88,7 +92,11 @@ describe("AssociationEntityTest", () => {
         expect(targetKeyProp.referenceProp).toBe(targetProp);
         expect(targetKeyProp.targetKeyProp).toBe(undefined);
        
-        const strategy = UPPER_SNAKE_CASE_DATABASE_NAMING_STRATEGY;
+        const strategy = {
+            namingStrategy: UPPER_SNAKE_CASE_DATABASE_NAMING_STRATEGY,
+            keywordStrategy: EMPTY_KEYWORD_STRATEGY
+        };
+
         expectStorage(sourceProp.toStorage(strategy)).toEqual({
             "kind": "COLUMN",
             "name": "AUTHOR_ID",
@@ -145,7 +153,10 @@ describe("AssociationEntityTest", () => {
         expect(targetKeyProp.referenceProp).toBe(targetProp);
         expect(targetKeyProp.targetKeyProp).toBe(undefined);
 
-        const strategy = UPPER_SNAKE_CASE_DATABASE_NAMING_STRATEGY;
+        const strategy = {
+            namingStrategy: UPPER_SNAKE_CASE_DATABASE_NAMING_STRATEGY,
+            keywordStrategy: EMPTY_KEYWORD_STRATEGY
+        };
 
         const sourceKeyXProp = entity.prop("sourceId.x");
         const sourceKeyYProp = entity.prop("sourceId.y");
@@ -273,7 +284,10 @@ describe("AssociationEntityTest", () => {
         expect(targetKeyProp.referenceProp).toBe(targetProp);
         expect(targetKeyProp.targetKeyProp).toBe(undefined);
 
-        const strategy = UPPER_SNAKE_CASE_DATABASE_NAMING_STRATEGY;
+        const strategy = {
+            namingStrategy: UPPER_SNAKE_CASE_DATABASE_NAMING_STRATEGY,
+            keywordStrategy: EMPTY_KEYWORD_STRATEGY
+        };
 
         const sourceKeyLowProp = entity.prop("sourceId.low");
         const sourceKeyHightProp = entity.prop("sourceId.high");
@@ -412,7 +426,10 @@ describe("AssociationEntityTest", () => {
         expect(targetKeyProp.referenceProp).toBe(targetProp);
         expect(targetKeyProp.targetKeyProp).toBe(undefined);
 
-        const strategy = UPPER_SNAKE_CASE_DATABASE_NAMING_STRATEGY;
+        const strategy = {
+            namingStrategy: UPPER_SNAKE_CASE_DATABASE_NAMING_STRATEGY,
+            keywordStrategy: EMPTY_KEYWORD_STRATEGY
+        };
 
         expectStorage(sourceKeyProp.toStorage(strategy)).toEqual({
             "kind": "COLUMN",

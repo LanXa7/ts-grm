@@ -11,7 +11,7 @@ export class PreVisitor extends ast.AbstractVisitor {
     private readonly _joinMergeScopeStack =
         new Stack<JoinMergeScope>(undefined);
 
-    private readonly _strategy: metadata.DatabaseNamingStrategy;
+    private readonly _strategy: metadata.DatabaseStrategy;
 
     private _filterProcessingTables: Array<RealTable> | undefined = undefined;
         
@@ -19,7 +19,7 @@ export class PreVisitor extends ast.AbstractVisitor {
         private readonly _sqlClient: SqlClientImplementor
     ) {
         super();
-        this._strategy = _sqlClient.options.strategy;
+        this._strategy = _sqlClient.strategy;
     }
 
     get tableMap(): ReadonlyMap<metadata.AbstractTable, RealTable> {

@@ -5,7 +5,7 @@ import { AnyModelImpl, ModelImpl } from "./model_impl";
 import { dedent, makeErr } from "@/error/util";
 import { EntityPropOrder } from "./entity_prop_order";
 import { StateError } from "@/error/common";
-import { DatabaseNamingStrategy, isIllegal, fixColumn, fixColumnArr, notEmpty } from "./strategy";
+import { isIllegal, fixColumn, fixColumnArr, notEmpty, DatabaseStrategy } from "./strategy";
 import { Column, Columns, MiddelEntity, MiddleTable, PropStorage, StorageType } from "./storage";
 import { ParameterizedTargetCalculator, TargetCalculator } from "@/schema/computed";
 import { z } from "zod";
@@ -57,7 +57,7 @@ export class EntityProp {
 
     private _baseStorage: PropStorage | null | undefined = undefined;
 
-    private _storageResolver: DatabaseNamingStrategy | undefined = undefined;
+    private _storageResolver: DatabaseStrategy | undefined = undefined;
 
     private _storage: PropStorage | undefined = undefined;
 
@@ -704,8 +704,9 @@ export class EntityProp {
         return storageType;
     }
 
-    toStorage(strategy: DatabaseNamingStrategy): PropStorage | undefined {
-        if (this._storageResolver === strategy) {
+    toStorage(strategy: DatabaseStrategy): PropStorage | undefined {
+        if (this._storageResolver?.namingStrategy === strategy.namingStrategy
+            && this._storageResolver?.keywordStrategy === strategy.keywordStrategy) {
             return this._storage;
         }
         if (this._data.mappedBy != null) {
@@ -754,7 +755,7 @@ export class EntityProp {
 
     private _createStorage(
         baseStorage: PropStorage, 
-        strategy: DatabaseNamingStrategy
+        strategy: DatabaseStrategy
     ): PropStorage {
         if (!isIllegal(baseStorage)) {
             return baseStorage;
@@ -762,8 +763,12 @@ export class EntityProp {
         if (baseStorage.kind === "COLUMN") {
             return fixColumn(
                     baseStorage, 
-                    () => strategy.columnName(this), 
-                    () => (baseStorage.referencedProp!.toStorage(strategy) as Column).name
+                    () => strategy.keywordStrategy.quoteIdentifier(
+                        strategy.namingStrategy.columnName(this)
+                    ), 
+                    () => strategy.keywordStrategy.quoteIdentifier(
+                        (baseStorage.referencedProp!.toStorage(strategy) as Column).name
+                    )
                 );
         }
         if (baseStorage.kind === "COLUMNS") {
@@ -783,8 +788,12 @@ export class EntityProp {
                         arr.push(
                             fixColumn(
                                 baseColumns[arr.length]!,
-                                () => strategy.columnName(prop),
-                                () => (baseColumns[arr.length]!.referencedProp?.toStorage(strategy) as Column).name
+                                () => strategy.keywordStrategy.quoteIdentifier(
+                                    strategy.namingStrategy.columnName(prop)
+                                ),
+                                () => strategy.keywordStrategy.quoteIdentifier(
+                                    (baseColumns[arr.length]!.referencedProp?.toStorage(strategy) as Column).name
+                                )
                             )
                         );
                     }
@@ -793,8 +802,12 @@ export class EntityProp {
             } else {
                 columns = fixColumnArr(
                     baseStorage,
-                    () => strategy.columnName(this),
-                    c => (c.referencedProp!.toStorage(strategy) as Column).name
+                    () => strategy.keywordStrategy.quoteIdentifier(
+                        strategy.namingStrategy.columnName(this)
+                    ),
+                    c => strategy.keywordStrategy.quoteIdentifier(
+                        (c.referencedProp!.toStorage(strategy) as Column).name
+                    )
                 );
             }
             (columns as any).kind = "COLUMNS";
@@ -803,16 +816,24 @@ export class EntityProp {
         if (baseStorage.kind === "MIDDLE_TABLE") {
             return {
                 kind: "MIDDLE_TABLE",
-                name: notEmpty(baseStorage.name, () => strategy.middleTableName(this)),
+                name: notEmpty(baseStorage.name, () => strategy.namingStrategy.middleTableName(this)),
                 toThisColumns: fixColumnArr(
                     baseStorage.toThisColumns,
-                    () => strategy.middleTableThisRefColumnName(this), 
-                    c => (c.referencedProp!.toStorage(strategy) as Column).name
+                    () => strategy.keywordStrategy.quoteIdentifier(
+                        strategy.namingStrategy.middleTableThisRefColumnName(this)
+                    ), 
+                    c => strategy.keywordStrategy.quoteIdentifier(
+                        (c.referencedProp!.toStorage(strategy) as Column).name
+                    )
                 ),
                 toTargetColumns: fixColumnArr(
                     baseStorage.toTargetColumns,
-                    () => strategy.middleTableTargetRefColumnName(this), 
-                    c => (c.referencedProp!.toStorage(strategy) as Column).name
+                    () => strategy.keywordStrategy.quoteIdentifier(
+                        strategy.namingStrategy.middleTableTargetRefColumnName(this)
+                    ), 
+                    c => strategy.keywordStrategy.quoteIdentifier(
+                        (c.referencedProp!.toStorage(strategy) as Column).name
+                    )
                 ),
             };
         }

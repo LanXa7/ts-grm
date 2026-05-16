@@ -2,8 +2,8 @@ import { Entity } from "@/impl/entity";
 import { PAPER_BOOK, ORDER_ITEM, BOOK, AUTHOR, TREE_NODE, BOOK_STORE, ELECTRONIC_BOOK, PDF_ELECTRONIC_BOOK, ORDER, VIP_ORDER, STUDENT, COURSE } from "../model/model";
 import { describe, expect, it } from "vitest";
 import { makeErr } from "@/error/util";
-import { Column, UPPER_SNAKE_CASE_DATABASE_NAMING_STRATEGY } from "@/impl";
-import { expectStorage } from "./utils";
+import { Column, DatabaseStrategy, UPPER_SNAKE_CASE_DATABASE_NAMING_STRATEGY } from "@/impl";
+import { EMPTY_KEYWORD_STRATEGY, expectStorage } from "./utils";
 
 describe("EntityTest", () => {
 
@@ -97,7 +97,10 @@ describe("EntityTest", () => {
 
     it("entityConfigurator", () => {
         const bookEntity = Entity.of(BOOK);
-        expect(bookEntity.toTableName(UPPER_SNAKE_CASE_DATABASE_NAMING_STRATEGY)).toEqual("BOOK");
+        expect(bookEntity.toTableName({
+            namingStrategy: UPPER_SNAKE_CASE_DATABASE_NAMING_STRATEGY,
+            keywordStrategy: EMPTY_KEYWORD_STRATEGY
+        })).toEqual("BOOK");
         expect(bookEntity.uniqueConstraints.length).toEqual(1);
         expect(bookEntity.uniqueConstraints[0]!.map(c => c.name)).toEqual(["name", "edition"]);
 
@@ -112,8 +115,10 @@ describe("EntityTest", () => {
 
     it("storage", () => {
 
-        const strategy = UPPER_SNAKE_CASE_DATABASE_NAMING_STRATEGY;
-
+        const strategy: DatabaseStrategy = {
+            namingStrategy: UPPER_SNAKE_CASE_DATABASE_NAMING_STRATEGY,
+            keywordStrategy: EMPTY_KEYWORD_STRATEGY
+        };
         const storeEntity = Entity.of(BOOK_STORE);
         expect(storeEntity.prop("id").toStorage(strategy)).toEqual({
             kind: "COLUMN",
@@ -331,8 +336,10 @@ describe("EntityTest", () => {
 
     it("inheritance", () => {
 
-        const strategy = UPPER_SNAKE_CASE_DATABASE_NAMING_STRATEGY;
-
+        const strategy: DatabaseStrategy = {
+            namingStrategy: UPPER_SNAKE_CASE_DATABASE_NAMING_STRATEGY,
+            keywordStrategy: EMPTY_KEYWORD_STRATEGY
+        };
         const bookEntity = Entity.of(BOOK);
         const paperBookEntity = Entity.of(PAPER_BOOK);
         const electronicBookEntity = Entity.of(ELECTRONIC_BOOK);

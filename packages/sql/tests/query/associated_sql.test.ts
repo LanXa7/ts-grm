@@ -44,7 +44,7 @@ describe("AssociatedSqlTest", () => {
                 not exists(
                     select 
                         1
-                    from ORDER tb_2_
+                    from "ORDER" tb_2_
                     where 
                             (
                                 tb_2_.X,
@@ -232,7 +232,7 @@ describe("AssociatedSqlTest", () => {
                 tb_1_.A,
                 tb_1_.B,
                 tb_1_.NAME
-            from ORDER tb_1_
+            from "ORDER" tb_1_
             where 
                 (
                     select 

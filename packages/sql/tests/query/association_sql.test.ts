@@ -112,7 +112,7 @@ describe("AssociationSqlTest", () => {
             select 
                 tb_1_.NAME,
                 tb_3_.NAME
-            from ORDER tb_1_
+            from "ORDER" tb_1_
             inner join ORDER_TAG_MAPPING tb_2_ on 
                 tb_1_.X = tb_2_.order_x
             and

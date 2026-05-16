@@ -12,7 +12,7 @@ export async function createSchema(
 
 class SchemaCreatorExecutor {
 
-    private readonly _strategy: metadata.DatabaseNamingStrategy;
+    private readonly _strategy: metadata.DatabaseStrategy;
 
     private readonly _processedMetadatas = new Set<metadata.Entity | metadata.EntityProp>();
 
@@ -21,7 +21,7 @@ class SchemaCreatorExecutor {
     constructor(
         private readonly _sqlClient: SqlClientImplementor
     ) {
-        this._strategy = _sqlClient.options.strategy;
+        this._strategy = _sqlClient.strategy;
     }
 
     async executue(): Promise<void> {

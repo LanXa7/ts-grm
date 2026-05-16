@@ -166,7 +166,7 @@ describe("FilterSqlTest", () => {
                 tb_1_.LOW = tb_2_.tag_low
             and
                 tb_1_.HIGH = tb_2_.tag_high
-            inner join ORDER tb_3_ on 
+            inner join "ORDER" tb_3_ on 
                 tb_2_.order_x = tb_3_.X
             and
                 tb_2_.order_y_a = tb_3_.A

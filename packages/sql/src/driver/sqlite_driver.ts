@@ -45,6 +45,17 @@ export class SqliteDriver implements Driver {
                 return "text";
         }
     }
+
+    get requiresInlineConstraints(): boolean {
+        return true;
+    }
+
+    quoteIdentifier(value: string): string {
+        if (KEYWORDS.has(value.toLowerCase())) {
+            return `"${value}"`;
+        }
+        return value;
+    }
 }
 
 const nodeRender = new class implements NodeRender {
@@ -185,3 +196,24 @@ const nodeRender = new class implements NodeRender {
         throw new err.StateError(`The sqlite does not support the function "${funName}"`);
     }
 };
+
+const KEYWORDS = new Set<string>([
+
+    "select", "from", "where", "group", "by", "having", "order", "limit", "offset",
+    "insert", "update", "delete", "into", "values", "set", "create", "table", "drop",
+    "alter", "add", "column", "rename", "to", "view", "trigger",
+
+    "and", "or", "not", "in", "is", "null", "like", "glob", "match", "regexp",
+    "between", "exists", "case", "when", "then", "else", "end",
+
+    "join", "left", "outer", "inner", "cross", "natural", "on", "using",
+    "union", "all", "intersect", "except",
+
+    "primary", "key", "foreign", "references", "unique", "check", "default", 
+    "constraint", "collate", "on", "conflict", "do", "nothing", "nothing",
+
+    "begin", "transaction", "commit", "rollback", "savepoint", "release",
+    "as", "distinct", "all", "exists", "cast", "with", "recursive",
+
+    "virtual", "indexed", "by", "escape", "deferrable", "initially", "deferred", "immediate"
+])

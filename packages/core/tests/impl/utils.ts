@@ -1,4 +1,4 @@
-import { Column, PropStorage } from "@/impl";
+import { Column, DatabaseKeywordStrategy, PropStorage } from "@/impl";
 import { expect, JestAssertion } from "vitest";
 
 export function expectStorage(storage: PropStorage | undefined): JestAssertion {
@@ -33,3 +33,9 @@ export function expectStorage(storage: PropStorage | undefined): JestAssertion {
         : columnJson(storage);
     return expect(json);
 }
+
+export const EMPTY_KEYWORD_STRATEGY: DatabaseKeywordStrategy = {
+    quoteIdentifier(value: string): string {
+        return value;
+    }
+};
