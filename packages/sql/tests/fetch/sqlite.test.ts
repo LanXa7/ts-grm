@@ -3,6 +3,7 @@ import { useSqliteClientWithData } from "./utils";
 import { BOOK } from "../model/model";
 import { SIMPLE_BOOK_VIEW } from "../query/utils";
 import { newSqlRecord } from "../utils";
+import { dto } from "@ts-grm/core";
 
 describe.sequential("SqliteFetchTest", () => {
 
@@ -40,6 +41,21 @@ describe.sequential("SqliteFetchTest", () => {
     });
 
     it("m2o", async() => {
-
+        const VIEW = dto.view(BOOK, $ => $
+            .allScalars()
+            .store($ => $
+                .id
+                .name
+                .version
+            )
+        );
+        const rows = await sqlClient.createQuery(BOOK, (q, book) => {
+            q.where(book.storeId.eq(2));
+            q.orderBy(book.edition.desc());
+            return q.select(
+                book.fetch(VIEW)
+            );
+        }).fetchList();
+        console.log(rows);
     });
 });
