@@ -7,13 +7,13 @@ export function useSqliteClientWithData(sqlRecord: SqlRecord): SqlClient {
     beforeAll(async () => {
         const schema = await sqlClient.createSchema();
         await schema.execute();
-        sqlClient.execute(async () => {
+        await sqlClient.execute(async () => {
             for (const part of INITIAL_SQL.split(";")) {
                 const sql = part.trim();
                 if (sql === "") {
                     continue;
                 }
-                sqlClient.executor.execute(sql);
+                await sqlClient.executor.execute(sql);
             }
         });
     });
