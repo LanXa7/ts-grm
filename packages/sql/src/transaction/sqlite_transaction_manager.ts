@@ -103,7 +103,7 @@ class SqliteExecutor implements Executor {
         const stmt = this._database.prepare(sql);
         stmt.raw(true);
         const values = args.map(v => v.value);
-        return (stmt.get(values) ?? []) as ReadonlyArray<any>;
+        return stmt.all(values) as DataRows;
     }
 
     async executeStatements(
@@ -115,7 +115,7 @@ class SqliteExecutor implements Executor {
         stmt.raw(true);
         for (const args of binds) {
             const values = args.map(v => v.value);
-            const rows = stmt.get(values) as ReadonlyArray<any>;
+            const rows = stmt.all(values) as DataRows;
             results.push(rows);
         }
         return results;

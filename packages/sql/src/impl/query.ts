@@ -24,15 +24,15 @@ export async function query<TProjection extends RootQueryProjection<any>>(
         switch (contract.projection.kind) {
             case "ROOT_SINGLE":
                 const selection = contract.projection.selection;
-                const dtoRows: Array<metadata.DtoRow> = [];
+                const dtos: Array<any> = [];
                 if (selection instanceof metadata.FetchedViewImpl) {
                     const dtoRowReader = selection.view.mapper.rowReader;
                     while (dataRowReader.next()) {
                         const dtoRow = dtoRowReader.read(undefined, dataRowReader);
-                        dtoRows.push(dtoRow);
+                        dtos.push(dtoRow.dto);
                     }
                 }
-                return dtoRows;
+                return dtos;
             default:
                 throw new Error();
         }

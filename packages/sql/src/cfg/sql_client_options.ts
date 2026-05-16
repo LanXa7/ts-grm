@@ -14,7 +14,7 @@ export type SqlClientOptions = {
 
     readonly entityManager: EntityManager | undefined;
 
-    readonly executorCreator: (defaultExecutor: Executor) => Executor;
+    readonly executorCreator: (executor: Executor) => Executor;
 };
 
 export type SqlLogger = {
