@@ -1,15 +1,12 @@
 import { AUTHOR, BOOK, BOOK_STORE, TREE_NODE } from "../model/model";
-import { describe, it, afterAll } from "vitest";
+import { describe, it } from "vitest";
 import { dsl, dto, FilterType } from "@ts-grm/core";
-import { expectCode, useSqlClient } from "../utils";
+import { expectCode, useSqliteClient } from "../utils";
 import { SIMPLE_BOOK_VIEW, SIMPLE_STORE_VIEW, sql } from "./utils";
 
 describe("QuerySqlTest", () => {
     
-    const [sqlClient, cleanup] = useSqlClient();
-    afterAll(() => {
-        cleanup();
-    });
+    const sqlClient = useSqliteClient();
 
     it("where", () => {
         const q = sqlClient.createQuery(BOOK, (q, book) => {

@@ -22,3 +22,6 @@ export type { BaseQueryImplementor, BaseModelImplementor } from "./base_query_im
 export type { ShadowAnchor } from "./shadow_anchor";
 export type { ModelContract } from "./model_contract";
 export { CodeWriter } from "./code_writer";
+export type { DataReader } from "./data_reader";
+export { FetchedViewImpl } from "./fetched_view_impl";
+export type { DtoRow, DtoRowReader } from "./row_reader";

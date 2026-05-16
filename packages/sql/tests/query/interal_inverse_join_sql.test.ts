@@ -1,10 +1,10 @@
 import { newSqlClient } from "@/sql_client";
-import { describe, it, afterAll } from "vitest";
+import { describe, it } from "vitest";
 import { SIMPLE_AUTHOR_VIEW, SIMPLE_BOOK_VIEW, SIMPLE_COMMENT_VIEW, SIMPLE_STORE_VIEW, sql } from "./utils";
 import { FilterManager } from "@/cfg";
 import { AUTHOR, BOOK, BOOK_STORE, COMMENT, ORDER } from "../model/model";
 import { dsl, Expression, ExprTuple, metadata } from "@ts-grm/core";
-import { expectCode, useSqlClient } from "../utils";
+import { expectCode, useSqliteClient } from "../utils";
 
 // Internal API, not public API for users
 // This internal API is used to implements association fetch
@@ -12,10 +12,7 @@ import { expectCode, useSqlClient } from "../utils";
 // even it the association is not bidirectional
 describe("InternalInverseJoinSqlTest", () => {
 
-    const [sqlClient, cleanup] = useSqlClient();
-    afterAll(() => {
-        cleanup();
-    });
+    const sqlClient = useSqliteClient();
 
     // All global filters should be ignored by internal inverse join
     // That means filters will be only applied to root table.

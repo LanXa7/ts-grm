@@ -30,7 +30,8 @@ import type {
     AnyAssociationModel,
     Isolation,
     Propagation,
-    TransactionOptions
+    TransactionOptions,
+    Schema
 } from "@ts-grm/core";
 import { suppressUnused, ast, dsl, err } from "@ts-grm/core";
 import { MutableRootQueryImpl } from "./mutable_root_query_impl";
@@ -42,7 +43,9 @@ import { toTables } from "./utils";
 import { MergedBaseQueryImpl, MergedDtSubQueryImpl, MergedExprSubQueryImpl, MergedNumSubQueryImpl, MergedRootQueryImpl, MergedStrSubQueryImpl, MergedTupleSubQueryImpl } from "./merged_query";
 import { MutableSubQueryImpl } from "./mutable_sub_query_impl";
 import { AtomDtSubQueryImpl, AtomNumSubQueryImpl, AtomStrSubQueryImpl, AtomExprSubQueryImpl, AtomTupleSubQueryImpl } from "./atom_sub_query_impl";
-import { ParseOptions } from "node:querystring";
+import { TableDef } from "./schema_def";
+import { createSchema } from "./schema_creator";
+import { Executor } from "@/transaction/executor";
 
 export class SqlClientImpl implements SqlClientImplementor {
 
@@ -207,7 +210,16 @@ export class SqlClientImpl implements SqlClientImplementor {
                 }
             }
         }
-        return this.driver.execute({propagation, isolation, timeout}, func);
+        return this.driver.transactionManager.execute({propagation, isolation, timeout}, func);
+    }
+
+    async createSchema(): Promise<Schema> {
+        const tableDefs = await createSchema(this);
+        return new SchemaImpl(this, tableDefs);
+    }
+
+    get executor(): Executor {
+        return this.options.executorCreator(this.driver.transactionManager.defaultExecutor);
     }
 }
 
@@ -324,3 +336,49 @@ class QueryFactoryImpl implements ast.QueryFactory {
 const queryFactory = new QueryFactoryImpl();
 
 ast.setQueryFactory(queryFactory);
+
+class SchemaImpl implements Schema {
+
+    private _sqlArray: ReadonlyArray<string> | undefined = undefined;
+
+    private _str: string | undefined = undefined;
+
+    constructor(
+        readonly sqlClient: SqlClientImplementor,
+        readonly tableDefs: ReadonlyArray<TableDef>
+    ) {}
+
+    get sqlArray(): ReadonlyArray<string> {
+        let arr = this._sqlArray;
+        if (arr == null) {
+            this._sqlArray = arr = this._toSqlArray();
+        }
+        return arr;
+    }
+    
+    private _toSqlArray(): ReadonlyArray<string> {
+        const arr: Array<string> = [];
+        for (const tableDef of this.tableDefs) {
+            const sqlArr = tableDef.toStatements(this.sqlClient.driver);
+            arr.push(...sqlArr);
+        }
+        return arr;     
+    }
+
+    execute(): Promise<void> {
+        return this.sqlClient.driver.transactionManager.executeReadonly(async () => {
+            for (const sql of this.sqlArray) {
+                this.sqlClient.executor.execute(sql);
+            }
+        });
+    }
+
+    toString(): string {
+        let str = this._str;
+        if (str == null) {
+            const arr: Array<string> = [...this.sqlArray, ""];
+            this._str = str = arr.join(";\n\n");
+        }
+        return str;
+    }
+}

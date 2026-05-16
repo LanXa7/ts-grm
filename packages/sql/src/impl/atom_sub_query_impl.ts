@@ -283,6 +283,10 @@ export class AtomStrSubQueryImpl extends AbstractStrSubQueryImpl implements ast.
         return this._projection as any as ast.ProjectionContract;
     }
 
+    get level(): "SUB" {
+        return "SUB";
+    }
+
     accept(visitor: ast.Visitor): void {
         visitor.visitAtomQuery(this);
     }
@@ -351,6 +355,10 @@ export class AtomDtSubQueryImpl extends AbstractDtSubQueryImpl implements ast.At
 
     get projection(): ast.ProjectionContract {
         return this._projection as any as ast.ProjectionContract;
+    }
+
+    get level(): "SUB" {
+        return "SUB";
     }
 
     accept(visitor: ast.Visitor): void {

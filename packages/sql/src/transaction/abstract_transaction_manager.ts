@@ -2,6 +2,7 @@ import { sqlerr } from "@/error";
 import { err, Isolation, Propagation, TransactionOptions } from "@ts-grm/core";
 import { AsyncLocalStorage } from "async_hooks";
 import { TransactionManager } from "./transaction_manger";
+import { Executor } from "./executor";
 
 export abstract class AbstractTransactionManager<TContext extends TransactionContext<TContext>> 
 implements TransactionManager {
@@ -10,7 +11,7 @@ implements TransactionManager {
         options: TransactionOptions,
         fn: () => Promise<R>
     ): Promise<R> {
-        if (!this.isPropgationSupported(options.propagation)) {
+        if (!this.isPropagationSupported(options.propagation)) {
             throw new err.ArgumentError(
                 `The propagation "${options.propagation}" is not supported by current database`
             );
@@ -55,6 +56,16 @@ implements TransactionManager {
                 }
                 return await this.executeInNewContext(options.isolation, options.timeout, ctx, fn);
         }
+    }
+
+    async executeReadonly<R>(
+        fn: () => Promise<R>
+    ): Promise<R> {
+        const ctx = transactionStorage.getStore() as TContext | undefined;
+        if (ctx != null) {
+            return await fn();
+        }
+        return await this.executeInNewContext(undefined, 0, undefined, fn);
     }
 
     private async executeInNewContext<R>(
@@ -128,7 +139,7 @@ implements TransactionManager {
         }
     }
 
-    protected isPropgationSupported(
+    protected isPropagationSupported(
         _: Propagation
     ): boolean {
         return true;
@@ -159,15 +170,36 @@ implements TransactionManager {
     protected upgrade(_: Isolation): Promise<void> {
         throw new err.StateError(`The "uprade" has not been implemented`);
     }
+
+    get defaultExecutor(): Executor {
+        const ctx = transactionStorage.getStore() as TContext;
+        if (ctx == null) {
+            throw new err.StateError(`Cannot get the default executor because there is no openning connection`);
+        }
+        return ctx.executor;
+    }
 }
 
-export class TransactionContext<TContext extends TransactionContext<TContext>> {
+export abstract class TransactionContext<TContext extends TransactionContext<TContext>> {
+    
+    private _executor: Executor | undefined = undefined;
+
     constructor(
         readonly isolation: Isolation | undefined, // Undefined means no transaction
         readonly timeout: number,
         readonly prevForSavepoint: TContext | undefined
     ) {
     }
+
+    get executor(): Executor {
+        let executor = this._executor;
+        if (executor == null) {
+            this._executor = executor = this.createExecutor();
+        }
+        return executor;
+    }
+
+    protected abstract createExecutor(): Executor;
 }
 
 const transactionStorage = new AsyncLocalStorage<TransactionContext<any>>();

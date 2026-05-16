@@ -1,15 +1,12 @@
-import { describe, it, afterAll } from "vitest";
+import { describe, it } from "vitest";
 import { SIMPLE_BOOK_VIEW, SIMPLE_PAPER_BOOK_VIEW, SIMPLE_PHYSICAL_BOOK_STORE_VIEW, SIMPLE_STORE_VIEW, sql } from "./utils";
 import { BOOK, BOOK_STORE, ELECTRONIC_BOOK, PAPER_BOOK, PHYSICAL_BOOK_STORE } from "../model/model";
 import { dsl } from "@ts-grm/core";
-import { expectCode, useSqlClient } from "../utils";
+import { expectCode, useSqliteClient } from "../utils";
 
 describe("InheritanceSqlTest", () => {
 
-    const [sqlClient, cleanup] = useSqlClient();
-    afterAll(() => {
-        cleanup();
-    });
+    const sqlClient = useSqliteClient();
     
     it("isFunctionOfMultipleTables", () => {
         const q = sqlClient.createQuery(BOOK, (q, book) => {

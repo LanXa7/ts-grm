@@ -42,6 +42,8 @@ export interface MergedQueryContract extends Node {
     readonly queries: ReadonlyArray<QueryContract>;
 
     readonly isRecursive: boolean;
+
+    readonly projection: ProjectionContract;
 }
 
 export type ProjectionContract = {

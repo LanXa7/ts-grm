@@ -2,16 +2,13 @@ import { SqliteDriver } from "@/driver/sqlite_driver";
 import { newSqlClient, SqlClientImplementor } from "@/sql_client";
 import { EntityManager, SqlClient } from "@ts-grm/core";
 import Database from "better-sqlite3";
-import { expect } from "vitest";
+import { afterAll, expect } from "vitest";
 
-export function useSqlClient<TImplementor extends boolean = false>(
+export function useSqliteClient<TImplementor extends boolean = false>(
     _?: TImplementor
-): [
-    TImplementor extends true 
-        ? SqlClientImplementor
-        : SqlClient, 
-    () => void
-] {
+): TImplementor extends true 
+    ? SqlClientImplementor
+    : SqlClient {
     const database = new Database(":memory:");
     const sqlClient = newSqlClient(new SqliteDriver(database), {
         entityManager: EntityManager.of(__dirname, "./model"),
@@ -19,7 +16,10 @@ export function useSqlClient<TImplementor extends boolean = false>(
             pretty: true
         }
     });
-    return [sqlClient as SqlClientImplementor, () => { database.close(); }]
+    afterAll(() => {
+        database.close();
+    })
+    return sqlClient as SqlClientImplementor;
 }
 
 export function expectCode(actual: string, expected: string) {

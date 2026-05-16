@@ -1,15 +1,12 @@
-import { afterAll, describe, it } from "vitest";
+import { describe, it } from "vitest";
 import { SIMPLE_AUTHOR_VIEW, SIMPLE_BOOK_VIEW, sql } from "./utils";
 import { dsl } from "@ts-grm/core";
 import { AUTHOR, BOOK, ORDER } from "../model/model";
-import { expectCode, useSqlClient } from "../utils";
+import { expectCode, useSqliteClient } from "../utils";
 
 describe("AssociationSqlTest", () => {
 
-    const [sqlClient, cleanup] = useSqlClient();
-    afterAll(() => {
-        cleanup();
-    });
+    const sqlClient = useSqliteClient();
 
     it("root", () => {
         const q = sqlClient.createQuery(dsl.associationModel(BOOK, "authors"), (q, association) => {

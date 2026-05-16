@@ -3,23 +3,23 @@ import { DataReader } from "./data_reader";
 import { DtoMapper } from "./dto_mapper";
 import { buildShape, isEmptyShape, Shape } from "./shape";
 
-export type Row = {
+export type DtoRow = {
 
-    readonly reader: RowReader;
+    readonly reader: DtoRowReader;
     
-    readonly parent: Row;
+    readonly parent: DtoRow;
 
     readonly dto: object;
 
     readonly implicit: object;
 }
 
-export abstract class RowReader {
+export abstract class DtoRowReader {
 
-    abstract read(parent: Row | undefined, reader: DataReader): Row;
+    abstract read(parent: DtoRow | undefined, reader: DataReader): DtoRow;
 }
 
-export function createRowReader(mapper: DtoMapper): RowReader {
+export function createRowReader(mapper: DtoMapper): DtoRowReader {
 
     const shape = buildShape(mapper);
 
@@ -33,7 +33,7 @@ export function createRowReader(mapper: DtoMapper): RowReader {
                 writeFold("_implicit", shape.__implicit, mapper.nullAsUndefined, writer);
             }
         });
-    const cls = new Function("$baseClass", writer.toString())(RowReader);
+    const cls = new Function("$baseClass", writer.toString())(DtoRowReader);
     return new cls();
 }
 

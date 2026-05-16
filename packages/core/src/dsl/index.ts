@@ -7,7 +7,7 @@ import { baseQuery, cteModel, derivedModel } from "./base_query";
 import { associationModel } from "./association";
 import { tuple } from "./tuple";
 export { ExpressionOrder } from "./utils";
-export type { SqlClient, Propagation, Isolation, TransactionOptions } from "./sql_client";
+export type { SqlClient, Propagation, Isolation, TransactionOptions, Schema } from "./sql_client";
 export type { AtLeastOne } from "./utils";
 export type { Criteria } from "./criteria";
 export type { ExprTuple, ExprTupleMatchable } from "./tuple";
@@ -19,7 +19,8 @@ export type {
     RootQuerySelectArrArgs, 
     RootQuerySelectMapArgs, 
     RootQuerySelection, 
-    RowTypeOf 
+    RowTypeOf,
+    FetchedView 
 } from "./root_query";
 export type { 
     SubQueryLike, 

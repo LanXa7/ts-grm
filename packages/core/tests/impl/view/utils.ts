@@ -41,9 +41,6 @@ export function mapperJson(mapper: DtoMapper): any {
 
 export function makeReader(...args: any[]): DataReader {
     return new class implements DataReader {
-        next(): boolean {
-            throw new Error("Unsupported Operation Error");
-        }
         get(index: number): any {
             return args[index];
         }

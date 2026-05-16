@@ -69,6 +69,8 @@ export interface SqlClient {
         options: Partial<TransactionOptions>,
         fn: () => Promise<R>
     ): Promise<R>;
+
+    createSchema(): Promise<Schema>;
 }
 
 export type Propagation =
@@ -91,3 +93,12 @@ export type TransactionOptions =
         readonly isolation: Isolation;
         readonly timeout: number;
     };
+
+export interface Schema {
+
+    readonly sqlArray: ReadonlyArray<string>;
+
+    execute(): Promise<void>;
+
+    toString(): string;
+}

@@ -5,6 +5,7 @@ import { metadata } from "@ts-grm/core";
 import { SqlClientImpl } from "./impl/sql_client_impl";
 import { DeepPartial, merge } from "./utils";
 import { AnyFilter, FilterManager } from "./cfg/filter";
+import { Executor } from "./transaction/executor";
 
 export function newSqlClient(
     data: Driver | SqlClient,
@@ -43,6 +44,8 @@ export interface SqlClientImplementor extends SqlClient {
     getFilters(
         entity: metadata.Entity
     ): ReadonlyArray<AnyFilter>;
+
+    readonly executor: Executor;
 }
 
 function createDefaultOptions(): SqlClientOptions {
@@ -54,6 +57,7 @@ function createDefaultOptions(): SqlClientOptions {
             parameter: "PLACEHOLDER"
         },
         filterManager: new FilterManager(),
-        entityManager: undefined
+        entityManager: undefined,
+        executorCreator: defaultExecutor => defaultExecutor
     };
 }

@@ -2,7 +2,7 @@ import { ArgumentError, StateError } from "@/error/common";
 import { Dto, DtoField, FetchProp } from "./dto";
 import { Entity } from "./entity";
 import { dtoField } from "./dto_builder";
-import { createRowReader, RowReader } from "./row_reader";
+import { createRowReader, DtoRowReader } from "./row_reader";
 import { makeErr } from "@/error/util";
 import { EntityProp } from ".";
 import { ReferenceFetchType } from "@/schema/dto";
@@ -23,7 +23,9 @@ export function dtoMapper(dto: Dto, nullAsUndefined: boolean): DtoMapper {
 
 export class DtoMapper {
 
-    private _rowReader: RowReader | undefined = undefined;
+    private _rowReader: DtoRowReader | undefined = undefined;
+
+    private _span: number | undefined = undefined;
 
     constructor(
         readonly entity: Entity,
@@ -33,12 +35,27 @@ export class DtoMapper {
         readonly fields: ReadonlyArray<DtoMapperField>
     ) {}
 
-    get rowReader(): RowReader {
+    get rowReader(): DtoRowReader {
         let rowReader = this._rowReader;
         if (rowReader == null) {
             this._rowReader = rowReader = createRowReader(this);
         }
         return rowReader;
+    }
+
+    get span(): number {
+        let span = this._span;
+        if (span == null) {
+            span = 0;
+            for (const field of this.fields) {
+                const index = field.columnIndex;
+                if (typeof index != null) {
+                    span++;
+                }
+            }
+            this._span = span;
+        }
+        return span;
     }
 }
 

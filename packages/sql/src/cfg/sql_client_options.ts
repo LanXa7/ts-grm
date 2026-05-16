@@ -1,5 +1,6 @@
 import { EntityManager, metadata } from "@ts-grm/core";
 import { FilterManager } from "./filter";
+import { Executor } from "@/transaction/executor";
 
 export type SqlClientOptions = {
     
@@ -12,6 +13,8 @@ export type SqlClientOptions = {
     readonly filterManager: FilterManager;
 
     readonly entityManager: EntityManager | undefined;
+
+    readonly executorCreator: (defaultExecutor: Executor) => Executor;
 };
 
 export type SqlLogger = {

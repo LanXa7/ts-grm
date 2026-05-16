@@ -1,6 +1,9 @@
 import { Isolation, Propagation } from "@ts-grm/core";
 import { AbstractTransactionManager, TransactionContext } from "./abstract_transaction_manager";
 import { Database } from "better-sqlite3";
+import { Executor } from "./executor";
+import { Value } from "@/sql/fragment";
+import { DataRows } from "@/impl/data_row_reader";
 
 export class SqliteTransactionManager 
 extends AbstractTransactionManager<SqliteTransactionContext> {
@@ -11,8 +14,8 @@ extends AbstractTransactionManager<SqliteTransactionContext> {
         super();
     }
 
-    protected isPropgationSupported(propgation: Propagation): boolean {
-        return propgation === "REQUIRED" || propgation === "MANDATORY" || propgation === "NESTED";
+    protected isPropagationSupported(propagation: Propagation): boolean {
+        return propagation === "REQUIRED" || propagation === "MANDATORY" || propagation === "NESTED";
     }
 
     protected create(
@@ -21,6 +24,7 @@ extends AbstractTransactionManager<SqliteTransactionContext> {
         prevForSavepoint: SqliteTransactionContext | undefined
     ): SqliteTransactionContext {
         return new SqliteTransactionContext(
+            this.database,
             isolation,
             timeout,
             prevForSavepoint
@@ -66,6 +70,7 @@ export class SqliteTransactionContext extends TransactionContext<SqliteTransacti
     readonly savepointName: string | undefined;
 
     constructor(
+        private readonly _database: Database,
         isolation: Isolation | undefined,
         timeout: number,
         prevForSavepoint: SqliteTransactionContext | undefined
@@ -74,5 +79,45 @@ export class SqliteTransactionContext extends TransactionContext<SqliteTransacti
         this.savepointName = prevForSavepoint != null
             ? `savepoint_${++SqliteTransactionContext._savepointIdSequence}`
             : undefined
+    }
+
+    protected createExecutor(): Executor {
+        return new SqliteExecutor(this._database);
+    }
+}
+
+class SqliteExecutor implements Executor {
+
+    constructor(
+        private readonly _database: Database
+    ) {}
+
+    async execute(sql: string): Promise<void> {
+        this._database.exec(sql);
+    }
+
+    async executeStatement(
+        sql: string, 
+        args: ReadonlyArray<Value>
+    ): Promise<DataRows> {
+        const stmt = this._database.prepare(sql);
+        stmt.raw(true);
+        const values = args.map(v => v.value);
+        return (stmt.get(values) ?? []) as ReadonlyArray<any>;
+    }
+
+    async executeStatements(
+        sql: string, 
+        binds: ReadonlyArray<ReadonlyArray<Value>>
+    ): Promise<ReadonlyArray<DataRows>> {
+        const results: Array<DataRows> = [];
+        const stmt = this._database.prepare(sql);
+        stmt.raw(true);
+        for (const args of binds) {
+            const values = args.map(v => v.value);
+            const rows = stmt.get(values) as ReadonlyArray<any>;
+            results.push(rows);
+        }
+        return results;
     }
 }

@@ -34,6 +34,10 @@ export class MergedRootQueryImpl<
         return false;
     }
 
+    get projection(): ast.ProjectionContract {
+        return this.queries[0]!.projection;
+    }
+
     accept(visitor: ast.Visitor): void {
         visitor.visitMergedQuery(this);
     }
@@ -76,6 +80,10 @@ implements BaseQuery<TProjection>, ast.MergedQueryContract {
         return (this.queries[0]! as any as AbstractBaseQueryImpl<TProjection>).args;
     }
 
+    get projection(): ast.ProjectionContract {
+        return this.queries[0]!.projection;
+    }
+
     accept(visitor: ast.Visitor): void {
         visitor.visitMergedQuery(this);
     }
@@ -90,6 +98,10 @@ implements ast.MergedQueryContract {
         readonly queries: ReadonlyArray<ast.QueryContract>
     ) {
         super();
+    }
+
+    get projection(): ast.ProjectionContract {
+        return this.queries[0]!.projection;
     }
 
     accept(visitor: ast.Visitor): void {
@@ -108,6 +120,10 @@ implements ast.MergedQueryContract {
         super();
     }
 
+    get projection(): ast.ProjectionContract {
+        return this.queries[0]!.projection;
+    }
+
     accept(visitor: ast.Visitor): void {
         visitor.visitMergedQuery(this);
     }
@@ -124,6 +140,10 @@ implements ast.MergedQueryContract {
         super();
     }
 
+    get projection(): ast.ProjectionContract {
+        return this.queries[0]!.projection;
+    }
+
     accept(visitor: ast.Visitor): void {
         visitor.visitMergedQuery(this);
     }
@@ -138,6 +158,10 @@ implements ast.MergedQueryContract {
         readonly queries: ReadonlyArray<ast.QueryContract>
     ) {
         super();
+    }
+
+    get projection(): ast.ProjectionContract {
+        return this.queries[0]!.projection;
     }
 
     accept(visitor: ast.Visitor): void {
@@ -158,6 +182,10 @@ implements ast.MergedQueryContract {
 
     get level(): "SUB" {
         return "SUB";
+    }
+
+    get projection(): ast.ProjectionContract {
+        return this.queries[0]!.projection;
     }
 
     accept(visitor: ast.Visitor): void {

@@ -1,4 +1,5 @@
 import { TransactionOptions } from "@ts-grm/core";
+import { Executor } from "./executor";
 
 export interface TransactionManager {
 
@@ -6,4 +7,10 @@ export interface TransactionManager {
         options: TransactionOptions,
         fn: () => Promise<R>
     ): Promise<R>;
+
+    executeReadonly<R>(
+        fn: () => Promise<R>
+    ): Promise<R>;
+
+    readonly defaultExecutor: Executor;
 }

@@ -34,7 +34,7 @@ class LiteralExpr<T> extends AbstractExpr<T> {
     }
 
     accept(visitor: Visitor): void {
-        visitor.visitLiteral(this);
+        visitor.visitLiteral(this.value);
     }
 }
 
@@ -45,7 +45,7 @@ class LiteralNumExpr<T extends number | string> extends AbstractNumExpr<T> {
     }
 
     accept(visitor: Visitor): void {
-        visitor.visitLiteral(this);
+        visitor.visitLiteral(this.value);
     }
 }
 
@@ -56,7 +56,7 @@ export class LiteralStrExpr extends AbstractStrExpr {
     }
 
     accept(visitor: Visitor): void {
-        visitor.visitLiteral(this);
+        visitor.visitLiteral(this.value);
     }
 }
 
@@ -67,6 +67,6 @@ export class LiteralDtExpr extends AbstractDtExpr {
     }
 
     accept(visitor: Visitor): void {
-        visitor.visitLiteral(this);
+        visitor.visitLiteral(this.value);
     }
 }

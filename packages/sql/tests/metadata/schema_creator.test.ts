@@ -1,14 +1,11 @@
 import { createSchema } from "@/impl/schema_creator";
-import { describe, it, expect, afterAll } from "vitest";
+import { describe, it, expect } from "vitest";
 import { expectCode, removeUndefined } from "../utils";
-import { useSqlClient } from "../utils";
+import { useSqliteClient } from "../utils";
 
 describe.sequential("SchemaCreatorTest", () => {
 
-    const [sqlClient, cleanup] = useSqlClient(true);
-    afterAll(() => {
-        cleanup();
-    });
+    const sqlClient = useSqliteClient(true);
 
     it("tables", async() => {
         const tableDefs = await createSchema(sqlClient);

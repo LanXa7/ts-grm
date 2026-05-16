@@ -1,15 +1,12 @@
-import { afterAll, describe, it } from "vitest";
+import { describe, it } from "vitest";
 import { SIMPLE_AUTHOR_VIEW, SIMPLE_BOOK_VIEW, SIMPLE_ITEM_VIEW, SIMPLE_ORDER_VIEW, SIMPLE_STORE_VIEW, sql } from "./utils";
 import { AUTHOR, BOOK, BOOK_STORE, ORDER, ORDER_ITEM } from "../model/model";
-import { expectCode, useSqlClient } from "../utils";
+import { expectCode, useSqliteClient } from "../utils";
 import { dsl } from "@ts-grm/core";
 
 describe("AssociatedSqlTest", () => {
 
-    const [sqlClient, cleanup] = useSqlClient();
-    afterAll(() => {
-        cleanup();
-    });
+    const sqlClient = useSqliteClient();
     
     it("noneWithoutFilter", () => {
         const q = sqlClient.createQuery(BOOK, (q, book) => {
