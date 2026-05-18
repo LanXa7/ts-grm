@@ -143,6 +143,16 @@ describe("RecursiveTest", () => {
                             throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
                     }
                 }
+                dependencyNullable(unresolvedFieldIndex, dependency) {
+                    switch (unresolvedFieldIndex) {
+                        case 2:
+                            return dependency == null;
+                        case 4:
+                            return dependency == null;
+                        default:
+                            throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                    }
+                }
                 dependencyHash(unresolvedFieldIndex, dependency) {
                     switch (unresolvedFieldIndex) {
                         case 2:
@@ -202,6 +212,14 @@ describe("RecursiveTest", () => {
                             throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
                     }
                 }
+                dependencyNullable(unresolvedFieldIndex, dependency) {
+                    switch (unresolvedFieldIndex) {
+                        case 2:
+                            return dependency == null;
+                        default:
+                            throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                    }
+                }
                 dependencyHash(unresolvedFieldIndex, dependency) {
                     switch (unresolvedFieldIndex) {
                         case 2:
@@ -250,6 +268,14 @@ describe("RecursiveTest", () => {
                     switch (unresolvedFieldIndex) {
                         case 4:
                             return row._implicit._3;
+                        default:
+                            throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                    }
+                }
+                dependencyNullable(unresolvedFieldIndex, dependency) {
+                    switch (unresolvedFieldIndex) {
+                        case 4:
+                            return dependency == null;
                         default:
                             throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
                     }

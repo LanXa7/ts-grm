@@ -94,6 +94,14 @@ describe("EmbeddedTest", () => {
                             throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
                     }
                 }
+                dependencyNullable(unresolvedFieldIndex, dependency) {
+                    switch (unresolvedFieldIndex) {
+                        case 3:
+                            return dependency[0] == null && dependency[1] == null && dependency[2] == null;
+                        default:
+                            throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                    }
+                }
                 dependencyHash(unresolvedFieldIndex, dependency) {
                     switch (unresolvedFieldIndex) {
                         case 3:
@@ -131,15 +139,6 @@ describe("EmbeddedTest", () => {
                         name: reader.get(0)
                     };
                     return { reader: this, parent, dto, implicit: undefined };
-                }
-                dependency(unresolvedFieldIndex, row) {
-                    throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
-                }
-                dependencyHash(unresolvedFieldIndex, dependency) {
-                    throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
-                }
-                resolve(unresolvedFieldIndex, row, value) {
-                    throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
                 }
             }
         `);
@@ -267,6 +266,14 @@ describe("EmbeddedTest", () => {
                             throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
                     }
                 }
+                dependencyNullable(unresolvedFieldIndex, dependency) {
+                    switch (unresolvedFieldIndex) {
+                        case 3:
+                            return dependency[0] == null && dependency[1] == null && dependency[2] == null;
+                        default:
+                            throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                    }
+                }
                 dependencyHash(unresolvedFieldIndex, dependency) {
                     switch (unresolvedFieldIndex) {
                         case 3:
@@ -309,15 +316,6 @@ describe("EmbeddedTest", () => {
                         name: reader.get(0)
                     };
                     return { reader: this, parent, dto, implicit: undefined };
-                }
-                dependency(unresolvedFieldIndex, row) {
-                    throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
-                }
-                dependencyHash(unresolvedFieldIndex, dependency) {
-                    throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
-                }
-                resolve(unresolvedFieldIndex, row, value) {
-                    throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
                 }
             }
         `);
@@ -446,6 +444,14 @@ describe("EmbeddedTest", () => {
                             throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
                     }
                 }
+                dependencyNullable(unresolvedFieldIndex, dependency) {
+                    switch (unresolvedFieldIndex) {
+                        case 3:
+                            return dependency[0] == null && dependency[1] == null && dependency[2] == null;
+                        default:
+                            throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                    }
+                }
                 dependencyHash(unresolvedFieldIndex, dependency) {
                     switch (unresolvedFieldIndex) {
                         case 3:
@@ -490,15 +496,6 @@ describe("EmbeddedTest", () => {
                         name: reader.get(0)
                     };
                     return { reader: this, parent, dto, implicit: undefined };
-                }
-                dependency(unresolvedFieldIndex, row) {
-                    throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
-                }
-                dependencyHash(unresolvedFieldIndex, dependency) {
-                    throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
-                }
-                resolve(unresolvedFieldIndex, row, value) {
-                    throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
                 }
             }
         `);

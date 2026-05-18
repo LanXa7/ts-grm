@@ -18,6 +18,22 @@ export type DtoRow = {
 export abstract class DtoRowReader {
 
     abstract read(parent: DtoRow | undefined, reader: DataReader): DtoRow;
+
+    dependency(unresolvedFieldIndex: number, _: DtoRow) {
+        throw new ArgumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+    }
+
+    dependencyNullable(unresolvedFieldIndex: number, _: any): boolean {
+        throw new ArgumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+    }
+
+    dependencyHash(unresolvedFieldIndex: number, _: any): any {
+        throw new ArgumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+    }
+
+    resolve(unresolvedFieldIndex: number, _1: DtoRow, _2: any) {
+        throw new ArgumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+    }
 }
 
 export function createRowReader(mapper: DtoMapper): DtoRowReader {
@@ -33,9 +49,12 @@ export function createRowReader(mapper: DtoMapper): DtoRowReader {
             if (shape.__implicit != null) {
                 writeFold("_implicit", shape.__implicit, mapper.nullAsUndefined, writer);
             }
-            writeDependency(mapper, writer);
-            writeDependencyHash(mapper, writer);
-            writeResolve(mapper, writer);
+            if (mapper.unresolvedFields.length !== 0) {
+                writeDependency(mapper, writer);
+                writeDependencyNullable(mapper, writer);
+                writeDependencyHash(mapper, writer);
+                writeResolve(mapper, writer);
+            }
         });
     const cls = new Function("$baseClass", "$argumentError", writer.toString())(DtoRowReader, ArgumentError);
     return new cls();
@@ -220,10 +239,6 @@ function writeDependency(
     writer: CodeWriter
 ) {
     writer.code("dependency(unresolvedFieldIndex, row) ").scope("CURLY_BRACKETS", () => {
-        if (mapper.unresolvedFields.length == 0) {
-            writeUnresolvedFieldIndexError(writer);
-            return;
-        }
         writer.code("switch (unresolvedFieldIndex) ").scope("CURLY_BRACKETS", () => {
             for (const unresolvedField of mapper.unresolvedFields) {
                 writer.code(`case ${unresolvedField.index}:`).scope("BLANK", () => {
@@ -250,15 +265,44 @@ function writeDependency(
     }).newLine();
 }
 
+function writeDependencyNullable(
+    mapper: DtoMapper,
+    writer: CodeWriter
+) {
+    writer.code("dependencyNullable(unresolvedFieldIndex, dependency) ").scope("CURLY_BRACKETS", () => {
+        writer.code("switch (unresolvedFieldIndex) ").scope("CURLY_BRACKETS", () => {
+            for (const unresolvedField of mapper.unresolvedFields) {
+                writer.code(`case ${unresolvedField.index}:`).scope("BLANK", () => {
+                    const dependencies = unresolvedField.dependencies!;
+                    if (dependencies.length === 1) {
+                        writer.code("return dependency == null");
+                    } else {
+                        writer.code("return ");
+                        for (let i = 0; i < dependencies.length; i++) {
+                            if (i != 0) {
+                                writer.code(" && ");
+                            }
+                            writer.code("dependency[");
+                            writer.code(i.toString());
+                            writer.code("] == null");
+                        }
+                    }
+                    writer.newLine(";");
+                });
+            }
+            writer.code("default:").scope("BLANK", () => {
+                writeUnresolvedFieldIndexError(writer);
+            });
+            return;
+        });
+    }).newLine();
+}
+
 function writeDependencyHash(
     mapper: DtoMapper,
     writer: CodeWriter
 ) {
     writer.code("dependencyHash(unresolvedFieldIndex, dependency) ").scope("CURLY_BRACKETS", () => {
-        if (mapper.unresolvedFields.length == 0) {
-            writeUnresolvedFieldIndexError(writer);
-            return;
-        }
         writer.code("switch (unresolvedFieldIndex) ").scope("CURLY_BRACKETS", () => {
             for (const unresolvedField of mapper.unresolvedFields) {
                 writer.code(`case ${unresolvedField.index}:`).scope("BLANK", () => {
@@ -292,10 +336,6 @@ function writeResolve(
     writer: CodeWriter
 ) {
     writer.code("resolve(unresolvedFieldIndex, row, value) ").scope("CURLY_BRACKETS", () => {
-        if (mapper.unresolvedFields.length == 0) {
-            writeUnresolvedFieldIndexError(writer);
-            return;
-        }
         writer.code("switch (unresolvedFieldIndex) ").scope("CURLY_BRACKETS", () => {
             for (const unresolvedField of mapper.unresolvedFields) {
                 writer.code(`case ${unresolvedField.index}:`).scope("BLANK", () => {

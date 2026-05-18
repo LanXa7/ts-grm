@@ -104,6 +104,14 @@ describe("JoinEntityTest", () => {
                             throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
                     }
                 }
+                dependencyNullable(unresolvedFieldIndex, dependency) {
+                    switch (unresolvedFieldIndex) {
+                        case 2:
+                            return dependency == null;
+                        default:
+                            throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                    }
+                }
                 dependencyHash(unresolvedFieldIndex, dependency) {
                     switch (unresolvedFieldIndex) {
                         case 2:
@@ -155,6 +163,14 @@ describe("JoinEntityTest", () => {
                             throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
                     }
                 }
+                dependencyNullable(unresolvedFieldIndex, dependency) {
+                    switch (unresolvedFieldIndex) {
+                        case 1:
+                            return dependency == null;
+                        default:
+                            throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                    }
+                }
                 dependencyHash(unresolvedFieldIndex, dependency) {
                     switch (unresolvedFieldIndex) {
                         case 1:
@@ -192,15 +208,6 @@ describe("JoinEntityTest", () => {
                     parent.dto.id = reader.get(0);
                     parent.dto.name = reader.get(1);
                     return { reader: this, parent, dto, implicit: undefined };
-                }
-                dependency(unresolvedFieldIndex, row) {
-                    throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
-                }
-                dependencyHash(unresolvedFieldIndex, dependency) {
-                    throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
-                }
-                resolve(unresolvedFieldIndex, row, value) {
-                    throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
                 }
             }
         `);
@@ -311,6 +318,14 @@ describe("JoinEntityTest", () => {
                             throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
                     }
                 }
+                dependencyNullable(unresolvedFieldIndex, dependency) {
+                    switch (unresolvedFieldIndex) {
+                        case 2:
+                            return dependency == null;
+                        default:
+                            throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                    }
+                }
                 dependencyHash(unresolvedFieldIndex, dependency) {
                     switch (unresolvedFieldIndex) {
                         case 2:
@@ -362,6 +377,14 @@ describe("JoinEntityTest", () => {
                             throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
                     }
                 }
+                dependencyNullable(unresolvedFieldIndex, dependency) {
+                    switch (unresolvedFieldIndex) {
+                        case 1:
+                            return dependency == null;
+                        default:
+                            throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                    }
+                }
                 dependencyHash(unresolvedFieldIndex, dependency) {
                     switch (unresolvedFieldIndex) {
                         case 1:
@@ -399,15 +422,6 @@ describe("JoinEntityTest", () => {
                     parent.dto.id = reader.get(0);
                     parent.dto.name = reader.get(1);
                     return { reader: this, parent, dto, implicit: undefined };
-                }
-                dependency(unresolvedFieldIndex, row) {
-                    throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
-                }
-                dependencyHash(unresolvedFieldIndex, dependency) {
-                    throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
-                }
-                resolve(unresolvedFieldIndex, row, value) {
-                    throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
                 }
             }
         `);

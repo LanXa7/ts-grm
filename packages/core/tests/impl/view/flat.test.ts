@@ -109,6 +109,14 @@ describe("FlatTest", () => {
                             throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
                     }
                 }
+                dependencyNullable(unresolvedFieldIndex, dependency) {
+                    switch (unresolvedFieldIndex) {
+                        case 5:
+                            return dependency == null;
+                        default:
+                            throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                    }
+                }
                 dependencyHash(unresolvedFieldIndex, dependency) {
                     switch (unresolvedFieldIndex) {
                         case 5:
@@ -149,15 +157,6 @@ describe("FlatTest", () => {
                     parent.dto.storeId = reader.get(0);
                     parent.dto.storeName = reader.get(1);
                     return { reader: this, parent, dto, implicit: undefined };
-                }
-                dependency(unresolvedFieldIndex, row) {
-                    throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
-                }
-                dependencyHash(unresolvedFieldIndex, dependency) {
-                    throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
-                }
-                resolve(unresolvedFieldIndex, row, value) {
-                    throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
                 }
             }
         `);
@@ -218,15 +217,6 @@ describe("FlatTest", () => {
                         flattenLastName: reader.get(2)
                     };
                     return { reader: this, parent, dto, implicit: undefined };
-                }
-                dependency(unresolvedFieldIndex, row) {
-                    throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
-                }
-                dependencyHash(unresolvedFieldIndex, dependency) {
-                    throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
-                }
-                resolve(unresolvedFieldIndex, row, value) {
-                    throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
                 }
             }
         `);
@@ -369,6 +359,14 @@ describe("FlatTest", () => {
                             throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
                     }
                 }
+                dependencyNullable(unresolvedFieldIndex, dependency) {
+                    switch (unresolvedFieldIndex) {
+                        case 3:
+                            return dependency == null;
+                        default:
+                            throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                    }
+                }
                 dependencyHash(unresolvedFieldIndex, dependency) {
                     switch (unresolvedFieldIndex) {
                         case 3:
@@ -424,6 +422,14 @@ describe("FlatTest", () => {
                             throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
                     }
                 }
+                dependencyNullable(unresolvedFieldIndex, dependency) {
+                    switch (unresolvedFieldIndex) {
+                        case 3:
+                            return dependency == null;
+                        default:
+                            throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                    }
+                }
                 dependencyHash(unresolvedFieldIndex, dependency) {
                     switch (unresolvedFieldIndex) {
                         case 3:
@@ -467,15 +473,6 @@ describe("FlatTest", () => {
                     parent.parent.dto.parentGrandId = reader.get(0);
                     parent.parent.dto.parentGrandName = reader.get(1);
                     return { reader: this, parent, dto, implicit: undefined };
-                }
-                dependency(unresolvedFieldIndex, row) {
-                    throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
-                }
-                dependencyHash(unresolvedFieldIndex, dependency) {
-                    throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
-                }
-                resolve(unresolvedFieldIndex, row, value) {
-                    throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
                 }
             }
         `);

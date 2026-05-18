@@ -64,15 +64,6 @@ describe("FoldTest", () => {
                     }
                     return o;
                 }
-                dependency(unresolvedFieldIndex, row) {
-                    throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
-                }
-                dependencyHash(unresolvedFieldIndex, dependency) {
-                    throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
-                }
-                resolve(unresolvedFieldIndex, row, value) {
-                    throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
-                }
             }
         `);
         const row = view.mapper.rowReader.read(
@@ -182,6 +173,14 @@ describe("FoldTest", () => {
                             throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
                     }
                 }
+                dependencyNullable(unresolvedFieldIndex, dependency) {
+                    switch (unresolvedFieldIndex) {
+                        case 1:
+                            return dependency == null;
+                        default:
+                            throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                    }
+                }
                 dependencyHash(unresolvedFieldIndex, dependency) {
                     switch (unresolvedFieldIndex) {
                         case 1:
@@ -231,15 +230,6 @@ describe("FoldTest", () => {
                         };
                     }
                     return o;
-                }
-                dependency(unresolvedFieldIndex, row) {
-                    throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
-                }
-                dependencyHash(unresolvedFieldIndex, dependency) {
-                    throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
-                }
-                resolve(unresolvedFieldIndex, row, value) {
-                    throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
                 }
             }
         `);
