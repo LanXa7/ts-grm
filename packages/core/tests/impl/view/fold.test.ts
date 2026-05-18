@@ -43,7 +43,7 @@ describe("FoldTest", () => {
                 "edition": 2
             }
         });
-        expectCode(view.mapper.rowReader.constructor.toString(), `
+        expectCode(view.mapper.dtoRowReader.constructor.toString(), `
             class extends $baseClass {
                 read(parent, reader) {
                     const dto = {
@@ -66,7 +66,7 @@ describe("FoldTest", () => {
                 }
             }
         `);
-        const row = view.mapper.rowReader.read(
+        const row = view.mapper.dtoRowReader.read(
             undefined, 
             makeReader(3, "GraphQL in Action", 2)
         );
@@ -147,7 +147,7 @@ describe("FoldTest", () => {
             }
         });
 
-        expectCode(view.mapper.rowReader.constructor.toString(), `
+        expectCode(view.mapper.dtoRowReader.constructor.toString(), `
             class extends $baseClass {
                 read(parent, reader) {
                     const dto = {
@@ -200,7 +200,7 @@ describe("FoldTest", () => {
                 }
             }
         `);
-        const row = view.mapper.rowReader.read(
+        const row = view.mapper.dtoRowReader.read(
             undefined, 
             makeReader(12)
         );
@@ -210,7 +210,7 @@ describe("FoldTest", () => {
         });
 
         const authorMapper = view.mapper.fields.find(f => f.prop.name === "authors")!.subMapper!;
-        expectCode(authorMapper.rowReader.constructor.toString(), `
+        expectCode(authorMapper.dtoRowReader.constructor.toString(), `
             class extends $baseClass {
                 read(parent, reader) {
                     const dto = {
@@ -233,7 +233,7 @@ describe("FoldTest", () => {
                 }
             }
         `);
-        const authorRow = authorMapper.rowReader.read(
+        const authorRow = authorMapper.dtoRowReader.read(
             undefined,
             makeReader(3, "Alex", "Banks")
         );

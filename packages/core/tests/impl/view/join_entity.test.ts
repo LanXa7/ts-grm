@@ -86,7 +86,7 @@ describe("JoinEntityTest", () => {
             }
         });
 
-        expectCode(view.mapper.rowReader.constructor.toString(), `
+        expectCode(view.mapper.dtoRowReader.constructor.toString(), `
             class extends $baseClass {
                 read(parent, reader) {
                     const dto = {
@@ -131,7 +131,7 @@ describe("JoinEntityTest", () => {
                 }
             }
         `);
-        const studentRow = view.mapper.rowReader.read(
+        const studentRow = view.mapper.dtoRowReader.read(
             undefined,
             makeReader(1, "Sam")
         );
@@ -143,7 +143,7 @@ describe("JoinEntityTest", () => {
         expect(studentRow.implicit).toEqual(undefined);
 
         const linkMapper = view.mapper.fields.find(f => f.prop.name === "learningLinks")!.subMapper!;
-        expectCode(linkMapper.rowReader.constructor.toString(), `
+        expectCode(linkMapper.dtoRowReader.constructor.toString(), `
             class extends $baseClass {
                 read(parent, reader) {
                     const dto = {
@@ -158,7 +158,7 @@ describe("JoinEntityTest", () => {
                 dependency(unresolvedFieldIndex, row) {
                     switch (unresolvedFieldIndex) {
                         case 1:
-                            return row._implicit._0;
+                            return row.implicit._0;
                         default:
                             throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
                     }
@@ -189,7 +189,7 @@ describe("JoinEntityTest", () => {
                 }
             }
         `);
-        const linkRow = linkMapper.rowReader.read(
+        const linkRow = linkMapper.dtoRowReader.read(
             studentRow,
             makeReader(2)
         );
@@ -200,7 +200,7 @@ describe("JoinEntityTest", () => {
         expect(linkRow.implicit).toEqual({_0: 2});
 
         const courseMapper = linkMapper.fields.find(f => f.prop.name === "course")!.subMapper!;
-        expectCode(courseMapper.rowReader.constructor.toString(), `
+        expectCode(courseMapper.dtoRowReader.constructor.toString(), `
             class extends $baseClass {
                 read(parent, reader) {
                     const dto = {
@@ -211,7 +211,7 @@ describe("JoinEntityTest", () => {
                 }
             }
         `);
-        courseMapper.rowReader.read(
+        courseMapper.dtoRowReader.read(
             linkRow,
             makeReader(3, "English")
         );
@@ -300,7 +300,7 @@ describe("JoinEntityTest", () => {
             }
         });
 
-        expectCode(view.mapper.rowReader.constructor.toString(), `
+        expectCode(view.mapper.dtoRowReader.constructor.toString(), `
             class extends $baseClass {
                 read(parent, reader) {
                     const dto = {
@@ -345,7 +345,7 @@ describe("JoinEntityTest", () => {
                 }
             }
         `);
-        const courseRow = view.mapper.rowReader.read(
+        const courseRow = view.mapper.dtoRowReader.read(
             undefined,
             makeReader(3, "English")
         );
@@ -357,7 +357,7 @@ describe("JoinEntityTest", () => {
         expect(courseRow.implicit).toEqual(undefined);
 
         const linkMapper = view.mapper.fields.find(f => f.prop.name === "←LearningLink.course")!.subMapper!;
-        expectCode(linkMapper.rowReader.constructor.toString(), `
+        expectCode(linkMapper.dtoRowReader.constructor.toString(), `
             class extends $baseClass {
                 read(parent, reader) {
                     const dto = {
@@ -372,7 +372,7 @@ describe("JoinEntityTest", () => {
                 dependency(unresolvedFieldIndex, row) {
                     switch (unresolvedFieldIndex) {
                         case 1:
-                            return row._implicit._0;
+                            return row.implicit._0;
                         default:
                             throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
                     }
@@ -403,7 +403,7 @@ describe("JoinEntityTest", () => {
                 }
             }
         `);
-        const linkRow = linkMapper.rowReader.read(
+        const linkRow = linkMapper.dtoRowReader.read(
             courseRow,
             makeReader(2)
         );
@@ -414,7 +414,7 @@ describe("JoinEntityTest", () => {
         expect(linkRow.implicit).toEqual({_0: 2});
 
         const studentMapper = linkMapper.fields.find(f => f.prop.name === "student")!.subMapper!;
-        expectCode(studentMapper.rowReader.constructor.toString(), `
+        expectCode(studentMapper.dtoRowReader.constructor.toString(), `
             class extends $baseClass {
                 read(parent, reader) {
                     const dto = {
@@ -425,7 +425,7 @@ describe("JoinEntityTest", () => {
                 }
             }
         `);
-        studentMapper.rowReader.read(
+        studentMapper.dtoRowReader.read(
             linkRow,
             makeReader(1, "Sam")
         );

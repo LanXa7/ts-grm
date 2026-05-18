@@ -85,7 +85,7 @@ describe("FlatTest", () => {
             }
         });
 
-        expectCode(view.mapper.rowReader.constructor.toString(), `
+        expectCode(view.mapper.dtoRowReader.constructor.toString(), `
             class extends $baseClass {
                 read(parent, reader) {
                     const dto = {
@@ -104,7 +104,7 @@ describe("FlatTest", () => {
                 dependency(unresolvedFieldIndex, row) {
                     switch (unresolvedFieldIndex) {
                         case 5:
-                            return row._implicit._4;
+                            return row.implicit._4;
                         default:
                             throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
                     }
@@ -135,7 +135,7 @@ describe("FlatTest", () => {
                 }
             }
         `);
-        const row = view.mapper.rowReader.read(
+        const row = view.mapper.dtoRowReader.read(
             undefined, 
             makeReader(12, "GraphQL in Action", 3, 59.9, 2)
         );
@@ -149,7 +149,7 @@ describe("FlatTest", () => {
         });
 
         const storeMapper = view.mapper.fields.find(f => f.prop.name === "store")!.subMapper!;
-        expectCode(storeMapper.rowReader.constructor.toString(), `
+        expectCode(storeMapper.dtoRowReader.constructor.toString(), `
             class extends $baseClass {
                 read(parent, reader) {
                     const dto = {
@@ -160,7 +160,7 @@ describe("FlatTest", () => {
                 }
             }
         `);
-        storeMapper.rowReader.read(
+        storeMapper.dtoRowReader.read(
             row, 
             makeReader(2, "MANNING")
         );
@@ -208,7 +208,7 @@ describe("FlatTest", () => {
             "flattenLastName": 2
         });
 
-        expectCode(view.mapper.rowReader.constructor.toString(), `
+        expectCode(view.mapper.dtoRowReader.constructor.toString(), `
             class extends $baseClass {
                 read(parent, reader) {
                     const dto = {
@@ -220,7 +220,7 @@ describe("FlatTest", () => {
                 }
             }
         `);
-        const row = view.mapper.rowReader.read(
+        const row = view.mapper.dtoRowReader.read(
             undefined, 
             makeReader(3, "Alex", "Banks")
         );
@@ -335,7 +335,7 @@ describe("FlatTest", () => {
             "parentGrandName": undefined
         });
         
-        expectCode(view.mapper.rowReader.constructor.toString(), `
+        expectCode(view.mapper.dtoRowReader.constructor.toString(), `
             class extends $baseClass {
                 read(parent, reader) {
                     const dto = {
@@ -354,7 +354,7 @@ describe("FlatTest", () => {
                 dependency(unresolvedFieldIndex, row) {
                     switch (unresolvedFieldIndex) {
                         case 3:
-                            return row._implicit._2;
+                            return row.implicit._2;
                         default:
                             throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
                     }
@@ -385,7 +385,7 @@ describe("FlatTest", () => {
                 }
             }
         `);
-        const row = view.mapper.rowReader.read(
+        const row = view.mapper.dtoRowReader.read(
             undefined,
             makeReader(10, "Cococala", 3)
         );
@@ -402,7 +402,7 @@ describe("FlatTest", () => {
         });
 
         const pMapper = view.mapper.fields.find(f => f.prop.name === "parentNode")!.subMapper!;
-        expectCode(pMapper.rowReader.constructor.toString(), `
+        expectCode(pMapper.dtoRowReader.constructor.toString(), `
             class extends $baseClass {
                 read(parent, reader) {
                     const dto = {
@@ -417,7 +417,7 @@ describe("FlatTest", () => {
                 dependency(unresolvedFieldIndex, row) {
                     switch (unresolvedFieldIndex) {
                         case 3:
-                            return row._implicit._2;
+                            return row.implicit._2;
                         default:
                             throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
                     }
@@ -448,7 +448,7 @@ describe("FlatTest", () => {
                 }
             }
         `);
-        const pRow = pMapper.rowReader.read(
+        const pRow = pMapper.dtoRowReader.read(
             row,
             makeReader(3, "Drinks", 1)
         );
@@ -465,7 +465,7 @@ describe("FlatTest", () => {
         });
 
         const ppMapper = pMapper.fields.find(f => f.prop.name === "parentNode")!.subMapper!;
-        expectCode(ppMapper.rowReader.constructor.toString(), `
+        expectCode(ppMapper.dtoRowReader.constructor.toString(), `
             class extends $baseClass {
                 read(parent, reader) {
                     const dto = {
@@ -476,7 +476,7 @@ describe("FlatTest", () => {
                 }
             }
         `);
-        ppMapper.rowReader.read(
+        ppMapper.dtoRowReader.read(
             pRow,
             makeReader(1, "Food", 1)
         );

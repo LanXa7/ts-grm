@@ -40,11 +40,20 @@ function readDto(
 ): ReadonlyArray<any> {
     const dtoRows: Array<metadata.DtoRow> = [];
     const dtos: Array<any> = [];
-    const dtoRowReader = fetchedView.view.mapper.rowReader;
+    const dtoRowReader = fetchedView.view.mapper.dtoRowReader;
     while (dataRowReader.next()) {
         const dtoRow = dtoRowReader.read(undefined, dataRowReader);
         dtoRows.push(dtoRow);
         dtos.push(dtoRow.dto);
+    }
+    const unresolvedFields = fetchedView.view.mapper.unresolvedFields;
+    for (const unresolvedField of unresolvedFields) {
+        if (unresolvedField.prop.associationType != null) {
+            console.log(unresolvedField.prop.toString());
+            for (const dtoRow of dtoRows) {
+                console.log(dtoRowReader.dependency(unresolvedField.index, dtoRow));
+            }
+        }
     }
     return dtos;
 }

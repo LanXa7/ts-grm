@@ -119,7 +119,7 @@ describe("RecursiveTest", () => {
             }
         });
 
-        expectCode(view.mapper.rowReader.constructor.toString(), `
+        expectCode(view.mapper.dtoRowReader.constructor.toString(), `
             class extends $baseClass {
                 read(parent, reader) {
                     const dto = {
@@ -136,9 +136,9 @@ describe("RecursiveTest", () => {
                 dependency(unresolvedFieldIndex, row) {
                     switch (unresolvedFieldIndex) {
                         case 2:
-                            return row._implicit._1;
+                            return row.implicit._1;
                         case 4:
-                            return row._implicit._3;
+                            return row.implicit._3;
                         default:
                             throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
                     }
@@ -177,7 +177,7 @@ describe("RecursiveTest", () => {
                 }
             }
         `);
-        const row = view.mapper.rowReader.read(
+        const row = view.mapper.dtoRowReader.read(
             undefined, 
             makeReader("Drinks", 1, 3)
         );
@@ -192,7 +192,7 @@ describe("RecursiveTest", () => {
         });
 
         const parentMapper = view.mapper.fields.find(f => f.prop.name === "parentNode")!.subMapper!;
-        expectCode(parentMapper.rowReader.constructor.toString(), `
+        expectCode(parentMapper.dtoRowReader.constructor.toString(), `
             class extends $baseClass {
                 read(parent, reader) {
                     const dto = {
@@ -207,7 +207,7 @@ describe("RecursiveTest", () => {
                 dependency(unresolvedFieldIndex, row) {
                     switch (unresolvedFieldIndex) {
                         case 2:
-                            return row._implicit._1;
+                            return row.implicit._1;
                         default:
                             throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
                     }
@@ -239,7 +239,7 @@ describe("RecursiveTest", () => {
                 }
             }
         `);
-        const parentRow = parentMapper.rowReader.read(
+        const parentRow = parentMapper.dtoRowReader.read(
             undefined,
             makeReader("Food", 1)
         );
@@ -252,7 +252,7 @@ describe("RecursiveTest", () => {
         });
 
         const childMapper = view.mapper.fields.find(f => f.prop.name === "childNodes")!.subMapper!;
-        expectCode(childMapper.rowReader.constructor.toString(), `
+        expectCode(childMapper.dtoRowReader.constructor.toString(), `
             class extends $baseClass {
                 read(parent, reader) {
                     const dto = {
@@ -267,7 +267,7 @@ describe("RecursiveTest", () => {
                 dependency(unresolvedFieldIndex, row) {
                     switch (unresolvedFieldIndex) {
                         case 4:
-                            return row._implicit._3;
+                            return row.implicit._3;
                         default:
                             throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
                     }
@@ -299,7 +299,7 @@ describe("RecursiveTest", () => {
                 }
             }
         `);
-        const childRow = childMapper.rowReader.read(
+        const childRow = childMapper.dtoRowReader.read(
             undefined,
             makeReader("Cococala", 10)
         );

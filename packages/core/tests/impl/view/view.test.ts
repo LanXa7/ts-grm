@@ -38,7 +38,7 @@ describe("ViewTest", () => {
             "edition": 2
         });
 
-        expectCode(view.mapper.rowReader.constructor.toString(), `
+        expectCode(view.mapper.dtoRowReader.constructor.toString(), `
             class extends $baseClass {
                 read(parent, reader) {
                     const dto = {
@@ -50,7 +50,7 @@ describe("ViewTest", () => {
                 }
             }
         `);
-        const row = view.mapper.rowReader.read(
+        const row = view.mapper.dtoRowReader.read(
             undefined, 
             makeReader(3, "GraphQL in Action", 2)
         );
@@ -177,7 +177,7 @@ describe("ViewTest", () => {
                 }
         });
 
-        expectCode(view.mapper.rowReader.constructor.toString(), `
+        expectCode(view.mapper.dtoRowReader.constructor.toString(), `
             class extends $baseClass {
                 read(parent, reader) {
                     const dto = {
@@ -195,9 +195,9 @@ describe("ViewTest", () => {
                 dependency(unresolvedFieldIndex, row) {
                     switch (unresolvedFieldIndex) {
                         case 3:
-                            return row._implicit._2;
+                            return row.implicit._2;
                         case 5:
-                            return row._implicit._4;
+                            return row.implicit._4;
                         default:
                             throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
                     }
@@ -236,7 +236,7 @@ describe("ViewTest", () => {
                 }
             }
         `);
-        const row = view.mapper.rowReader.read(
+        const row = view.mapper.dtoRowReader.read(
             undefined, 
             makeReader("GraphQL in Action", 3, 2, 12)
         );
@@ -256,7 +256,7 @@ describe("ViewTest", () => {
             .fields
             .find(f => f.prop.name === "store")!
             .subMapper!;
-        expectCode(storeMapper.rowReader.constructor.toString(), `
+        expectCode(storeMapper.dtoRowReader.constructor.toString(), `
             class extends $baseClass {
                 read(parent, reader) {
                     const dto = {
@@ -268,7 +268,7 @@ describe("ViewTest", () => {
                 }
             }
         `);
-        const storeRow = storeMapper.rowReader.read(
+        const storeRow = storeMapper.dtoRowReader.read(
             undefined,
             makeReader(2, "MANNING", 0)
         );
@@ -283,7 +283,7 @@ describe("ViewTest", () => {
             .fields
             .find(f => f.prop.name === "authors")!
             .subMapper!;
-        expectCode(authorMapper.rowReader.constructor.toString(), `
+        expectCode(authorMapper.dtoRowReader.constructor.toString(), `
             class extends $baseClass {
                 read(parent, reader) {
                     const dto = {
@@ -306,7 +306,7 @@ describe("ViewTest", () => {
                 }
             }
         `);
-        const authorRow = authorMapper.rowReader.read(
+        const authorRow = authorMapper.dtoRowReader.read(
             undefined, 
             makeReader(3, "Alex", "Banks")
         );
@@ -421,7 +421,7 @@ describe("ViewTest", () => {
             }
         });
 
-        expectCode(view.mapper.rowReader.constructor.toString(), `
+        expectCode(view.mapper.dtoRowReader.constructor.toString(), `
             class extends $baseClass {
                 read(parent, reader) {
                     const dto = {
@@ -466,7 +466,7 @@ describe("ViewTest", () => {
                 }
             }
         `);
-        const row = view.mapper.rowReader.read(
+        const row = view.mapper.dtoRowReader.read(
             undefined, 
             makeReader(2, "MANNING")
         );
@@ -477,7 +477,7 @@ describe("ViewTest", () => {
         });
         
         const bookMapper = view.mapper.fields.find(f => f.prop.name === "books")!.subMapper!;
-        expectCode(bookMapper.rowReader.constructor.toString(), `
+        expectCode(bookMapper.dtoRowReader.constructor.toString(), `
             class extends $baseClass {
                 read(parent, reader) {
                     const dto = {
@@ -522,7 +522,7 @@ describe("ViewTest", () => {
                 }
             }
         `);
-        const bookRow = bookMapper.rowReader.read(
+        const bookRow = bookMapper.dtoRowReader.read(
             undefined, 
             makeReader(12, "GraphQL in Action")
         );
@@ -533,7 +533,7 @@ describe("ViewTest", () => {
         });
 
         const authorMapper = bookMapper.fields.find(f => f.prop.name === "authors")!.subMapper!;
-        expectCode(authorMapper.rowReader.constructor.toString(), `
+        expectCode(authorMapper.dtoRowReader.constructor.toString(), `
             class extends $baseClass {
                 read(parent, reader) {
                     const dto = {
@@ -556,7 +556,7 @@ describe("ViewTest", () => {
                 }
             }
         `);
-        const authorRow = authorMapper.rowReader.read(
+        const authorRow = authorMapper.dtoRowReader.read(
             undefined, 
             makeReader(3, "Alex", "Banks")
         );
@@ -671,7 +671,7 @@ describe("ViewTest", () => {
             }
         });
 
-        expectCode(view.mapper.rowReader.constructor.toString(), `
+        expectCode(view.mapper.dtoRowReader.constructor.toString(), `
             class extends $baseClass {
                 read(parent, reader) {
                     const dto = {
@@ -686,7 +686,7 @@ describe("ViewTest", () => {
                 dependency(unresolvedFieldIndex, row) {
                     switch (unresolvedFieldIndex) {
                         case 2:
-                            return row._implicit._1;
+                            return row.implicit._1;
                         default:
                             throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
                     }
@@ -718,7 +718,7 @@ describe("ViewTest", () => {
                 }
             }
         `);
-        const row = view.mapper.rowReader.read(
+        const row = view.mapper.dtoRowReader.read(
             undefined, 
             makeReader("MANNING", 2)
         );
@@ -726,7 +726,7 @@ describe("ViewTest", () => {
         expect(row.implicit).toEqual({"_1": 2});
 
         const bookMapper = view.mapper.fields.find(f => f.prop.name === "books")!.subMapper!;
-        expectCode(bookMapper.rowReader.constructor.toString(), `
+        expectCode(bookMapper.dtoRowReader.constructor.toString(), `
             class extends $baseClass {
                 read(parent, reader) {
                     const dto = {
@@ -741,7 +741,7 @@ describe("ViewTest", () => {
                 dependency(unresolvedFieldIndex, row) {
                     switch (unresolvedFieldIndex) {
                         case 2:
-                            return row._implicit._1;
+                            return row.implicit._1;
                         default:
                             throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
                     }
@@ -773,7 +773,7 @@ describe("ViewTest", () => {
                 }
             }
         `);
-        const bookRow = bookMapper.rowReader.read(
+        const bookRow = bookMapper.dtoRowReader.read(
             undefined,
             makeReader("GraphQL in Action", 12)
         );
@@ -781,7 +781,7 @@ describe("ViewTest", () => {
         expect(bookRow.implicit).toEqual({"_1": 12});
 
         const authorMapper = bookMapper.fields.find(f => f.prop.name === "authors")!.subMapper!;
-        expectCode(authorMapper.rowReader.constructor.toString(), `
+        expectCode(authorMapper.dtoRowReader.constructor.toString(), `
             class extends $baseClass {
                 read(parent, reader) {
                     const dto = {
@@ -803,7 +803,7 @@ describe("ViewTest", () => {
                 }
             }
         `);
-        const authorRow = authorMapper.rowReader.read(
+        const authorRow = authorMapper.dtoRowReader.read(
             undefined, 
             makeReader("Alex", "Banks")
         );
@@ -917,7 +917,7 @@ describe("ViewTest", () => {
             }
         });
 
-        expectCode(view.mapper.rowReader.constructor.toString(), `
+        expectCode(view.mapper.dtoRowReader.constructor.toString(), `
             class extends $baseClass {
                 read(parent, reader) {
                     const dto = {
@@ -983,7 +983,7 @@ describe("ViewTest", () => {
                 }
             }
         `);
-        const row = view.mapper.rowReader.read(
+        const row = view.mapper.dtoRowReader.read(
             undefined, 
             makeReader(12, "GraphQL in Action", 3)
         );
@@ -997,7 +997,7 @@ describe("ViewTest", () => {
         });
 
         const authorMapper = view.mapper.fields.find(f => f.prop.name === "authors")!.subMapper!;
-        expectCode(authorMapper.rowReader.constructor.toString(), `
+        expectCode(authorMapper.dtoRowReader.constructor.toString(), `
             class extends $baseClass {
                 read(parent, reader) {
                     const dto = {
@@ -1009,7 +1009,7 @@ describe("ViewTest", () => {
                 }
             }
         `);
-        const authorRow = authorMapper.rowReader.read(
+        const authorRow = authorMapper.dtoRowReader.read(
             undefined,
             makeReader(3, "Alex", "Banks")
         );

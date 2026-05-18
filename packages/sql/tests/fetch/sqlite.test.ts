@@ -50,8 +50,8 @@ describe.sequential("SqliteFetchTest", () => {
             )
         );
         const rows = await sqlClient.createQuery(BOOK, (q, book) => {
-            q.where(book.storeId.eq(2));
-            q.orderBy(book.edition.desc());
+            q.where(book.name.ilike("graphql"));
+            q.orderBy(book.name, book.edition.desc());
             return q.select(
                 book.fetch(VIEW)
             );

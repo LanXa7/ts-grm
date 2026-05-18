@@ -36,7 +36,7 @@ export abstract class DtoRowReader {
     }
 }
 
-export function createRowReader(mapper: DtoMapper): DtoRowReader {
+export function createDtoRowReader(mapper: DtoMapper): DtoRowReader {
 
     const shape = buildShape(mapper);
 
@@ -359,7 +359,7 @@ function writeDependencyRef(
     writer: CodeWriter
 ) {
     if (dependencyField.paths.length === 0) {
-        writer.code(`row._implicit._${dependencyField.index}`);
+        writer.code(`row.implicit._${dependencyField.index}`);
         return;
     }
     const path = dependencyField.paths[0]!;

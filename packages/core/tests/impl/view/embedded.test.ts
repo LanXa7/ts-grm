@@ -69,7 +69,7 @@ describe("EmbeddedTest", () => {
             }
         });
 
-        expectCode(view.mapper.rowReader.constructor.toString(), `
+        expectCode(view.mapper.dtoRowReader.constructor.toString(), `
             class extends $baseClass {
                 read(parent, reader) {
                     const dto = {
@@ -86,9 +86,9 @@ describe("EmbeddedTest", () => {
                     switch (unresolvedFieldIndex) {
                         case 3:
                             return [
-                                row._implicit._0, 
-                                row._implicit._1, 
-                                row._implicit._2
+                                row.implicit._0, 
+                                row.implicit._1, 
+                                row.implicit._2
                             ];
                         default:
                             throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
@@ -121,7 +121,7 @@ describe("EmbeddedTest", () => {
                 }
             }
         `);
-        const row = view.mapper.rowReader.read(
+        const row = view.mapper.dtoRowReader.read(
             undefined,
             makeReader(32, 16, 16)
         );
@@ -132,7 +132,7 @@ describe("EmbeddedTest", () => {
         });
 
         const orderMapper = view.mapper.fields.find(f => f.prop.name === "order")!.subMapper!;
-        expectCode(orderMapper.rowReader.constructor.toString(), `
+        expectCode(orderMapper.dtoRowReader.constructor.toString(), `
             class extends $baseClass {
                 read(parent, reader) {
                     const dto = {
@@ -142,7 +142,7 @@ describe("EmbeddedTest", () => {
                 }
             }
         `);
-        const orderRow = orderMapper.rowReader.read(
+        const orderRow = orderMapper.dtoRowReader.read(
             undefined,
             makeReader("my-order")
         );
@@ -222,7 +222,7 @@ describe("EmbeddedTest", () => {
             }
         });
 
-        expectCode(view.mapper.rowReader.constructor.toString(), `
+        expectCode(view.mapper.dtoRowReader.constructor.toString(), `
             class extends $baseClass {
                 read(parent, reader) {
                     const dto = {
@@ -293,7 +293,7 @@ describe("EmbeddedTest", () => {
                 }
             }
         `);
-        const row = view.mapper.rowReader.read(
+        const row = view.mapper.dtoRowReader.read(
             undefined,
             makeReader(32, 16, 16)
         );
@@ -309,7 +309,7 @@ describe("EmbeddedTest", () => {
         });
 
         const orderMapper = view.mapper.fields.find(f => f.prop.name === "order")!.subMapper!;
-        expectCode(orderMapper.rowReader.constructor.toString(), `
+        expectCode(orderMapper.dtoRowReader.constructor.toString(), `
             class extends $baseClass {
                 read(parent, reader) {
                     const dto = {
@@ -319,7 +319,7 @@ describe("EmbeddedTest", () => {
                 }
             }
         `);
-        const orderRow = orderMapper.rowReader.read(
+        const orderRow = orderMapper.dtoRowReader.read(
             undefined,
             makeReader("my-order")
         );
@@ -399,7 +399,7 @@ describe("EmbeddedTest", () => {
             }
         });
 
-        expectCode(view.mapper.rowReader.constructor.toString(), `
+        expectCode(view.mapper.dtoRowReader.constructor.toString(), `
             class extends $baseClass {
                 read(parent, reader) {
                     const dto = {
@@ -436,7 +436,7 @@ describe("EmbeddedTest", () => {
                     switch (unresolvedFieldIndex) {
                         case 3:
                             return [
-                                row._implicit._2, 
+                                row.implicit._2, 
                                 row.dto.orderId?.y?.a, 
                                 row.dto.orderId?.y?.b
                             ];
@@ -471,7 +471,7 @@ describe("EmbeddedTest", () => {
                 }
             }
         `);
-        const row = view.mapper.rowReader.read(
+        const row = view.mapper.dtoRowReader.read(
             undefined,
             makeReader(16, 16, 32)
         );
@@ -489,7 +489,7 @@ describe("EmbeddedTest", () => {
         });
 
         const orderMapper = view.mapper.fields.find(f => f.prop.name === "order")!.subMapper!;
-        expectCode(orderMapper.rowReader.constructor.toString(), `
+        expectCode(orderMapper.dtoRowReader.constructor.toString(), `
             class extends $baseClass {
                 read(parent, reader) {
                     const dto = {
@@ -499,7 +499,7 @@ describe("EmbeddedTest", () => {
                 }
             }
         `);
-        const orderRow = orderMapper.rowReader.read(
+        const orderRow = orderMapper.dtoRowReader.read(
             undefined,
             makeReader("my-order")
         );
