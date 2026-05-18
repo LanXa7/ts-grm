@@ -88,6 +88,34 @@ describe("ComputedTest", () => {
                     }
                     return o;
                 }
+                dependency(unresolvedFieldIndex, row) {
+                    switch (unresolvedFieldIndex) {
+                        case 3:
+                            return [
+                                row._implicit.fullName?.name?.firstName, 
+                                row._implicit.fullName?.name?.lastName
+                            ];
+                        default:
+                            throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                    }
+                }
+                dependencyHash(unresolvedFieldIndex, dependency) {
+                    switch (unresolvedFieldIndex) {
+                        case 3:
+                            return dependency[0] + "\\x1F" + dependency[1];
+                        default:
+                            throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                    }
+                }
+                resolve(unresolvedFieldIndex, row, value) {
+                    switch (unresolvedFieldIndex) {
+                        case 3:
+                            row.dto.fullName = value;
+                            break;
+                        default:
+                            throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                    }
+                }
             }
         `);
         const row = view.mapper.rowReader.read(
@@ -211,6 +239,34 @@ describe("ComputedTest", () => {
                     }
                     return o;
                 }
+                dependency(unresolvedFieldIndex, row) {
+                    switch (unresolvedFieldIndex) {
+                        case 3:
+                            return [
+                                row._implicit.fullName?.name?.firstName, 
+                                row._implicit.fullName?.name?.lastName
+                            ];
+                        default:
+                            throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                    }
+                }
+                dependencyHash(unresolvedFieldIndex, dependency) {
+                    switch (unresolvedFieldIndex) {
+                        case 3:
+                            return dependency[0] + "\\x1F" + dependency[1];
+                        default:
+                            throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                    }
+                }
+                resolve(unresolvedFieldIndex, row, value) {
+                    switch (unresolvedFieldIndex) {
+                        case 3:
+                            row.dto.fullName = value;
+                            break;
+                        default:
+                            throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                    }
+                }
             }
         `);
         const row = view.mapper.rowReader.read(
@@ -329,6 +385,34 @@ describe("ComputedTest", () => {
                     }
                     return o;
                 }
+                dependency(unresolvedFieldIndex, row) {
+                    switch (unresolvedFieldIndex) {
+                        case 3:
+                            return [
+                                row._implicit.fullName?.name?.firstName, 
+                                row._implicit.fullName?.name?.lastName
+                            ];
+                        default:
+                            throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                    }
+                }
+                dependencyHash(unresolvedFieldIndex, dependency) {
+                    switch (unresolvedFieldIndex) {
+                        case 3:
+                            return dependency[0] + "\\x1F" + dependency[1];
+                        default:
+                            throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                    }
+                }
+                resolve(unresolvedFieldIndex, row, value) {
+                    switch (unresolvedFieldIndex) {
+                        case 3:
+                            this._formula(row.dto).fn = value;
+                            break;
+                        default:
+                            throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                    }
+                }
             }
         `);
         const row = view.mapper.rowReader.read(
@@ -429,6 +513,31 @@ describe("ComputedTest", () => {
                         _0: reader.get(0)
                     };
                     return { reader: this, parent, dto, implicit };
+                }
+                dependency(unresolvedFieldIndex, row) {
+                    switch (unresolvedFieldIndex) {
+                        case 1:
+                            return row._implicit._0;
+                        default:
+                            throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                    }
+                }
+                dependencyHash(unresolvedFieldIndex, dependency) {
+                    switch (unresolvedFieldIndex) {
+                        case 1:
+                            return dependency;
+                        default:
+                            throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                    }
+                }
+                resolve(unresolvedFieldIndex, row, value) {
+                    switch (unresolvedFieldIndex) {
+                        case 1:
+                            row.dto.newestBooks = value;
+                            break;
+                        default:
+                            throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                    }
                 }
             }
         `);
@@ -534,6 +643,38 @@ describe("ComputedTest", () => {
                     };
                     return { reader: this, parent, dto, implicit: undefined };
                 }
+                dependency(unresolvedFieldIndex, row) {
+                    switch (unresolvedFieldIndex) {
+                        case 1:
+                            return row.dto.id;
+                        case 2:
+                            return row.dto.id;
+                        default:
+                            throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                    }
+                }
+                dependencyHash(unresolvedFieldIndex, dependency) {
+                    switch (unresolvedFieldIndex) {
+                        case 1:
+                            return dependency;
+                        case 2:
+                            return dependency;
+                        default:
+                            throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                    }
+                }
+                resolve(unresolvedFieldIndex, row, value) {
+                    switch (unresolvedFieldIndex) {
+                        case 1:
+                            row.dto.cheapBooks = value;
+                            break;
+                        case 2:
+                            row.dto.expensiveBooks = value;
+                            break;
+                        default:
+                            throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                    }
+                }
             }
         `);
         const cheapBooksMapper = view
@@ -552,6 +693,15 @@ describe("ComputedTest", () => {
                     };
                     return { reader: this, parent, dto, implicit: undefined };
                 }
+                dependency(unresolvedFieldIndex, row) {
+                    throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                }
+                dependencyHash(unresolvedFieldIndex, dependency) {
+                    throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                }
+                resolve(unresolvedFieldIndex, row, value) {
+                    throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                }
             }
         `);
         const expensiveBooksMapper = view
@@ -567,6 +717,15 @@ describe("ComputedTest", () => {
                         name: reader.get(1)
                     };
                     return { reader: this, parent, dto, implicit: undefined };
+                }
+                dependency(unresolvedFieldIndex, row) {
+                    throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                }
+                dependencyHash(unresolvedFieldIndex, dependency) {
+                    throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                }
+                resolve(unresolvedFieldIndex, row, value) {
+                    throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
                 }
             }
         `);
@@ -612,6 +771,73 @@ describe("ComputedTest", () => {
                 }
             ]
         });
-        console.log(JSON.stringify(buildShape(view.mapper)));
+        expect(buildShape(view.mapper)).toEqual({
+            "id": 0,
+            "__implicit": {
+                "bookNames": {
+                    "newestBooks": {
+                        "__array": {
+                            "name": 0
+                        }
+                    }
+                }
+            },
+            "bookNames": "bookNames"
+        });
+        expectCode(view.mapper.rowReader.constructor.toString(), `
+            class extends $baseClass {
+                read(parent, reader) {
+                    const dto = {
+                        id: reader.get(0), 
+                        bookNames: null
+                    };
+                    const implicit = {
+                        bookNames: null
+                    };
+                    return { reader: this, parent, dto, implicit };
+                }
+                _implicit_bookNames(implicit) {
+                    let o = implicit.bookNames;
+                    if (o == null) {
+                        implicit.bookNames = o = {
+                            newestBooks: null
+                        };
+                    }
+                    return o;
+                }
+                dependency(unresolvedFieldIndex, row) {
+                    switch (unresolvedFieldIndex) {
+                        case 1:
+                            return row.dto.id;
+                        case 2:
+                            return row._implicit.bookNames?.newestBooks;
+                        default:
+                            throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                    }
+                }
+                dependencyHash(unresolvedFieldIndex, dependency) {
+                    switch (unresolvedFieldIndex) {
+                        case 1:
+                            return dependency;
+                        case 2:
+                            return dependency;
+                        default:
+                            throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                    }
+                }
+                resolve(unresolvedFieldIndex, row, value) {
+                    switch (unresolvedFieldIndex) {
+                        case 1:
+                            this._implicit_bookNames(row.implicit).newestBooks = value;
+                            break;
+                        case 2:
+                            row.dto.bookNames = value;
+                            break;
+                        default:
+                            throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                    }
+                }
+            }
+        `);
     });
 });

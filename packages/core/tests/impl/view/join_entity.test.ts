@@ -96,6 +96,31 @@ describe("JoinEntityTest", () => {
                     };
                     return { reader: this, parent, dto, implicit: undefined };
                 }
+                dependency(unresolvedFieldIndex, row) {
+                    switch (unresolvedFieldIndex) {
+                        case 2:
+                            return row.dto.id;
+                        default:
+                            throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                    }
+                }
+                dependencyHash(unresolvedFieldIndex, dependency) {
+                    switch (unresolvedFieldIndex) {
+                        case 2:
+                            return dependency;
+                        default:
+                            throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                    }
+                }
+                resolve(unresolvedFieldIndex, row, value) {
+                    switch (unresolvedFieldIndex) {
+                        case 2:
+                            row.dto.courses = value;
+                            break;
+                        default:
+                            throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                    }
+                }
             }
         `);
         const studentRow = view.mapper.rowReader.read(
@@ -122,6 +147,30 @@ describe("JoinEntityTest", () => {
                     };
                     return { reader: this, parent, dto, implicit };
                 }
+                dependency(unresolvedFieldIndex, row) {
+                    switch (unresolvedFieldIndex) {
+                        case 1:
+                            return row._implicit._0;
+                        default:
+                            throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                    }
+                }
+                dependencyHash(unresolvedFieldIndex, dependency) {
+                    switch (unresolvedFieldIndex) {
+                        case 1:
+                            return dependency;
+                        default:
+                            throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                    }
+                }
+                resolve(unresolvedFieldIndex, row, value) {
+                    switch (unresolvedFieldIndex) {
+                        case 1:
+                            break;
+                        default:
+                            throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                    }
+                }
             }
         `);
         const linkRow = linkMapper.rowReader.read(
@@ -135,14 +184,23 @@ describe("JoinEntityTest", () => {
         expect(linkRow.implicit).toEqual({_0: 2});
 
         const courseMapper = linkMapper.fields.find(f => f.prop.name === "course")!.subMapper!;
-        expect(courseMapper.rowReader.constructor.toString(), `
+        expectCode(courseMapper.rowReader.constructor.toString(), `
             class extends $baseClass {
                 read(parent, reader) {
                     const dto = {
-                        id: reader.get(0), 
-                        name: reader.get(1)
                     };
+                    parent.dto.id = reader.get(0);
+                    parent.dto.name = reader.get(1);
                     return { reader: this, parent, dto, implicit: undefined };
+                }
+                dependency(unresolvedFieldIndex, row) {
+                    throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                }
+                dependencyHash(unresolvedFieldIndex, dependency) {
+                    throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                }
+                resolve(unresolvedFieldIndex, row, value) {
+                    throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
                 }
             }
         `);
@@ -235,7 +293,7 @@ describe("JoinEntityTest", () => {
             }
         });
 
-        expect(view.mapper.rowReader.constructor.toString(), `
+        expectCode(view.mapper.rowReader.constructor.toString(), `
             class extends $baseClass {
                 read(parent, reader) {
                     const dto = {
@@ -244,6 +302,31 @@ describe("JoinEntityTest", () => {
                         students: null
                     };
                     return { reader: this, parent, dto, implicit: undefined };
+                }
+                dependency(unresolvedFieldIndex, row) {
+                    switch (unresolvedFieldIndex) {
+                        case 2:
+                            return row.dto.id;
+                        default:
+                            throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                    }
+                }
+                dependencyHash(unresolvedFieldIndex, dependency) {
+                    switch (unresolvedFieldIndex) {
+                        case 2:
+                            return dependency;
+                        default:
+                            throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                    }
+                }
+                resolve(unresolvedFieldIndex, row, value) {
+                    switch (unresolvedFieldIndex) {
+                        case 2:
+                            row.dto.students = value;
+                            break;
+                        default:
+                            throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                    }
                 }
             }
         `);
@@ -259,6 +342,44 @@ describe("JoinEntityTest", () => {
         expect(courseRow.implicit).toEqual(undefined);
 
         const linkMapper = view.mapper.fields.find(f => f.prop.name === "←LearningLink.course")!.subMapper!;
+        expectCode(linkMapper.rowReader.constructor.toString(), `
+            class extends $baseClass {
+                read(parent, reader) {
+                    const dto = {
+                        id: null, 
+                        name: null
+                    };
+                    const implicit = {
+                        _0: reader.get(0)
+                    };
+                    return { reader: this, parent, dto, implicit };
+                }
+                dependency(unresolvedFieldIndex, row) {
+                    switch (unresolvedFieldIndex) {
+                        case 1:
+                            return row._implicit._0;
+                        default:
+                            throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                    }
+                }
+                dependencyHash(unresolvedFieldIndex, dependency) {
+                    switch (unresolvedFieldIndex) {
+                        case 1:
+                            return dependency;
+                        default:
+                            throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                    }
+                }
+                resolve(unresolvedFieldIndex, row, value) {
+                    switch (unresolvedFieldIndex) {
+                        case 1:
+                            break;
+                        default:
+                            throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                    }
+                }
+            }
+        `);
         const linkRow = linkMapper.rowReader.read(
             courseRow,
             makeReader(2)
@@ -270,14 +391,23 @@ describe("JoinEntityTest", () => {
         expect(linkRow.implicit).toEqual({_0: 2});
 
         const studentMapper = linkMapper.fields.find(f => f.prop.name === "student")!.subMapper!;
-        expect(studentMapper.rowReader.constructor.toString(), `
+        expectCode(studentMapper.rowReader.constructor.toString(), `
             class extends $baseClass {
                 read(parent, reader) {
                     const dto = {
-                        id: reader.get(0), 
-                        name: reader.get(1)
                     };
+                    parent.dto.id = reader.get(0);
+                    parent.dto.name = reader.get(1);
                     return { reader: this, parent, dto, implicit: undefined };
+                }
+                dependency(unresolvedFieldIndex, row) {
+                    throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                }
+                dependencyHash(unresolvedFieldIndex, dependency) {
+                    throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                }
+                resolve(unresolvedFieldIndex, row, value) {
+                    throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
                 }
             }
         `);

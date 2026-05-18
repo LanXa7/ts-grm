@@ -5,7 +5,7 @@ import { Composite } from "@/sql/fragment";
 import { SqlBuilder } from "@/sql/sql_builder";
 import { DataRowReader } from "./data_row_reader";
 
-export async function query<TProjection extends RootQueryProjection<any>>(
+export async function executeQuery<TProjection extends RootQueryProjection<any>>(
     q: RootQuery<TProjection>
 ): Promise<ReadonlyArray<any>> {
     const contract = q as any as ast.QueryContract;
@@ -24,17 +24,27 @@ export async function query<TProjection extends RootQueryProjection<any>>(
         switch (contract.projection.kind) {
             case "ROOT_SINGLE":
                 const selection = contract.projection.selection;
-                const dtos: Array<any> = [];
                 if (selection instanceof metadata.FetchedViewImpl) {
-                    const dtoRowReader = selection.view.mapper.rowReader;
-                    while (dataRowReader.next()) {
-                        const dtoRow = dtoRowReader.read(undefined, dataRowReader);
-                        dtos.push(dtoRow.dto);
-                    }
+                    return readDto(dataRowReader, selection);
                 }
-                return dtos;
+                throw new Error();
             default:
                 throw new Error();
         }
     });
+}
+
+function readDto(
+    dataRowReader: DataRowReader, 
+    fetchedView: metadata.FetchedViewImpl<any, any>
+): ReadonlyArray<any> {
+    const dtoRows: Array<metadata.DtoRow> = [];
+    const dtos: Array<any> = [];
+    const dtoRowReader = fetchedView.view.mapper.rowReader;
+    while (dataRowReader.next()) {
+        const dtoRow = dtoRowReader.read(undefined, dataRowReader);
+        dtoRows.push(dtoRow);
+        dtos.push(dtoRow.dto);
+    }
+    return dtos;
 }

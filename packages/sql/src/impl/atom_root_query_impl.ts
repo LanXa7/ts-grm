@@ -1,7 +1,7 @@
 import { ast, ExpressionOrder, metadata, AtomRootQuery, RootQueryProjection, RowTypeOf, suppressUnused } from "@ts-grm/core";
 import { MutableRootQueryImpl } from "./mutable_root_query_impl";
 import { AbstractRootQueryProjection } from "./query_projection";
-import { query } from "./query";
+import { executeQuery } from "./query_executor";
 
 export class AtomRootQueryImpl<TProjection extends RootQueryProjection<any>> 
 implements AtomRootQuery<TProjection>, ast.AtomQueryContract {
@@ -57,7 +57,7 @@ implements AtomRootQuery<TProjection>, ast.AtomQueryContract {
         }
     ): Promise<Array<RowTypeOf<TProjection, TNullAsUndefined>>> {
         suppressUnused(options);
-        return await query(this) as Array<RowTypeOf<TProjection, TNullAsUndefined>>;
+        return await executeQuery(this) as Array<RowTypeOf<TProjection, TNullAsUndefined>>;
     }
 
     get kind(): "ATOM" {

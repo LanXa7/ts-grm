@@ -27,7 +27,7 @@ export class DtoMapper {
 
     private _span: number | undefined = undefined;
 
-    private _unresolvedAssociations: ReadonlyArray<DtoMapperField> | undefined = undefined;
+    private _unresolvedFields: ReadonlyArray<DtoMapperField> | undefined = undefined;
 
     constructor(
         readonly entity: Entity,
@@ -60,22 +60,24 @@ export class DtoMapper {
         return span;
     }
 
-    get unresolvedAssociations(): ReadonlyArray<DtoMapperField> {
-        let unresolvedAssociations = this._unresolvedAssociations;
-        if (unresolvedAssociations == null) {
+    get unresolvedFields(): ReadonlyArray<DtoMapperField> {
+        let unresolvedFields = this._unresolvedFields;
+        if (unresolvedFields == null) {
             const arr: Array<DtoMapperField> = [];
             for (const field of this.fields) {
-                if (field.columnIndex == null && field.prop.associationType != null) {
+                if (field.dependencies != null) {
                     arr.push(field);
                 }
             }
-            this._unresolvedAssociations = unresolvedAssociations = arr;
+            this._unresolvedFields = unresolvedFields = arr;
         }
-        return unresolvedAssociations;
+        return unresolvedFields;
     }
 }
 
 export type DtoMapperField = {
+
+    readonly index: number;
 
     readonly prop: FetchProp;
 
@@ -380,6 +382,7 @@ class MapperField {
                 : parts;
         });
         return {
+            index: this.index,
             prop: this.prop,
             parameter: this.parameter,
             bridgeProp: this.bridgeProp,

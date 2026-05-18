@@ -20,7 +20,7 @@ export class CodeWriter {
             typeof options === "string"
                 ? undefined
                 : options.multiline
-        ) ?? (kind === "CURLY_BRACKETS");
+        ) ?? (kind === "CURLY_BRACKETS" || kind === "BLANK");
         this.code(startStr(kind));
         this._scope = {
             kind,
@@ -110,7 +110,7 @@ type Scope = {
     dirty: boolean;
 };
 
-type ScopeKind = "PARENTHESES" | "SQUARE_BRACKETS" | "CURLY_BRACKETS";
+type ScopeKind = "PARENTHESES" | "SQUARE_BRACKETS" | "CURLY_BRACKETS" | "BLANK";
 
 function startStr(kind: ScopeKind): string {
     switch (kind) {
@@ -120,6 +120,8 @@ function startStr(kind: ScopeKind): string {
             return "[";
         case "CURLY_BRACKETS":
             return "{";
+        case "BLANK":
+            return "";
     }
 }
 
@@ -131,5 +133,7 @@ function endStr(kind: ScopeKind): string {
             return "]";
         case "CURLY_BRACKETS":
             return "}";
+        case "BLANK":
+            return "";
     }
 }

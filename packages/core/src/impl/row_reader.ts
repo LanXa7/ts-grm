@@ -1,7 +1,8 @@
 import { CodeWriter } from "./code_writer";
 import { DataReader } from "./data_reader";
-import { DtoMapper } from "./dto_mapper";
+import { DtoMapper,DtoMapperField } from "./dto_mapper";
 import { buildShape, isEmptyShape, Shape } from "./shape";
+import { ArgumentError } from "@/error/common";
 
 export type DtoRow = {
 
@@ -32,8 +33,11 @@ export function createRowReader(mapper: DtoMapper): DtoRowReader {
             if (shape.__implicit != null) {
                 writeFold("_implicit", shape.__implicit, mapper.nullAsUndefined, writer);
             }
+            writeDependency(mapper, writer);
+            writeDependencyHash(mapper, writer);
+            writeResolve(mapper, writer);
         });
-    const cls = new Function("$baseClass", writer.toString())(DtoRowReader);
+    const cls = new Function("$baseClass", "$argumentError", writer.toString())(DtoRowReader, ArgumentError);
     return new cls();
 }
 
@@ -106,41 +110,47 @@ function writeDepthAssignments(
             if (typeof path === "string") {
                 continue;
             }
-            if (path.length === 1) {
-                continue;
-            }
-            const parents: Array<string> = [];
-            for (const part of path) {
-                if (part === "..") {
-                    parents.push("parent");
-                } else if (part.startsWith("<implicit:") && part.endsWith(">")) {
-                    parents.push("implicit");
-                } else {
-                    break;
-                }
-            }
-            const dto = parents.length === 0
-                ? "dto" 
-                : parents[0] === "implicit"
-                    ? `${parents.join(".")}`
-                    : `${parents.join(".")}.dto`;
-            const foldKeys =
-                parents[0] === "implicit" 
-                    ? ["implicit", path[0]!.substring(10, path[0]!.length - 1), ...path.slice(parents.length, path.length - 1)]
-                    : path.slice(parents.length, path.length - 1);
-            const target = foldKeys.length === 0
-                ? dto
-                : `this._${foldKeys.join("_")}(${dto})`;
+            writeAssignmentTarget("", path, writer);
             writer
-                .code(target)
-                .code(".")
-                .code(path[path.length - 1]!)
                 .code(" = reader.get(")
                 .code(`${field.columnIndex}`)
                 .code(")")
                 .newLine(";");
         }
     }
+}
+
+function writeAssignmentTarget(
+    prefix: string,
+    path: ReadonlyArray<string>,
+    writer: CodeWriter
+) {
+    const parents: Array<string> = [];
+    for (const part of path) {
+        if (part === "..") {
+            parents.push(`parent`);
+        } else if (part.startsWith("<implicit:") && part.endsWith(">")) {
+            parents.push(`implicit`);
+        } else {
+            break;
+        }
+    }
+    const dto = parents.length === 0
+        ? `${prefix}dto`
+        : parents[0] === "implicit"
+            ? `${prefix}${parents.join(".")}`
+            : `${prefix}${parents.join(".")}.dto`;
+    const foldKeys =
+        parents[0] === "implicit" 
+            ? ["implicit", path[0]!.substring(10, path[0]!.length - 1), ...path.slice(parents.length, path.length - 1)]
+            : path.slice(parents.length, path.length - 1);
+    const target = foldKeys.length === 0
+        ? dto
+        : `this._${foldKeys.join("_")}(${dto})`;
+    writer
+        .code(target)
+        .code(".")
+        .code(path[path.length - 1]!);
 }
 
 function writeFold(
@@ -204,3 +214,137 @@ function writeFoldBody(
         }
     }
 };
+
+function writeDependency(
+    mapper: DtoMapper,
+    writer: CodeWriter
+) {
+    writer.code("dependency(unresolvedFieldIndex, row) ").scope("CURLY_BRACKETS", () => {
+        if (mapper.unresolvedFields.length == 0) {
+            writeUnresolvedFieldIndexError(writer);
+            return;
+        }
+        writer.code("switch (unresolvedFieldIndex) ").scope("CURLY_BRACKETS", () => {
+            for (const unresolvedField of mapper.unresolvedFields) {
+                writer.code(`case ${unresolvedField.index}:`).scope("BLANK", () => {
+                    const dependencies = unresolvedField.dependencies!;
+                    if (dependencies.length === 1) {
+                        writer.code("return ");
+                        writeDependencyRef(mapper.fields[dependencies[0]!]!, writer);
+                    } else {
+                        writer.code("return ").scope({kind: "SQUARE_BRACKETS", multiline: true}, () => {
+                            for (const dependency of dependencies) {
+                                writer.separator();
+                                writeDependencyRef(mapper.fields[dependency]!, writer);
+                            }
+                        });
+                    }
+                    writer.newLine(";");
+                });
+            }
+            writer.code("default:").scope("BLANK", () => {
+                writeUnresolvedFieldIndexError(writer);
+            });
+            return;
+        });
+    }).newLine();
+}
+
+function writeDependencyHash(
+    mapper: DtoMapper,
+    writer: CodeWriter
+) {
+    writer.code("dependencyHash(unresolvedFieldIndex, dependency) ").scope("CURLY_BRACKETS", () => {
+        if (mapper.unresolvedFields.length == 0) {
+            writeUnresolvedFieldIndexError(writer);
+            return;
+        }
+        writer.code("switch (unresolvedFieldIndex) ").scope("CURLY_BRACKETS", () => {
+            for (const unresolvedField of mapper.unresolvedFields) {
+                writer.code(`case ${unresolvedField.index}:`).scope("BLANK", () => {
+                    const dependencies = unresolvedField.dependencies!;
+                    if (dependencies.length === 1) {
+                        writer.code("return dependency");
+                    } else {
+                        writer.code("return ");
+                        for (let i = 0; i < dependencies.length; i++) {
+                            if (i != 0) {
+                                writer.code(' + "\\x1F" + ');
+                            }
+                            writer.code("dependency[");
+                            writer.code(i.toString());
+                            writer.code("]");
+                        }
+                    }
+                    writer.newLine(";");
+                });
+            }
+            writer.code("default:").scope("BLANK", () => {
+                writeUnresolvedFieldIndexError(writer);
+            });
+            return;
+        });
+    }).newLine();
+}
+
+function writeResolve(
+    mapper: DtoMapper,
+    writer: CodeWriter
+) {
+    writer.code("resolve(unresolvedFieldIndex, row, value) ").scope("CURLY_BRACKETS", () => {
+        if (mapper.unresolvedFields.length == 0) {
+            writeUnresolvedFieldIndexError(writer);
+            return;
+        }
+        writer.code("switch (unresolvedFieldIndex) ").scope("CURLY_BRACKETS", () => {
+            for (const unresolvedField of mapper.unresolvedFields) {
+                writer.code(`case ${unresolvedField.index}:`).scope("BLANK", () => {
+                    for (const path of unresolvedField.paths) {
+                        writeAssignmentTarget("row.", typeof path === "string" ? [path] : path, writer);
+                        writer.code(" = value").newLine(";");
+                    }
+                    writer.code("break").newLine(";");
+                });
+            }
+            writer.code("default:").scope("BLANK", () => {
+                writeUnresolvedFieldIndexError(writer);
+            });
+            return;
+        });
+    }).newLine();
+}
+
+function writeDependencyRef(
+    dependencyField: DtoMapperField,
+    writer: CodeWriter
+) {
+    if (dependencyField.paths.length === 0) {
+        writer.code(`row._implicit._${dependencyField.index}`);
+        return;
+    }
+    const path = dependencyField.paths[0]!;
+    writer.code("row");
+    const subPaths = typeof path === "string" 
+        ? [path]
+        : path;
+    let metFirst = false;
+    for (let i = 0; i < subPaths.length; i++) {
+        const subPath = subPaths[i]!;
+        if (subPath === "..") {
+            writer.code(".parent");
+        } else if (subPath.startsWith("<implicit:") && subPath.endsWith(">")) {
+            writer.code("._implicit.").code(subPath.substring(10, subPath.length - 1));
+            metFirst = true;
+        } else {
+            const prefix = metFirst ? "?." : ".dto.";
+            writer.code(prefix).code(subPath);
+            metFirst = true;
+        }
+    }
+}
+
+function writeUnresolvedFieldIndexError(
+    writer: CodeWriter
+) {
+    writer.code('throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex)').newLine(";");
+}

@@ -17,6 +17,10 @@ export class DataRowReader implements metadata.DataReader {
         return true;
     }
 
+    reset() {
+        this._rowIndex = -1;
+    }
+
     get(col: number): any {
         const rowIndex = this._rowIndex;
         if (rowIndex < 0 || rowIndex >= this._rows.length) {
@@ -35,6 +39,10 @@ export class DataRowReader implements metadata.DataReader {
             return this;
         }
         return new DataRowReader(this._rows, this._offset + offset);
+    }
+
+    get rowIndex(): number {
+        return this._rowIndex;
     }
 }
 
