@@ -71,7 +71,7 @@ describe("EmbeddedTest", () => {
 
         expectCode(view.mapper.dtoRowReader.constructor.toString(), `
             class extends $baseClass {
-                read(parent, reader) {
+                read(parents, reader) {
                     const dto = {
                         order: null
                     };
@@ -80,7 +80,7 @@ describe("EmbeddedTest", () => {
                         _1: reader.get(1), 
                         _2: reader.get(2)
                     };
-                    return { reader: this, parent, dto, implicit };
+                    return { reader: this, parents, dto, implicit };
                 }
                 dependency(unresolvedFieldIndex, row) {
                     switch (unresolvedFieldIndex) {
@@ -134,11 +134,11 @@ describe("EmbeddedTest", () => {
         const orderMapper = view.mapper.fields.find(f => f.prop.name === "order")!.subMapper!;
         expectCode(orderMapper.dtoRowReader.constructor.toString(), `
             class extends $baseClass {
-                read(parent, reader) {
+                read(parents, reader) {
                     const dto = {
                         name: reader.get(0)
                     };
-                    return { reader: this, parent, dto, implicit: undefined };
+                    return { reader: this, parents, dto, implicit: undefined };
                 }
             }
         `);
@@ -224,7 +224,7 @@ describe("EmbeddedTest", () => {
 
         expectCode(view.mapper.dtoRowReader.constructor.toString(), `
             class extends $baseClass {
-                read(parent, reader) {
+                read(parents, reader) {
                     const dto = {
                         orderId: null, 
                         order: null
@@ -232,7 +232,7 @@ describe("EmbeddedTest", () => {
                     this._orderId(dto).x = reader.get(0);
                     this._orderId_y(dto).a = reader.get(1);
                     this._orderId_y(dto).b = reader.get(2);
-                    return { reader: this, parent, dto, implicit: undefined };
+                    return { reader: this, parents, dto, implicit: undefined };
                 }
                 _orderId(dto) {
                     let o = dto.orderId;
@@ -311,11 +311,11 @@ describe("EmbeddedTest", () => {
         const orderMapper = view.mapper.fields.find(f => f.prop.name === "order")!.subMapper!;
         expectCode(orderMapper.dtoRowReader.constructor.toString(), `
             class extends $baseClass {
-                read(parent, reader) {
+                read(parents, reader) {
                     const dto = {
                         name: reader.get(0)
                     };
-                    return { reader: this, parent, dto, implicit: undefined };
+                    return { reader: this, parents, dto, implicit: undefined };
                 }
             }
         `);
@@ -401,7 +401,7 @@ describe("EmbeddedTest", () => {
 
         expectCode(view.mapper.dtoRowReader.constructor.toString(), `
             class extends $baseClass {
-                read(parent, reader) {
+                read(parents, reader) {
                     const dto = {
                         orderId: null, 
                         order: null
@@ -411,7 +411,7 @@ describe("EmbeddedTest", () => {
                     };
                     this._orderId_y(dto).a = reader.get(0);
                     this._orderId_y(dto).b = reader.get(1);
-                    return { reader: this, parent, dto, implicit };
+                    return { reader: this, parents, dto, implicit };
                 }
                 _orderId(dto) {
                     let o = dto.orderId;
@@ -491,11 +491,11 @@ describe("EmbeddedTest", () => {
         const orderMapper = view.mapper.fields.find(f => f.prop.name === "order")!.subMapper!;
         expectCode(orderMapper.dtoRowReader.constructor.toString(), `
             class extends $baseClass {
-                read(parent, reader) {
+                read(parents, reader) {
                     const dto = {
                         name: reader.get(0)
                     };
-                    return { reader: this, parent, dto, implicit: undefined };
+                    return { reader: this, parents, dto, implicit: undefined };
                 }
             }
         `);

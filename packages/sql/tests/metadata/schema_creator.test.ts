@@ -751,7 +751,6 @@ describe.sequential("SchemaCreatorTest", () => {
     it("sql", async () => {
         const tableDefs = await createSchema(sqlClient);
         const sql = tableDefs.map(td => td.toStatements(sqlClient.driver).join(";\n\n")).join(";\n\n");
-        console.log(sql);
         expectCode(sql, `
             -- Entity table for "BookStore"
             create table BOOK_STORE(

@@ -40,13 +40,13 @@ describe("ViewTest", () => {
 
         expectCode(view.mapper.dtoRowReader.constructor.toString(), `
             class extends $baseClass {
-                read(parent, reader) {
+                read(parents, reader) {
                     const dto = {
                         id: reader.get(0), 
                         name: reader.get(1), 
                         edition: reader.get(2)
                     };
-                    return { reader: this, parent, dto, implicit: undefined };
+                    return { reader: this, parents, dto, implicit: undefined };
                 }
             }
         `);
@@ -179,7 +179,7 @@ describe("ViewTest", () => {
 
         expectCode(view.mapper.dtoRowReader.constructor.toString(), `
             class extends $baseClass {
-                read(parent, reader) {
+                read(parents, reader) {
                     const dto = {
                         name: reader.get(0), 
                         edition: reader.get(1), 
@@ -190,7 +190,7 @@ describe("ViewTest", () => {
                         _2: reader.get(2), 
                         _4: reader.get(3)
                     };
-                    return { reader: this, parent, dto, implicit };
+                    return { reader: this, parents, dto, implicit };
                 }
                 dependency(unresolvedFieldIndex, row) {
                     switch (unresolvedFieldIndex) {
@@ -258,13 +258,13 @@ describe("ViewTest", () => {
             .subMapper!;
         expectCode(storeMapper.dtoRowReader.constructor.toString(), `
             class extends $baseClass {
-                read(parent, reader) {
+                read(parents, reader) {
                     const dto = {
                         id: reader.get(0), 
                         name: reader.get(1), 
                         version: reader.get(2)
                     };
-                    return { reader: this, parent, dto, implicit: undefined };
+                    return { reader: this, parents, dto, implicit: undefined };
                 }
             }
         `);
@@ -285,14 +285,14 @@ describe("ViewTest", () => {
             .subMapper!;
         expectCode(authorMapper.dtoRowReader.constructor.toString(), `
             class extends $baseClass {
-                read(parent, reader) {
+                read(parents, reader) {
                     const dto = {
                         id: reader.get(0), 
                         name: null
                     };
                     this._name(dto).firstName = reader.get(1);
                     this._name(dto).lastName = reader.get(2);
-                    return { reader: this, parent, dto, implicit: undefined };
+                    return { reader: this, parents, dto, implicit: undefined };
                 }
                 _name(dto) {
                     let o = dto.name;
@@ -423,13 +423,13 @@ describe("ViewTest", () => {
 
         expectCode(view.mapper.dtoRowReader.constructor.toString(), `
             class extends $baseClass {
-                read(parent, reader) {
+                read(parents, reader) {
                     const dto = {
                         id: reader.get(0), 
                         name: reader.get(1), 
                         books: null
                     };
-                    return { reader: this, parent, dto, implicit: undefined };
+                    return { reader: this, parents, dto, implicit: undefined };
                 }
                 dependency(unresolvedFieldIndex, row) {
                     switch (unresolvedFieldIndex) {
@@ -479,13 +479,13 @@ describe("ViewTest", () => {
         const bookMapper = view.mapper.fields.find(f => f.prop.name === "books")!.subMapper!;
         expectCode(bookMapper.dtoRowReader.constructor.toString(), `
             class extends $baseClass {
-                read(parent, reader) {
+                read(parents, reader) {
                     const dto = {
                         id: reader.get(0), 
                         name: reader.get(1), 
                         authors: null
                     };
-                    return { reader: this, parent, dto, implicit: undefined };
+                    return { reader: this, parents, dto, implicit: undefined };
                 }
                 dependency(unresolvedFieldIndex, row) {
                     switch (unresolvedFieldIndex) {
@@ -535,14 +535,14 @@ describe("ViewTest", () => {
         const authorMapper = bookMapper.fields.find(f => f.prop.name === "authors")!.subMapper!;
         expectCode(authorMapper.dtoRowReader.constructor.toString(), `
             class extends $baseClass {
-                read(parent, reader) {
+                read(parents, reader) {
                     const dto = {
                         id: reader.get(0), 
                         name: null
                     };
                     this._name(dto).firstName = reader.get(1);
                     this._name(dto).lastName = reader.get(2);
-                    return { reader: this, parent, dto, implicit: undefined };
+                    return { reader: this, parents, dto, implicit: undefined };
                 }
                 _name(dto) {
                     let o = dto.name;
@@ -673,7 +673,7 @@ describe("ViewTest", () => {
 
         expectCode(view.mapper.dtoRowReader.constructor.toString(), `
             class extends $baseClass {
-                read(parent, reader) {
+                read(parents, reader) {
                     const dto = {
                         name: reader.get(0), 
                         books: null
@@ -681,7 +681,7 @@ describe("ViewTest", () => {
                     const implicit = {
                         _1: reader.get(1)
                     };
-                    return { reader: this, parent, dto, implicit };
+                    return { reader: this, parents, dto, implicit };
                 }
                 dependency(unresolvedFieldIndex, row) {
                     switch (unresolvedFieldIndex) {
@@ -728,7 +728,7 @@ describe("ViewTest", () => {
         const bookMapper = view.mapper.fields.find(f => f.prop.name === "books")!.subMapper!;
         expectCode(bookMapper.dtoRowReader.constructor.toString(), `
             class extends $baseClass {
-                read(parent, reader) {
+                read(parents, reader) {
                     const dto = {
                         name: reader.get(0), 
                         authors: null
@@ -736,7 +736,7 @@ describe("ViewTest", () => {
                     const implicit = {
                         _1: reader.get(1)
                     };
-                    return { reader: this, parent, dto, implicit };
+                    return { reader: this, parents, dto, implicit };
                 }
                 dependency(unresolvedFieldIndex, row) {
                     switch (unresolvedFieldIndex) {
@@ -783,13 +783,13 @@ describe("ViewTest", () => {
         const authorMapper = bookMapper.fields.find(f => f.prop.name === "authors")!.subMapper!;
         expectCode(authorMapper.dtoRowReader.constructor.toString(), `
             class extends $baseClass {
-                read(parent, reader) {
+                read(parents, reader) {
                     const dto = {
                         name: null
                     };
                     this._name(dto).firstName = reader.get(0);
                     this._name(dto).lastName = reader.get(1);
-                    return { reader: this, parent, dto, implicit: undefined };
+                    return { reader: this, parents, dto, implicit: undefined };
                 }
                 _name(dto) {
                     let o = dto.name;
@@ -919,7 +919,7 @@ describe("ViewTest", () => {
 
         expectCode(view.mapper.dtoRowReader.constructor.toString(), `
             class extends $baseClass {
-                read(parent, reader) {
+                read(parents, reader) {
                     const dto = {
                         bookId: reader.get(0), 
                         key: null, 
@@ -927,7 +927,7 @@ describe("ViewTest", () => {
                     };
                     this._key(dto).bookName = reader.get(1);
                     this._key(dto).bookEdition = reader.get(2);
-                    return { reader: this, parent, dto, implicit: undefined };
+                    return { reader: this, parents, dto, implicit: undefined };
                 }
                 _key(dto) {
                     let o = dto.key;
@@ -999,13 +999,13 @@ describe("ViewTest", () => {
         const authorMapper = view.mapper.fields.find(f => f.prop.name === "authors")!.subMapper!;
         expectCode(authorMapper.dtoRowReader.constructor.toString(), `
             class extends $baseClass {
-                read(parent, reader) {
+                read(parents, reader) {
                     const dto = {
                         id: reader.get(0), 
                         flattenFn: reader.get(1), 
                         flattenLn: reader.get(2)
                     };
-                    return { reader: this, parent, dto, implicit: undefined };
+                    return { reader: this, parents, dto, implicit: undefined };
                 }
             }
         `);

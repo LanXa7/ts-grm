@@ -87,7 +87,7 @@ describe("FlatTest", () => {
 
         expectCode(view.mapper.dtoRowReader.constructor.toString(), `
             class extends $baseClass {
-                read(parent, reader) {
+                read(parents, reader) {
                     const dto = {
                         id: reader.get(0), 
                         name: reader.get(1), 
@@ -99,7 +99,7 @@ describe("FlatTest", () => {
                     const implicit = {
                         _4: reader.get(4)
                     };
-                    return { reader: this, parent, dto, implicit };
+                    return { reader: this, parents, dto, implicit };
                 }
                 dependency(unresolvedFieldIndex, row) {
                     switch (unresolvedFieldIndex) {
@@ -151,17 +151,23 @@ describe("FlatTest", () => {
         const storeMapper = view.mapper.fields.find(f => f.prop.name === "store")!.subMapper!;
         expectCode(storeMapper.dtoRowReader.constructor.toString(), `
             class extends $baseClass {
-                read(parent, reader) {
+                read(parents, reader) {
                     const dto = {
                     };
-                    parent.dto.storeId = reader.get(0);
-                    parent.dto.storeName = reader.get(1);
-                    return { reader: this, parent, dto, implicit: undefined };
+                    const reader_0 = reader.get(0);
+                    for (const parent of parents) {
+                        parent.dto.storeId = reader_0;
+                    }
+                    const reader_1 = reader.get(1);
+                    for (const parent of parents) {
+                        parent.dto.storeName = reader_1;
+                    }
+                    return { reader: this, parents, dto, implicit: undefined };
                 }
             }
         `);
         storeMapper.dtoRowReader.read(
-            row, 
+            [row], 
             makeReader(2, "MANNING")
         );
         expect(row.dto).toEqual({
@@ -210,13 +216,13 @@ describe("FlatTest", () => {
 
         expectCode(view.mapper.dtoRowReader.constructor.toString(), `
             class extends $baseClass {
-                read(parent, reader) {
+                read(parents, reader) {
                     const dto = {
                         id: reader.get(0), 
                         flattenFirstName: reader.get(1), 
                         flattenLastName: reader.get(2)
                     };
-                    return { reader: this, parent, dto, implicit: undefined };
+                    return { reader: this, parents, dto, implicit: undefined };
                 }
             }
         `);
@@ -337,7 +343,7 @@ describe("FlatTest", () => {
         
         expectCode(view.mapper.dtoRowReader.constructor.toString(), `
             class extends $baseClass {
-                read(parent, reader) {
+                read(parents, reader) {
                     const dto = {
                         id: reader.get(0), 
                         name: reader.get(1), 
@@ -349,7 +355,7 @@ describe("FlatTest", () => {
                     const implicit = {
                         _2: reader.get(2)
                     };
-                    return { reader: this, parent, dto, implicit };
+                    return { reader: this, parents, dto, implicit };
                 }
                 dependency(unresolvedFieldIndex, row) {
                     switch (unresolvedFieldIndex) {
@@ -404,15 +410,21 @@ describe("FlatTest", () => {
         const pMapper = view.mapper.fields.find(f => f.prop.name === "parentNode")!.subMapper!;
         expectCode(pMapper.dtoRowReader.constructor.toString(), `
             class extends $baseClass {
-                read(parent, reader) {
+                read(parents, reader) {
                     const dto = {
                     };
                     const implicit = {
                         _2: reader.get(2)
                     };
-                    parent.dto.parentId = reader.get(0);
-                    parent.dto.parentName = reader.get(1);
-                    return { reader: this, parent, dto, implicit };
+                    const reader_0 = reader.get(0);
+                    for (const parent of parents) {
+                        parent.dto.parentId = reader_0;
+                    }
+                    const reader_1 = reader.get(1);
+                    for (const parent of parents) {
+                        parent.dto.parentName = reader_1;
+                    }
+                    return { reader: this, parents, dto, implicit };
                 }
                 dependency(unresolvedFieldIndex, row) {
                     switch (unresolvedFieldIndex) {
@@ -449,7 +461,7 @@ describe("FlatTest", () => {
             }
         `);
         const pRow = pMapper.dtoRowReader.read(
-            row,
+            [row],
             makeReader(3, "Drinks", 1)
         );
         expect(pRow.implicit).toEqual({
@@ -467,17 +479,27 @@ describe("FlatTest", () => {
         const ppMapper = pMapper.fields.find(f => f.prop.name === "parentNode")!.subMapper!;
         expectCode(ppMapper.dtoRowReader.constructor.toString(), `
             class extends $baseClass {
-                read(parent, reader) {
+                read(parents, reader) {
                     const dto = {
                     };
-                    parent.parent.dto.parentGrandId = reader.get(0);
-                    parent.parent.dto.parentGrandName = reader.get(1);
-                    return { reader: this, parent, dto, implicit: undefined };
+                    const reader_0 = reader.get(0);
+                    for (const parent of parents) {
+                        for (const parent2 of parent.parents) {
+                            parent2.dto.parentGrandId = reader_0;
+                        }
+                    }
+                    const reader_1 = reader.get(1);
+                    for (const parent of parents) {
+                        for (const parent2 of parent.parents) {
+                            parent2.dto.parentGrandName = reader_1;
+                        }
+                    }
+                    return { reader: this, parents, dto, implicit: undefined };
                 }
             }
         `);
         ppMapper.dtoRowReader.read(
-            pRow,
+            [pRow],
             makeReader(1, "Food", 1)
         );
         expect(row.dto).toEqual({

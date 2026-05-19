@@ -45,14 +45,14 @@ describe("FoldTest", () => {
         });
         expectCode(view.mapper.dtoRowReader.constructor.toString(), `
             class extends $baseClass {
-                read(parent, reader) {
+                read(parents, reader) {
                     const dto = {
                         id: reader.get(0), 
                         key: null
                     };
                     this._key(dto).name = reader.get(1);
                     this._key(dto).edition = reader.get(2);
-                    return { reader: this, parent, dto, implicit: undefined };
+                    return { reader: this, parents, dto, implicit: undefined };
                 }
                 _key(dto) {
                     let o = dto.key;
@@ -149,12 +149,12 @@ describe("FoldTest", () => {
 
         expectCode(view.mapper.dtoRowReader.constructor.toString(), `
             class extends $baseClass {
-                read(parent, reader) {
+                read(parents, reader) {
                     const dto = {
                         id: reader.get(0), 
                         associations: null
                     };
-                    return { reader: this, parent, dto, implicit: undefined };
+                    return { reader: this, parents, dto, implicit: undefined };
                 }
                 _associations(dto) {
                     let o = dto.associations;
@@ -212,14 +212,14 @@ describe("FoldTest", () => {
         const authorMapper = view.mapper.fields.find(f => f.prop.name === "authors")!.subMapper!;
         expectCode(authorMapper.dtoRowReader.constructor.toString(), `
             class extends $baseClass {
-                read(parent, reader) {
+                read(parents, reader) {
                     const dto = {
                         id: reader.get(0), 
                         name: null
                     };
                     this._name(dto).firstName = reader.get(1);
                     this._name(dto).lastName = reader.get(2);
-                    return { reader: this, parent, dto, implicit: undefined };
+                    return { reader: this, parents, dto, implicit: undefined };
                 }
                 _name(dto) {
                     let o = dto.name;

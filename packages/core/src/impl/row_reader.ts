@@ -8,7 +8,7 @@ export type DtoRow = {
 
     readonly reader: DtoRowReader;
     
-    readonly parent: DtoRow;
+    readonly parents: ReadonlyArray<DtoRow> | undefined;
 
     readonly dto: object;
 
@@ -17,7 +17,7 @@ export type DtoRow = {
 
 export abstract class DtoRowReader {
 
-    abstract read(parent: DtoRow | undefined, reader: DataReader): DtoRow;
+    abstract read(parents: ReadonlyArray<DtoRow> | undefined, reader: DataReader): DtoRow;
 
     dependency(unresolvedFieldIndex: number, _: DtoRow) {
         throw new ArgumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
@@ -66,7 +66,7 @@ function writeRead(
     writer: CodeWriter
 ) {
     const implicit = shape.__implicit;
-    writer.code("read(parent, reader) ");
+    writer.code("read(parents, reader) ");
     writer.scope("CURLY_BRACKETS", () => {
         writer
             .code("const dto = ")
@@ -90,10 +90,10 @@ function writeRead(
         }
         writeDepthAssignments(mapper, writer);
         if (implicit == null) {
-            writer.code("return { reader: this, parent, dto, implicit: undefined };");
+            writer.code("return { reader: this, parents, dto, implicit: undefined };");
             return;
         }
-        writer.code("return { reader: this, parent, dto, implicit };");
+        writer.code("return { reader: this, parents, dto, implicit };");
     }).newLine();
 }
 
@@ -129,10 +129,43 @@ function writeDepthAssignments(
             if (typeof path === "string") {
                 continue;
             }
+            writeDepthAssignment(
+                0,
+                path,
+                field.columnIndex,
+                writer
+            );
+        }
+    }
+}
+
+function writeDepthAssignment(
+    parentDepth: number,
+    path: ReadonlyArray<string>,
+    columnIndex: string | number,
+    writer: CodeWriter
+) {
+    if (path[parentDepth] === "..") {
+        if (parentDepth === 0) {
+            writer
+                .code(`const reader_${columnIndex} = reader.get(`)
+                .code(`${columnIndex}`)
+                .code(")")
+                .newLine(";");
+        }
+        writer.code(`for (const ${parentName(parentDepth)} of ${parentDepth > 0 ? `${parentName(parentDepth - 1)}.` : ""}parents) `);
+        writer.scope("CURLY_BRACKETS", () => {
+            writeDepthAssignment(parentDepth + 1, path, columnIndex, writer);
+        }).newLine();
+    } else {
+        if (parentDepth > 0) {
+            writeAssignmentTarget(`${parentName(parentDepth - 1)}.`, path.slice(parentDepth, path.length), writer);
+            writer.code(` = reader_${columnIndex}`).newLine(";");
+        } else {
             writeAssignmentTarget("", path, writer);
             writer
                 .code(" = reader.get(")
-                .code(`${field.columnIndex}`)
+                .code(`${columnIndex}`)
                 .code(")")
                 .newLine(";");
         }
@@ -147,7 +180,7 @@ function writeAssignmentTarget(
     const parents: Array<string> = [];
     for (const part of path) {
         if (part === "..") {
-            parents.push(`parent`);
+            throw new ArgumentError("Internal bug");
         } else if (part.startsWith("<implicit:") && part.endsWith(">")) {
             parents.push(`implicit`);
         } else {
@@ -371,8 +404,9 @@ function writeDependencyRef(
     for (let i = 0; i < subPaths.length; i++) {
         const subPath = subPaths[i]!;
         if (subPath === "..") {
-            writer.code(".parent");
-        } else if (subPath.startsWith("<implicit:") && subPath.endsWith(">")) {
+            continue;
+        }
+        if (subPath.startsWith("<implicit:") && subPath.endsWith(">")) {
             writer.code(".implicit.").code(subPath.substring(10, subPath.length - 1));
             metFirst = true;
         } else {
@@ -387,4 +421,11 @@ function writeUnresolvedFieldIndexError(
     writer: CodeWriter
 ) {
     writer.code('throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex)').newLine(";");
+}
+
+function parentName(parentDepth: number): string {
+    if (parentDepth === 0) {
+        return "parent";
+    }
+    return `parent${parentDepth + 1}`;
 }

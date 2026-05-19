@@ -88,13 +88,13 @@ describe("JoinEntityTest", () => {
 
         expectCode(view.mapper.dtoRowReader.constructor.toString(), `
             class extends $baseClass {
-                read(parent, reader) {
+                read(parents, reader) {
                     const dto = {
                         id: reader.get(0), 
                         name: reader.get(1), 
                         courses: null
                     };
-                    return { reader: this, parent, dto, implicit: undefined };
+                    return { reader: this, parents, dto, implicit: undefined };
                 }
                 dependency(unresolvedFieldIndex, row) {
                     switch (unresolvedFieldIndex) {
@@ -145,7 +145,7 @@ describe("JoinEntityTest", () => {
         const linkMapper = view.mapper.fields.find(f => f.prop.name === "learningLinks")!.subMapper!;
         expectCode(linkMapper.dtoRowReader.constructor.toString(), `
             class extends $baseClass {
-                read(parent, reader) {
+                read(parents, reader) {
                     const dto = {
                         id: null, 
                         name: null
@@ -153,7 +153,7 @@ describe("JoinEntityTest", () => {
                     const implicit = {
                         _0: reader.get(0)
                     };
-                    return { reader: this, parent, dto, implicit };
+                    return { reader: this, parents, dto, implicit };
                 }
                 dependency(unresolvedFieldIndex, row) {
                     switch (unresolvedFieldIndex) {
@@ -190,7 +190,7 @@ describe("JoinEntityTest", () => {
             }
         `);
         const linkRow = linkMapper.dtoRowReader.read(
-            studentRow,
+            [studentRow],
             makeReader(2)
         );
         expect(linkRow.dto).toEqual({
@@ -202,17 +202,23 @@ describe("JoinEntityTest", () => {
         const courseMapper = linkMapper.fields.find(f => f.prop.name === "course")!.subMapper!;
         expectCode(courseMapper.dtoRowReader.constructor.toString(), `
             class extends $baseClass {
-                read(parent, reader) {
+                read(parents, reader) {
                     const dto = {
                     };
-                    parent.dto.id = reader.get(0);
-                    parent.dto.name = reader.get(1);
-                    return { reader: this, parent, dto, implicit: undefined };
+                    const reader_0 = reader.get(0);
+                    for (const parent of parents) {
+                        parent.dto.id = reader_0;
+                    }
+                    const reader_1 = reader.get(1);
+                    for (const parent of parents) {
+                        parent.dto.name = reader_1;
+                    }
+                    return { reader: this, parents, dto, implicit: undefined };
                 }
             }
         `);
         courseMapper.dtoRowReader.read(
-            linkRow,
+            [linkRow],
             makeReader(3, "English")
         );
         expect(linkRow.dto).toEqual({
@@ -302,13 +308,13 @@ describe("JoinEntityTest", () => {
 
         expectCode(view.mapper.dtoRowReader.constructor.toString(), `
             class extends $baseClass {
-                read(parent, reader) {
+                read(parents, reader) {
                     const dto = {
                         id: reader.get(0), 
                         name: reader.get(1), 
                         students: null
                     };
-                    return { reader: this, parent, dto, implicit: undefined };
+                    return { reader: this, parents, dto, implicit: undefined };
                 }
                 dependency(unresolvedFieldIndex, row) {
                     switch (unresolvedFieldIndex) {
@@ -359,7 +365,7 @@ describe("JoinEntityTest", () => {
         const linkMapper = view.mapper.fields.find(f => f.prop.name === "←LearningLink.course")!.subMapper!;
         expectCode(linkMapper.dtoRowReader.constructor.toString(), `
             class extends $baseClass {
-                read(parent, reader) {
+                read(parents, reader) {
                     const dto = {
                         id: null, 
                         name: null
@@ -367,7 +373,7 @@ describe("JoinEntityTest", () => {
                     const implicit = {
                         _0: reader.get(0)
                     };
-                    return { reader: this, parent, dto, implicit };
+                    return { reader: this, parents, dto, implicit };
                 }
                 dependency(unresolvedFieldIndex, row) {
                     switch (unresolvedFieldIndex) {
@@ -404,7 +410,7 @@ describe("JoinEntityTest", () => {
             }
         `);
         const linkRow = linkMapper.dtoRowReader.read(
-            courseRow,
+            [courseRow],
             makeReader(2)
         );
         expect(linkRow.dto).toEqual({
@@ -416,17 +422,23 @@ describe("JoinEntityTest", () => {
         const studentMapper = linkMapper.fields.find(f => f.prop.name === "student")!.subMapper!;
         expectCode(studentMapper.dtoRowReader.constructor.toString(), `
             class extends $baseClass {
-                read(parent, reader) {
+                read(parents, reader) {
                     const dto = {
                     };
-                    parent.dto.id = reader.get(0);
-                    parent.dto.name = reader.get(1);
-                    return { reader: this, parent, dto, implicit: undefined };
+                    const reader_0 = reader.get(0);
+                    for (const parent of parents) {
+                        parent.dto.id = reader_0;
+                    }
+                    const reader_1 = reader.get(1);
+                    for (const parent of parents) {
+                        parent.dto.name = reader_1;
+                    }
+                    return { reader: this, parents, dto, implicit: undefined };
                 }
             }
         `);
         studentMapper.dtoRowReader.read(
-            linkRow,
+            [linkRow],
             makeReader(1, "Sam")
         );
         expect(linkRow.dto).toEqual({

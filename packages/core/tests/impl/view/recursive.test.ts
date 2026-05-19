@@ -121,7 +121,7 @@ describe("RecursiveTest", () => {
 
         expectCode(view.mapper.dtoRowReader.constructor.toString(), `
             class extends $baseClass {
-                read(parent, reader) {
+                read(parents, reader) {
                     const dto = {
                         name: reader.get(0), 
                         parentNode: null, 
@@ -131,7 +131,7 @@ describe("RecursiveTest", () => {
                         _1: reader.get(1), 
                         _3: reader.get(2)
                     };
-                    return { reader: this, parent, dto, implicit };
+                    return { reader: this, parents, dto, implicit };
                 }
                 dependency(unresolvedFieldIndex, row) {
                     switch (unresolvedFieldIndex) {
@@ -194,7 +194,7 @@ describe("RecursiveTest", () => {
         const parentMapper = view.mapper.fields.find(f => f.prop.name === "parentNode")!.subMapper!;
         expectCode(parentMapper.dtoRowReader.constructor.toString(), `
             class extends $baseClass {
-                read(parent, reader) {
+                read(parents, reader) {
                     const dto = {
                         name: reader.get(0), 
                         parentNode: null
@@ -202,7 +202,7 @@ describe("RecursiveTest", () => {
                     const implicit = {
                         _1: reader.get(1)
                     };
-                    return { reader: this, parent, dto, implicit };
+                    return { reader: this, parents, dto, implicit };
                 }
                 dependency(unresolvedFieldIndex, row) {
                     switch (unresolvedFieldIndex) {
@@ -254,7 +254,7 @@ describe("RecursiveTest", () => {
         const childMapper = view.mapper.fields.find(f => f.prop.name === "childNodes")!.subMapper!;
         expectCode(childMapper.dtoRowReader.constructor.toString(), `
             class extends $baseClass {
-                read(parent, reader) {
+                read(parents, reader) {
                     const dto = {
                         name: reader.get(0), 
                         childNodes: null
@@ -262,7 +262,7 @@ describe("RecursiveTest", () => {
                     const implicit = {
                         _1: reader.get(1)
                     };
-                    return { reader: this, parent, dto, implicit };
+                    return { reader: this, parents, dto, implicit };
                 }
                 dependency(unresolvedFieldIndex, row) {
                     switch (unresolvedFieldIndex) {

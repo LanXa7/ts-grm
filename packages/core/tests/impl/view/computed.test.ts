@@ -57,7 +57,7 @@ describe("ComputedTest", () => {
         });
         expectCode(view.mapper.dtoRowReader.constructor.toString(), `
             class extends $baseClass {
-                read(parent, reader) {
+                read(parents, reader) {
                     const dto = {
                         id: reader.get(0), 
                         fullName: null
@@ -67,7 +67,7 @@ describe("ComputedTest", () => {
                     };
                     this._implicit_fullName_name(implicit).firstName = reader.get(1);
                     this._implicit_fullName_name(implicit).lastName = reader.get(2);
-                    return { reader: this, parent, dto, implicit };
+                    return { reader: this, parents, dto, implicit };
                 }
                 _implicit_fullName(implicit) {
                     let o = implicit.fullName;
@@ -203,7 +203,7 @@ describe("ComputedTest", () => {
         });
         expectCode(view.mapper.dtoRowReader.constructor.toString(), `
             class extends $baseClass {
-                read(parent, reader) {
+                read(parents, reader) {
                     const dto = {
                         id: reader.get(0), 
                         name: null, 
@@ -216,7 +216,7 @@ describe("ComputedTest", () => {
                     this._name(dto).firstName = reader.get(1);
                     this._implicit_fullName_name(implicit).lastName = reader.get(2);
                     this._name(dto).lastName = reader.get(2);
-                    return { reader: this, parent, dto, implicit };
+                    return { reader: this, parents, dto, implicit };
                 }
                 _name(dto) {
                     let o = dto.name;
@@ -361,7 +361,7 @@ describe("ComputedTest", () => {
         });
         expectCode(view.mapper.dtoRowReader.constructor.toString(), `
             class extends $baseClass {
-                read(parent, reader) {
+                read(parents, reader) {
                     const dto = {
                         id: reader.get(0), 
                         formula: null
@@ -371,7 +371,7 @@ describe("ComputedTest", () => {
                     };
                     this._implicit_fullName_name(implicit).firstName = reader.get(1);
                     this._implicit_fullName_name(implicit).lastName = reader.get(2);
-                    return { reader: this, parent, dto, implicit };
+                    return { reader: this, parents, dto, implicit };
                 }
                 _formula(dto) {
                     let o = dto.formula;
@@ -529,14 +529,14 @@ describe("ComputedTest", () => {
         });
         expectCode(view.mapper.dtoRowReader.constructor.toString(), `
             class extends $baseClass {
-                read(parent, reader) {
+                read(parents, reader) {
                     const dto = {
                         newestBooks: null
                     };
                     const implicit = {
                         _0: reader.get(0)
                     };
-                    return { reader: this, parent, dto, implicit };
+                    return { reader: this, parents, dto, implicit };
                 }
                 dependency(unresolvedFieldIndex, row) {
                     switch (unresolvedFieldIndex) {
@@ -667,13 +667,13 @@ describe("ComputedTest", () => {
         });
         expectCode(view.mapper.dtoRowReader.constructor.toString(), `
             class extends $baseClass {
-                read(parent, reader) {
+                read(parents, reader) {
                     const dto = {
                         id: reader.get(0), 
                         cheapBooks: null, 
                         expensiveBooks: null
                     };
-                    return { reader: this, parent, dto, implicit: undefined };
+                    return { reader: this, parents, dto, implicit: undefined };
                 }
                 dependency(unresolvedFieldIndex, row) {
                     switch (unresolvedFieldIndex) {
@@ -726,14 +726,14 @@ describe("ComputedTest", () => {
             .subMapper!;
         expectCode(cheapBooksMapper.dtoRowReader.constructor.toString(), `
             class extends $baseClass {
-                read(parent, reader) {
+                read(parents, reader) {
                     const dto = {
                         id: reader.get(0), 
                         name: reader.get(1), 
                         edition: reader.get(2), 
                         price: reader.get(3)
                     };
-                    return { reader: this, parent, dto, implicit: undefined };
+                    return { reader: this, parents, dto, implicit: undefined };
                 }
             }
         `);
@@ -744,12 +744,12 @@ describe("ComputedTest", () => {
             .subMapper!;
         expectCode(expensiveBooksMapper.dtoRowReader.constructor.toString(), `
             class extends $baseClass {
-                read(parent, reader) {
+                read(parents, reader) {
                     const dto = {
                         id: reader.get(0), 
                         name: reader.get(1)
                     };
-                    return { reader: this, parent, dto, implicit: undefined };
+                    return { reader: this, parents, dto, implicit: undefined };
                 }
             }
         `);
@@ -810,7 +810,7 @@ describe("ComputedTest", () => {
         });
         expectCode(view.mapper.dtoRowReader.constructor.toString(), `
             class extends $baseClass {
-                read(parent, reader) {
+                read(parents, reader) {
                     const dto = {
                         id: reader.get(0), 
                         bookNames: null
@@ -818,7 +818,7 @@ describe("ComputedTest", () => {
                     const implicit = {
                         bookNames: null
                     };
-                    return { reader: this, parent, dto, implicit };
+                    return { reader: this, parents, dto, implicit };
                 }
                 _implicit_bookNames(implicit) {
                     let o = implicit.bookNames;

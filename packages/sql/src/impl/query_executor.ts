@@ -229,8 +229,9 @@ class ReferenceResolver extends AssociationResolver {
         const targetDtoRowReader = this.targetDtoRowReader;
         while (keyRowReader.next()) {
             const key = keyRowReader.get(0, keySpan);
-            const row = targetDtoRowReader.read(undefined, valueRowReader);
-            this._bindingMap.get(sourceDtoRowReader.dependencyHash(this.unresolvedField.index, key))!.targetRow = row;
+            const binding = this._bindingMap.get(sourceDtoRowReader.dependencyHash(this.unresolvedField.index, key))!
+            const row = targetDtoRowReader.read(binding.sourceRows, valueRowReader);
+            binding.targetRow = row;
         }
     }
 }
