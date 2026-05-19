@@ -373,7 +373,7 @@ function writeDependencyRef(
         if (subPath === "..") {
             writer.code(".parent");
         } else if (subPath.startsWith("<implicit:") && subPath.endsWith(">")) {
-            writer.code("._implicit.").code(subPath.substring(10, subPath.length - 1));
+            writer.code(".implicit.").code(subPath.substring(10, subPath.length - 1));
             metFirst = true;
         } else {
             const prefix = metFirst ? "?." : ".dto.";

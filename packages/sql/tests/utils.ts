@@ -5,7 +5,7 @@ import { newSqlClient, SqlClientImplementor } from "@/sql_client";
 import { AbstractExecutorWrapper, Executor } from "@/transaction/executor";
 import { EntityManager, SqlClient } from "@ts-grm/core";
 import Database from "better-sqlite3";
-import { afterAll, expect } from "vitest";
+import { afterAll, afterEach, expect } from "vitest";
 
 export function useSqliteClient<TImplementor extends boolean = false>(
     _?: TImplementor,
@@ -26,6 +26,8 @@ export function useSqliteClient<TImplementor extends boolean = false>(
     });
     afterAll(() => {
         database.close();
+    });
+    afterEach(() => {
         if (sqlRecord != null) {
             (sqlRecord as SqlRecordImpl).clear();
         }

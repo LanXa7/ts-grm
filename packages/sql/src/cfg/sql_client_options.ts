@@ -8,6 +8,8 @@ export type SqlClientOptions = {
 
     readonly defaultBatchSize: number;
 
+    readonly defaultListBatchSize: number;
+
     readonly sqlLogger: SqlLogger;
 
     readonly filterManager: FilterManager;

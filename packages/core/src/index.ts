@@ -78,7 +78,8 @@ export {
     TargetCalculator,
     ParameterizedTargetCalculator
 } from "./schema/computed";
-export type { TypeOf, View, ModelOf } from "./schema/dto";
+export type { TypeOf, ModelOf } from "./schema/dto";
+export { View } from "./schema/dto";
 export { EntityManager } from "./schema/entity_manager";
 export type { CascadeType } from "./schema/join";
 export type  {

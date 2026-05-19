@@ -21,12 +21,23 @@ export function newSqlClient(
         options, 
         originalSqlClient?.options ?? createDefaultOptions()
     );
-    if (options.defaultBatchSize != null) {
-        if (options.defaultBatchSize < 2) {
-            throw new err.ArgumentError(
-                `"options.defaultBatchSize" cannot be less than 2 when it is specified`
-            );
-        }
+    if (options.defaultBatchSize != null && options.defaultBatchSize < 2) {
+        throw new err.ArgumentError(
+            `"options.defaultBatchSize" cannot be less than 2 when it is specified`
+        );
+    }
+    if (options.defaultListBatchSize != null && options.defaultListBatchSize < 2) {
+        throw new err.ArgumentError(
+            `"options.defaultListBatchSize" cannot be less than 2 when it is specified`
+        );
+    }
+    if (options.defaultListBatchSize != null 
+        && options.defaultBatchSize != null
+        && options.defaultListBatchSize > options.defaultBatchSize
+    ) {
+        throw new err.ArgumentError(
+            `"options.defaultListBatchSize" cannot be greator than "options.defaultBatchSize" when both of them are specified`
+        );
     }
     return new SqlClientImpl(driver, finalOptions);
 }
@@ -53,7 +64,8 @@ export interface SqlClientImplementor extends SqlClient {
 function createDefaultOptions(): SqlClientOptions {
     return {
         strategy: metadata.UPPER_SNAKE_CASE_DATABASE_NAMING_STRATEGY,
-        defaultBatchSize: 64,
+        defaultBatchSize: 128,
+        defaultListBatchSize: 16,
         sqlLogger: {
             pretty: false,
             parameter: "PLACEHOLDER"

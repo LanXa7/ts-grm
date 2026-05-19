@@ -617,6 +617,28 @@ export abstract class AbstractEntityTable implements AbstractTable {
         }
     }
 
+    __expression(prop: EntityProp): Expression<any> {
+        if (prop.props != null) {
+            throw new ArgumentError(`The property "${prop.toString()}" is not scalar property`);
+        }
+        return AbstractEntityTable._expression(this, prop, true);
+    }
+
+    private static _expression(
+        parent: any, 
+        prop: EntityProp, 
+        isTail: boolean
+    ): any {
+        const parentProp = prop.parentProp;
+        if (parentProp != null) {
+            parent = AbstractEntityTable._expression(parent, parentProp, false);
+        }
+        if (isTail) {
+            return parent[prop.name];
+        }
+        return parent[prop.name]();
+    }
+
     static expandTuple(ast: any, prop: EntityProp): ExprTuple<ExpressionLike[]> {
         const arr: Array<Expression<any>> = [];
         for (const subProp of prop.flattenScalarProps.values()) {

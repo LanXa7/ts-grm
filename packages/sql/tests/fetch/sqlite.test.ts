@@ -56,6 +56,81 @@ describe.sequential("SqliteFetchTest", () => {
                 book.fetch(VIEW)
             );
         }).fetchList();
-        console.log(rows);
+        sqlRecord.assert(
+            {
+                sql: `
+                    select 
+                        tb_1_.ID,
+                        tb_1_.NAME,
+                        tb_1_.EDITION,
+                        tb_1_.PRICE,
+                        tb_1_.STORE_ID
+                    from BOOK tb_1_
+                    where 
+                        lower(tb_1_.NAME) like ?
+                    order by 
+                        tb_1_.NAME asc,
+                        tb_1_.EDITION desc
+                `,
+                args: ["%graphql%"]
+            },
+            {
+                sql: `
+                    select 
+                        tb_1_.ID,
+                        tb_1_.ID,
+                        tb_1_.NAME,
+                        tb_1_.VERSION
+                    from BOOK_STORE tb_1_
+                    where 
+                        tb_1_.ID in(?, ?)
+                `,
+                args: [2, 1]
+            }
+        );
+        expect(rows).toEqual([
+            {
+                id: 12,
+                name: 'GraphQL in Action',
+                edition: 3,
+                price: 79.99,
+                store: { id: 2, name: 'MANNING', version: 1 }
+            },
+            {
+                id: 11,
+                name: 'GraphQL in Action',
+                edition: 2,
+                price: 69.99,
+                store: { id: 2, name: 'MANNING', version: 1 }
+            },
+            {
+                id: 10,
+                name: 'GraphQL in Action',
+                edition: 1,
+                price: 59.99,
+                store: { id: 2, name: 'MANNING', version: 1 }
+            },
+            {
+                id: 3,
+                name: 'Learning GraphQL',
+                edition: 3,
+                price: 33.99,
+                store: { id: 1, name: "O'REILLY", version: 1 }
+            },
+            {
+                id: 2,
+                name: 'Learning GraphQL',
+                edition: 2,
+                price: 33.99,
+                store: { id: 1, name: "O'REILLY", version: 1 }
+            },
+            {
+                id: 1,
+                name: 'Learning GraphQL',
+                edition: 1,
+                price: 33.99,
+                store: { id: 1, name: "O'REILLY", version: 1 }
+            }
+        ]);
     });
 });
