@@ -4,21 +4,21 @@ import { useSqliteClientWithData } from "./utils";
 import { dto } from "@ts-grm/core";
 import { ORDER, ORDER_ITEM, TAG } from "../model/model";
 
-describe.sequential("EmbeddedSpliteTest", () => {
+describe.sequential("WideKeySqliteTest", () => {
 
     const sqlRecord = newSqlRecord();
 
     const sqlClient = useSqliteClientWithData(sqlRecord);
 
     it("m2o", async() => {
-        const VIEW = dto.view(ORDER_ITEM, $ => $
+        const view = dto.view(ORDER_ITEM, $ => $
             .allScalars()
             .order()
         );
         const rows = await sqlClient.createQuery(ORDER_ITEM, (q, orderItem) => {
             q.where(orderItem.id.in(1, 2, 3, 4));
             return q.select(
-                orderItem.fetch(VIEW)
+                orderItem.fetch(view)
             );
         }).fetchList();
         sqlRecord.assert(
@@ -119,14 +119,14 @@ describe.sequential("EmbeddedSpliteTest", () => {
     });
 
     it("o2m", async() => {
-        const VIEW = dto.view(ORDER, $ => $
+        const view = dto.view(ORDER, $ => $
             .allScalars()
             .items()
         );
         const rows = await sqlClient.createQuery(ORDER, (q, order) => {
             q.where(order.id().x.eq(2));
             return q.select(
-                order.fetch(VIEW)
+                order.fetch(view)
             );
         }).fetchList();
         sqlRecord.assert(
@@ -208,13 +208,13 @@ describe.sequential("EmbeddedSpliteTest", () => {
     });
 
     it("m2m", async() => {
-        const VIEW = dto.view(ORDER, $ => $
+        const view = dto.view(ORDER, $ => $
             .name
             .tags($ => $.name)
         );
         const rows = await sqlClient.createQuery(ORDER, (q, order) => {
             q.where(order.id().x.eq(2));
-            return q.select(order.fetch(VIEW));
+            return q.select(order.fetch(view));
         }).fetchList();
         sqlRecord.assert(
             {
@@ -272,14 +272,14 @@ describe.sequential("EmbeddedSpliteTest", () => {
     });
 
     it("inverseM2M", async() => {
-        const VIEW = dto.view(TAG, $ => $
+        const view = dto.view(TAG, $ => $
             .name
             .orders($ => $.name)
         );
         const rows = await sqlClient.createQuery(TAG, (q, tag) => {
             q.where(tag.id().low.eq(1));
             return q.select(
-                tag.fetch(VIEW)
+                tag.fetch(view)
             );
         }).fetchList();
         sqlRecord.assert(

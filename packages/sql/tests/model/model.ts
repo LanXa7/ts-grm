@@ -198,7 +198,7 @@ export const TREE_NODE = model(
         class {
         id = prop.i64()
         name = prop.str()
-        parentNode = prop.m2o.self(() => TREE_NODE)
+        parentNode = prop.m2o.self(() => TREE_NODE).nullable()
         childNodes = prop.o2m.self(() => TREE_NODE, { mappedBy: "parentNode" })
     },
     ctx => {

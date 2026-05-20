@@ -16,7 +16,7 @@ export function useSqliteClientWithData(sqlRecord: SqlRecord): SqlClient {
                 try {
                     await sqlClient.executor.execute(sql);
                 } catch (ex) {
-                    console.error("Failed to execute", sql);
+                    console.error("Failed to execute: ", sql, ex);
                     throw ex;
                 }
             }
@@ -117,4 +117,32 @@ insert into ORDER_TAG_MAPPING(order_x, order_y_a, order_y_b, tag_low, tag_high) 
     (2, 1, 1, 2, 3),
     (2, 1, 2, 1, 1),
     (2, 1, 2, 1, 2);
+
+insert into TREE_NODE(
+    ID, TYPE, NAME, PARENT_NODE_ID
+) values
+    (1, 'Group', 'Home', null),
+        (2, 'Group', 'Food', 1),
+            (3, 'Group', 'Drinks', 2),
+                (4, 'Group', 'Coca Cola', 3),
+                (5, 'Group', 'Fanta', 3),
+            (6, 'Group', 'Bread', 2),
+                (7, 'Group', 'Baguette', 6),
+                (8, 'Group', 'Ciabatta', 6),
+        (9, 'Group', 'Clothing', 1),
+            (10, 'Group', 'Woman', 9),
+                (11, 'Group', 'Casual wear', 10),
+                    (12, 'Group', 'Dress', 11),
+                    (13, 'Group', 'Miniskirt', 11),
+                    (14, 'Group', 'Jeans', 11),
+                (15, 'Group', 'Formal wear', 10),
+                    (16, 'Group', 'Suit', 15),
+                    (17, 'Group', 'Shirt', 15),
+            (18, 'Group', 'Man', 9),
+                (19, 'Group', 'Casual wear', 18),
+                    (20, 'Group', 'Jacket', 19),
+                    (21, 'Group', 'Jeans', 19),
+                (22, 'Group', 'Formal wear', 18),
+                    (23, 'Group', 'Suit', 22),
+                    (24, 'Group', 'Shirt', 22);
 `;

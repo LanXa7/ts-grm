@@ -1,0 +1,203 @@
+import { dto } from "@ts-grm/core";
+import { describe, it, expect } from "vitest";
+import { BOOK, TREE_NODE } from "../model/model";
+import { newSqlRecord } from "../utils";
+import { useSqliteClientWithData } from "./utils";
+
+describe.sequential("FlatTest", () => {
+
+    const sqlRecord = newSqlRecord();
+
+    const sqlClient = useSqliteClientWithData(sqlRecord);
+
+    it("embedded", async () => {
+        const view = dto.view(BOOK, $ => $
+            .name
+            .authors($ => $
+                .id
+                .flat({prop: "name", prefix: "the"}, $ => $
+                    .allScalars()
+                )
+            )
+        );
+        const row = await sqlClient.createQuery(BOOK, (q, book) => {
+            q.where(book.id.eq(9));
+            return q.select(
+                book.fetch(view)
+            );
+        }).fetchRequired();
+        sqlRecord.assert(
+            {
+                sql: `
+                    select 
+                        tb_1_.NAME,
+                        tb_1_.ID
+                    from BOOK tb_1_
+                    where 
+                        tb_1_.ID = ?
+                `,
+                args: [9],
+                purpose: "query"
+            },
+            {
+                sql: `
+                    select 
+                        tb_2_.BOOK_ID,
+                        tb_1_.ID,
+                        tb_1_.FIRST_NAME,
+                        tb_1_.LAST_NAME
+                    from AUTHOR tb_1_
+                    inner join book_author_mapping tb_2_ on 
+                        tb_1_.ID = tb_2_.AUTHOR_ID
+                    where 
+                        tb_2_.BOOK_ID = ?
+                    order by 
+                        tb_1_.FIRST_NAME asc,
+                        tb_1_.LAST_NAME asc
+                `,
+                args: [9],
+                purpose: "loadAssociation(Book.authors)"
+            }
+        );
+        expect(row).toEqual({
+            name: 'YugabyteDB: The Definitive Guide',
+            authors: [
+                { id: 5, theFirstName: 'Kannappan', theLastName: 'Muthukkaruppan' },
+                { id: 4, theFirstName: 'Karthik', theLastName: 'Ranganathan' },
+                { id: 6, theFirstName: 'Mikhail', theLastName: 'Bautin' }
+            ]
+        });
+    });
+
+    it("shallow", async () => {
+        const view = dto.view(BOOK, $ => $
+            .allScalars()
+            .flat("store", $ => $
+                .id
+                .name
+            )
+        );
+        const rows = await sqlClient.createQuery(BOOK, (q, book) => {
+            q.where(book.id.in(9, 12));
+            return q.select(
+                book.fetch(view)
+            );
+        }).fetchList();
+        sqlRecord.assert(
+            {
+                sql: `
+                    select 
+                        tb_1_.ID,
+                        tb_1_.NAME,
+                        tb_1_.EDITION,
+                        tb_1_.PRICE,
+                        tb_1_.STORE_ID
+                    from BOOK tb_1_
+                    where 
+                        tb_1_.ID in(?, ?)
+                `,
+                args: [9, 12],
+                purpose: "query"
+            },
+            {
+                sql: `
+                    select 
+                        tb_1_.ID,
+                        tb_1_.ID,
+                        tb_1_.NAME
+                    from BOOK_STORE tb_1_
+                    where 
+                        tb_1_.ID in(?, ?)
+                `,
+                args: [1, 2],
+                purpose: "loadAssociation(Book.store)"
+            }
+        );
+        expect(rows).toEqual([
+            {
+                id: 9,
+                name: 'YugabyteDB: The Definitive Guide',
+                edition: 3,
+                price: 89.99,
+                storeId: 1,
+                storeName: "O'REILLY"
+            },
+            {
+                id: 12,
+                name: 'GraphQL in Action',
+                edition: 3,
+                price: 79.99,
+                storeId: 2,
+                storeName: 'MANNING'
+            }
+        ]);
+    });
+
+    it("deep", async () => {
+        const view = dto.view(TREE_NODE, $ => $
+            .allScalars()
+            .flat({prop: "parentNode", prefix: "parent"}, $ => $
+                .allScalars()
+                .flat({prop: "parentNode", prefix: "grand"}, $ => $
+                    .allScalars()
+                )
+            )
+        );
+        const row = await sqlClient.createQuery(TREE_NODE, (q, treeNode) => {
+            q.where(treeNode.name.eq("Coca Cola"));
+            return q.select(
+                treeNode.fetch(view)
+            );
+        }).fetchRequired();
+        sqlRecord.assert(
+            {
+                sql: `
+                    select 
+                        tb_1_.ID,
+                        tb_1_.NAME,
+                        tb_1_.PARENT_NODE_ID
+                    from TREE_NODE tb_1_
+                    where 
+                        tb_1_.NAME = ?
+                `,
+                args: ["Coca Cola"],
+                purpose: "query"
+            },
+            {
+                sql: `
+                    select 
+                        tb_1_.ID,
+                        tb_1_.ID,
+                        tb_1_.NAME,
+                        tb_1_.PARENT_NODE_ID
+                    from TREE_NODE tb_1_
+                    where 
+                        tb_1_.ID = ?
+                `,
+                args: [3],
+                purpose: "loadAssociation(TreeNode.parentNode)"
+            },
+            {
+                sql: `
+                    select 
+                        tb_1_.ID,
+                        tb_1_.ID,
+                        tb_1_.NAME
+                    from TREE_NODE tb_1_
+                    where 
+                        tb_1_.ID = ?
+                `,
+                args: [2],
+                purpose: "loadAssociation(TreeNode.parentNode)"
+            }
+        );
+        expect(row).toEqual({
+            id: 4,
+            name: 'Coca Cola',
+            parentId: 3,
+            parentName: 'Drinks',
+            parentGrandId: 2,
+            parentGrandName: 'Food'
+        });
+    });
+});

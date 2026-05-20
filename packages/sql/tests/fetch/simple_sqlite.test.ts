@@ -1,7 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { useSqliteClientWithData } from "./utils";
 import { AUTHOR, BOOK, BOOK_STORE } from "../model/model";
-import { SIMPLE_BOOK_VIEW } from "../query/utils";
 import { newSqlRecord } from "../utils";
 import { dto } from "@ts-grm/core";
 
@@ -12,11 +11,15 @@ describe.sequential("SimpleSqliteFetchTest", () => {
     const sqlClient = useSqliteClientWithData(sqlRecord);
     
     it("alone", async() => {
+        const view = dto.view(BOOK, $ => $
+            .allScalars()
+            .remove("price")
+        );
         const rows = await sqlClient.createQuery(BOOK, (q, book) => {
             q.where(book.storeId.eq(2));
             q.orderBy(book.edition.desc())
             return q.select(
-                book.fetch(SIMPLE_BOOK_VIEW)
+                book.fetch(view)
             );
         }).fetchList();
         sqlRecord.assert({
@@ -42,7 +45,7 @@ describe.sequential("SimpleSqliteFetchTest", () => {
     });
 
     it("m2o", async() => {
-        const VIEW = dto.view(BOOK, $ => $
+        const view = dto.view(BOOK, $ => $
             .allScalars()
             .store($ => $
                 .id
@@ -54,7 +57,7 @@ describe.sequential("SimpleSqliteFetchTest", () => {
             q.where(book.name.ilike("graphql"));
             q.orderBy(book.name, book.edition.desc());
             return q.select(
-                book.fetch(VIEW)
+                book.fetch(view)
             );
         }).fetchList();
         sqlRecord.assert(
@@ -138,7 +141,7 @@ describe.sequential("SimpleSqliteFetchTest", () => {
     });
 
     it("o2m", async () => {
-        const VIEW = dto.view(BOOK_STORE, $ => $
+        const view = dto.view(BOOK_STORE, $ => $
             .allScalars()
             .books($ => $
                 .id
@@ -149,7 +152,7 @@ describe.sequential("SimpleSqliteFetchTest", () => {
         const rows = await sqlClient.createQuery(BOOK_STORE, (q, store) => {
             q.orderBy(store.name);
             return q.select(
-                store.fetch(VIEW)
+                store.fetch(view)
             );
         }).fetchList();
         sqlRecord.assert(
@@ -263,7 +266,7 @@ describe.sequential("SimpleSqliteFetchTest", () => {
     });
 
     it("m2m", async() => {
-        const VIEW = dto.view(BOOK, $ => $
+        const view = dto.view(BOOK, $ => $
             .allScalars()
             .authors($ => $
                 .id
@@ -274,7 +277,7 @@ describe.sequential("SimpleSqliteFetchTest", () => {
             q.where(book.edition.eq(3));
             q.orderBy(book.name.asc())
             return q.select(
-                book.fetch(VIEW)
+                book.fetch(view)
             );
         }).fetchList();
         sqlRecord.assert(
@@ -400,7 +403,7 @@ describe.sequential("SimpleSqliteFetchTest", () => {
     });
 
     it("inverseM2M", async() => {
-        const VIEW = dto.view(AUTHOR, $ => $
+        const view = dto.view(AUTHOR, $ => $
             .allScalars()
             .books($ => $
                 .id
@@ -411,7 +414,7 @@ describe.sequential("SimpleSqliteFetchTest", () => {
         const rows = await sqlClient.createQuery(AUTHOR, (q, author) => {
             q.where(author.id.in(3, 7));
             return q.select(
-                author.fetch(VIEW)
+                author.fetch(view)
             );
         }).fetchList();
         sqlRecord.assert(

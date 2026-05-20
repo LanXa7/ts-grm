@@ -1,4 +1,4 @@
-import { ast, ExpressionOrder, metadata, AtomRootQuery, RootQueryProjection, RowTypeOf, suppressUnused } from "@ts-grm/core";
+import { ast, ExpressionOrder, metadata, AtomRootQuery, RootQueryProjection, RowTypeOf, suppressUnused, err, FetchOptions } from "@ts-grm/core";
 import { MutableRootQueryImpl } from "./mutable_root_query_impl";
 import { AbstractRootQueryProjection } from "./query_projection";
 import { executeQuery } from "./query_executor";
@@ -52,12 +52,41 @@ implements AtomRootQuery<TProjection>, ast.AtomQueryContract {
     }
 
     async fetchList<TNullAsUndefined extends boolean = false>(
-        options?: {
-            readonly nullAsUndefined?: TNullAsUndefined;
-        }
+        options?: FetchOptions<TNullAsUndefined>
     ): Promise<Array<RowTypeOf<TProjection, TNullAsUndefined>>> {
         suppressUnused(options);
         return await executeQuery(this) as Array<RowTypeOf<TProjection, TNullAsUndefined>>;
+    }
+
+    async fetchRequired<TNullAsUndefined extends boolean = false>(
+        options?: FetchOptions<TNullAsUndefined>
+    ): Promise<RowTypeOf<TProjection, TNullAsUndefined>> {
+        const rows = await this.fetchList(options);
+        switch (rows.length) {
+            case 0:
+                throw new err.StateError(`"fetchRequired" does not accpet empty result set`);
+            case 1:
+                return rows[0] as any;
+            default:
+                throw new err.StateError(`"fetchRequired" does not accpet multiple rows`);
+        }
+    }
+
+    async fetchOptional<TNullAsUndefined extends boolean = false>(
+        options?: FetchOptions<TNullAsUndefined>
+    ): Promise<
+        RowTypeOf<TProjection, TNullAsUndefined> 
+        | TNullAsUndefined extends true ? undefined : null
+    > {
+        const rows = await this.fetchList(options);
+        switch (rows.length) {
+            case 0:
+                return ((options?.nullAsUndefined ?? false) ? undefined : null) as any;
+            case 1:
+                return rows[0] as any;
+            default:
+                throw new err.StateError(`"fetchOptional" does not accpet multiple rows`);
+        }
     }
 
     get kind(): "ATOM" {

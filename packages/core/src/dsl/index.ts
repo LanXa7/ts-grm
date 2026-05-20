@@ -20,6 +20,7 @@ export type {
     RootQuerySelectMapArgs, 
     RootQuerySelection, 
     RowTypeOf,
+    FetchOptions,
     FetchedView 
 } from "./root_query";
 export type { 

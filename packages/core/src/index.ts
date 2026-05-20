@@ -97,6 +97,7 @@ export type  {
     RootQuerySelectMapArgs,
     RootQuerySelection,
     FetchedView,
+    FetchOptions,
     RootQueryProjection,
     SubQueryLike,
     ExpressionSubQuery,

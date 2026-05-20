@@ -52,11 +52,24 @@ export interface RootQuery<TProjection extends RootQueryProjection<any>> {
     fetchList<
         TNullAsUndefined extends boolean = false
     >(
-        options?: {
-            readonly nullAsUndefined?: TNullAsUndefined 
-        }
+        options?: FetchOptions<TNullAsUndefined>
     ): Promise<Array<RowTypeOf<TProjection, TNullAsUndefined>>>;
+
+    fetchRequired<TNullAsUndefined extends boolean = false>(
+        options?: FetchOptions<TNullAsUndefined>
+    ): Promise<RowTypeOf<TProjection, TNullAsUndefined>>;
+
+    fetchOptional<TNullAsUndefined extends boolean = false>(
+        options?: FetchOptions<TNullAsUndefined>
+    ): Promise<
+        RowTypeOf<TProjection, TNullAsUndefined> 
+        | TNullAsUndefined extends true ? undefined : null
+    >;
 }
+
+export type FetchOptions<TNullAsUndefined extends boolean> = {
+    readonly nullAsUndefined?: TNullAsUndefined
+};
 
 export interface AtomRootQuery<TProjection extends RootQueryProjection<any>>
 extends RootQuery<TProjection> {
