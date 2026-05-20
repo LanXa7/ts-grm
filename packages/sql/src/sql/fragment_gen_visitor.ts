@@ -220,7 +220,7 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
 
     visitTuple(tuple: ast.TupleContract): void {
         using _ = this._precedenceStack.with(Precedence.ROOT);
-        using __ = this._compositeStack.with(new Scope("VALUES"));
+        using __ = this._compositeStack.with(new Scope("VALUES", false));
         for (const expr of tuple.exprs) {
             this._compositeStack.current.separator();
             expr.accept(this);

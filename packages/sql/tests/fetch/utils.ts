@@ -98,4 +98,23 @@ insert into ORDER_ITEM(ID, PRODUCT_NAME, order_x, order_y_a, order_y_b) values
     (6, 'TV', 2, 1, 1),
     (7, 'Computer', 2, 1, 2),
     (8, 'iPhone', 2, 1, 2);
+
+insert into TAG(LOW, HIGH, NAME) values
+    (1, 1, 'red'),
+    (1, 2, 'orange'),
+    (1, 3, 'yellow'),
+    (1, 4, 'green'),
+    (2, 1, 'cyan'),
+    (2, 2, 'blue'),
+    (2, 3, 'purple');
+
+insert into ORDER_TAG_MAPPING(order_x, order_y_a, order_y_b, tag_low, tag_high) values
+    (1, 1, 1, 1, 2),
+    (1, 1, 1, 1, 3),
+    (1, 1, 2, 1, 4),
+    (1, 1, 2, 2, 1),
+    (2, 1, 1, 2, 2),
+    (2, 1, 1, 2, 3),
+    (2, 1, 2, 1, 1),
+    (2, 1, 2, 1, 2);
 `;

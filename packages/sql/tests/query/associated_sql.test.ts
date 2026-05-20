@@ -46,15 +46,7 @@ describe("AssociatedSqlTest", () => {
                         1
                     from "ORDER" tb_2_
                     where 
-                            (
-                                tb_2_.X,
-                                tb_2_.A,
-                                tb_2_.B
-                            ) = (
-                                tb_1_.order_x,
-                                tb_1_.order_y_a,
-                                tb_1_.order_y_b
-                            )
+                            (tb_2_.X, tb_2_.A, tb_2_.B) = (tb_1_.order_x, tb_1_.order_y_a, tb_1_.order_y_b)
                         and
                             length(cast(tb_2_.NAME as text)) < ?
                 )
@@ -241,15 +233,7 @@ describe("AssociatedSqlTest", () => {
                     inner join ORDER_COMMENT_MAPPING tb_3_ on 
                         tb_2_.ID = tb_3_.COMMENT_ID
                     where 
-                        (
-                            tb_3_.order_x,
-                            tb_3_.order_y_a,
-                            tb_3_.order_y_b
-                        ) = (
-                            tb_1_.X,
-                            tb_1_.A,
-                            tb_1_.B
-                        )
+                        (tb_3_.order_x, tb_3_.order_y_a, tb_3_.order_y_b) = (tb_1_.X, tb_1_.A, tb_1_.B)
                 ) between ? and ?
         `);
     });

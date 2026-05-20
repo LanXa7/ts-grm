@@ -63,10 +63,7 @@ describe("SubQueryTest", () => {
                 tb_1_.EDITION
             from BOOK tb_1_
             where 
-                (
-                    tb_1_.NAME,
-                    tb_1_.EDITION
-                ) in(
+                (tb_1_.NAME, tb_1_.EDITION) in(
                     select 
                         tb_2_.NAME,
                         max(tb_2_.EDITION)
@@ -96,10 +93,7 @@ describe("SubQueryTest", () => {
                 tb_1_.NAME
             from "ORDER" tb_1_
             where 
-                (
-                    tb_1_.A,
-                    tb_1_.B
-                ) in(
+                (tb_1_.A, tb_1_.B) in(
                     select 
                         tb_2_.order_y_a,
                         tb_2_.order_y_b

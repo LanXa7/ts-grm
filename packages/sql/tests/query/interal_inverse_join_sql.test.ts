@@ -190,25 +190,9 @@ describe("InternalInverseJoinSqlTest", () => {
                 tb_1_.ID = tb_2_.COMMENT_ID
             where 
                     (
-                        (
-                            tb_2_.order_x,
-                            tb_2_.order_y_a,
-                            tb_2_.order_y_b
-                        ) = (
-                            ?,
-                            ?,
-                            ?
-                        )
+                        (tb_2_.order_x, tb_2_.order_y_a, tb_2_.order_y_b) = (?, ?, ?)
                     or
-                        (
-                            tb_2_.order_x,
-                            tb_2_.order_y_a,
-                            tb_2_.order_y_b
-                        ) = (
-                            ?,
-                            ?,
-                            ?
-                        )
+                        (tb_2_.order_x, tb_2_.order_y_a, tb_2_.order_y_b) = (?, ?, ?)
                     )
                 and
                     length(cast(tb_1_.TEXT as text)) >= ?

@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { newSqlRecord } from "../utils";
 import { useSqliteClientWithData } from "./utils";
 import { dto } from "@ts-grm/core";
-import { ORDER, ORDER_ITEM } from "../model/model";
+import { ORDER, ORDER_ITEM, TAG } from "../model/model";
 
 describe.sequential("EmbeddedSpliteTest", () => {
 
@@ -49,21 +49,9 @@ describe.sequential("EmbeddedSpliteTest", () => {
                         tb_1_.NAME
                     from "ORDER" tb_1_
                     where 
-                        (
-                            tb_1_.X,
-                            tb_1_.A,
-                            tb_1_.B
-                        ) in(
-                            (
-                                ?,
-                                ?,
-                                ?
-                            ),
-                            (
-                                ?,
-                                ?,
-                                ?
-                            )
+                        (tb_1_.X, tb_1_.A, tb_1_.B) in(
+                            (?, ?, ?),
+                            (?, ?, ?)
                         )
                 `,
                 args: [1, 1, 1, 1, 1, 2],
@@ -166,21 +154,9 @@ describe.sequential("EmbeddedSpliteTest", () => {
                         tb_1_.PRODUCT_NAME
                     from ORDER_ITEM tb_1_
                     where 
-                        (
-                            tb_1_.order_x,
-                            tb_1_.order_y_a,
-                            tb_1_.order_y_b
-                        ) in(
-                            (
-                                ?,
-                                ?,
-                                ?
-                            ),
-                            (
-                                ?,
-                                ?,
-                                ?
-                            )
+                        (tb_1_.order_x, tb_1_.order_y_a, tb_1_.order_y_b) in(
+                            (?, ?, ?),
+                            (?, ?, ?)
                         )
                 `,
                 args: [2, 1, 1, 2, 1, 2],
@@ -226,6 +202,149 @@ describe.sequential("EmbeddedSpliteTest", () => {
                         "id": 8,
                         "productName": "iPhone"
                     }
+                ]
+            }
+        ]);
+    });
+
+    it("m2m", async() => {
+        const VIEW = dto.view(ORDER, $ => $
+            .name
+            .tags($ => $.name)
+        );
+        const rows = await sqlClient.createQuery(ORDER, (q, order) => {
+            q.where(order.id().x.eq(2));
+            return q.select(order.fetch(VIEW));
+        }).fetchList();
+        sqlRecord.assert(
+            {
+                sql: `
+                    select 
+                        tb_1_.NAME,
+                        tb_1_.X,
+                        tb_1_.A,
+                        tb_1_.B
+                    from "ORDER" tb_1_
+                    where 
+                        tb_1_.X = ?
+                `,
+                args: [2],
+                purpose: "query"
+            },
+            {
+                sql: `
+                    select 
+                        tb_2_.order_x,
+                        tb_2_.order_y_a,
+                        tb_2_.order_y_b,
+                        tb_1_.NAME
+                    from TAG tb_1_
+                    inner join ORDER_TAG_MAPPING tb_2_ on 
+                        tb_1_.LOW = tb_2_.tag_low
+                    and
+                        tb_1_.HIGH = tb_2_.tag_high
+                    where 
+                        (tb_2_.order_x, tb_2_.order_y_a, tb_2_.order_y_b) in(
+                            (?, ?, ?),
+                            (?, ?, ?)
+                        )
+                `,
+                args: [2, 1, 1, 2, 1, 2],
+                purpose: "loadAssociation(Order.tags)"
+            }
+        );
+        expect(rows).toEqual([
+            {
+                "name": "order-3",
+                "tags": [
+                    { "name": "blue" },
+                    { "name": "purple" }
+                ]
+            },
+            {
+                "name": "order-4",
+                "tags": [
+                    { "name": "red" },
+                    { "name": "orange" }
+                ]
+            }
+        ]);
+    });
+
+    it("inverseM2M", async() => {
+        const VIEW = dto.view(TAG, $ => $
+            .name
+            .orders($ => $.name)
+        );
+        const rows = await sqlClient.createQuery(TAG, (q, tag) => {
+            q.where(tag.id().low.eq(1));
+            return q.select(
+                tag.fetch(VIEW)
+            );
+        }).fetchList();
+        sqlRecord.assert(
+            {
+                sql: `
+                    select 
+                        tb_1_.NAME,
+                        tb_1_.LOW,
+                        tb_1_.HIGH
+                    from TAG tb_1_
+                    where 
+                        tb_1_.LOW = ?
+                `,
+                args: [1],
+                purpose: "query"
+            }, 
+            {
+                sql: `
+                    select 
+                        tb_2_.tag_low,
+                        tb_2_.tag_high,
+                        tb_1_.NAME
+                    from "ORDER" tb_1_
+                    inner join ORDER_TAG_MAPPING tb_2_ on 
+                        tb_1_.X = tb_2_.order_x
+                    and
+                        tb_1_.A = tb_2_.order_y_a
+                    and
+                        tb_1_.B = tb_2_.order_y_b
+                    where 
+                        (tb_2_.tag_low, tb_2_.tag_high) in(
+                            (?, ?),
+                            (?, ?),
+                            (?, ?),
+                            (?, ?)
+                        )
+                `,
+                args: [1, 1, 1, 2, 1, 3, 1, 4],
+                purpose: "loadAssociation(Tag.orders)"
+            }
+        );
+        expect(rows).toEqual([
+            {
+                "name": "red",
+                "orders": [
+                    { "name": "order-4" }
+                ]
+            },
+            {
+                "name": "orange",
+                "orders": [
+                    { "name": "order-1" },
+                    { "name": "order-4" }
+                ]
+            },
+            {
+                "name": "yellow",
+                "orders": [
+                    { "name": "order-1" }
+                ]
+            },
+            {
+                "name": "green",
+                "orders": [
+                    { "name": "order-2" }
                 ]
             }
         ]);
