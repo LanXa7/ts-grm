@@ -2,7 +2,7 @@ import { SqliteDriver } from "@/driver/sqlite_driver";
 import { DataRows } from "@/impl/data_row_reader";
 import { Value } from "@/sql/fragment";
 import { newSqlClient, SqlClientImplementor } from "@/sql_client";
-import { AbstractExecutorWrapper, Executor } from "@/transaction/executor";
+import { AbstractExecutorWrapper, Executor, Purpose } from "@/transaction/executor";
 import { EntityManager, SqlClient } from "@ts-grm/core";
 import Database from "better-sqlite3";
 import { afterAll, afterEach, expect } from "vitest";
@@ -107,14 +107,15 @@ export interface SqlRecord {
 export type StatementRecord = {
     readonly sql: string;
     readonly args: ReadonlyArray<any>;
+    readonly purpose: string;
 }
 
 class SqlRecordImpl implements SqlRecord {
 
     private readonly _statements: Array<StatementRecord> = [];
 
-    add(sql: string, args: ReadonlyArray<any>): void {
-        this._statements.push({sql, args});
+    add(sql: string, args: ReadonlyArray<any>, purpose: Purpose): void {
+        this._statements.push({ sql, args, purpose: purposeString(purpose) });
     }
 
     clear() {
@@ -130,6 +131,8 @@ class SqlRecordImpl implements SqlRecord {
                 .toEqual(normalizeCode(statements[i]!.sql));
             expect(this._statements[i]!.args, `The args of statments[${i}]`)
                 .toEqual(statements[i]!.args);
+            expect(this._statements[i]!.purpose, `The purpose of statments[${i}]`)
+                .toEqual(statements[i]!.purpose);
         }
     }
 
@@ -152,9 +155,19 @@ class SqlRecordExecutor extends AbstractExecutorWrapper {
 
     executeStatement(
         sql: string, 
-        values: ReadonlyArray<Value>
+        values: ReadonlyArray<Value>,
+        purpose: Purpose
     ): Promise<DataRows> {
-        this.sqlRecord.add(sql, values.map(v => v.value));
-        return super.executeStatement(sql, values);
+        this.sqlRecord.add(sql, values.map(v => v.value), purpose);
+        return super.executeStatement(sql, values, purpose);
+    }
+}
+
+function purposeString(purpose: Purpose): string {
+    switch (purpose.kind) {
+        case "QUERY":
+            return "query";
+        case "LOAD_ASSOCIATION":
+            return `loadAssociation(${purpose.prop.toString()})`;
     }
 }

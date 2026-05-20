@@ -50,4 +50,48 @@ insert into BOOK(ID, TYPE, NAME, EDITION, PRICE, STORE_ID)
     values(11, 'PaperBook', 'GraphQL in Action', 2, 69.99, 2);
 insert into BOOK(ID, TYPE, NAME, EDITION, PRICE, STORE_ID)
     values(12, 'PaperBook', 'GraphQL in Action', 3, 79.99, 2);
+
+insert into author(id, first_name, last_name) 
+    values(1, 'Eve', 'Procello');
+insert into author(id, first_name, last_name) 
+    values(2, 'Alex', 'Banks');
+insert into author(id, first_name, last_name) 
+    values(3, 'Dan', 'Vanderkam');
+insert into author(id, first_name, last_name) 
+    values(4, 'Karthik', 'Ranganathan');
+insert into author(id, first_name, last_name) 
+    values(5, 'Kannappan', 'Muthukkaruppan');
+insert into author(id, first_name, last_name) 
+    values(6, 'Mikhail', 'Bautin');
+insert into author(id, first_name, last_name) 
+    values(7, 'Samer', 'Buna');
+
+insert into book_author_mapping(book_id, author_id) values
+    (1, 1),
+    (2, 1),
+    (3, 1),
+
+    (1, 2),
+    (2, 2),
+    (3, 2),
+
+    (4, 3),
+    (5, 3),
+    (6, 3),
+
+    (7, 4),
+    (8, 4),
+    (9, 4),
+
+    (7, 5),
+    (8, 5),
+    (9, 5),
+
+    (7, 6),
+    (8, 6),
+    (9, 6),
+
+    (10, 7),
+    (11, 7),
+    (12, 7);
 `;

@@ -186,7 +186,9 @@ export const AUTHOR = model("Author", "id", class {
         firstName: prop.str(),
         lastName: prop.str()
     })
-    books = prop.m2m(BOOK).mappedBy("authors")
+    books = prop.m2m(BOOK)
+        .mappedBy("authors")
+        .orderBy("name", "edition")
     fullName = prop.formula.ts(AUTHOR_FULL_NAME_FORMULA)
 });
 

@@ -16,7 +16,7 @@ export async function executeQuery<TProjection extends RootQueryProjection<any>>
     const [sql, args] = buildStatement(sqlClient, query);
     const transactionManager = sqlClient.driver.transactionManager;
     return transactionManager.executeReadonly(async () => {
-        const dataRows = await sqlClient.executor.executeStatement(sql, args);
+        const dataRows = await sqlClient.executor.executeStatement(sql, args, { kind: "QUERY" });
         const dataRowReader = DataRowReader.of(dataRows);
         switch (contract.projection.kind) {
             case "ROOT_SINGLE":
@@ -263,7 +263,10 @@ class AssociationResolver {
             return q.select(...selections);
         });
         const [sql, args] = buildStatement(this._sqlClient, query);
-        const dataRows = await this._sqlClient.executor.executeStatement(sql, args);
+        const dataRows = await this._sqlClient.executor.executeStatement(sql, args, {
+            kind: "LOAD_ASSOCIATION",
+            prop: this._unresolvedField.prop as metadata.EntityProp
+        });
         const keyRowReader = DataRowReader.of(dataRows);
         const keySpan = this._unresolvedField.dependencies!.length;
         const valueRowReader = keyRowReader.offset(keySpan);

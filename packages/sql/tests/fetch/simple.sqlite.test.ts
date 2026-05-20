@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { useSqliteClientWithData } from "./utils";
-import { BOOK, BOOK_STORE } from "../model/model";
+import { AUTHOR, BOOK, BOOK_STORE } from "../model/model";
 import { SIMPLE_BOOK_VIEW } from "../query/utils";
 import { newSqlRecord } from "../utils";
 import { dto } from "@ts-grm/core";
@@ -31,7 +31,8 @@ describe.sequential("SimpleSqliteFetchTest", () => {
             order by 
                 tb_1_.EDITION desc
             `,
-            args: [2]
+            args: [2],
+            purpose: "query"
         });
         expect(rows).toEqual([
             {"id":12,"name":"GraphQL in Action","edition":3},
@@ -72,7 +73,8 @@ describe.sequential("SimpleSqliteFetchTest", () => {
                         tb_1_.NAME asc,
                         tb_1_.EDITION desc
                 `,
-                args: ["%graphql%"]
+                args: ["%graphql%"],
+                purpose: "query"
             },
             {
                 sql: `
@@ -85,7 +87,8 @@ describe.sequential("SimpleSqliteFetchTest", () => {
                     where 
                         tb_1_.ID in(?, ?)
                 `,
-                args: [2, 1]
+                args: [2, 1],
+                purpose: "loadAssociation(Book.store)"
             }
         );
         expect(rows).toEqual([
@@ -160,7 +163,8 @@ describe.sequential("SimpleSqliteFetchTest", () => {
                     order by 
                         tb_1_.NAME asc
                 `,
-                args: []
+                args: [],
+                purpose: "query"
             },
             {
                 sql: `
@@ -176,7 +180,8 @@ describe.sequential("SimpleSqliteFetchTest", () => {
                         tb_1_.NAME asc,
                         tb_1_.EDITION desc
                 `,
-                args: [2, 1]
+                args: [2, 1],
+                purpose: "loadAssociation(BookStore.books)"
             }
         );
         expect(rows).toEqual([
@@ -251,6 +256,244 @@ describe.sequential("SimpleSqliteFetchTest", () => {
                         "id": 7,
                         "name": "YugabyteDB: The Definitive Guide",
                         "edition": 1
+                    }
+                ]
+            }
+        ]);
+    });
+
+    it("m2m", async() => {
+        const VIEW = dto.view(BOOK, $ => $
+            .allScalars()
+            .authors($ => $
+                .id
+                .name()
+            )
+        );
+        const rows = await sqlClient.createQuery(BOOK, (q, book) => {
+            q.where(book.edition.eq(3));
+            q.orderBy(book.name.asc())
+            return q.select(
+                book.fetch(VIEW)
+            );
+        }).fetchList();
+        sqlRecord.assert(
+            {
+                sql: `
+                    select 
+                        tb_1_.ID,
+                        tb_1_.NAME,
+                        tb_1_.EDITION,
+                        tb_1_.PRICE
+                    from BOOK tb_1_
+                    where 
+                        tb_1_.EDITION = ?
+                    order by 
+                        tb_1_.NAME asc
+                `,
+                args: [3],
+                purpose: "query"
+            },
+            {
+                sql: `
+                    select 
+                        tb_2_.BOOK_ID,
+                        tb_1_.ID,
+                        tb_1_.FIRST_NAME,
+                        tb_1_.LAST_NAME
+                    from AUTHOR tb_1_
+                    inner join book_author_mapping tb_2_ on 
+                        tb_1_.ID = tb_2_.AUTHOR_ID
+                    where 
+                        tb_2_.BOOK_ID in(?, ?, ?, ?)
+                    order by 
+                        tb_1_.FIRST_NAME asc,
+                        tb_1_.LAST_NAME asc
+                `,
+                args: [6, 12, 3, 9],
+                purpose: "loadAssociation(Book.authors)"
+            }
+        );
+        expect(rows).toEqual([
+            {
+                "id": 6,
+                "name": "Effective TypeScript",
+                "edition": 3,
+                "price": 63.99,
+                "authors": [
+                    {
+                        "id": 3,
+                        "name": {
+                            "firstName": "Dan",
+                            "lastName": "Vanderkam"
+                        }
+                    }
+                ]
+            },
+            {
+                "id": 12,
+                "name": "GraphQL in Action",
+                "edition": 3,
+                "price": 79.99,
+                "authors": [
+                    {
+                        "id": 7,
+                        "name": {
+                            "firstName": "Samer",
+                            "lastName": "Buna"
+                        }
+                    }
+                ]
+            },
+            {
+                "id": 3,
+                "name": "Learning GraphQL",
+                "edition": 3,
+                "price": 33.99,
+                "authors": [
+                    {
+                        "id": 2,
+                        "name": {
+                            "firstName": "Alex",
+                            "lastName": "Banks"
+                        }
+                    },
+                    {
+                        "id": 1,
+                        "name": {
+                            "firstName": "Eve",
+                            "lastName": "Procello"
+                        }
+                    }
+                ]
+            },
+            {
+                "id": 9,
+                "name": "YugabyteDB: The Definitive Guide",
+                "edition": 3,
+                "price": 89.99,
+                "authors": [
+                    {
+                        "id": 5,
+                        "name": {
+                            "firstName": "Kannappan",
+                            "lastName": "Muthukkaruppan"
+                        }
+                    },
+                    {
+                        "id": 4,
+                        "name": {
+                            "firstName": "Karthik",
+                            "lastName": "Ranganathan"
+                        }
+                    },
+                    {
+                        "id": 6,
+                        "name": {
+                            "firstName": "Mikhail",
+                            "lastName": "Bautin"
+                        }
+                    }
+                ]
+            }
+        ]);
+    });
+
+    it("inverseM2M", async() => {
+        const VIEW = dto.view(AUTHOR, $ => $
+            .allScalars()
+            .books($ => $
+                .id
+                .name
+                .edition
+            )
+        );
+        const rows = await sqlClient.createQuery(AUTHOR, (q, author) => {
+            q.where(author.id.in(3, 7));
+            return q.select(
+                author.fetch(VIEW)
+            );
+        }).fetchList();
+        sqlRecord.assert(
+            {
+                sql: `
+                    select 
+                        tb_1_.ID,
+                        tb_1_.FIRST_NAME,
+                        tb_1_.LAST_NAME
+                    from AUTHOR tb_1_
+                    where 
+                        tb_1_.ID in(?, ?)
+                `,
+                args: [3, 7],
+                purpose: "query"
+            },
+            {
+                sql: `
+                    select 
+                        tb_2_.AUTHOR_ID,
+                        tb_1_.ID,
+                        tb_1_.NAME,
+                        tb_1_.EDITION
+                    from BOOK tb_1_
+                    inner join book_author_mapping tb_2_ on 
+                        tb_1_.ID = tb_2_.BOOK_ID
+                    where 
+                        tb_2_.AUTHOR_ID in(?, ?)
+                    order by 
+                        tb_1_.NAME asc,
+                        tb_1_.EDITION asc
+                `,
+                args: [3, 7],
+                purpose: "loadAssociation(Author.books)"
+            }
+        );
+        expect(rows).toEqual([
+            {
+                "id": 3,
+                "name": {
+                    "firstName": "Dan",
+                    "lastName": "Vanderkam"
+                },
+                "books": [
+                    {
+                        "id": 4,
+                        "name": "Effective TypeScript",
+                        "edition": 1
+                    },
+                    {
+                        "id": 5,
+                        "name": "Effective TypeScript",
+                        "edition": 2
+                    },
+                    {
+                        "id": 6,
+                        "name": "Effective TypeScript",
+                        "edition": 3
+                    }
+                ]
+            },
+            {
+                "id": 7,
+                "name": {
+                    "firstName": "Samer",
+                    "lastName": "Buna"
+                },
+                "books": [
+                    {
+                        "id": 10,
+                        "name": "GraphQL in Action",
+                        "edition": 1
+                    },
+                    {
+                        "id": 11,
+                        "name": "GraphQL in Action",
+                        "edition": 2
+                    },
+                    {
+                        "id": 12,
+                        "name": "GraphQL in Action",
+                        "edition": 3
                     }
                 ]
             }
