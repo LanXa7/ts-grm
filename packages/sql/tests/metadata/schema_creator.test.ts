@@ -324,7 +324,7 @@ describe.sequential("SchemaCreatorTest", () => {
                         "name": "PARENT_NODE_ID",
                         "referenceName": "ID",
                         "type": "I64",
-                        "nullable": false
+                        "nullable": true
                     }
                 ],
                 "constraints": [
@@ -888,7 +888,7 @@ describe.sequential("SchemaCreatorTest", () => {
                 ID integer not null, 
                 TYPE text not null, 
                 NAME text not null, 
-                PARENT_NODE_ID integer not null, 
+                PARENT_NODE_ID integer null, 
 
                 constraint TREE_NODE_constraint_1
                     primary key(ID), 

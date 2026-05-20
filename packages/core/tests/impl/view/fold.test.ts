@@ -245,4 +245,112 @@ describe("FoldTest", () => {
             }
         });
     });
+
+    it("mixedWithFlat", () => {
+        const view = dto.view(BOOK, $ => $
+            .fold("key", $ => $
+                .name
+                .edition
+            )
+            .fold("associations", $ => $
+                .flat("store", $ => $
+                    .id
+                    .fold("key", $ => $
+                        .name
+                        .version
+                    )
+                )
+                .authors($ => $
+                    .flat({prop: "name", prefix: ""})
+                )
+            )
+        );
+        expect(mapperJson(view.mapper)).toEqual({
+            "entity": "Book",
+            "fields": [
+                {
+                    "prop": "Book.name",
+                    "paths": [
+                        ["key", "name"]
+                    ],
+                    "columnIndex": 0
+                },
+                {
+                    "prop": "Book.edition",
+                    "paths": [
+                        ["key", "edition"]
+                    ],
+                    "columnIndex": 1
+                },
+                {
+                    "prop": "Book.storeId",
+                    "paths": [],
+                    "isDependent": true,
+                    "columnIndex": 2
+                },
+                {
+                    "prop": "Book.store",
+                    "paths": [],
+                    "subMapper": {
+                        "entity": "BookStore",
+                        "associatedProp": "Book.store",
+                        "fields": [
+                            {
+                                "prop": "BookStore.id",
+                                "paths": [
+                                    ["..", "storeId"]
+                                ],
+                                "columnIndex": 0
+                            },
+                            {
+                                "prop": "BookStore.name",
+                                "paths": [
+                                    ["..", "storeKey", "name"]
+                                ],
+                                "columnIndex": 1
+                            },
+                            {
+                                "prop": "BookStore.version",
+                                "paths": [
+                                    ["..", "storeKey", "version"]
+                                ],
+                                "columnIndex": 2
+                            }
+                        ]
+                    },
+                    "dependencies": [2]
+                },
+                {
+                    "prop": "Book.id",
+                    "paths": [],
+                    "isDependent": true,
+                    "columnIndex": 3
+                },
+                {
+                    "prop": "Book.authors",
+                    "paths": [
+                        ["associations", "authors"]
+                    ],
+                    "subMapper": {
+                        "entity": "Author",
+                        "associatedProp": "Book.authors",
+                        "fields": [
+                            {
+                                "prop": "Author.name.firstName",
+                                "paths": ["firstName"],
+                                "columnIndex": 0
+                            },
+                            {
+                                "prop": "Author.name.lastName",
+                                "paths": ["lastName"],
+                                "columnIndex": 1
+                            }
+                        ]
+                    },
+                    "dependencies": [4]
+                }
+            ]
+        });
+        console.log(JSON.stringify(buildShape(view.mapper)));
+    });
 });
