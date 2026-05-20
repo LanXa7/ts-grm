@@ -4,6 +4,11 @@ import { EntityProp } from "./entity_prop";
 import { Dto, DtoField, InverseFetchProp } from "./dto";
 import { capitalize } from "./util";
 import { makeErr } from "@/error/util";
+import { ModelOrder } from "@/schema/order";
+import { AnyModel } from "@/schema/model";
+import { AbstractEntityTable } from ".";
+import { Predicate } from "@/dsl";
+import { EntityPropOrder } from "./entity_prop_order";
 
 export function createTypedDtoBuilder(entity: Entity): TypedDtoBuilder {
     const builder = new DtoBuilder(entity);
@@ -152,7 +157,7 @@ class DtoBuilder {
             bridgeProp: undefined,
             dto: undefined,
             fetchType: undefined,
-            orders: undefined,
+            orders: prop.orders,
             recursiveDepth: depth,
             nullable: prop.nullable,
             parameter: undefined
@@ -180,6 +185,53 @@ class DtoBuilder {
             this.fields.push(renamedField);
         }
         this.lastPropName = alias;
+    }
+
+    $where(
+        _: (table: AbstractEntityTable) => Predicate | null | undefined
+    ) {
+
+    }
+
+    $orderBy(
+        ...orders: ReadonlyArray<ModelOrder<AnyModel>>
+    ) {
+        if (this.lastPropName == null) {
+            throw new StateError(`"$as" function cannot be invoked because there is no last property`);
+        }
+        const entity = this.source as Entity;
+        const actualOrders = orders.length !== 0 
+            ? orders.map(ord => {
+                const path = typeof ord === "string"
+                    ? ord
+                    : ord.path;
+                const desc = typeof ord === "string"
+                    ? false
+                    : (ord.desc ?? false);
+                const nulls = typeof ord === "string"
+                    ? "UNSPECIFIED"
+                    : (ord.nulls ?? "UNSPECIFIED");
+                const prop = entity.expandedPropMap.get(path);
+                if (prop == null) {
+                    throw new ArgumentError(
+                        `There is no property "${path}" in the entity "${entity.name}"`
+                    );
+                }
+                const order: EntityPropOrder = {
+                    prop,
+                    desc,
+                    nulls
+                };
+                return order;
+            }) 
+            : undefined;
+        const arr = this.fields;
+        for (let i = arr.length - 1; i >= 0; --i) {
+            if (isMatched(arr[i]!, this.lastPropName)) {
+                arr[i] = {...arr[i]!, orders: actualOrders};
+                break;
+            }
+        }
     }
 
     build(): Dto {
@@ -250,6 +302,16 @@ const typedDtoBuilderHandler: ProxyHandler<DtoBuilder> = {
                     target.$as(alias);
                     return receiver;
                 }
+            case "$where":
+                return (fn: (table: AbstractEntityTable) => Predicate | null | undefined) => {
+                    target.$where(fn);
+                    return receiver;
+                }
+            case "$orderBy":
+                return (...orders: ReadonlyArray<ModelOrder<AnyModel>>) => {
+                    target.$orderBy(...orders);
+                    return receiver;
+                }
             default:
                 if (prop in target) {
                     return Reflect.get(target, prop);
@@ -298,7 +360,7 @@ export function dtoField(
             bridgeProp: prop,
             dto: middleDto,
             fetchType: undefined,
-            orders: undefined,
+            orders: prop.orders,
             recursiveDepth: undefined,
             nullable: prop.nullable,
             parameter: undefined
@@ -314,7 +376,7 @@ export function dtoField(
             bridgeProp: undefined,
             dto: childDto,
             fetchType: undefined,
-            orders: undefined,
+            orders: prop.orders,
             recursiveDepth: undefined,
             nullable: prop.nullable,
             parameter
@@ -333,7 +395,7 @@ export function dtoField(
             bridgeProp: undefined,
             dto: childDto,
             fetchType: undefined,
-            orders: undefined,
+            orders: prop.orders,
             recursiveDepth: undefined,
             nullable: prop.nullable,
             parameter: undefined
@@ -351,7 +413,7 @@ export function dtoField(
         bridgeProp: undefined,
         dto: undefined,
         fetchType: undefined,
-        orders: undefined,
+        orders: prop.orders,
         recursiveDepth: undefined,
         nullable: false,
         parameter

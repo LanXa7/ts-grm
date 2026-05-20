@@ -534,6 +534,21 @@ export abstract class AbstractEntityTable implements AbstractTable {
         parentModel: AnyModel,
         toThisPropName: string
     ): AbstractExpr<any> | ExprTuple<ExpressionLike[]> {
+        return this._inverseAssociatedKey(parentModel, toThisPropName, "AST");
+    }
+
+    __inverseAssociatedKeyArr(
+        parentModel: AnyModel,
+        toThisPropName: string
+    ): ReadonlyArray<Expression<any>> {
+        return this._inverseAssociatedKey(parentModel, toThisPropName, "ARRAY");
+    }
+
+    private _inverseAssociatedKey(
+        parentModel: AnyModel,
+        toThisPropName: string,
+        resultType: "AST" | "ARRAY"
+    ): any {
         const parentEntity = Entity.of(parentModel);
         const prop = parentEntity.prop(toThisPropName);
         this._validateToThisProp(prop);
@@ -595,10 +610,16 @@ export abstract class AbstractEntityTable implements AbstractTable {
                     ? (backTable as any)[keyProp.name]()
                     : (backTable as any)[keyProp.name];
         }
-        if (keyProp.flattenScalarProps.size === 0) {
-            return exprOrEmbedded as AbstractExpr<any>;
+        if (resultType === "AST") {
+            if (keyProp.flattenScalarProps.size === 0) {
+                return exprOrEmbedded as AbstractExpr<any>;
+            }
+            return AbstractEntityTable.expandTuple(exprOrEmbedded, keyProp);
         }
-        return AbstractEntityTable.expandTuple(exprOrEmbedded, keyProp);
+        if (keyProp.flattenScalarProps.size === 0) {
+            return [exprOrEmbedded];
+        }
+        return AbstractEntityTable._expandTupleArr(exprOrEmbedded, keyProp);
     }
 
     private _validateToThisProp(
@@ -640,6 +661,11 @@ export abstract class AbstractEntityTable implements AbstractTable {
     }
 
     static expandTuple(ast: any, prop: EntityProp): ExprTuple<ExpressionLike[]> {
+        const arr = AbstractEntityTable._expandTupleArr(ast, prop);
+        return toTuple(arr as any);
+    }
+
+    private static _expandTupleArr(ast: any, prop: EntityProp): Expression<any>[] {
         const arr: Array<Expression<any>> = [];
         for (const subProp of prop.flattenScalarProps.values()) {
             const parts = subProp.subPath.split('.');
@@ -654,7 +680,7 @@ export abstract class AbstractEntityTable implements AbstractTable {
             }
             arr.push(prev as Expression<any>);
         }
-        return toTuple(arr as any);
+        return arr;
     }
 }
 

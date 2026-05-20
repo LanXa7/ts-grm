@@ -1,4 +1,4 @@
-import { ast, dsl, metadata, RootQuery, RootQueryProjection, View, ExprTuple, ExpressionLike, ExpressionOrder, AnyModel, RootQuerySelectArrArgs } from "@ts-grm/core";
+import { ast, dsl, metadata, RootQuery, RootQueryProjection, View, ExprTuple, ExpressionLike, ExpressionOrder, AnyModel, RootQuerySelectArrArgs, err, Expression } from "@ts-grm/core";
 import { MergedRootQueryImpl } from "./merged_query";
 import { AtomRootQueryImpl } from "./atom_root_query_impl";
 import { Composite } from "@/sql/fragment";
@@ -69,52 +69,66 @@ async function resolveAssocaitions(
         return;
     }
     for (const unresolveField of mapper.unresolvedFields) {
-        const associationType = unresolveField.prop.associationType;
-        switch (associationType) {
-            case "ONE_TO_ONE":
-            case "MANY_TO_ONE":
-                await new ReferenceResolver(sqlClient, mapper, unresolveField, sourceRows).resolve();
-        }
+        await new AssociationResolver(sqlClient, mapper, unresolveField, sourceRows).resolve();
     }
 }
 
-abstract class AssociationResolver {
+class AssociationResolver {
 
-    protected readonly targetMapper: metadata.DtoMapper;
+    private readonly _targetMapper: metadata.DtoMapper;
 
-    protected readonly sourceDtoRowReader: metadata.DtoRowReader;
+    private readonly _sourceDtoRowReader: metadata.DtoRowReader;
 
-    protected readonly targetDtoRowReader: metadata.DtoRowReader;
+    private readonly _targetDtoRowReader: metadata.DtoRowReader;
+
+    private readonly _isCollection: boolean;
+
+    private readonly _batchSize: number;
+
+    private readonly _bindingMap = new Map<any, Binding>();
 
     constructor(
-        protected sqlClient: SqlClientImplementor,
-        protected readonly sourceMapper: metadata.DtoMapper,
-        protected readonly unresolvedField: metadata.DtoMapperField,
-        protected readonly sourceRows: ReadonlyArray<metadata.DtoRow>
+        private _sqlClient: SqlClientImplementor,
+        private readonly _sourceMapper: metadata.DtoMapper,
+        private readonly _unresolvedField: metadata.DtoMapperField,
+        private readonly _sourceRows: ReadonlyArray<metadata.DtoRow>
     ) {
-        this.targetMapper = unresolvedField.subMapper!;
-        this.sourceDtoRowReader = this.sourceMapper.dtoRowReader;
-        this.targetDtoRowReader = this.targetMapper.dtoRowReader;
+        this._targetMapper = _unresolvedField.subMapper!;
+        this._sourceDtoRowReader = this._sourceMapper.dtoRowReader;
+        this._targetDtoRowReader = this._targetMapper.dtoRowReader;
+        const associationType = this._unresolvedField.prop.associationType;
+        this._isCollection = associationType === "ONE_TO_MANY" || associationType === "MANY_TO_MANY";
+        if (this._isCollection) {
+            this._batchSize = _sqlClient.options.defaultListBatchSize;
+        } else {
+            this._batchSize = _sqlClient.options.defaultBatchSize;
+        }
     }
     
-    protected dependencyAst(
-        table: any
+    private _dependencyAst(
+        targetTable: any
     ): ast.AbstractExpr<any> | ExprTuple<ExpressionLike[]> {
-        const entityTable = table as any as metadata.AbstractEntityTable;
-        const keyProps = this.unresolvedField.prop.targetKeyProp!.scalarProps!;
-        if (keyProps.length === 1) {
-            return entityTable.__expression(keyProps[0]!) as ast.AbstractExpr<any>;
+        const entityTable = targetTable as any as metadata.AbstractEntityTable;
+        if (this._unresolvedField.prop.referenceKeyProp != null) {
+            const keyProps = this._unresolvedField.prop.targetKeyProp!.scalarProps!;
+            if (keyProps.length === 1) {
+                return entityTable.__expression(keyProps[0]!) as ast.AbstractExpr<any>;
+            }
+            const keyExpressions = keyProps.map(p => entityTable.__expression(p)) as any;
+            return dsl.tuple(...keyExpressions);
         }
-        const keyExpressions = keyProps.map(p => entityTable.__expression(p)) as any;
-        return dsl.tuple(...keyExpressions);
+        return targetTable.__inverseAssociatedKey(
+            this._sourceMapper.entity.model, 
+            this._unresolvedField.prop.name
+        );
     }
 
-    protected orders(
-        table: any
+    private _orders(
+        targetTable: any
     ): ReadonlyArray<ExpressionOrder> {
-        const entityTable = table as any as metadata.AbstractEntityTable;
+        const entityTable = targetTable as any as metadata.AbstractEntityTable;
         const arr: Array<ExpressionOrder> = [];
-        const orders = this.unresolvedField.orders;
+        const orders = this._unresolvedField.orders;
         if (orders != null) {
             for (const order of orders) {
                 arr.push(
@@ -128,29 +142,31 @@ abstract class AssociationResolver {
         };
         return arr;
     }
-}
 
-class ReferenceResolver extends AssociationResolver {
-
-    private readonly _batchSize: number;
-
-    private readonly _bindingMap = new Map<any, ReferenceBinding>();
-
-    constructor(
-        sqlClient: SqlClientImplementor,
-        mapper: metadata.DtoMapper, 
-        unresolvedField: metadata.DtoMapperField,
-        sourceRows: ReadonlyArray<metadata.DtoRow>
-    ) {
-        super(sqlClient, mapper, unresolvedField, sourceRows);
-        this._batchSize = sqlClient.options.defaultBatchSize;
+    private _keyExpressions(targetTable: any): ReadonlyArray<Expression<any>> {
+        if (this._unresolvedField.prop.referenceKeyProp != null) {
+            return this
+                ._unresolvedField
+                .prop
+                .targetKeyProp!
+                .scalarProps!
+                .map(keyProp => 
+                    (targetTable as any as metadata.AbstractEntityTable)
+                    .__expression(keyProp)
+                );
+        }
+        return (targetTable as metadata.AbstractEntityTable)
+            .__inverseAssociatedKeyArr(
+                this._sourceMapper.entity.model, 
+                this._unresolvedField.prop.name
+            );
     }
 
     async resolve(): Promise<void> {
-        const unresolvedFieldIndex = this.unresolvedField.index;
-        const dtoRowReader = this.sourceDtoRowReader;
+        const unresolvedFieldIndex = this._unresolvedField.index;
+        const dtoRowReader = this._sourceDtoRowReader;
         const bindingMap = this._bindingMap;
-        for (const sourceRow of this.sourceRows) {
+        for (const sourceRow of this._sourceRows) {
             const dependency = dtoRowReader.dependency(unresolvedFieldIndex, sourceRow);
             if (dtoRowReader.dependencyNullable(unresolvedFieldIndex, dependency)) {
                 continue;
@@ -163,7 +179,7 @@ class ReferenceResolver extends AssociationResolver {
             }
             binding = {
                 sourceRows: [sourceRow],
-                targetRow: undefined
+                targetData: undefined
             };
             bindingMap.set(hash, binding);
         }
@@ -183,60 +199,92 @@ class ReferenceResolver extends AssociationResolver {
                 start += this._batchSize;
             }
         }
-        const unresolvedFieldIndex = this.unresolvedField.index;
-        const sourceDtoRowReader = this.sourceDtoRowReader;
+        const unresolvedFieldIndex = this._unresolvedField.index;
+        const sourceDtoRowReader = this._sourceDtoRowReader;
         const targetRows: Array<metadata.DtoRow> = [];
         for (const binding of this._bindingMap.values()) {
+            const targetData = binding.targetData;
+            let value: any;
+            if (this._isCollection) {
+                if (targetData == null) {
+                    value = [];
+                } else if (Array.isArray(targetData)) {
+                    value = targetData.map(row => row.dto);
+                } else {
+                    value = [(targetData as metadata.DtoRow).dto];
+                }
+            } else {
+                if (targetData == null) {
+                    continue;
+                } else if (Array.isArray(targetData)) {
+                    const arr = targetData as ReadonlyArray<metadata.DtoRow>;
+                    throw new err.StateError(
+                        `Cannot resolve the assocaition property "${
+                            this._unresolvedField.prop.toString()
+                        }", it is reference but there are ${
+                            arr.length
+                        } associated objects`
+                    );
+                } else {
+                    value = (targetData as metadata.DtoRow).dto;
+                }
+            }
             for (const sourceRow of binding.sourceRows) {
                 sourceDtoRowReader.resolve(
                     unresolvedFieldIndex, 
                     sourceRow, 
-                    binding.targetRow?.dto
+                    value
                 );
             }
-            targetRows.push(binding.targetRow!);
+            if (Array.isArray(targetData)) {
+                const arr = targetData as ReadonlyArray<metadata.DtoRow>;
+                targetRows.push(...arr);
+            } else if (targetData != null) {
+                const row = targetData as metadata.DtoRow;
+                targetRows.push(row);
+            }
         }
-        await resolveAssocaitions(this.sqlClient, this.targetMapper, targetRows);
+        await resolveAssocaitions(this._sqlClient, this._targetMapper, targetRows);
     }
 
     private async _resolveBatch(
         dependencies: ReadonlyArray<any>
     ) {
-        const model = this.unresolvedField.subMapper!.entity.model;
-        const view = new View<AnyModel, any>(this.unresolvedField.subMapper!);
-        const query = this.sqlClient.createQuery(model, (q, target) => {
-            const dependencyAst = this.dependencyAst(target) as any;
+        const model = this._unresolvedField.subMapper!.entity.model;
+        const view = new View<AnyModel, any>(this._unresolvedField.subMapper!);
+        const query = this._sqlClient.createQuery(model, (q, target) => {
+            const dependencyAst = this._dependencyAst(target) as any;
             q.where(dependencyAst.in(...dependencies));
-            const keyExpressions = 
-                this
-                .unresolvedField
-                .prop
-                .targetKeyProp!
-                .scalarProps!
-                .map(keyProp => 
-                    (target as any as metadata.AbstractEntityTable)
-                    .__expression(keyProp)
-                );
+            const keyExpressions = this._keyExpressions(target);
+            if (this._isCollection) {
+                q.orderBy(...this._orders(target));
+            }
             const selections = [...keyExpressions, target.fetch(view)] as any as RootQuerySelectArrArgs;
             return q.select(...selections);
         });
-        const [sql, args] = buildStatement(this.sqlClient, query);
-        const dataRows = await this.sqlClient.executor.executeStatement(sql, args);
+        const [sql, args] = buildStatement(this._sqlClient, query);
+        const dataRows = await this._sqlClient.executor.executeStatement(sql, args);
         const keyRowReader = DataRowReader.of(dataRows);
-        const keySpan = this.unresolvedField.dependencies!.length;
+        const keySpan = this._unresolvedField.dependencies!.length;
         const valueRowReader = keyRowReader.offset(keySpan);
-        const sourceDtoRowReader = this.sourceDtoRowReader;
-        const targetDtoRowReader = this.targetDtoRowReader;
+        const sourceDtoRowReader = this._sourceDtoRowReader;
+        const targetDtoRowReader = this._targetDtoRowReader;
         while (keyRowReader.next()) {
             const key = keyRowReader.get(0, keySpan);
-            const binding = this._bindingMap.get(sourceDtoRowReader.dependencyHash(this.unresolvedField.index, key))!
+            const binding = this._bindingMap.get(sourceDtoRowReader.dependencyHash(this._unresolvedField.index, key))!
             const row = targetDtoRowReader.read(binding.sourceRows, valueRowReader);
-            binding.targetRow = row;
+            if (binding.targetData == null) {
+                binding.targetData = row;
+            } else if (!Array.isArray(binding.targetData)) {
+                binding.targetData = [binding.targetData as metadata.DtoRow, row];
+            } else {
+                binding.targetData.push(row);
+            }
         }
     }
 }
 
-type ReferenceBinding = {
+type Binding = {
     sourceRows: Array<metadata.DtoRow>;
-    targetRow: metadata.DtoRow | undefined;
+    targetData: metadata.DtoRow | ReadonlyArray<metadata.DtoRow> | undefined;
 };

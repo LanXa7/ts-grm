@@ -234,7 +234,7 @@ export class EntityProp {
     get orders(): ReadonlyArray<EntityPropOrder> {
         this.declaringEntity.resolve(2);
         return this._orders ?? 
-            makeErr(`The orders of ${this.declaringEntity.name}.${this.name} 
+            makeErr(`The orders of ${this.toString()} 
                 is not initialized`);
     }
 
@@ -430,6 +430,12 @@ export class EntityProp {
     private _initOrders() {
         if (this._data.orders == null) {
             this._orders = [];
+            const subProps = this._props;
+            if (subProps != null) {
+                for (const subProp of subProps.values()) {
+                    subProp._initOrders();
+                }
+            }
         } else {
             const orders = new Array<EntityPropOrder>(this._data.orders.length);
             const paths = new Set<string>();
