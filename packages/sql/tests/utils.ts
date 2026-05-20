@@ -140,6 +140,7 @@ class SqlRecordImpl implements SqlRecord {
         for (const statement of this._statements) {
             console.log(statement.sql);
             console.log(statement.args);
+            console.log(statement.purpose);
         }
     }
 }

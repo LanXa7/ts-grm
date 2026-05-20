@@ -178,6 +178,7 @@ class AssociationResolver {
                 continue;
             }
             binding = {
+                dependency,
                 sourceRows: [sourceRow],
                 targetData: undefined
             };
@@ -187,7 +188,10 @@ class AssociationResolver {
     }
 
     private async _resolve(): Promise<void> {
-        const dependencies = Array.from(this._bindingMap.keys());
+        const dependencies: Array<any> = [];
+        for (const binding of this._bindingMap.values()) {
+            dependencies.push(binding.dependency);
+        }
         if (dependencies.length <= this._batchSize) {
             await this._resolveBatch(dependencies);
         } else {
@@ -288,6 +292,7 @@ class AssociationResolver {
 }
 
 type Binding = {
-    sourceRows: Array<metadata.DtoRow>;
+    readonly dependency: any;
+    readonly sourceRows: Array<metadata.DtoRow>;
     targetData: metadata.DtoRow | ReadonlyArray<metadata.DtoRow> | undefined;
 };

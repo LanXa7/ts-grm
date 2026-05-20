@@ -243,6 +243,7 @@ export const ORDER = model("Order", "id", class {
         })
     });
     name = prop.str()
+    items = prop.o2m(ORDER_ITEM).mappedBy("order")
     tags = prop.m2m(TAG).joinTable({
         joinThis: {
             keyProp: "id",
