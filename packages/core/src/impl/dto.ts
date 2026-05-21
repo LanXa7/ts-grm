@@ -13,7 +13,7 @@ export type Dto = {
 
 export type DtoField = {
 
-    readonly path: string | ReadonlyArray<string> | undefined;
+    path: string | ReadonlyArray<string> | undefined;
 
     readonly prop: FetchProp;
 
@@ -89,4 +89,41 @@ export class InverseFetchProp {
     toString() {
         return `←${this.prop.toString()}`;
     }
+}
+
+export function foldDto(dto: Dto, key: string): Dto {
+    return {
+        ...dto,
+        fields: dto.fields.map(field => foldDtoField(field, key))
+    };
+}
+
+function foldDtoField(
+    dtoField: DtoField, 
+    key: string
+): DtoField {
+    let path = dtoField.path;
+    if (path == null) {
+        if (dtoField.dto == null) {
+            return dtoField;
+        }
+        return {
+            ...dtoField,
+            dto: foldDto(dtoField.dto, key)
+        };
+    }
+    if (typeof path === "string") {
+        path = [key, path];
+    } else {
+        const index = path.lastIndexOf("..");
+        if (index === -1) {
+            path = [key, ...path];
+        } else {
+            path = [...path.slice(0, index + 1), key, ...path.slice(index + 1, path.length)];
+        }
+    }
+    return {
+        ...dtoField,
+        path
+    };
 }

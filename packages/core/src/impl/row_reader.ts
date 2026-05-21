@@ -159,10 +159,10 @@ function writeDepthAssignment(
         }).newLine();
     } else {
         if (parentDepth > 0) {
-            writeAssignmentTarget(`${parentName(parentDepth - 1)}.`, path.slice(parentDepth, path.length), writer);
+            writeAssignmentTarget(`${parentName(parentDepth - 1)}.`, true, path.slice(parentDepth, path.length), writer);
             writer.code(` = reader_${columnIndex}`).newLine(";");
         } else {
-            writeAssignmentTarget("", path, writer);
+            writeAssignmentTarget("", false, path, writer);
             writer
                 .code(" = reader.get(")
                 .code(`${columnIndex}`)
@@ -174,6 +174,7 @@ function writeDepthAssignment(
 
 function writeAssignmentTarget(
     prefix: string,
+    parentReader: boolean,
     path: ReadonlyArray<string>,
     writer: CodeWriter
 ) {
@@ -198,7 +199,7 @@ function writeAssignmentTarget(
             : path.slice(parents.length, path.length - 1);
     const target = foldKeys.length === 0
         ? dto
-        : `this._${foldKeys.join("_")}(${dto})`;
+        : `${parentReader ? "parent.reader." : "this."}_${foldKeys.join("_")}(${dto})`;
     writer
         .code(target)
         .code(".")
@@ -373,7 +374,7 @@ function writeResolve(
             for (const unresolvedField of mapper.unresolvedFields) {
                 writer.code(`case ${unresolvedField.index}:`).scope("BLANK", () => {
                     for (const path of unresolvedField.paths) {
-                        writeAssignmentTarget("row.", typeof path === "string" ? [path] : path, writer);
+                        writeAssignmentTarget("row.", false, typeof path === "string" ? [path] : path, writer);
                         writer.code(" = value").newLine(";");
                     }
                     writer.code("break").newLine(";");

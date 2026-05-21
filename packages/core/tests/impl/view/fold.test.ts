@@ -298,21 +298,21 @@ describe("FoldTest", () => {
                             {
                                 "prop": "BookStore.id",
                                 "paths": [
-                                    ["..", "storeId"]
+                                    ["..", "associations", "storeId"]
                                 ],
                                 "columnIndex": 0
                             },
                             {
                                 "prop": "BookStore.name",
                                 "paths": [
-                                    ["..", "storeKey", "name"]
+                                    ["..", "associations", "storeKey", "name"]
                                 ],
                                 "columnIndex": 1
                             },
                             {
                                 "prop": "BookStore.version",
                                 "paths": [
-                                    ["..", "storeKey", "version"]
+                                    ["..", "associations", "storeKey", "version"]
                                 ],
                                 "columnIndex": 2
                             }
@@ -351,6 +351,173 @@ describe("FoldTest", () => {
                 }
             ]
         });
-        console.log(JSON.stringify(buildShape(view.mapper)));
+        expect(buildShape(view.mapper)).toEqual({
+            "key": {
+                "name": 0,
+                "edition": 1
+            },
+            "__implicit": {
+                "_2": 2,
+                "_4": 3
+            },
+            "associations": {
+                "storeKey": {
+                    "name": undefined,
+                    "version": undefined
+                },
+                "authors": {
+                    "__array": {
+                        "firstName": 0,
+                        "lastName": 1
+                    }
+                }
+            }
+        });
+        expectCode(view.mapper.dtoRowReader.constructor.toString(), `
+            class extends $baseClass {
+                read(parents, reader) {
+                    const dto = {
+                        key: null, 
+                        associations: null
+                    };
+                    const implicit = {
+                        _2: reader.get(2), 
+                        _4: reader.get(3)
+                    };
+                    this._key(dto).name = reader.get(0);
+                    this._key(dto).edition = reader.get(1);
+                    return { reader: this, parents, dto, implicit };
+                }
+                _key(dto) {
+                    let o = dto.key;
+                    if (o == null) {
+                        dto.key = o = {
+                            name: null, 
+                            edition: null
+                        };
+                    }
+                    return o;
+                }
+                _associations(dto) {
+                    let o = dto.associations;
+                    if (o == null) {
+                        dto.associations = o = {
+                            storeId: null, 
+                            storeKey: null, 
+                            authors: null
+                        };
+                    }
+                    return o;
+                }
+                _associations_storeKey(dto) {
+                    let o = this._associations(dto).storeKey;
+                    if (o == null) {
+                        this._associations(dto).storeKey = o = {
+                            name: null, 
+                            version: null
+                        };
+                    }
+                    return o;
+                }
+                dependency(unresolvedFieldIndex, row) {
+                    switch (unresolvedFieldIndex) {
+                        case 3:
+                            return row.implicit._2;
+                        case 5:
+                            return row.implicit._4;
+                        default:
+                            throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                    }
+                }
+                dependencyNullable(unresolvedFieldIndex, dependency) {
+                    switch (unresolvedFieldIndex) {
+                        case 3:
+                            return dependency == null;
+                        case 5:
+                            return dependency == null;
+                        default:
+                            throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                    }
+                }
+                dependencyHash(unresolvedFieldIndex, dependency) {
+                    switch (unresolvedFieldIndex) {
+                        case 3:
+                            return dependency;
+                        case 5:
+                            return dependency;
+                        default:
+                            throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                    }
+                }
+                resolve(unresolvedFieldIndex, row, value) {
+                    switch (unresolvedFieldIndex) {
+                        case 3:
+                            break;
+                        case 5:
+                            this._associations(row.dto).authors = value;
+                            break;
+                        default:
+                            throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                    }
+                }
+            }
+        `);
+
+        const row = view.mapper.dtoRowReader.read(
+            undefined, 
+            makeReader("GraphQL in Action", 3, 2, 12)
+        );
+        expect(row.dto).toEqual({
+            "key": {
+                "name": "GraphQL in Action",
+                "edition": 3
+            },
+            "associations": null
+        });
+        expect(row.implicit).toEqual({
+            "_2": 2,
+            "_4": 12
+        });
+
+        const storeMapper = view.mapper.fields.find(f => f.prop.name === "store")!.subMapper!;
+        expectCode(storeMapper.dtoRowReader.constructor.toString(), `
+            class extends $baseClass {
+                read(parents, reader) {
+                    const dto = {
+                    };
+                    const reader_0 = reader.get(0);
+                    for (const parent of parents) {
+                        parent.reader._associations(parent.dto).storeId = reader_0;
+                    }
+                    const reader_1 = reader.get(1);
+                    for (const parent of parents) {
+                        parent.reader._associations_storeKey(parent.dto).name = reader_1;
+                    }
+                    const reader_2 = reader.get(2);
+                    for (const parent of parents) {
+                        parent.reader._associations_storeKey(parent.dto).version = reader_2;
+                    }
+                    return { reader: this, parents, dto, implicit: undefined };
+                }
+            }
+        `);
+        storeMapper.dtoRowReader.read(
+            [row],
+            makeReader(2, "MANNING", 2)
+        );
+        expect(row.dto).toEqual({
+            "key": {
+                "name": "GraphQL in Action",
+                "edition": 3
+            },
+            "associations": {
+                "storeId": 2,
+                "storeKey": {
+                    "name": "MANNING",
+                    "version": 2
+                },
+                "authors": null
+            }
+        });
     });
 });

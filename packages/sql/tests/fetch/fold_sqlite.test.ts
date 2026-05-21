@@ -10,7 +10,7 @@ describe.sequential("FoldSqliteTest", () => {
     
     const sqlClient = useSqliteClientWithData(sqlRecord);
 
-    it("simple", async () => {
+    it("fold", async () => {
         const view = dto.view(BOOK, $ => $
             .fold("key", $ => $
                 .name
@@ -33,6 +33,54 @@ describe.sequential("FoldSqliteTest", () => {
                 book.fetch(view)
             );
         }).fetchRequired();
+        sqlRecord.assert(
+            {
+                sql: `
+                    select 
+                        tb_1_.NAME,
+                        tb_1_.EDITION,
+                        tb_1_.STORE_ID,
+                        tb_1_.ID
+                    from BOOK tb_1_
+                    where 
+                        tb_1_.ID = ?
+                `,
+                args: [9],
+                purpose: "query"
+            },
+            {
+                sql: `
+                    select 
+                        tb_1_.ID,
+                        tb_1_.ID,
+                        tb_1_.NAME,
+                        tb_1_.VERSION
+                    from BOOK_STORE tb_1_
+                    where 
+                        tb_1_.ID = ?
+                `,
+                args: [1],
+                purpose: "loadAssociation(Book.store)"
+            },
+            {
+                sql: `
+                    select 
+                        tb_2_.BOOK_ID,
+                        tb_1_.FIRST_NAME,
+                        tb_1_.LAST_NAME
+                    from AUTHOR tb_1_
+                    inner join book_author_mapping tb_2_ on 
+                        tb_1_.ID = tb_2_.AUTHOR_ID
+                    where 
+                        tb_2_.BOOK_ID = ?
+                    order by 
+                        tb_1_.FIRST_NAME asc,
+                        tb_1_.LAST_NAME asc
+                `,
+                args: [9],
+                purpose: "loadAssociation(Book.authors)"
+            }
+        );
         expect(row).toEqual({
             "key": {
                 "name": "YugabyteDB: The Definitive Guide",
@@ -70,7 +118,7 @@ describe.sequential("FoldSqliteTest", () => {
         });
     });
 
-    it("mixedWithFlat", async () => {
+    it("foldMixedWithFlat", async () => {
         const view = dto.view(BOOK, $ => $
             .fold("key", $ => $
                 .name
@@ -95,6 +143,80 @@ describe.sequential("FoldSqliteTest", () => {
                 book.fetch(view)
             );
         }).fetchRequired();
-        console.log(JSON.stringify(row));
+        sqlRecord.assert(
+            {
+                sql: `
+                    select 
+                        tb_1_.NAME,
+                        tb_1_.EDITION,
+                        tb_1_.STORE_ID,
+                        tb_1_.ID
+                    from BOOK tb_1_
+                    where 
+                        tb_1_.ID = ?
+                `,
+                args: [9],
+                purpose: "query"
+            },
+            {
+                sql: `
+                    select 
+                        tb_1_.ID,
+                        tb_1_.ID,
+                        tb_1_.NAME,
+                        tb_1_.VERSION
+                    from BOOK_STORE tb_1_
+                    where 
+                        tb_1_.ID = ?
+                `,
+                args: [1],
+                purpose: "loadAssociation(Book.store)"
+            },
+            {
+                sql: `
+                    select 
+                        tb_2_.BOOK_ID,
+                        tb_1_.FIRST_NAME,
+                        tb_1_.LAST_NAME
+                    from AUTHOR tb_1_
+                    inner join book_author_mapping tb_2_ on 
+                        tb_1_.ID = tb_2_.AUTHOR_ID
+                    where 
+                        tb_2_.BOOK_ID = ?
+                    order by 
+                        tb_1_.FIRST_NAME asc,
+                        tb_1_.LAST_NAME asc
+                `,
+                args: [9],
+                purpose: "loadAssociation(Book.authors)"
+            }
+        );
+        expect(row).toEqual({
+            "key": {
+                "name": "YugabyteDB: The Definitive Guide",
+                "edition": 3
+            },
+            "associations": {
+                "storeId": 1,
+                "storeKey": {
+                    "name": "O'REILLY",
+                    "version": 1
+                },
+                "authors": [
+                    {
+                        "firstName": "Kannappan",
+                        "lastName": "Muthukkaruppan"
+                    },
+                    {
+                        "firstName": "Karthik",
+                        "lastName": "Ranganathan"
+                    },
+                    {
+                        "firstName": "Mikhail",
+                        "lastName": "Bautin"
+                    }
+                ]
+            }
+        });
     });
 });

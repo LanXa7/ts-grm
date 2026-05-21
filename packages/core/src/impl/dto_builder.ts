@@ -1,7 +1,7 @@
 import { ArgumentError, StateError } from "@/error/common";
 import { Entity } from "./entity";
 import { EntityProp } from "./entity_prop";
-import { Dto, DtoField, InverseFetchProp } from "./dto";
+import { Dto, DtoField, foldDto, InverseFetchProp } from "./dto";
 import { capitalize } from "./util";
 import { makeErr } from "@/error/util";
 import { ModelOrder } from "@/schema/order";
@@ -88,14 +88,7 @@ class DtoBuilder {
         ) as any as TypedDtoBuilder;
         fn(builder);
         const dto = builder.__unwrap().build();
-        const foldFields = dto.fields.map(f => {
-            return {
-                ...f,
-                path: f.path != null 
-                    ? withFoldKey(key, f.path)
-                    : undefined
-            };
-        });
+        const foldFields = foldDto(dto, key).fields;
         for (const foldField of foldFields) {
             this.fields.push(foldField);
         }
@@ -436,16 +429,6 @@ function withPrefix(
         return `${prefix}${capitalize(path)}`;
     }
     return [`${prefix}${capitalize(path[0]!)}`, ...path.slice(1, path.length)];
-}
-
-function withFoldKey(
-    key: string, 
-    path: string | ReadonlyArray<string>
-): ReadonlyArray<string> {
-    if (typeof path === "string") {
-        return [key, path];
-    }
-    return [key, ...path];
 }
 
 function isMatched(
