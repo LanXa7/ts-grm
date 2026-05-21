@@ -565,6 +565,45 @@ describe("ViewShapeTest", () => {
         }>();
     });
 
+    it("testFlatAndFlod", () => {
+        const view = dto.view(BOOK, $ => $
+            .fold("key", $ => $
+                .name
+                .edition
+            )
+            .fold("associations", $ => $
+                .flat("store", $ => $
+                    .id
+                    .fold("key", $ => $
+                        .name
+                        .version
+                    )
+                )
+                .authors($ => $
+                    .flat({prop: "name", prefix: ""})
+                )
+            )
+        );
+        type ViewType = TypeOf<typeof view>;
+        expectTypeOf<ViewType>().toEqualTypeOf<{
+            key: {
+                edition: number;
+                name: string;
+            };
+            associations: {
+                authors: {
+                    firstName: string;
+                    lastName: string;
+                }[];
+                storeId: string | null;
+                storeKey: {
+                    name: string;
+                    version: number;
+                } | null;
+            };
+        }>();
+    });
+
     it("testJoinEntity", () => {
         const view = dto.view(
             STUDENT, 
