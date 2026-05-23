@@ -1,4 +1,20 @@
-import { ast, dsl, metadata, RootQuery, RootQueryProjection, View, ExprTuple, ExpressionLike, ExpressionOrder, AnyModel, RootQuerySelectArrArgs, err, Expression } from "@ts-grm/core";
+import { 
+    ast, 
+    dsl, 
+    err,
+    metadata, 
+    RootQuery, 
+    RootQueryProjection, 
+    View, 
+    ExprTuple, 
+    ExpressionLike, 
+    ExpressionOrder, 
+    AnyModel, 
+    RootQuerySelectArrArgs, 
+    Expression, 
+    AtLeastTwo, 
+    Predicate 
+} from "@ts-grm/core";
 import { MergedRootQueryImpl } from "./merged_query";
 import { AtomRootQueryImpl } from "./atom_root_query_impl";
 import { Composite } from "@/sql/fragment";
@@ -12,7 +28,7 @@ export async function executeQuery<TProjection extends RootQueryProjection<any>>
     const contract = query as any as ast.QueryContract;
     const sqlClient = contract.kind === "ATOM"
         ? (query as AtomRootQueryImpl<TProjection>).mutableQuery.sqlClient
-        : (query as MergedRootQueryImpl<TProjection>).sqlClient;
+        : (query as any as MergedRootQueryImpl<TProjection>).sqlClient;
     const [sql, args] = buildStatement(sqlClient, query);
     const transactionManager = sqlClient.driver.transactionManager;
     return transactionManager.executeReadonly(async () => {
@@ -69,7 +85,9 @@ async function resolveAssocaitions(
         return;
     }
     for (const unresolveField of mapper.unresolvedFields) {
-        await new AssociationResolver(sqlClient, mapper, unresolveField, sourceRows).resolve();
+        if (unresolveField.subMapper != null) {
+            await new AssociationResolver(sqlClient, mapper, unresolveField, sourceRows).resolve();
+        }
     }
 }
 
@@ -254,18 +272,10 @@ class AssociationResolver {
     private async _resolveBatch(
         dependencies: ReadonlyArray<any>
     ) {
-        const model = this._unresolvedField.subMapper!.entity.model;
         const view = new View<AnyModel, any>(this._unresolvedField.subMapper!);
-        const query = this._sqlClient.createQuery(model, (q, target) => {
-            const dependencyAst = this._dependencyAst(target) as any;
-            q.where(dependencyAst.in(...dependencies));
-            const keyExpressions = this._keyExpressions(target);
-            if (this._isCollection) {
-                q.orderBy(...this._orders(target));
-            }
-            const selections = [...keyExpressions, target.fetch(view)] as any as RootQuerySelectArrArgs;
-            return q.select(...selections);
-        });
+        const query = this._unresolvedField.recursiveDepth != null
+            ? this._createRecursiveQuery(dependencies, view)
+            : this._createQuery(dependencies, view);
         const [sql, args] = buildStatement(this._sqlClient, query);
         const dataRows = await this._sqlClient.executor.executeStatement(sql, args, {
             kind: "LOAD_ASSOCIATION",
@@ -289,6 +299,72 @@ class AssociationResolver {
             }
         }
     }
+
+    private _createQuery(
+        dependencies: ReadonlyArray<any>, 
+        view: View<AnyModel, any>
+    ): RootQuery<any> {
+        const model = this._unresolvedField.subMapper!.entity.model;
+        return this._sqlClient.createQuery(model, (q, target) => {
+            const dependencyAst = this._dependencyAst(target) as any;
+            q.where(dependencyAst.in(...dependencies));
+            const keyExpressions = this._keyExpressions(target);
+            if (this._isCollection) {
+                q.orderBy(...this._orders(target));
+            }
+            const selections = [...keyExpressions, target.fetch(view)] as any as RootQuerySelectArrArgs;
+            return q.select(...selections);
+        })
+    }
+
+    private _createRecursiveQuery(
+        dependencies: ReadonlyArray<any>, 
+        view: View<AnyModel, any>
+    ): RootQuery<any> {
+        const model = this._unresolvedField.subMapper!.entity.model;
+        const baseModel = dsl.cteModel(
+            dsl.baseQuery(model, (q, target) => {
+                const dependencyAst = this._dependencyAst(target) as any;
+                q.where(dependencyAst.in(...dependencies));
+                return q.select({
+                    target,
+                    depth: dsl.constant(0)
+                });
+            }).unionAllRecursively(model, {
+                join: (prev, target) => { 
+                    const dependencyAst = this._dependencyAst(target);
+                    let keyProps: ReadonlyArray<metadata.EntityProp>;
+                    if (this._unresolvedField.prop.referenceKeyProp != null) {
+                        keyProps = this._unresolvedField.prop.referenceKeyProp.scalarProps!;
+                    } else {
+                        keyProps = (
+                            this._unresolvedField.prop.targetKeyProp 
+                            ?? this._unresolvedField.prop.targetEntity!.idProp
+                        ).scalarProps!;
+                    }
+                    const prevExpressions = keyProps.map(keyProp => 
+                        (prev.target as any as metadata.AbstractEntityTable).__expression(keyProp)
+                    );
+                    return dependencyAst.eq(expressionsToAst(prevExpressions)) as Predicate;
+                },
+                query: (q, target) => {
+                    return q.select({
+                        target,
+                        depth: q.prev.depth.plus(dsl.constant(1))
+                    });
+                }
+            })
+        );
+        return this._sqlClient.createQuery(baseModel, (q, base) => {
+            const keyExpressions = this._keyExpressions(base.target);
+            const selections = [
+                ...keyExpressions, 
+                base.target.fetch(view),
+                base.depth
+            ] as any as RootQuerySelectArrArgs;
+            return q.select(...selections);
+        });
+    }
 }
 
 type Binding = {
@@ -296,3 +372,12 @@ type Binding = {
     readonly sourceRows: Array<metadata.DtoRow>;
     targetData: metadata.DtoRow | ReadonlyArray<metadata.DtoRow> | undefined;
 };
+
+function expressionsToAst(
+    expressions: ReadonlyArray<Expression<any>>
+): any {
+    if (expressions.length === 1) {
+        return expressions[0]!;
+    }
+    return dsl.tuple(...(expressions as AtLeastTwo<any>));
+}

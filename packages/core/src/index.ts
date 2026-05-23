@@ -90,6 +90,7 @@ export type  {
     Schema,
     Criteria, 
     AtLeastOne,
+    AtLeastTwo,
     RootQuery,
     AtomRootQuery,
     MutableRootQuery,

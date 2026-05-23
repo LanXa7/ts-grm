@@ -87,7 +87,7 @@ export class PreVisitor extends ast.AbstractVisitor {
         const shadow = this._toRealTable(table).shadow;
         if (shadow != null) {
             shadow.baseQueryMetadata.alias(
-                expr.table.__anchor!.exportedName, 
+                table.__anchor!.exportedName, 
                 column.name
             );
         }

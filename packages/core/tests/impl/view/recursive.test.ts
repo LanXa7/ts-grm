@@ -7,7 +7,193 @@ import { mapperJson, makeReader } from "./utils";
 
 describe("RecursiveTest", () => {
 
-    it("recursive", () => {
+    it("oneRecursiveProp", () => {
+        const view = dto.view(TREE_NODE, $ => $
+            .name
+            .recursive("parentNode")
+        );
+        expect(mapperJson(view.mapper)).toEqual({
+            "entity": "TreeNode",
+            "fields": [
+                {
+                    "prop": "TreeNode.name",
+                    "paths": ["name"],
+                    "columnIndex": 0
+                },
+                {
+                    "prop": "TreeNode.parentNodeId",
+                    "paths": [],
+                    "isDependent": true,
+                    "columnIndex": 1
+                },
+                {
+                    "prop": "TreeNode.parentNode",
+                    "paths": ["parentNode"],
+                    "subMapper": {
+                        "entity": "TreeNode",
+                        "associatedProp": "TreeNode.parentNode",
+                        "fields": [
+                            {
+                                "prop": "TreeNode.name",
+                                "paths": ["name"],
+                                "columnIndex": 0
+                            },
+                            {
+                                "prop": "TreeNode.parentNodeId",
+                                "paths": [],
+                                "isDependent": true,
+                                "columnIndex": 1
+                            },
+                            {
+                                "prop": "TreeNode.parentNode",
+                                "paths": ["parentNode"],
+                                "dependencies": [1]
+                            }
+                        ]
+                    },
+                    "recursiveDepth": -1,
+                    "dependencies": [1]
+                }
+            ]
+        });
+        expect(buildShape(view.mapper)).toEqual({
+            "name": 0,
+            "parentNode": {
+                "__recursive": 1,
+                "__ref": {
+                    "name": 0,
+                    "__implicit": {
+                        "_1": 1
+                    },
+                    "parentNode": undefined
+                }
+            },
+            "__implicit": {
+                "_1": 1
+            }
+        });
+        expectCode(view.mapper.dtoRowReader.constructor.toString(), `
+            class extends $baseClass {
+                read(parents, reader) {
+                    const dto = {
+                        name: reader.get(0), 
+                        parentNode: null
+                    };
+                    const implicit = {
+                        _1: reader.get(1)
+                    };
+                    return { reader: this, parents, dto, implicit };
+                }
+                dependency(unresolvedFieldIndex, row) {
+                    switch (unresolvedFieldIndex) {
+                        case 2:
+                            return row.implicit._1;
+                        default:
+                            throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                    }
+                }
+                dependencyNullable(unresolvedFieldIndex, dependency) {
+                    switch (unresolvedFieldIndex) {
+                        case 2:
+                            return dependency == null;
+                        default:
+                            throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                    }
+                }
+                dependencyHash(unresolvedFieldIndex, dependency) {
+                    switch (unresolvedFieldIndex) {
+                        case 2:
+                            return dependency;
+                        default:
+                            throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                    }
+                }
+                resolve(unresolvedFieldIndex, row, value) {
+                    switch (unresolvedFieldIndex) {
+                        case 2:
+                            row.dto.parentNode = value;
+                            break;
+                        default:
+                            throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                    }
+                }
+            }
+        `);
+
+        const row = view.mapper.dtoRowReader.read(
+            undefined, 
+            makeReader("Drinks", 1)
+        );
+        expect(row.dto).toEqual({
+            name: "Drinks",
+            parentNode: null
+        });
+        expect(row.implicit).toEqual({
+            _1: 1
+        });
+
+        const parentMapper = view.mapper.fields.find(f => f.prop.name === "parentNode")!.subMapper!;
+        expectCode(parentMapper.dtoRowReader.constructor.toString(), `
+            class extends $baseClass {
+                read(parents, reader) {
+                    const dto = {
+                        name: reader.get(0), 
+                        parentNode: null
+                    };
+                    const implicit = {
+                        _1: reader.get(1)
+                    };
+                    return { reader: this, parents, dto, implicit };
+                }
+                dependency(unresolvedFieldIndex, row) {
+                    switch (unresolvedFieldIndex) {
+                        case 2:
+                            return row.implicit._1;
+                        default:
+                            throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                    }
+                }
+                dependencyNullable(unresolvedFieldIndex, dependency) {
+                    switch (unresolvedFieldIndex) {
+                        case 2:
+                            return dependency == null;
+                        default:
+                            throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                    }
+                }
+                dependencyHash(unresolvedFieldIndex, dependency) {
+                    switch (unresolvedFieldIndex) {
+                        case 2:
+                            return dependency;
+                        default:
+                            throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                    }
+                }
+                resolve(unresolvedFieldIndex, row, value) {
+                    switch (unresolvedFieldIndex) {
+                        case 2:
+                            row.dto.parentNode = value;
+                            break;
+                        default:
+                            throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                    }
+                }
+            }
+        `);
+        const parentRow = parentMapper.dtoRowReader.read(
+            undefined,
+            makeReader("Food", 1)
+        );
+        expect(parentRow.dto).toEqual({
+            name: "Food",
+            parentNode: null
+        });
+        expect(parentRow.implicit).toEqual({
+            _1: 1
+        });
+    });
+
+    it("twoRecursiveProps", () => {
         const view = dto.view(TREE_NODE, $ => $
             .name
             .recursive("parentNode")
