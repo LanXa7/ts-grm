@@ -19,7 +19,7 @@ import { MergedRootQueryImpl } from "./merged_query";
 import { AtomRootQueryImpl } from "./atom_root_query_impl";
 import { Composite } from "@/sql/fragment";
 import { SqlBuilder } from "@/sql/sql_builder";
-import { DataRowReader } from "./data_row_reader";
+import { DataRow, DataRowReader, DataRows } from "./data_row_reader";
 import { SqlClientImplementor } from "@/sql_client";
 
 export async function executeQuery<TProjection extends RootQueryProjection<any>>(
@@ -72,26 +72,35 @@ async function readDto(
         dtoRows.push(dtoRow);
         dtos.push(dtoRow.dto);
     }
-    await resolveAssocaitions(sqlClient, mapper, dtoRows);
+    await resolveAssociations(sqlClient, mapper, dtoRows, undefined);
     return dtos;
 }
 
-async function resolveAssocaitions(
+async function resolveAssociations(
     sqlClient: SqlClientImplementor,
     mapper: metadata.DtoMapper,
-    sourceRows: ReadonlyArray<metadata.DtoRow>
+    sourceRows: ReadonlyArray<metadata.DtoRow>,
+    recursiveContext: RecursiveContext | undefined
 ): Promise<void> {
     if (sourceRows.length === 0) {
         return;
     }
-    for (const unresolveField of mapper.unresolvedFields) {
-        if (unresolveField.subMapper != null) {
-            await new AssociationResolver(sqlClient, mapper, unresolveField, sourceRows).resolve();
+    for (const unresolvedField of mapper.unresolvedFields) {
+        if (unresolvedField.subMapper != null || recursiveContext != null) {
+            await new AssociationResolver(
+                sqlClient, 
+                mapper, 
+                unresolvedField, 
+                sourceRows, 
+                recursiveContext
+            ).resolve();
         }
     }
 }
 
 class AssociationResolver {
+
+    private readonly _unresolvedField: metadata.DtoMapperField;
 
     private readonly _targetMapper: metadata.DtoMapper;
 
@@ -108,13 +117,20 @@ class AssociationResolver {
     constructor(
         private _sqlClient: SqlClientImplementor,
         private readonly _sourceMapper: metadata.DtoMapper,
-        private readonly _unresolvedField: metadata.DtoMapperField,
-        private readonly _sourceRows: ReadonlyArray<metadata.DtoRow>
+        unresolvedField: metadata.DtoMapperField,
+        private readonly _sourceRows: ReadonlyArray<metadata.DtoRow>,
+        private readonly _recursiveContext: RecursiveContext | undefined
     ) {
-        this._targetMapper = _unresolvedField.subMapper!;
+        if (unresolvedField.subMapper != null) { // Assocaition
+            this._unresolvedField = unresolvedField;
+            this._targetMapper = unresolvedField.subMapper!;
+        } else { // Recursive
+            this._unresolvedField = _sourceMapper.fields.find(f => f.prop === unresolvedField.prop)!;
+            this._targetMapper = _sourceMapper;
+        }
         this._sourceDtoRowReader = this._sourceMapper.dtoRowReader;
         this._targetDtoRowReader = this._targetMapper.dtoRowReader;
-        const associationType = this._unresolvedField.prop.associationType;
+        const associationType = unresolvedField.prop.associationType;
         this._isCollection = associationType === "ONE_TO_MANY" || associationType === "MANY_TO_MANY";
         if (this._isCollection) {
             this._batchSize = _sqlClient.options.defaultListBatchSize;
@@ -210,14 +226,21 @@ class AssociationResolver {
         for (const binding of this._bindingMap.values()) {
             dependencies.push(binding.dependency);
         }
+        const recursiveContexts: Array<RecursiveContext> = [];
         if (dependencies.length <= this._batchSize) {
-            await this._resolveBatch(dependencies);
+            const recursiveContext = await this._resolveBatch(dependencies);
+            if (recursiveContext != null) {
+                recursiveContexts.push(recursiveContext);
+            }
         } else {
             let start = 0;
             while (start < this._batchSize) {
                 const end = Math.min(dependencies.length, start + this._batchSize);
                 const batchDependencies = dependencies.slice(start, end);
-                await this._resolveBatch(batchDependencies);
+                const recursiveContext = await this._resolveBatch(batchDependencies);
+                if (recursiveContext != null) {
+                    recursiveContexts.push(recursiveContext);
+                }
                 start += this._batchSize;
             }
         }
@@ -266,38 +289,60 @@ class AssociationResolver {
                 targetRows.push(row);
             }
         }
-        await resolveAssocaitions(this._sqlClient, this._targetMapper, targetRows);
+        const recursiveContext = RecursiveContext.merge(recursiveContexts);
+        await resolveAssociations(
+            this._sqlClient, 
+            this._targetMapper, 
+            targetRows, 
+            recursiveContext?.toDeeperContext()
+        );
     }
 
     private async _resolveBatch(
         dependencies: ReadonlyArray<any>
-    ) {
+    ): Promise<RecursiveContext | undefined> {
         const view = new View<AnyModel, any>(this._unresolvedField.subMapper!);
-        const query = this._unresolvedField.recursiveDepth != null
-            ? this._createRecursiveQuery(dependencies, view)
-            : this._createQuery(dependencies, view);
-        const [sql, args] = buildStatement(this._sqlClient, query);
-        const dataRows = await this._sqlClient.executor.executeStatement(sql, args, {
-            kind: "LOAD_ASSOCIATION",
-            prop: this._unresolvedField.prop as metadata.EntityProp
-        });
-        const keyRowReader = DataRowReader.of(dataRows);
         const keySpan = this._unresolvedField.dependencies!.length;
+        let keyRowReader: DataRowReader;
+        let recursiveContext = this._recursiveContext;
+        if (recursiveContext != null) {
+            keyRowReader = recursiveContext.toKeyRowReader();
+        } else {
+            const isRecursive = this._unresolvedField.recursiveDepth != null;
+            const query = isRecursive
+                ? this._createRecursiveQuery(dependencies, view)
+                : this._createQuery(dependencies, view);
+            const [sql, args] = buildStatement(this._sqlClient, query);
+            const dataRows = await this._sqlClient.executor.executeStatement(sql, args, {
+                kind: isRecursive ? "LOAD_RECURSIVE_TREE": "LOAD_ASSOCIATION",
+                prop: this._unresolvedField.prop as metadata.EntityProp
+            });
+            if (isRecursive && recursiveContext == null) {
+                recursiveContext = new RecursiveContext(dataRows, keySpan, view.mapper.span, 0);
+            }
+            keyRowReader = recursiveContext?.toKeyRowReader() ?? DataRowReader.of(dataRows);
+        }
         const valueRowReader = keyRowReader.offset(keySpan);
         const sourceDtoRowReader = this._sourceDtoRowReader;
         const targetDtoRowReader = this._targetDtoRowReader;
         while (keyRowReader.next()) {
             const key = keyRowReader.get(0, keySpan);
-            const binding = this._bindingMap.get(sourceDtoRowReader.dependencyHash(this._unresolvedField.index, key))!
+            const binding = this._bindingMap.get(sourceDtoRowReader.dependencyHash(this._unresolvedField.index, key))
+            if (binding == null) {
+                continue;
+            }
             const row = targetDtoRowReader.read(binding.sourceRows, valueRowReader);
             if (binding.targetData == null) {
                 binding.targetData = row;
+            } else if (!this._isCollection) {
+                // Do nothing
             } else if (!Array.isArray(binding.targetData)) {
                 binding.targetData = [binding.targetData as metadata.DtoRow, row];
             } else {
                 binding.targetData.push(row);
             }
         }
+        return recursiveContext;
     }
 
     private _createQuery(
@@ -381,3 +426,51 @@ function expressionsToAst(
     }
     return dsl.tuple(...(expressions as AtLeastTwo<any>));
 }
+
+class RecursiveContext {
+
+    constructor(
+        private readonly _allDataRows: DataRows,
+        private readonly _keySpan: number,
+        private readonly _valueSpan: number,
+        private readonly _depth: number
+    ) {}
+
+    toKeyRowReader(): DataRowReader {
+        const depth = this._depth;
+        const dci = this._keySpan + this._valueSpan;
+        const rows = this._allDataRows.filter(row => row[dci] === depth);
+        return DataRowReader.of(rows);
+    }
+
+    toDeeperContext() {
+        return new RecursiveContext(
+            this._allDataRows,
+            this._keySpan,
+            this._valueSpan,
+            this._depth + 1
+        );
+    }
+
+    static merge(
+        contexts: ReadonlyArray<RecursiveContext>
+    ): RecursiveContext | undefined {
+        if (contexts.length === 0) {
+            return undefined;
+        }
+        const firstContext = contexts[0]!;
+        if (contexts.length === 1) {
+            return firstContext;
+        }
+        const rows: Array<DataRow> = [];
+        for (const context of contexts) {
+            rows.push(...context._allDataRows);
+        }
+        return new RecursiveContext(
+            rows,
+            firstContext._keySpan,
+            firstContext._valueSpan,
+            firstContext._depth
+        );
+    }
+};

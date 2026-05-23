@@ -51,7 +51,7 @@ export class DtoMapper {
             span = 0;
             for (const field of this.fields) {
                 const index = field.columnIndex;
-                if (typeof index != null) {
+                if (index != null) {
                     span++;
                 }
             }
@@ -299,6 +299,7 @@ class Mapper {
             const newField: DtoMapperField = {
                 ...field,
                 recursiveDepth: undefined,
+                index: field.index + indexDelta,
                 columnIndex: typeof field.columnIndex === "number" 
                     ? field.columnIndex + columnIndexDelta 
                     : undefined,

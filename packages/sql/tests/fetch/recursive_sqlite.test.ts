@@ -1,5 +1,5 @@
 import { dto } from "@ts-grm/core";
-import { describe, it } from "vitest";
+import { describe, it, expect } from "vitest";
 import { TREE_NODE } from "../model/model";
 import { useSqliteClientWithData } from "./utils";
 import { newSqlRecord } from "../utils";
@@ -15,12 +15,84 @@ describe.sequential("RecursiveTest", () => {
             .name
             .recursive("parentNode")
         );
-        const row = await sqlClient.createQuery(TREE_NODE, (q, treeNode) => {
+        const rows = await sqlClient.createQuery(TREE_NODE, (q, treeNode) => {
             q.where(treeNode.id.in(5, 8));
             return q.select(treeNode.fetch(view));
         }).fetchList();
-        sqlRecord.log();
-        console.log(row);
+        sqlRecord.assert(
+            {
+                sql: `
+                    select 
+                        tb_1_.NAME,
+                        tb_1_.PARENT_NODE_ID
+                    from TREE_NODE tb_1_
+                    where 
+                        tb_1_.ID in(?, ?)
+                `,
+                args: [5, 8],
+                purpose: "query"
+            },
+            {
+                sql: `
+                    with
+                        recursive tb_1_(c1, c2, c3, c4) as (
+                            select 
+                                tb_2_.ID,
+                                tb_2_.NAME,
+                                tb_2_.PARENT_NODE_ID,
+                                0
+                            from TREE_NODE tb_2_
+                            where 
+                                tb_2_.ID in(?, ?)
+                            union all
+                            select 
+                                tb_3_.ID,
+                                tb_3_.NAME,
+                                tb_3_.PARENT_NODE_ID,
+                                tb_1_.c4 + 1
+                            from TREE_NODE tb_3_
+                            inner join tb_1_ on 
+                                tb_3_.ID = tb_1_.c3
+                        )
+                    select 
+                        tb_1_.c1,
+                        tb_1_.c2,
+                        tb_1_.c3,
+                        tb_1_.c4
+                    from tb_1_
+                `,
+                args: [3, 6],
+                purpose: "loadRecursiveTree(TreeNode.parentNode)"
+            }
+        );
+        expect(rows).toEqual([
+            {
+                "name": "Fanta",
+                "parentNode": {
+                    "name": "Drinks",
+                    "parentNode": {
+                        "name": "Food",
+                        "parentNode": {
+                            "name": "Home",
+                            "parentNode": null
+                        }
+                    }
+                }
+            },
+            {
+                "name": "Ciabatta",
+                "parentNode": {
+                    "name": "Bread",
+                    "parentNode": {
+                        "name": "Food",
+                        "parentNode": {
+                            "name": "Home",
+                            "parentNode": null
+                        }
+                    }
+                }
+            }
+        ]);
     });
 
     it("down", async () => {
@@ -31,8 +103,292 @@ describe.sequential("RecursiveTest", () => {
         const row = await sqlClient.createQuery(TREE_NODE, (q, treeNode) => {
             q.where(treeNode.id.eq(1));
             return q.select(treeNode.fetch(view));
-        }).fetchList();
-        sqlRecord.log();
-        console.log(JSON.stringify(row));
+        }).fetchRequired();
+        sqlRecord.assert(
+            {
+                sql: `
+                    select 
+                        tb_1_.NAME,
+                        tb_1_.ID
+                    from TREE_NODE tb_1_
+                    where 
+                        tb_1_.ID = ?
+                `,
+                args: [1],
+                purpose: "query"
+            },
+            {
+                sql: `
+                    with
+                        recursive tb_1_(c1, c2, c3, c4) as (
+                            select 
+                                tb_2_.PARENT_NODE_ID,
+                                tb_2_.NAME,
+                                tb_2_.ID,
+                                0
+                            from TREE_NODE tb_2_
+                            where 
+                                tb_2_.PARENT_NODE_ID = ?
+                            union all
+                            select 
+                                tb_3_.PARENT_NODE_ID,
+                                tb_3_.NAME,
+                                tb_3_.ID,
+                                tb_1_.c4 + 1
+                            from TREE_NODE tb_3_
+                            inner join tb_1_ on 
+                                tb_3_.PARENT_NODE_ID = tb_1_.c3
+                        )
+                    select 
+                        tb_1_.c1,
+                        tb_1_.c2,
+                        tb_1_.c3,
+                        tb_1_.c4
+                    from tb_1_
+                `,
+                args: [1],
+                purpose: "loadRecursiveTree(TreeNode.childNodes)"
+            }
+        );
+        expect(row).toEqual({
+            "name": "Home",
+            "childNodes": [
+                {
+                    "name": "Food",
+                    "childNodes": [
+                        {
+                            "name": "Bread",
+                            "childNodes": [
+                                {
+                                    "name": "Baguette",
+                                    "childNodes": []
+                                },
+                                {
+                                    "name": "Ciabatta",
+                                    "childNodes": []
+                                }
+                            ]
+                        },
+                        {
+                            "name": "Drinks",
+                            "childNodes": [
+                                {
+                                    "name": "Coca Cola",
+                                    "childNodes": []
+                                },
+                                {
+                                    "name": "Fanta",
+                                    "childNodes": []
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "name": "Clothing",
+                    "childNodes": [
+                        {
+                            "name": "Man",
+                            "childNodes": [
+                                {
+                                    "name": "Casual wear",
+                                    "childNodes": [
+                                        {
+                                            "name": "Jacket",
+                                            "childNodes": []
+                                        },
+                                        {
+                                            "name": "Jeans",
+                                            "childNodes": []
+                                        }
+                                    ]
+                                },
+                                {
+                                    "name": "Formal wear",
+                                    "childNodes": [
+                                        {
+                                            "name": "Shirt",
+                                            "childNodes": []
+                                        },
+                                        {
+                                            "name": "Suit",
+                                            "childNodes": []
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "name": "Woman",
+                            "childNodes": [
+                                {
+                                    "name": "Casual wear",
+                                    "childNodes": [
+                                        {
+                                            "name": "Dress",
+                                            "childNodes": []
+                                        },
+                                        {
+                                            "name": "Jeans",
+                                            "childNodes": []
+                                        },
+                                        {
+                                            "name": "Miniskirt",
+                                            "childNodes": []
+                                        }
+                                    ]
+                                },
+                                {
+                                    "name": "Formal wear",
+                                    "childNodes": [
+                                        {
+                                            "name": "Shirt",
+                                            "childNodes": []
+                                        },
+                                        {
+                                            "name": "Suit",
+                                            "childNodes": []
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        });
+    });
+
+    it("upAndDown", async () => {
+        const view = dto.view(TREE_NODE, $ => $
+            .name
+            .recursive("parentNode")
+            .recursive("childNodes")
+        );
+        const row = await sqlClient.createQuery(TREE_NODE, (q, treeNode) => {
+            q.where(treeNode.id.eq(10));
+            return q.select(treeNode.fetch(view));
+        }).fetchRequired();
+        sqlRecord.assert(
+            {
+                sql: `
+                    select 
+                        tb_1_.NAME,
+                        tb_1_.PARENT_NODE_ID,
+                        tb_1_.ID
+                    from TREE_NODE tb_1_
+                    where 
+                        tb_1_.ID = ?
+                `,
+                args: [10],
+                purpose: "query"
+            },
+            {
+                sql: `
+                    with
+                        recursive tb_1_(c1, c2, c3, c4) as (
+                            select 
+                                tb_2_.ID,
+                                tb_2_.NAME,
+                                tb_2_.PARENT_NODE_ID,
+                                0
+                            from TREE_NODE tb_2_
+                            where 
+                                tb_2_.ID = ?
+                            union all
+                            select 
+                                tb_3_.ID,
+                                tb_3_.NAME,
+                                tb_3_.PARENT_NODE_ID,
+                                tb_1_.c4 + 1
+                            from TREE_NODE tb_3_
+                            inner join tb_1_ on 
+                                tb_3_.ID = tb_1_.c3
+                        )
+                    select 
+                        tb_1_.c1,
+                        tb_1_.c2,
+                        tb_1_.c3,
+                        tb_1_.c4
+                    from tb_1_
+                `,
+                args: [9],
+                purpose: "loadRecursiveTree(TreeNode.parentNode)"
+            },
+            {
+                sql: `
+                    with
+                        recursive tb_1_(c1, c2, c3, c4) as (
+                            select 
+                                tb_2_.PARENT_NODE_ID,
+                                tb_2_.NAME,
+                                tb_2_.ID,
+                                0
+                            from TREE_NODE tb_2_
+                            where 
+                                tb_2_.PARENT_NODE_ID = ?
+                            union all
+                            select 
+                                tb_3_.PARENT_NODE_ID,
+                                tb_3_.NAME,
+                                tb_3_.ID,
+                                tb_1_.c4 + 1
+                            from TREE_NODE tb_3_
+                            inner join tb_1_ on 
+                                tb_3_.PARENT_NODE_ID = tb_1_.c3
+                        )
+                    select 
+                        tb_1_.c1,
+                        tb_1_.c2,
+                        tb_1_.c3,
+                        tb_1_.c4
+                    from tb_1_
+                `,
+                args: [10],
+                purpose: "loadRecursiveTree(TreeNode.childNodes)"
+            },
+        )
+        expect(row).toEqual({
+            "name": "Woman",
+            "parentNode": {
+                "name": "Clothing",
+                "parentNode": {
+                    "name": "Home",
+                    "parentNode": null
+                }
+            },
+            "childNodes": [
+                {
+                    "name": "Casual wear",
+                    "childNodes": [
+                        {
+                            "name": "Dress",
+                            "childNodes": []
+                        },
+                        {
+                            "name": "Jeans",
+                            "childNodes": []
+                        },
+                        {
+                            "name": "Miniskirt",
+                            "childNodes": []
+                        }
+                    ]
+                },
+                {
+                    "name": "Formal wear",
+                    "childNodes": [
+                        {
+                            "name": "Shirt",
+                            "childNodes": []
+                        },
+                        {
+                            "name": "Suit",
+                            "childNodes": []
+                        }
+                    ]
+                }
+            ]
+        });
     });
 });

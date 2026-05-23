@@ -452,15 +452,15 @@ describe("RecursiveTest", () => {
                 }
                 dependency(unresolvedFieldIndex, row) {
                     switch (unresolvedFieldIndex) {
-                        case 4:
-                            return row.implicit._3;
+                        case 2:
+                            return row.implicit._1;
                         default:
                             throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
                     }
                 }
                 dependencyNullable(unresolvedFieldIndex, dependency) {
                     switch (unresolvedFieldIndex) {
-                        case 4:
+                        case 2:
                             return dependency == null;
                         default:
                             throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
@@ -468,7 +468,7 @@ describe("RecursiveTest", () => {
                 }
                 dependencyHash(unresolvedFieldIndex, dependency) {
                     switch (unresolvedFieldIndex) {
-                        case 4:
+                        case 2:
                             return dependency;
                         default:
                             throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
@@ -476,7 +476,7 @@ describe("RecursiveTest", () => {
                 }
                 resolve(unresolvedFieldIndex, row, value) {
                     switch (unresolvedFieldIndex) {
-                        case 4:
+                        case 2:
                             row.dto.childNodes = value;
                             break;
                         default:
