@@ -145,4 +145,39 @@ insert into TREE_NODE(
                 (22, 'Group', 'Formal wear', 18),
                     (23, 'Group', 'Suit', 22),
                     (24, 'Group', 'Shirt', 22);
+
+insert into LIBRARY(ID, NAME, VERSION) values
+    (1, 'react', '18.2.0'),
+    (2, 'react-dom', '18.2.0'),
+    (3, 'preact', '10.19.0'),
+    (4, 'loose-envify', '1.4.0'),
+    (5, 'js-tokens', '4.0.0'),
+    (6, 'scheduler', '0.23.0'),
+    (7, 'webpack', '5.88.0'),
+    (8, 'preact-render-to-string', '6.3.0'),
+    (9, 'preact-jsx-runtime', '1.0.0'),
+    (10, 'terser', '5.19.0'),
+    (11, '@babel/core', '7.22.0'),
+    (12, '@babel/preset-env', '7.22.0'),
+    (13, '@babel/preset-react', '7.22.0'),
+    (14, 'babel-loader', '9.1.0');
+
+insert into LIBRARY_DEPENDENCY_MAPPING(DEPENDENT_ID, DEPENDENCY_ID) values
+    (1, 4),
+    (1, 6),
+    (2, 1),
+    (2, 6),
+    (2, 4),
+    (4, 5),
+    (3, 4),
+    (3, 6),
+    (3, 1),
+    (3, 2),
+    (2, 7),
+    (3, 7),
+    (7, 10),
+    (7, 11),
+    (11, 12),
+    (12, 13),
+    (13, 14);
 `;

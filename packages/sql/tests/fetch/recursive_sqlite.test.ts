@@ -1,6 +1,6 @@
 import { dto } from "@ts-grm/core";
 import { describe, it, expect } from "vitest";
-import { TREE_NODE } from "../model/model";
+import { LIBRARY, TREE_NODE } from "../model/model";
 import { useSqliteClientWithData } from "./utils";
 import { newSqlRecord } from "../utils";
 
@@ -485,5 +485,78 @@ describe.sequential("RecursiveTest", () => {
                 }
             ]
         });
+    });
+
+    it("byJoinTable", async () => {
+        const view = dto.view(LIBRARY, $ => $
+            .name
+            .version
+            .recursive("dependents")
+        );
+        const row = await sqlClient.createQuery(LIBRARY, (q, lib) => {
+            q.where(lib.id.eq(5));
+            return q.select(
+                lib.fetch(view)
+            );
+        }).fetchRequired();
+        sqlRecord.log();
+        sqlRecord.assert(
+            {
+                sql: `
+                    select 
+                        tb_1_.NAME,
+                        tb_1_.VERSION,
+                        tb_1_.ID
+                    from LIBRARY tb_1_
+                    where 
+                        tb_1_.ID = ?
+                `,
+                args: [5],
+                purpose: "query"
+            },
+            {
+                sql: `
+                    with
+                        recursive tb_1_(c1, c2, c3, c4) as (
+                            select 
+                                tb_3_.NAME,
+                                tb_3_.VERSION,
+                                tb_3_.ID,
+                                0
+                            from LIBRARY tb_3_
+                            inner join LIBRARY_DEPENDENCY_MAPPING tb_4_ on 
+                                tb_3_.ID = tb_4_.DEPENDENT_ID
+                            where 
+                                tb_4_.DEPENDENCY_ID = ?
+                            union all
+                            select 
+                                tb_5_.NAME,
+                                tb_5_.VERSION,
+                                tb_5_.ID,
+                                tb_1_.c4 + 1
+                            from LIBRARY tb_5_
+                            inner join LIBRARY_DEPENDENCY_MAPPING tb_6_ on 
+                                tb_5_.ID = tb_6_.DEPENDENT_ID
+                            inner join tb_1_ on 
+                                tb_6_.DEPENDENCY_ID = tb_1_.c3
+                        )
+                    select 
+                        tb_2_.DEPENDENCY_ID,
+                        tb_1_.c1,
+                        tb_1_.c2,
+                        tb_1_.c3,
+                        tb_1_.c4
+                    from tb_1_
+                    inner join LIBRARY_DEPENDENCY_MAPPING tb_2_ on 
+                        tb_1_.c3 = tb_2_.DEPENDENT_ID
+                `,
+                args: [5],
+                purpose: "loadRecursiveTree(Library.dependents)"
+            }
+        );
+        // TODO:
+        // 1. SQL is not good, optimize it
+        // 2. Remove duplicated data of associated objects
+        console.log(JSON.stringify(row))
     });
 });

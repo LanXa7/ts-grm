@@ -760,7 +760,7 @@ describe.sequential("SchemaCreatorTest", () => {
                     {
                         "name": "VERSION",
                         "nullable": false,
-                        "type": "I32",
+                        "type": "STR",
                     },
                 ],
                 "constraints": [
@@ -1130,7 +1130,7 @@ describe.sequential("SchemaCreatorTest", () => {
             create table LIBRARY(
                 ID integer not null, 
                 NAME text not null, 
-                VERSION integer not null, 
+                VERSION text not null, 
 
                 constraint LIBRARY_constraint_1
                     primary key(ID)

@@ -195,7 +195,7 @@ export class PreVisitor extends ast.AbstractVisitor {
         if (table.parent?.shadow == null) {
             return;
         }
-        if (table.joinProp != null) {
+        if (table.joinProp != null && table.symbol.__entity != null) {
             switch (table.joinProp.storageType) {
                 case "MIDDLE_TABLE":
                     this._processMiddleTable(table);
