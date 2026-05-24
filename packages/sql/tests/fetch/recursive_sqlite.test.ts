@@ -391,4 +391,99 @@ describe.sequential("RecursiveTest", () => {
             ]
         });
     });
+
+    it("withDepth", async() => {
+        const view = dto.view(TREE_NODE, $ => $
+            .name
+            .recursive({
+                prop: "childNodes",
+                alias: "childList",
+                depth: 2
+            })
+        );
+        const row = await sqlClient.createQuery(TREE_NODE, (q, treeNode) => {
+            q.where(treeNode.id.eq(1));
+            return q.select(treeNode.fetch(view));
+        }).fetchRequired();
+        sqlRecord.assert(
+            {
+                sql: `
+                    select 
+                        tb_1_.NAME,
+                        tb_1_.ID
+                    from TREE_NODE tb_1_
+                    where 
+                        tb_1_.ID = ?
+                `,
+                args: [1],
+                purpose: "query"
+            },
+            {
+                sql: `
+                    with
+                        recursive tb_1_(c1, c2, c3, c4) as (
+                            select 
+                                tb_2_.PARENT_NODE_ID,
+                                tb_2_.NAME,
+                                tb_2_.ID,
+                                0
+                            from TREE_NODE tb_2_
+                            where 
+                                tb_2_.PARENT_NODE_ID = ?
+                            union all
+                            select 
+                                tb_3_.PARENT_NODE_ID,
+                                tb_3_.NAME,
+                                tb_3_.ID,
+                                tb_1_.c4 + 1
+                            from TREE_NODE tb_3_
+                            inner join tb_1_ on 
+                                tb_3_.PARENT_NODE_ID = tb_1_.c3
+                        )
+                    select 
+                        tb_1_.c1,
+                        tb_1_.c2,
+                        tb_1_.c3,
+                        tb_1_.c4
+                    from tb_1_
+                    where 
+                        tb_1_.c4 < ?
+                `,
+                args: [1, 2],
+                purpose: "loadRecursiveTree(TreeNode.childNodes)"
+            }
+        );
+        expect(row).toEqual({
+            "name": "Home",
+            "childNodes": null,
+            "childList": [
+                {
+                    "name": "Food",
+                    "childList": [
+                        {
+                            "name": "Bread",
+                            "childList": null
+                        },
+                        {
+                            "name": "Drinks",
+                            "childList": null
+                        }
+                    ]
+                },
+                {
+                    "name": "Clothing",
+                    "childList": [
+                        {
+                            "name": "Man",
+                            "childList": null
+                        },
+                        {
+                            "name": "Woman",
+                            "childList": null
+                        }
+                    ]
+                }
+            ]
+        });
+    });
 });

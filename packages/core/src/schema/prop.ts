@@ -1515,7 +1515,7 @@ type SelfJoinTableOptions<
         readonly joinThisColumns?: JoinColumns | undefined;
         readonly joinTargetColumns?: JoinColumns | undefined; 
     } | {
-        readonly nam?: string | undefined;
+        readonly name?: string | undefined;
         readonly joinThis?: {
             readonly sourceKeyProp?: TSourceKeyProp | undefined;
             readonly cascadeType?: CascadeType | undefined;
@@ -1726,7 +1726,7 @@ function m2mCreator(): M2MCreator {
         return new ManyToManyProp({
             ...EMPTY_PROP_DEFINITION_DATA, 
             targetModel: self, 
-            associationType: "ONE_TO_MANY",
+            associationType: "MANY_TO_MANY",
             mappedBy: mappedBy,
             joinTable: (options as any)?.joinTable != null 
                 ? joinTableDataOf((options as any).joinTable, undefined)

@@ -243,9 +243,9 @@ describe("InheritanceBaseQuerySqlTest", () => {
                     tb_5_.TYPE c5
                 from AUTHOR tb_3_
                 inner join book_author_mapping tb_4_ on 
-                    tb_3_.ID = tb_4_.AUTHOR_ID
+                    tb_3_.ID = tb_4_.author_id
                 inner join BOOK tb_5_ on 
-                    tb_4_.BOOK_ID = tb_5_.ID
+                    tb_4_.book_id = tb_5_.ID
                 where 
                     tb_3_.FIRST_NAME = ?
             ) tb_1_

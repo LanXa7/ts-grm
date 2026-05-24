@@ -18,6 +18,7 @@ describe.sequential("EntityManagerTest", () => {
             'ElectronicBook',
             'Group',
             'LearningLink',
+            'Library',
             'OnlineBookStore',
             'Order',
             'OrderItem',

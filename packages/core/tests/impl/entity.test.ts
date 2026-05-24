@@ -169,7 +169,7 @@ describe("EntityTest", () => {
             "toThisColumns": [
                 {
                     "kind": "COLUMN",
-                    "name": "BOOK_ID",
+                    "name": "book_id",
                     "referencedProp": "Book.id",
                     "referencedColumnName": "ID"
                 },
@@ -177,7 +177,7 @@ describe("EntityTest", () => {
             "toTargetColumns": [
                 {
                     "kind": "COLUMN",
-                    "name": "AUTHOR_ID",
+                    "name": "author_id",
                     "referencedProp": "Author.id",
                     "referencedColumnName": "ID"
                 },
@@ -219,7 +219,7 @@ describe("EntityTest", () => {
             "toThisColumns": [
                 {
                     "kind": "COLUMN",
-                    "name": "AUTHOR_ID",
+                    "name": "author_id",
                     "referencedProp": "Author.id",
                     "referencedColumnName": "ID"
                 },
@@ -227,7 +227,7 @@ describe("EntityTest", () => {
             "toTargetColumns": [
                 {
                     "kind": "COLUMN",
-                    "name": "BOOK_ID",
+                    "name": "book_id",
                     "referencedProp": "Book.id",
                     "referencedColumnName": "ID"
                 },

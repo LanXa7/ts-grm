@@ -89,9 +89,9 @@ describe("FilterSqlTest", () => {
                 tb_1_.EDITION
             from BOOK tb_1_
             inner join book_author_mapping tb_2_ on 
-                tb_1_.ID = tb_2_.BOOK_ID
+                tb_1_.ID = tb_2_.book_id
             where 
-                tb_2_.AUTHOR_ID in(?, ?)
+                tb_2_.author_id in(?, ?)
         `);
     });
 
@@ -117,9 +117,9 @@ describe("FilterSqlTest", () => {
                 tb_1_.EDITION
             from BOOK tb_1_
             inner join book_author_mapping tb_2_ on 
-                tb_1_.ID = tb_2_.BOOK_ID
+                tb_1_.ID = tb_2_.book_id
             inner join AUTHOR tb_3_ on 
-                tb_2_.AUTHOR_ID = tb_3_.ID
+                tb_2_.author_id = tb_3_.ID
             and
                 length(cast(tb_3_.FIRST_NAME as text)) + length(cast(tb_3_.LAST_NAME as text)) <= ?
             where 

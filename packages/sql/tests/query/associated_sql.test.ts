@@ -200,9 +200,9 @@ describe("AssociatedSqlTest", () => {
                         1
                     from AUTHOR tb_2_
                     inner join book_author_mapping tb_3_ on 
-                        tb_2_.ID = tb_3_.AUTHOR_ID
+                        tb_2_.ID = tb_3_.author_id
                     where 
-                            tb_3_.BOOK_ID = tb_1_.ID
+                            tb_3_.book_id = tb_1_.ID
                         and
                             (
                                 length(cast(tb_2_.FIRST_NAME as text)) < ?
@@ -255,9 +255,9 @@ describe("AssociatedSqlTest", () => {
                         count(1)
                     from BOOK tb_2_
                     inner join book_author_mapping tb_3_ on 
-                        tb_2_.ID = tb_3_.BOOK_ID
+                        tb_2_.ID = tb_3_.book_id
                     where 
-                            tb_3_.AUTHOR_ID = tb_1_.ID
+                            tb_3_.author_id = tb_1_.ID
                         and
                             lower(tb_2_.NAME) like ?
                 ) > ?

@@ -163,13 +163,13 @@ describe.sequential("SchemaCreatorTest", () => {
                 "name": "book_author_mapping",
                 "columns": [
                     {
-                        "name": "BOOK_ID",
+                        "name": "book_id",
                         "referenceName": "ID",
                         "type": "I64",
                         "nullable": false
                     },
                     {
-                        "name": "AUTHOR_ID",
+                        "name": "author_id",
                         "referenceName": "ID",
                         "type": "I64",
                         "nullable": false
@@ -178,18 +178,18 @@ describe.sequential("SchemaCreatorTest", () => {
                 "constraints": [
                     {
                         "kind": "PRIMARY_KEY",
-                        "columns": ["BOOK_ID", "AUTHOR_ID"],
+                        "columns": ["book_id", "author_id"],
                         "implicit": "MIDDLE_TABLE"
                     },
                     {
                         "kind": "FOREIGN_KEY",
-                        "columns": ["BOOK_ID"],
+                        "columns": ["book_id"],
                         "referencedColumns": ["ID"],
                         "cascade": "NONE"
                     },
                     {
                         "kind": "FOREIGN_KEY",
-                        "columns": ["AUTHOR_ID"],
+                        "columns": ["author_id"],
                         "referencedColumns": ["ID"],
                         "cascade": "NONE"
                     }
@@ -744,6 +744,68 @@ describe.sequential("SchemaCreatorTest", () => {
                         "cascade": "NONE"
                     }
                 ]
+            },
+            {
+                "columns": [
+                    {
+                        "name": "ID",
+                        "nullable": false,
+                        "type": "I64",
+                    },
+                    {
+                        "name": "NAME",
+                        "nullable": false,
+                        "type": "STR",
+                    },
+                    {
+                        "name": "VERSION",
+                        "nullable": false,
+                        "type": "I32",
+                    },
+                ],
+                "constraints": [
+                    {
+                        "columns": ["ID"],
+                        "kind": "PRIMARY_KEY",
+                        },
+                ],
+                "name": "LIBRARY"
+            },
+            {
+                "columns": [
+                    {
+                        "name": "DEPENDENT_ID",
+                        "nullable": false,
+                        "referenceName": "ID",
+                        "type": "I64"
+                    },
+                    {
+                        "name": "DEPENDENCY_ID",
+                        "nullable": false,
+                        "referenceName": "ID",
+                        "type": "I64"
+                    }
+                ],
+                "constraints": [
+                    {
+                        "columns": ["DEPENDENT_ID", "DEPENDENCY_ID"],
+                        "implicit": "MIDDLE_TABLE",
+                        "kind": "PRIMARY_KEY"
+                    },
+                    {
+                        "cascade": "NONE",
+                        "columns": ["DEPENDENT_ID"],
+                        "kind": "FOREIGN_KEY",
+                        "referencedColumns": ["ID"]
+                    },
+                    {
+                        "cascade": "NONE",
+                        "columns": ["DEPENDENCY_ID"],
+                        "kind": "FOREIGN_KEY",
+                        "referencedColumns": ["ID"]
+                    },
+                ],
+                "name": "LIBRARY_DEPENDENCY_MAPPING",
             }
         ]);
     });
@@ -816,19 +878,19 @@ describe.sequential("SchemaCreatorTest", () => {
 
             -- Middle table for "Book.authors"
             create table book_author_mapping(
-                BOOK_ID integer not null, 
-                AUTHOR_ID integer not null, 
+                book_id integer not null, 
+                author_id integer not null, 
 
                 -- Implicit primary key constraint for middle table
                 constraint book_author_mapping_constraint_1
-                    primary key(BOOK_ID, AUTHOR_ID), 
+                    primary key(book_id, author_id), 
 
                 constraint book_author_mapping_constraint_2
-                    foreign key(BOOK_ID)
+                    foreign key(book_id)
                         references BOOK(ID), 
 
                 constraint book_author_mapping_constraint_3
-                    foreign key(AUTHOR_ID)
+                    foreign key(author_id)
                         references AUTHOR(ID)
             );
 
@@ -1062,6 +1124,34 @@ describe.sequential("SchemaCreatorTest", () => {
                 constraint LEARNING_LINK_constraint_4
                     foreign key(COURSE_ID)
                         references COURSE(ID)
+            );
+
+            -- Entity table for "Library"
+            create table LIBRARY(
+                ID integer not null, 
+                NAME text not null, 
+                VERSION integer not null, 
+
+                constraint LIBRARY_constraint_1
+                    primary key(ID)
+            );
+
+            -- Middle table for "Library.dependencies"
+            create table LIBRARY_DEPENDENCY_MAPPING(
+                DEPENDENT_ID integer not null, 
+                DEPENDENCY_ID integer not null, 
+
+                -- Implicit primary key constraint for middle table
+                constraint LIBRARY_DEPENDENCY_MAPPING_constraint_1
+                    primary key(DEPENDENT_ID, DEPENDENCY_ID), 
+
+                constraint LIBRARY_DEPENDENCY_MAPPING_constraint_2
+                    foreign key(DEPENDENT_ID)
+                        references LIBRARY(ID), 
+
+                constraint LIBRARY_DEPENDENCY_MAPPING_constraint_3
+                    foreign key(DEPENDENCY_ID)
+                        references LIBRARY(ID)
             )
         `);
     });

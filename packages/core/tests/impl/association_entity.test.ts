@@ -40,25 +40,25 @@ describe("AssociationEntityTest", () => {
 
         expectStorage(sourceProp.toStorage(strategy)).toEqual({
             "kind": "COLUMN",
-            "name": "BOOK_ID",
+            "name": "book_id",
             "referencedColumnName": "ID",
             "referencedProp": "Book.id",
         });
         expectStorage(targetProp.toStorage(strategy)).toEqual({
             "kind": "COLUMN",
-            "name": "AUTHOR_ID",
+            "name": "author_id",
             "referencedColumnName": "ID",
             "referencedProp": "Author.id",
         });
         expectStorage(sourceKeyProp.toStorage(strategy)).toEqual({
             "kind": "COLUMN",
-            "name": "BOOK_ID",
+            "name": "book_id",
             "referencedColumnName": "ID",
             "referencedProp": "Book.id",
         });
         expectStorage(targetKeyProp.toStorage(strategy)).toEqual({
             "kind": "COLUMN",
-            "name": "AUTHOR_ID",
+            "name": "author_id",
             "referencedColumnName": "ID",
             "referencedProp": "Author.id",
         });
@@ -99,25 +99,25 @@ describe("AssociationEntityTest", () => {
 
         expectStorage(sourceProp.toStorage(strategy)).toEqual({
             "kind": "COLUMN",
-            "name": "AUTHOR_ID",
+            "name": "author_id",
             "referencedColumnName": "ID",
             "referencedProp": "Author.id",
         });
         expectStorage(targetProp.toStorage(strategy)).toEqual({
             "kind": "COLUMN",
-            "name": "BOOK_ID",
+            "name": "book_id",
             "referencedColumnName": "ID",
             "referencedProp": "Book.id",
         });
         expectStorage(sourceKeyProp.toStorage(strategy)).toEqual({
             "kind": "COLUMN",
-            "name": "AUTHOR_ID",
+            "name": "author_id",
             "referencedColumnName": "ID",
             "referencedProp": "Author.id",
         });
         expectStorage(targetKeyProp.toStorage(strategy)).toEqual({
             "kind": "COLUMN",
-            "name": "BOOK_ID",
+            "name": "book_id",
             "referencedColumnName": "ID",
             "referencedProp": "Book.id",
         });

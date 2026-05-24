@@ -68,15 +68,15 @@ describe.sequential("ActionSqliteTest", () => {
             {
                 sql: `
                     select 
-                        tb_2_.BOOK_ID,
+                        tb_2_.book_id,
                         tb_1_.ID,
                         tb_1_.FIRST_NAME,
                         tb_1_.LAST_NAME
                     from AUTHOR tb_1_
                     inner join book_author_mapping tb_2_ on 
-                        tb_1_.ID = tb_2_.AUTHOR_ID
+                        tb_1_.ID = tb_2_.author_id
                     where 
-                        tb_2_.BOOK_ID in(?, ?, ?)
+                        tb_2_.book_id in(?, ?, ?)
                     order by 
                         tb_1_.FIRST_NAME asc,
                         tb_1_.LAST_NAME asc

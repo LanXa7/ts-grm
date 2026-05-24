@@ -26,11 +26,11 @@ describe("AssociationSqlTest", () => {
                 tb_3_.LAST_NAME
             from book_author_mapping tb_1_
             inner join BOOK tb_2_ on 
-                tb_1_.BOOK_ID = tb_2_.ID
+                tb_1_.book_id = tb_2_.ID
             inner join AUTHOR tb_3_ on 
-                tb_1_.AUTHOR_ID = tb_3_.ID
+                tb_1_.author_id = tb_3_.ID
             where 
-                tb_1_.BOOK_ID = ?
+                tb_1_.book_id = ?
         `);
     });
 
@@ -52,11 +52,11 @@ describe("AssociationSqlTest", () => {
                 tb_3_.EDITION
             from book_author_mapping tb_1_
             inner join AUTHOR tb_2_ on 
-                tb_1_.AUTHOR_ID = tb_2_.ID
+                tb_1_.author_id = tb_2_.ID
             inner join BOOK tb_3_ on 
-                tb_1_.BOOK_ID = tb_3_.ID
+                tb_1_.book_id = tb_3_.ID
             where 
-                tb_1_.AUTHOR_ID = ?
+                tb_1_.author_id = ?
         `);
     });
 
@@ -74,9 +74,9 @@ describe("AssociationSqlTest", () => {
                 tb_1_.EDITION
             from BOOK tb_1_
             inner join book_author_mapping tb_2_ on 
-                tb_1_.ID = tb_2_.BOOK_ID
+                tb_1_.ID = tb_2_.book_id
             where 
-                tb_2_.AUTHOR_ID = ?
+                tb_2_.author_id = ?
         `);
     });
 
@@ -94,9 +94,9 @@ describe("AssociationSqlTest", () => {
                 tb_1_.LAST_NAME
             from AUTHOR tb_1_
             inner join book_author_mapping tb_2_ on 
-                tb_1_.ID = tb_2_.AUTHOR_ID
+                tb_1_.ID = tb_2_.author_id
             where 
-                tb_2_.BOOK_ID = ?
+                tb_2_.book_id = ?
         `);
     });
 

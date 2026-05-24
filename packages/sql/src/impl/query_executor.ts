@@ -227,7 +227,7 @@ class AssociationResolver {
             dependencies.push(binding.dependency);
         }
         const recursiveContexts: Array<RecursiveContext> = [];
-        if (dependencies.length <= this._batchSize) {
+        if (dependencies.length <= this._batchSize || this._recursiveContext != null) {
             const recursiveContext = await this._resolveBatch(dependencies);
             if (recursiveContext != null) {
                 recursiveContexts.push(recursiveContext);
@@ -252,7 +252,11 @@ class AssociationResolver {
             let value: any;
             if (this._isCollection) {
                 if (targetData == null) {
-                    value = [];
+                    if ((this._recursiveContext?.isBound ?? false)) {
+                        value = this._sourceMapper.nullAsUndefined ? undefined : null;
+                    } else {
+                        value = [];
+                    }
                 } else if (Array.isArray(targetData)) {
                     value = targetData.map(row => row.dto);
                 } else {
@@ -260,7 +264,7 @@ class AssociationResolver {
                 }
             } else {
                 if (targetData == null) {
-                    continue;
+                    value = this._sourceMapper.nullAsUndefined ? undefined : null;
                 } else if (Array.isArray(targetData)) {
                     const arr = targetData as ReadonlyArray<metadata.DtoRow>;
                     throw new err.StateError(
@@ -318,7 +322,7 @@ class AssociationResolver {
                 prop: this._unresolvedField.prop as metadata.EntityProp
             });
             if (isRecursive && recursiveContext == null) {
-                recursiveContext = new RecursiveContext(dataRows, keySpan, view.mapper.span, 0);
+                recursiveContext = new RecursiveContext(dataRows, keySpan, view.mapper.span, this._unresolvedField.recursiveDepth, 0);
             }
             keyRowReader = recursiveContext?.toKeyRowReader() ?? DataRowReader.of(dataRows);
         }
@@ -401,6 +405,15 @@ class AssociationResolver {
             })
         );
         return this._sqlClient.createQuery(baseModel, (q, base) => {
+            if (this._unresolvedField.recursiveDepth != -1) {
+                q.where(base.depth.lt(this._unresolvedField.recursiveDepth!));
+            }
+            if (this._isCollection) {
+                const orders = this._orders(base.target);
+                if (orders.length !== 0) {
+                    q.orderBy(...[base.depth.asc(), ...orders]);
+                }
+            }
             const keyExpressions = this._keyExpressions(base.target);
             const selections = [
                 ...keyExpressions, 
@@ -433,7 +446,8 @@ class RecursiveContext {
         private readonly _allDataRows: DataRows,
         private readonly _keySpan: number,
         private readonly _valueSpan: number,
-        private readonly _depth: number
+        private readonly _maxDepth: number,
+        private readonly _depth: number,
     ) {}
 
     toKeyRowReader(): DataRowReader {
@@ -448,8 +462,13 @@ class RecursiveContext {
             this._allDataRows,
             this._keySpan,
             this._valueSpan,
+            this._maxDepth,
             this._depth + 1
         );
+    }
+
+    get isBound(): boolean {
+        return this._maxDepth != -1 && this._depth + 1 >= this._maxDepth;
     }
 
     static merge(
@@ -470,6 +489,7 @@ class RecursiveContext {
             rows,
             firstContext._keySpan,
             firstContext._valueSpan,
+            firstContext._maxDepth,
             firstContext._depth
         );
     }

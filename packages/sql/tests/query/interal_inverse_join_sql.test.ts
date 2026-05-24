@@ -112,12 +112,12 @@ describe("InternalInverseJoinSqlTest", () => {
                 tb_1_.EDITION
             from BOOK tb_1_
             inner join book_author_mapping tb_2_ on 
-                tb_1_.ID = tb_2_.BOOK_ID
+                tb_1_.ID = tb_2_.book_id
             where 
                     (
-                        tb_2_.AUTHOR_ID = ?
+                        tb_2_.author_id = ?
                     or
-                        tb_2_.AUTHOR_ID = ?
+                        tb_2_.author_id = ?
                     )
                 and
                     tb_1_.EDITION > ?
@@ -145,12 +145,12 @@ describe("InternalInverseJoinSqlTest", () => {
                 tb_1_.LAST_NAME
             from AUTHOR tb_1_
             inner join book_author_mapping tb_2_ on 
-                tb_1_.ID = tb_2_.AUTHOR_ID
+                tb_1_.ID = tb_2_.author_id
             where 
                     (
-                        tb_2_.BOOK_ID = ?
+                        tb_2_.book_id = ?
                     or
-                        tb_2_.BOOK_ID = ?
+                        tb_2_.book_id = ?
                     )
                 and
                     length(cast(tb_1_.FIRST_NAME as text)) >= ?

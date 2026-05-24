@@ -1077,7 +1077,9 @@ export class EntityProp {
             }
             const column: Column = {
                 kind: "COLUMN",
-                name: "",
+                name: typeof joinColumns[0]! === "string"
+                    ? joinColumns[0]!
+                    : joinColumns[0]!.columnName,
                 referencedProp: targetKeyProp,
                 referencedColumnName: (targetKeyProp._getBaseStorage() as Column).name
             };

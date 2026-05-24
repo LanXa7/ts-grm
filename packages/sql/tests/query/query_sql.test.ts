@@ -378,9 +378,9 @@ describe("QuerySqlTest", () => {
                 tb_1_.EDITION
             from BOOK tb_1_
             inner join book_author_mapping tb_2_ on 
-                tb_1_.ID = tb_2_.BOOK_ID
+                tb_1_.ID = tb_2_.book_id
             inner join AUTHOR tb_3_ on 
-                tb_2_.AUTHOR_ID = tb_3_.ID
+                tb_2_.author_id = tb_3_.ID
             and
                 tb_3_.FIRST_NAME not like ?
             and
@@ -420,15 +420,15 @@ describe("QuerySqlTest", () => {
                 tb_1_.EDITION
             from BOOK tb_1_
             inner join book_author_mapping tb_2_ on 
-                tb_1_.ID = tb_2_.BOOK_ID
+                tb_1_.ID = tb_2_.book_id
             inner join AUTHOR tb_3_ on 
-                tb_2_.AUTHOR_ID = tb_3_.ID
+                tb_2_.author_id = tb_3_.ID
             and
                 tb_3_.FIRST_NAME not like ?
             left join book_author_mapping tb_4_ on 
-                tb_1_.ID = tb_4_.BOOK_ID
+                tb_1_.ID = tb_4_.book_id
             left join AUTHOR tb_5_ on 
-                tb_4_.AUTHOR_ID = tb_5_.ID
+                tb_4_.author_id = tb_5_.ID
             and
                 tb_5_.FIRST_NAME not like ?
             where 

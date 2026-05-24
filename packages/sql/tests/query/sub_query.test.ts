@@ -29,10 +29,10 @@ describe("SubQueryTest", () => {
             where 
                 tb_1_.ID in(
                     select 
-                        tb_3_.BOOK_ID
+                        tb_3_.book_id
                     from AUTHOR tb_2_
                     inner join book_author_mapping tb_3_ on 
-                        tb_2_.ID = tb_3_.AUTHOR_ID
+                        tb_2_.ID = tb_3_.author_id
                     where 
                         tb_2_.FIRST_NAME like ?
                 )
@@ -128,7 +128,7 @@ describe("SubQueryTest", () => {
                         count(1)
                     from book_author_mapping tb_2_
                     where 
-                        tb_2_.BOOK_ID = tb_1_.ID
+                        tb_2_.book_id = tb_1_.ID
                 )
             from BOOK tb_1_
             order by 
@@ -137,7 +137,7 @@ describe("SubQueryTest", () => {
                         count(1)
                     from book_author_mapping tb_3_
                     where 
-                        tb_3_.BOOK_ID = tb_1_.ID
+                        tb_3_.book_id = tb_1_.ID
                 ) desc
         `);
     });
@@ -164,7 +164,7 @@ describe("SubQueryTest", () => {
                         count(1)
                     from book_author_mapping tb_2_
                     where 
-                        tb_2_.BOOK_ID = tb_1_.ID
+                        tb_2_.book_id = tb_1_.ID
                 )
             from BOOK tb_1_
             order by 
@@ -173,7 +173,7 @@ describe("SubQueryTest", () => {
                         count(1)
                     from book_author_mapping tb_3_
                     where 
-                        tb_3_.BOOK_ID = tb_1_.ID
+                        tb_3_.book_id = tb_1_.ID
                 ) desc
         `);
     });
@@ -272,9 +272,9 @@ describe("SubQueryTest", () => {
                         1
                     from AUTHOR tb_2_
                     inner join book_author_mapping tb_3_ on 
-                        tb_2_.ID = tb_3_.AUTHOR_ID
+                        tb_2_.ID = tb_3_.author_id
                     where 
-                            tb_3_.BOOK_ID = tb_1_.ID
+                            tb_3_.book_id = tb_1_.ID
                         and
                             tb_2_.FIRST_NAME = ?
                 )
