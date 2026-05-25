@@ -53,7 +53,9 @@ export type {
     FilterType, 
     FilterContextType, 
     NullableEntityTableOf, 
-    NullableBaseQuerySelectMapOf 
+    NullableBaseQuerySelectMapOf,
+    TableLike,
+    EntityTableLike
 } from "./table";
 export type { LikeMode, Expression, ExpressionLike, Predicate } from "./expression";
 

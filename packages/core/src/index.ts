@@ -132,5 +132,7 @@ export type  {
     FilterType,
     FilterContextType,
     NullableEntityTableOf,
-    NullableBaseQuerySelectMapOf
+    NullableBaseQuerySelectMapOf,
+    TableLike,
+    EntityTableLike
 } from "./dsl";

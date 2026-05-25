@@ -499,7 +499,6 @@ describe.sequential("RecursiveTest", () => {
                 lib.fetch(view)
             );
         }).fetchRequired();
-        sqlRecord.log();
         sqlRecord.assert(
             {
                 sql: `
@@ -517,38 +516,38 @@ describe.sequential("RecursiveTest", () => {
             {
                 sql: `
                     with
-                        recursive tb_1_(c1, c2, c3, c4) as (
+                        recursive tb_1_(c1, c2, c3, c4, c5) as (
                             select 
-                                tb_3_.NAME,
-                                tb_3_.VERSION,
-                                tb_3_.ID,
+                                tb_3_.DEPENDENCY_ID,
+                                tb_2_.NAME,
+                                tb_2_.VERSION,
+                                tb_2_.ID,
                                 0
-                            from LIBRARY tb_3_
-                            inner join LIBRARY_DEPENDENCY_MAPPING tb_4_ on 
-                                tb_3_.ID = tb_4_.DEPENDENT_ID
+                            from LIBRARY tb_2_
+                            inner join LIBRARY_DEPENDENCY_MAPPING tb_3_ on 
+                                tb_2_.ID = tb_3_.DEPENDENT_ID
                             where 
-                                tb_4_.DEPENDENCY_ID = ?
+                                tb_3_.DEPENDENCY_ID = ?
                             union all
                             select 
-                                tb_5_.NAME,
-                                tb_5_.VERSION,
-                                tb_5_.ID,
-                                tb_1_.c4 + 1
-                            from LIBRARY tb_5_
-                            inner join LIBRARY_DEPENDENCY_MAPPING tb_6_ on 
-                                tb_5_.ID = tb_6_.DEPENDENT_ID
+                                tb_5_.DEPENDENCY_ID,
+                                tb_4_.NAME,
+                                tb_4_.VERSION,
+                                tb_4_.ID,
+                                tb_1_.c5 + 1
+                            from LIBRARY tb_4_
+                            inner join LIBRARY_DEPENDENCY_MAPPING tb_5_ on 
+                                tb_4_.ID = tb_5_.DEPENDENT_ID
                             inner join tb_1_ on 
-                                tb_6_.DEPENDENCY_ID = tb_1_.c3
+                                tb_5_.DEPENDENCY_ID = tb_1_.c4
                         )
                     select 
-                        tb_2_.DEPENDENCY_ID,
                         tb_1_.c1,
                         tb_1_.c2,
                         tb_1_.c3,
-                        tb_1_.c4
+                        tb_1_.c4,
+                        tb_1_.c5
                     from tb_1_
-                    inner join LIBRARY_DEPENDENCY_MAPPING tb_2_ on 
-                        tb_1_.c3 = tb_2_.DEPENDENT_ID
                 `,
                 args: [5],
                 purpose: "loadRecursiveTree(Library.dependents)"
