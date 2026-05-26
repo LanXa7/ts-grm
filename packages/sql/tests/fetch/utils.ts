@@ -146,38 +146,93 @@ insert into TREE_NODE(
                     (23, 'Group', 'Suit', 22),
                     (24, 'Group', 'Shirt', 22);
 
+-- Library table data (bottom layer libraries have smaller IDs)
 insert into LIBRARY(ID, NAME, VERSION) values
-    (1, 'react', '18.2.0'),
-    (2, 'react-dom', '18.2.0'),
-    (3, 'preact', '10.19.0'),
-    (4, 'loose-envify', '1.4.0'),
-    (5, 'js-tokens', '4.0.0'),
-    (6, 'scheduler', '0.23.0'),
-    (7, 'webpack', '5.88.0'),
-    (8, 'preact-render-to-string', '6.3.0'),
-    (9, 'preact-jsx-runtime', '1.0.0'),
-    (10, 'terser', '5.19.0'),
-    (11, '@babel/core', '7.22.0'),
-    (12, '@babel/preset-env', '7.22.0'),
-    (13, '@babel/preset-react', '7.22.0'),
-    (14, 'babel-loader', '9.1.0');
+    -- Bottom layer root nodes (IDs 1-10)
+    (1, 'lodash', '4.17.21'),
+    (2, 'async', '3.2.5'),
+    (3, 'statuses', '2.0.1'),
+    (4, 'toidentifier', '1.0.1'),
+    (5, 'setprototypeof', '1.2.0'),
+    (6, 'inherits', '2.0.4'),
+    (7, 'ee-first', '1.1.1'),
+    (8, 'esutils', '2.0.3'),
+    (9, 'util-deprecate', '1.0.2'),
+    
+    -- Middle layer nodes (IDs 11-30)
+    (11, 'send', '0.18.0'),
+    (12, 'parseurl', '1.3.3'),
+    (13, 'encodeurl', '1.0.2'),
+    (14, 'fresh', '0.5.2'),
+    (15, 'etag', '1.8.1'),
+    (16, 'depd', '2.0.0'),
+    (17, 'http-errors', '2.0.0'),
+    (18, 'on-finished', '2.4.1'),
+    (19, 'eslint-visitor-keys', '3.4.3'),
+    (20, 'estraverse', '5.3.0'),
+    (21, 'esrecurse', '4.3.0'),
+    
+    -- Upper layer nodes (IDs 31-40)
+    (31, 'serve-static', '1.15.0'),
+    (32, 'finalhandler', '1.2.0'),
+    (33, 'espree', '9.6.1'),
+    (34, 'esquery', '1.5.0'),
+    (35, 'eslint-scope', '7.2.2'),
+    
+    -- Top layer root nodes (IDs 41-50)
+    (41, 'express', '4.18.2'),
+    (42, 'eslint', '8.56.0');
 
+-- Dependency mapping (dependent_id -> dependency_id)
 insert into LIBRARY_DEPENDENCY_MAPPING(DEPENDENT_ID, DEPENDENCY_ID) values
-    (1, 4),
-    (1, 6),
-    (2, 1),
-    (2, 6),
-    (2, 4),
-    (4, 5),
-    (3, 4),
-    (3, 6),
-    (3, 1),
-    (3, 2),
-    (2, 7),
-    (3, 7),
-    (7, 10),
-    (7, 11),
-    (11, 12),
-    (12, 13),
-    (13, 14);
+    -- Express tree: top layer depends on bottom layer
+    (41, 1),   -- express depends on lodash
+    (41, 2),   -- express depends on async
+    
+    -- Express tree: serve-static branch
+    (41, 31),  -- express depends on serve-static
+    (31, 11),  -- serve-static depends on send
+    
+    -- Express tree: finalhandler branch
+    (41, 32),  -- express depends on finalhandler
+    (32, 11),  -- finalhandler depends on send
+    (32, 18),  -- finalhandler depends on on-finished
+    (18, 7),   -- on-finished depends on ee-first
+    
+    -- Express tree: send sub-branch (shared by serve-static and finalhandler)
+    (11, 12),  -- send depends on parseurl
+    (11, 13),  -- send depends on encodeurl
+    (11, 14),  -- send depends on fresh
+    (11, 15),  -- send depends on etag
+    
+    -- Express tree: deep chain (parseurl/encodeurl/fresh/etag -> depd -> http-errors -> bottom)
+    (12, 16),  -- parseurl depends on depd
+    (13, 16),  -- encodeurl depends on depd
+    (14, 16),  -- fresh depends on depd
+    (15, 16),  -- etag depends on depd
+    (16, 17),  -- depd depends on http-errors
+    (17, 3),   -- http-errors depends on statuses
+    (17, 4),   -- http-errors depends on toidentifier
+    (17, 5),   -- http-errors depends on setprototypeof
+    (17, 6),   -- http-errors depends on inherits
+    
+    -- ESLint tree: top layer depends on bottom layer
+    (42, 1),   -- eslint depends on lodash
+    (42, 2),   -- eslint depends on async
+    
+    -- ESLint tree: espree branch
+    (42, 33),  -- eslint depends on espree
+    (33, 19),  -- espree depends on eslint-visitor-keys
+    (19, 8),   -- eslint-visitor-keys depends on esutils
+    
+    -- ESLint tree: esquery branch
+    (42, 34),  -- eslint depends on esquery
+    (34, 20),  -- esquery depends on estraverse
+    (20, 9),   -- estraverse depends on util-deprecate
+    
+    -- ESLint tree: eslint-scope branch
+    (42, 35),  -- eslint depends on eslint-scope
+    (35, 20),  -- eslint-scope depends on estraverse
+    (35, 21),  -- eslint-scope depends on esrecurse
+    (21, 8);   -- esrecurse depends on esutils
 `;

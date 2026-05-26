@@ -49,7 +49,9 @@ export abstract class AbstractExecutorWrapper implements Executor {
 export type Purpose = 
     QueryPurpose 
     | LoadAssociationPurpose 
-    | LoadRecursiveTreePurpose;
+    | LoadRecursiveTreePurpose
+    | LoadRecursiveTreeIdPurpose
+    | LoadRecursiveTreeNodePurpose;
 
 export type QueryPurpose = {
     kind: "QUERY"
@@ -62,5 +64,15 @@ export type LoadAssociationPurpose = {
 
 export type LoadRecursiveTreePurpose = {
     kind: "LOAD_RECURSIVE_TREE",
+    prop: metadata.EntityProp
+};
+
+export type LoadRecursiveTreeIdPurpose = {
+    kind: "LOAD_RECURSIVE_TREE_ID",
+    prop: metadata.EntityProp
+};
+
+export type LoadRecursiveTreeNodePurpose = {
+    kind: "LOAD_RECURSIVE_TREE_NODE",
     prop: metadata.EntityProp
 };

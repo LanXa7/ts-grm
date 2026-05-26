@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { dto } from "@/schema/dto";
-import { TREE_NODE } from "../../model/model";
+import { LIBRARY, TREE_NODE } from "../../model/model";
 import { buildShape } from "@/impl/shape";
 import { expectCode } from "../../utils";
 import { mapperJson, makeReader } from "./utils";
@@ -496,5 +496,297 @@ describe("RecursiveTest", () => {
         expect(childRow.implicit).toEqual({
             _1: 10
         });
+    });
+
+    it("dependenciesAndDependents", () => {
+        const view = dto.view(LIBRARY, $ => $
+            .name
+            .version
+            .recursive("dependencies")
+            .recursive("dependents")
+        );
+        expect(mapperJson(view.mapper)).toEqual({
+            "entity": "Library",
+            "fields": [
+                {
+                    "prop": "Library.name",
+                    "paths": ["name"],
+                    "columnIndex": 0
+                },
+                {
+                    "prop": "Library.version",
+                    "paths": ["version"],
+                    "columnIndex": 1
+                },
+                {
+                    "prop": "Library.id",
+                    "paths": [],
+                    "isDependent": true,
+                    "columnIndex": 2
+                },
+                {
+                    "prop": "Library.dependencies",
+                    "paths": [
+                        "dependencies"
+                    ],
+                    "subMapper": {
+                        "entity": "Library",
+                        "associatedProp": "Library.dependencies",
+                        "fields": [
+                            {
+                                "prop": "Library.name",
+                                "paths": ["name"],
+                                "columnIndex": 0
+                            },
+                            {
+                                "prop": "Library.version",
+                                "paths": ["version"],
+                                "columnIndex": 1
+                            },
+                            {
+                                "prop": "Library.id",
+                                "paths": [],
+                                "isDependent": true,
+                                "columnIndex": 2
+                            },
+                            {
+                                "prop": "Library.dependencies",
+                                "paths": [
+                                    "dependencies"
+                                ],
+                                "dependencies": [2]
+                            }
+                        ]
+                    },
+                    "recursiveDepth": -1,
+                    "dependencies": [2]
+                },
+                {
+                    "prop": "Library.dependents",
+                    "paths": [
+                        "dependents"
+                    ],
+                    "subMapper": {
+                        "entity": "Library",
+                        "associatedProp": "Library.dependents",
+                        "fields": [
+                            {
+                                "prop": "Library.name",
+                                "paths": ["name"],
+                                "columnIndex": 0
+                            },
+                            {
+                                "prop": "Library.version",
+                                "paths": ["version"],
+                                "columnIndex": 1
+                            },
+                            {
+                                "prop": "Library.id",
+                                "paths": [],
+                                "isDependent": true,
+                                "columnIndex": 2
+                            },
+                            {
+                                "prop": "Library.dependents",
+                                "paths": [
+                                    "dependents"
+                                ],
+                                "dependencies": [2]
+                            }
+                        ]
+                    },
+                    "recursiveDepth": -1,
+                    "dependencies": [2]
+                }
+            ]
+        });
+
+        expectCode(view.mapper.dtoRowReader.constructor.toString(), `
+            class extends $baseClass {
+                read(parents, reader) {
+                    const dto = {
+                        name: reader.get(0), 
+                        version: reader.get(1), 
+                        dependencies: null, 
+                        dependents: null
+                    };
+                    const implicit = {
+                        _2: reader.get(2)
+                    };
+                    return { reader: this, parents, dto, implicit };
+                }
+                dependency(unresolvedFieldIndex, row) {
+                    switch (unresolvedFieldIndex) {
+                        case 3:
+                            return row.implicit._2;
+                        case 4:
+                            return row.implicit._2;
+                        default:
+                            throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                    }
+                }
+                dependencyNullable(unresolvedFieldIndex, dependency) {
+                    switch (unresolvedFieldIndex) {
+                        case 3:
+                            return dependency == null;
+                        case 4:
+                            return dependency == null;
+                        default:
+                            throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                    }
+                }
+                dependencyHash(unresolvedFieldIndex, dependency) {
+                    switch (unresolvedFieldIndex) {
+                        case 3:
+                            return dependency;
+                        case 4:
+                            return dependency;
+                        default:
+                            throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                    }
+                }
+                resolve(unresolvedFieldIndex, row, value) {
+                    switch (unresolvedFieldIndex) {
+                        case 3:
+                            row.dto.dependencies = value;
+                            break;
+                        case 4:
+                            row.dto.dependents = value;
+                            break;
+                        default:
+                            throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                    }
+                }
+            }
+        `);
+
+        const dependencyMapper = view.mapper.fields.find(f => f.prop.name === "dependencies")!.subMapper!;
+        expectCode(dependencyMapper.dtoRowReader.constructor.toString(), `
+            class extends $baseClass {
+                read(parents, reader) {
+                    const dto = {
+                        name: reader.get(0), 
+                        version: reader.get(1), 
+                        dependencies: null
+                    };
+                    const implicit = {
+                        _2: reader.get(2)
+                    };
+                    return { reader: this, parents, dto, implicit };
+                }
+                dependency(unresolvedFieldIndex, row) {
+                    switch (unresolvedFieldIndex) {
+                        case 3:
+                            return row.implicit._2;
+                        default:
+                            throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                    }
+                }
+                dependencyNullable(unresolvedFieldIndex, dependency) {
+                    switch (unresolvedFieldIndex) {
+                        case 3:
+                            return dependency == null;
+                        default:
+                            throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                    }
+                }
+                dependencyHash(unresolvedFieldIndex, dependency) {
+                    switch (unresolvedFieldIndex) {
+                        case 3:
+                            return dependency;
+                        default:
+                            throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                    }
+                }
+                resolve(unresolvedFieldIndex, row, value) {
+                    switch (unresolvedFieldIndex) {
+                        case 3:
+                            row.dto.dependencies = value;
+                            break;
+                        default:
+                            throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                    }
+                }
+            }
+        `);
+
+        const dependentMapper = view.mapper.fields.find(f => f.prop.name === "dependents")!.subMapper!;
+        expect(mapperJson(dependentMapper)).toEqual({
+            "entity": "Library",
+            "associatedProp": "Library.dependents",
+            "fields": [
+                {
+                    "prop": "Library.name",
+                    "paths": ["name"],
+                    "columnIndex": 0
+                },
+                {
+                    "prop": "Library.version",
+                    "paths": ["version"],
+                    "columnIndex": 1
+                },
+                {
+                    "prop": "Library.id",
+                    "paths": [],
+                    "isDependent": true,
+                    "columnIndex": 2
+                },
+                {
+                    "prop": "Library.dependents",
+                    "paths": [
+                        "dependents"
+                    ],
+                    "dependencies": [2]
+                }
+            ]
+        });
+        expectCode(dependentMapper.dtoRowReader.constructor.toString(), `
+            class extends $baseClass {
+                read(parents, reader) {
+                    const dto = {
+                        name: reader.get(0), 
+                        version: reader.get(1), 
+                        dependents: null
+                    };
+                    const implicit = {
+                        _2: reader.get(2)
+                    };
+                    return { reader: this, parents, dto, implicit };
+                }
+                dependency(unresolvedFieldIndex, row) {
+                    switch (unresolvedFieldIndex) {
+                        case 3:
+                            return row.implicit._2;
+                        default:
+                            throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                    }
+                }
+                dependencyNullable(unresolvedFieldIndex, dependency) {
+                    switch (unresolvedFieldIndex) {
+                        case 3:
+                            return dependency == null;
+                        default:
+                            throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                    }
+                }
+                dependencyHash(unresolvedFieldIndex, dependency) {
+                    switch (unresolvedFieldIndex) {
+                        case 3:
+                            return dependency;
+                        default:
+                            throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                    }
+                }
+                resolve(unresolvedFieldIndex, row, value) {
+                    switch (unresolvedFieldIndex) {
+                        case 3:
+                            row.dto.dependents = value;
+                            break;
+                        default:
+                            throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                    }
+                }
+            }
+        `);
     });
 });

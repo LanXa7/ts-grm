@@ -281,12 +281,15 @@ export const LEARNING_LINK = model("LearningLink", "id", class {
 export const LIBRARY = model("Library", "id", class {
     id = prop.i64()
     name = prop.str()
-    version = prop.i32()
+    version = prop.str()
     dependencies = prop.m2m.self(() => LIBRARY, {
         joinTable: {
             name: "LIBRARY_DEPENDENCY_MAPPING",
             joinThisColumns: ["DEPENDENT_ID"],
             joinTargetColumns: ["DEPENDENCY_ID"]
         }
-    })
+    });
+    dependents = prop.m2m.self(() => LIBRARY, {
+        mappedBy: "dependencies"
+    });
 });

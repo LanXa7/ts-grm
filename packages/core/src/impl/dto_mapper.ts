@@ -287,12 +287,17 @@ class Mapper {
         const newFields: Array<DtoMapperField> = [];
         let indexDelta = 0;
         let columnIndexDelta = 0;
+        let dependencyDeltaMap = new Map<number, number>();
         for (let i = 0; i < fields.length; i++) {
             const field = fields[i]!;
             if (!usedArr[i]) {
                 indexDelta--;
-                if (field.columnIndex != null) {
+                if (typeof field.columnIndex === "number") {
                     columnIndexDelta--;
+                }
+                for (let next = i + 1; next < fields.length; next++) {
+                    const delta = dependencyDeltaMap.get(next) ?? 0;
+                    dependencyDeltaMap.set(next, delta - 1);
                 }
                 continue;
             }
@@ -303,7 +308,7 @@ class Mapper {
                 columnIndex: typeof field.columnIndex === "number" 
                     ? field.columnIndex + columnIndexDelta 
                     : undefined,
-                dependencies: field.dependencies?.map(i => i + indexDelta)
+                dependencies: field.dependencies?.map(i => i + (dependencyDeltaMap.get(i) ?? 0))
             };
             newFields.push(newField);
         }

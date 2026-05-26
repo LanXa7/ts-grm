@@ -134,5 +134,6 @@ export type  {
     NullableEntityTableOf,
     NullableBaseQuerySelectMapOf,
     TableLike,
-    EntityTableLike
+    EntityTableLike,
+    SelectionLike
 } from "./dsl";

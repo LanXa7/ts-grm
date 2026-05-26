@@ -21,7 +21,8 @@ export type {
     RootQuerySelection, 
     RowTypeOf,
     FetchOptions,
-    FetchedView 
+    FetchedView,
+    SelectionLike
 } from "./root_query";
 export type { 
     SubQueryLike, 

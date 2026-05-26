@@ -487,14 +487,14 @@ describe.sequential("RecursiveTest", () => {
         });
     });
 
-    it("byJoinTable", async () => {
+    it("dependencies", async () => {
         const view = dto.view(LIBRARY, $ => $
             .name
             .version
-            .recursive("dependents")
+            .recursive("dependencies")
         );
         const row = await sqlClient.createQuery(LIBRARY, (q, lib) => {
-            q.where(lib.id.eq(5));
+            q.where(lib.id.eq(41));
             return q.select(
                 lib.fetch(view)
             );
@@ -510,17 +510,446 @@ describe.sequential("RecursiveTest", () => {
                     where 
                         tb_1_.ID = ?
                 `,
-                args: [5],
+                args: [41],
                 purpose: "query"
             },
             {
                 sql: `
                     with
-                        recursive tb_1_(c1, c2, c3, c4, c5) as (
+                        recursive tb_1_(c1, c2, c3) as (
+                            select 
+                                tb_3_.DEPENDENT_ID,
+                                tb_2_.ID,
+                                0
+                            from LIBRARY tb_2_
+                            inner join LIBRARY_DEPENDENCY_MAPPING tb_3_ on 
+                                tb_2_.ID = tb_3_.DEPENDENCY_ID
+                            where 
+                                tb_3_.DEPENDENT_ID = ?
+                            union all
+                            select 
+                                tb_5_.DEPENDENT_ID,
+                                tb_4_.ID,
+                                tb_1_.c3 + 1
+                            from LIBRARY tb_4_
+                            inner join LIBRARY_DEPENDENCY_MAPPING tb_5_ on 
+                                tb_4_.ID = tb_5_.DEPENDENCY_ID
+                            inner join tb_1_ on 
+                                tb_5_.DEPENDENT_ID = tb_1_.c2
+                        )
+                    select 
+                        tb_1_.c1,
+                        tb_1_.c2,
+                        tb_1_.c3
+                    from tb_1_
+                `,
+                args: [41],
+                purpose: "loadRecursiveTreeId(Library.dependencies)"
+            },
+            {
+                sql: `
+                    select 
+                        tb_1_.ID,
+                        tb_1_.NAME,
+                        tb_1_.VERSION,
+                        tb_1_.ID
+                    from LIBRARY tb_1_
+                    where 
+                        tb_1_.ID in(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                `,
+                args: [1,  2, 31, 32, 11, 18, 12, 13, 14, 15,  7, 16, 17,  3, 4,  5,  6],
+                purpose: "loadRecursiveTreeNode(Library.dependencies)"
+            }
+        );
+        expect(row).toEqual({
+            "name": "express",
+            "version": "4.18.2",
+            "dependencies": [
+                {
+                    "name": "lodash",
+                    "version": "4.17.21",
+                    "dependencies": []
+                },
+                {
+                    "name": "async",
+                    "version": "3.2.5",
+                    "dependencies": []
+                },
+                {
+                    "name": "serve-static",
+                    "version": "1.15.0",
+                    "dependencies": [
+                        {
+                            "name": "send",
+                            "version": "0.18.0",
+                            "dependencies": [
+                                {
+                                    "name": "parseurl",
+                                    "version": "1.3.3",
+                                    "dependencies": [
+                                        {
+                                            "name": "depd",
+                                            "version": "2.0.0",
+                                            "dependencies": [
+                                                {
+                                                    "name": "http-errors",
+                                                    "version": "2.0.0",
+                                                    "dependencies": [
+                                                        {
+                                                            "name": "statuses",
+                                                            "version": "2.0.1",
+                                                            "dependencies": []
+                                                        },
+                                                        {
+                                                            "name": "toidentifier",
+                                                            "version": "1.0.1",
+                                                            "dependencies": []
+                                                        },
+                                                        {
+                                                            "name": "setprototypeof",
+                                                            "version": "1.2.0",
+                                                            "dependencies": []
+                                                        },
+                                                        {
+                                                            "name": "inherits",
+                                                            "version": "2.0.4",
+                                                            "dependencies": []
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                },
+                                {
+                                    "name": "encodeurl",
+                                    "version": "1.0.2",
+                                    "dependencies": [
+                                        {
+                                            "name": "depd",
+                                            "version": "2.0.0",
+                                            "dependencies": [
+                                                {
+                                                    "name": "http-errors",
+                                                    "version": "2.0.0",
+                                                    "dependencies": [
+                                                        {
+                                                            "name": "statuses",
+                                                            "version": "2.0.1",
+                                                            "dependencies": []
+                                                        },
+                                                        {
+                                                            "name": "toidentifier",
+                                                            "version": "1.0.1",
+                                                            "dependencies": []
+                                                        },
+                                                        {
+                                                            "name": "setprototypeof",
+                                                            "version": "1.2.0",
+                                                            "dependencies": []
+                                                        },
+                                                        {
+                                                            "name": "inherits",
+                                                            "version": "2.0.4",
+                                                            "dependencies": []
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                },
+                                {
+                                    "name": "fresh",
+                                    "version": "0.5.2",
+                                    "dependencies": [
+                                        {
+                                            "name": "depd",
+                                            "version": "2.0.0",
+                                            "dependencies": [
+                                                {
+                                                    "name": "http-errors",
+                                                    "version": "2.0.0",
+                                                    "dependencies": [
+                                                        {
+                                                            "name": "statuses",
+                                                            "version": "2.0.1",
+                                                            "dependencies": []
+                                                        },
+                                                        {
+                                                            "name": "toidentifier",
+                                                            "version": "1.0.1",
+                                                            "dependencies": []
+                                                        },
+                                                        {
+                                                            "name": "setprototypeof",
+                                                            "version": "1.2.0",
+                                                            "dependencies": []
+                                                        },
+                                                        {
+                                                            "name": "inherits",
+                                                            "version": "2.0.4",
+                                                            "dependencies": []
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                },
+                                {
+                                    "name": "etag",
+                                    "version": "1.8.1",
+                                    "dependencies": [
+                                        {
+                                            "name": "depd",
+                                            "version": "2.0.0",
+                                            "dependencies": [
+                                                {
+                                                    "name": "http-errors",
+                                                    "version": "2.0.0",
+                                                    "dependencies": [
+                                                        {
+                                                            "name": "statuses",
+                                                            "version": "2.0.1",
+                                                            "dependencies": []
+                                                        },
+                                                        {
+                                                            "name": "toidentifier",
+                                                            "version": "1.0.1",
+                                                            "dependencies": []
+                                                        },
+                                                        {
+                                                            "name": "setprototypeof",
+                                                            "version": "1.2.0",
+                                                            "dependencies": []
+                                                        },
+                                                        {
+                                                            "name": "inherits",
+                                                            "version": "2.0.4",
+                                                            "dependencies": []
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "name": "finalhandler",
+                    "version": "1.2.0",
+                    "dependencies": [
+                        {
+                            "name": "send",
+                            "version": "0.18.0",
+                            "dependencies": [
+                                {
+                                    "name": "parseurl",
+                                    "version": "1.3.3",
+                                    "dependencies": [
+                                        {
+                                            "name": "depd",
+                                            "version": "2.0.0",
+                                            "dependencies": [
+                                                {
+                                                    "name": "http-errors",
+                                                    "version": "2.0.0",
+                                                    "dependencies": [
+                                                        {
+                                                            "name": "statuses",
+                                                            "version": "2.0.1",
+                                                            "dependencies": []
+                                                        },
+                                                        {
+                                                            "name": "toidentifier",
+                                                            "version": "1.0.1",
+                                                            "dependencies": []
+                                                        },
+                                                        {
+                                                            "name": "setprototypeof",
+                                                            "version": "1.2.0",
+                                                            "dependencies": []
+                                                        },
+                                                        {
+                                                            "name": "inherits",
+                                                            "version": "2.0.4",
+                                                            "dependencies": []
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                },
+                                {
+                                    "name": "encodeurl",
+                                    "version": "1.0.2",
+                                    "dependencies": [
+                                        {
+                                            "name": "depd",
+                                            "version": "2.0.0",
+                                            "dependencies": [
+                                                {
+                                                    "name": "http-errors",
+                                                    "version": "2.0.0",
+                                                    "dependencies": [
+                                                        {
+                                                            "name": "statuses",
+                                                            "version": "2.0.1",
+                                                            "dependencies": []
+                                                        },
+                                                        {
+                                                            "name": "toidentifier",
+                                                            "version": "1.0.1",
+                                                            "dependencies": []
+                                                        },
+                                                        {
+                                                            "name": "setprototypeof",
+                                                            "version": "1.2.0",
+                                                            "dependencies": []
+                                                        },
+                                                        {
+                                                            "name": "inherits",
+                                                            "version": "2.0.4",
+                                                            "dependencies": []
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                },
+                                {
+                                    "name": "fresh",
+                                    "version": "0.5.2",
+                                    "dependencies": [
+                                        {
+                                            "name": "depd",
+                                            "version": "2.0.0",
+                                            "dependencies": [
+                                                {
+                                                    "name": "http-errors",
+                                                    "version": "2.0.0",
+                                                    "dependencies": [
+                                                        {
+                                                            "name": "statuses",
+                                                            "version": "2.0.1",
+                                                            "dependencies": []
+                                                        },
+                                                        {
+                                                            "name": "toidentifier",
+                                                            "version": "1.0.1",
+                                                            "dependencies": []
+                                                        },
+                                                        {
+                                                            "name": "setprototypeof",
+                                                            "version": "1.2.0",
+                                                            "dependencies": []
+                                                        },
+                                                        {
+                                                            "name": "inherits",
+                                                            "version": "2.0.4",
+                                                            "dependencies": []
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                },
+                                {
+                                    "name": "etag",
+                                    "version": "1.8.1",
+                                    "dependencies": [
+                                        {
+                                            "name": "depd",
+                                            "version": "2.0.0",
+                                            "dependencies": [
+                                                {
+                                                    "name": "http-errors",
+                                                    "version": "2.0.0",
+                                                    "dependencies": [
+                                                        {
+                                                            "name": "statuses",
+                                                            "version": "2.0.1",
+                                                            "dependencies": []
+                                                        },
+                                                        {
+                                                            "name": "toidentifier",
+                                                            "version": "1.0.1",
+                                                            "dependencies": []
+                                                        },
+                                                        {
+                                                            "name": "setprototypeof",
+                                                            "version": "1.2.0",
+                                                            "dependencies": []
+                                                        },
+                                                        {
+                                                            "name": "inherits",
+                                                            "version": "2.0.4",
+                                                            "dependencies": []
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "name": "on-finished",
+                            "version": "2.4.1",
+                            "dependencies": [
+                                {
+                                    "name": "ee-first",
+                                    "version": "1.1.1",
+                                    "dependencies": []
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        });
+    });
+
+    it("dependents", async () => {
+        const view = dto.view(LIBRARY, $ => $
+            .name
+            .version
+            .recursive("dependents")
+        );
+        const row = await sqlClient.createQuery(LIBRARY, (q, lib) => {
+            q.where(lib.id.eq(3));
+            return q.select(
+                lib.fetch(view)
+            );
+        }).fetchRequired();
+        sqlRecord.assert(
+            {
+                sql: `
+                    select 
+                        tb_1_.NAME,
+                        tb_1_.VERSION,
+                        tb_1_.ID
+                    from LIBRARY tb_1_
+                    where 
+                        tb_1_.ID = ?
+                `,
+                args: [3],
+                purpose: "query"
+            },
+            {
+                sql: `
+                    with
+                        recursive tb_1_(c1, c2, c3) as (
                             select 
                                 tb_3_.DEPENDENCY_ID,
-                                tb_2_.NAME,
-                                tb_2_.VERSION,
                                 tb_2_.ID,
                                 0
                             from LIBRARY tb_2_
@@ -531,31 +960,383 @@ describe.sequential("RecursiveTest", () => {
                             union all
                             select 
                                 tb_5_.DEPENDENCY_ID,
-                                tb_4_.NAME,
-                                tb_4_.VERSION,
                                 tb_4_.ID,
-                                tb_1_.c5 + 1
+                                tb_1_.c3 + 1
                             from LIBRARY tb_4_
                             inner join LIBRARY_DEPENDENCY_MAPPING tb_5_ on 
                                 tb_4_.ID = tb_5_.DEPENDENT_ID
                             inner join tb_1_ on 
-                                tb_5_.DEPENDENCY_ID = tb_1_.c4
+                                tb_5_.DEPENDENCY_ID = tb_1_.c2
                         )
                     select 
                         tb_1_.c1,
                         tb_1_.c2,
-                        tb_1_.c3,
-                        tb_1_.c4,
-                        tb_1_.c5
+                        tb_1_.c3
                     from tb_1_
                 `,
-                args: [5],
-                purpose: "loadRecursiveTree(Library.dependents)"
+                args: [3],
+                purpose: "loadRecursiveTreeId(Library.dependents)"
+            },
+            {
+                sql: `
+                    select 
+                        tb_1_.ID,
+                        tb_1_.NAME,
+                        tb_1_.VERSION,
+                        tb_1_.ID
+                    from LIBRARY tb_1_
+                    where 
+                        tb_1_.ID in(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                `,
+                args: [17, 16, 12, 13, 14, 15, 11, 31, 32, 41],
+                purpose: "loadRecursiveTreeNode(Library.dependents)"
             }
         );
-        // TODO:
-        // 1. SQL is not good, optimize it
-        // 2. Remove duplicated data of associated objects
-        console.log(JSON.stringify(row))
+        expect(row).toEqual({
+            "name": "statuses",
+            "version": "2.0.1",
+            "dependents": [
+                {
+                    "name": "http-errors",
+                    "version": "2.0.0",
+                    "dependents": [
+                        {
+                            "name": "depd",
+                            "version": "2.0.0",
+                            "dependents": [
+                                {
+                                    "name": "parseurl",
+                                    "version": "1.3.3",
+                                    "dependents": [
+                                        {
+                                            "name": "send",
+                                            "version": "0.18.0",
+                                            "dependents": [
+                                                {
+                                                    "name": "serve-static",
+                                                    "version": "1.15.0",
+                                                    "dependents": [
+                                                        {
+                                                            "name": "express",
+                                                            "version": "4.18.2",
+                                                            "dependents": []
+                                                        }
+                                                    ]
+                                                },
+                                                {
+                                                    "name": "finalhandler",
+                                                    "version": "1.2.0",
+                                                    "dependents": [
+                                                        {
+                                                            "name": "express",
+                                                            "version": "4.18.2",
+                                                            "dependents": []
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                },
+                                {
+                                    "name": "encodeurl",
+                                    "version": "1.0.2",
+                                    "dependents": [
+                                        {
+                                            "name": "send",
+                                            "version": "0.18.0",
+                                            "dependents": [
+                                                {
+                                                    "name": "serve-static",
+                                                    "version": "1.15.0",
+                                                    "dependents": [
+                                                        {
+                                                            "name": "express",
+                                                            "version": "4.18.2",
+                                                            "dependents": []
+                                                        }
+                                                    ]
+                                                },
+                                                {
+                                                    "name": "finalhandler",
+                                                    "version": "1.2.0",
+                                                    "dependents": [
+                                                        {
+                                                            "name": "express",
+                                                            "version": "4.18.2",
+                                                            "dependents": []
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                },
+                                {
+                                    "name": "fresh",
+                                    "version": "0.5.2",
+                                    "dependents": [
+                                        {
+                                            "name": "send",
+                                            "version": "0.18.0",
+                                            "dependents": [
+                                                {
+                                                    "name": "serve-static",
+                                                    "version": "1.15.0",
+                                                    "dependents": [
+                                                        {
+                                                            "name": "express",
+                                                            "version": "4.18.2",
+                                                            "dependents": []
+                                                        }
+                                                    ]
+                                                },
+                                                {
+                                                    "name": "finalhandler",
+                                                    "version": "1.2.0",
+                                                    "dependents": [
+                                                        {
+                                                            "name": "express",
+                                                            "version": "4.18.2",
+                                                            "dependents": []
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                },
+                                {
+                                    "name": "etag",
+                                    "version": "1.8.1",
+                                    "dependents": [
+                                        {
+                                            "name": "send",
+                                            "version": "0.18.0",
+                                            "dependents": [
+                                                {
+                                                    "name": "serve-static",
+                                                    "version": "1.15.0",
+                                                    "dependents": [
+                                                        {
+                                                            "name": "express",
+                                                            "version": "4.18.2",
+                                                            "dependents": []
+                                                        }
+                                                    ]
+                                                },
+                                                {
+                                                    "name": "finalhandler",
+                                                    "version": "1.2.0",
+                                                    "dependents": [
+                                                        {
+                                                            "name": "express",
+                                                            "version": "4.18.2",
+                                                            "dependents": []
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        });
+    });
+
+    it("dependenciesAndDependents", async() => {
+        const view = dto.view(LIBRARY, $ => $
+            .name
+            .version
+            .recursive("dependencies")
+            .recursive("dependents")
+        );
+        const row = await sqlClient.createQuery(LIBRARY, (q, lib) => {
+            q.where(lib.id.eq(12));
+            return q.select(
+                lib.fetch(view)
+            );
+        }).fetchRequired();
+        sqlRecord.assert(
+            {
+                sql: `
+                    select 
+                        tb_1_.NAME,
+                        tb_1_.VERSION,
+                        tb_1_.ID
+                    from LIBRARY tb_1_
+                    where 
+                        tb_1_.ID = ?
+                `,
+                args: [12],
+                purpose: "query"
+            },
+            {
+                sql: `
+                    with
+                        recursive tb_1_(c1, c2, c3) as (
+                            select 
+                                tb_3_.DEPENDENT_ID,
+                                tb_2_.ID,
+                                0
+                            from LIBRARY tb_2_
+                            inner join LIBRARY_DEPENDENCY_MAPPING tb_3_ on 
+                                tb_2_.ID = tb_3_.DEPENDENCY_ID
+                            where 
+                                tb_3_.DEPENDENT_ID = ?
+                            union all
+                            select 
+                                tb_5_.DEPENDENT_ID,
+                                tb_4_.ID,
+                                tb_1_.c3 + 1
+                            from LIBRARY tb_4_
+                            inner join LIBRARY_DEPENDENCY_MAPPING tb_5_ on 
+                                tb_4_.ID = tb_5_.DEPENDENCY_ID
+                            inner join tb_1_ on 
+                                tb_5_.DEPENDENT_ID = tb_1_.c2
+                        )
+                    select 
+                        tb_1_.c1,
+                        tb_1_.c2,
+                        tb_1_.c3
+                    from tb_1_
+                `,
+                args: [12],
+                purpose: "loadRecursiveTreeId(Library.dependencies)"
+            },
+            {
+                sql: `
+                    select 
+                        tb_1_.ID,
+                        tb_1_.NAME,
+                        tb_1_.VERSION,
+                        tb_1_.ID
+                    from LIBRARY tb_1_
+                    where 
+                        tb_1_.ID in(?, ?, ?, ?, ?, ?)
+                `,
+                args: [16, 17, 3, 4, 5, 6],
+                purpose: "loadRecursiveTreeNode(Library.dependencies)"
+            },
+            {
+                sql: `
+                    with
+                        recursive tb_1_(c1, c2, c3) as (
+                            select 
+                                tb_3_.DEPENDENCY_ID,
+                                tb_2_.ID,
+                                0
+                            from LIBRARY tb_2_
+                            inner join LIBRARY_DEPENDENCY_MAPPING tb_3_ on 
+                                tb_2_.ID = tb_3_.DEPENDENT_ID
+                            where 
+                                tb_3_.DEPENDENCY_ID = ?
+                            union all
+                            select 
+                                tb_5_.DEPENDENCY_ID,
+                                tb_4_.ID,
+                                tb_1_.c3 + 1
+                            from LIBRARY tb_4_
+                            inner join LIBRARY_DEPENDENCY_MAPPING tb_5_ on 
+                                tb_4_.ID = tb_5_.DEPENDENT_ID
+                            inner join tb_1_ on 
+                                tb_5_.DEPENDENCY_ID = tb_1_.c2
+                        )
+                    select 
+                        tb_1_.c1,
+                        tb_1_.c2,
+                        tb_1_.c3
+                    from tb_1_
+                `,
+                args: [12],
+                purpose: "loadRecursiveTreeId(Library.dependents)"
+            },
+            {
+                sql: `
+                    select 
+                        tb_1_.ID,
+                        tb_1_.NAME,
+                        tb_1_.VERSION,
+                        tb_1_.ID
+                    from LIBRARY tb_1_
+                    where 
+                        tb_1_.ID in(?, ?, ?, ?)
+                `,
+                args: [11, 31, 32, 41],
+                purpose: "loadRecursiveTreeNode(Library.dependents)"
+            }
+        );
+        expect(row).toEqual({
+            "name": "parseurl",
+            "version": "1.3.3",
+            "dependencies": [
+                {
+                    "name": "depd",
+                    "version": "2.0.0",
+                    "dependencies": [
+                        {
+                            "name": "http-errors",
+                            "version": "2.0.0",
+                            "dependencies": [
+                                {
+                                    "name": "statuses",
+                                    "version": "2.0.1",
+                                    "dependencies": []
+                                },
+                                {
+                                    "name": "toidentifier",
+                                    "version": "1.0.1",
+                                    "dependencies": []
+                                },
+                                {
+                                    "name": "setprototypeof",
+                                    "version": "1.2.0",
+                                    "dependencies": []
+                                },
+                                {
+                                    "name": "inherits",
+                                    "version": "2.0.4",
+                                    "dependencies": []
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ],
+            "dependents": [
+                {
+                    "name": "send",
+                    "version": "0.18.0",
+                    "dependents": [
+                        {
+                            "name": "serve-static",
+                            "version": "1.15.0",
+                            "dependents": [
+                                {
+                                    "name": "express",
+                                    "version": "4.18.2",
+                                    "dependents": []
+                                }
+                            ]
+                        },
+                        {
+                            "name": "finalhandler",
+                            "version": "1.2.0",
+                            "dependents": [
+                                {
+                                    "name": "express",
+                                    "version": "4.18.2",
+                                    "dependents": []
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        });
     });
 });
