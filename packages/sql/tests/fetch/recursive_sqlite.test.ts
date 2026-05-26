@@ -544,7 +544,7 @@ describe.sequential("RecursiveTest", () => {
                     from tb_1_
                 `,
                 args: [41],
-                purpose: "loadRecursiveTreeId(Library.dependencies)"
+                purpose: "loadRecursiveTreeKey(Library.dependencies)"
             },
             {
                 sql: `
@@ -975,7 +975,7 @@ describe.sequential("RecursiveTest", () => {
                     from tb_1_
                 `,
                 args: [3],
-                purpose: "loadRecursiveTreeId(Library.dependents)"
+                purpose: "loadRecursiveTreeKey(Library.dependents)"
             },
             {
                 sql: `
@@ -1206,7 +1206,7 @@ describe.sequential("RecursiveTest", () => {
                     from tb_1_
                 `,
                 args: [12],
-                purpose: "loadRecursiveTreeId(Library.dependencies)"
+                purpose: "loadRecursiveTreeKey(Library.dependencies)"
             },
             {
                 sql: `
@@ -1253,7 +1253,7 @@ describe.sequential("RecursiveTest", () => {
                     from tb_1_
                 `,
                 args: [12],
-                purpose: "loadRecursiveTreeId(Library.dependents)"
+                purpose: "loadRecursiveTreeKey(Library.dependents)"
             },
             {
                 sql: `

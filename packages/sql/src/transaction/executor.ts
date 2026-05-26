@@ -50,7 +50,7 @@ export type Purpose =
     QueryPurpose 
     | LoadAssociationPurpose 
     | LoadRecursiveTreePurpose
-    | LoadRecursiveTreeIdPurpose
+    | LoadRecursiveTreeKeyPurpose
     | LoadRecursiveTreeNodePurpose;
 
 export type QueryPurpose = {
@@ -67,8 +67,8 @@ export type LoadRecursiveTreePurpose = {
     prop: metadata.EntityProp
 };
 
-export type LoadRecursiveTreeIdPurpose = {
-    kind: "LOAD_RECURSIVE_TREE_ID",
+export type LoadRecursiveTreeKeyPurpose = {
+    kind: "LOAD_RECURSIVE_TREE_KEY",
     prop: metadata.EntityProp
 };
 

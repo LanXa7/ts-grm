@@ -172,8 +172,8 @@ function purposeString(purpose: Purpose): string {
             return `loadAssociation(${purpose.prop.toString()})`
         case "LOAD_RECURSIVE_TREE":
             return `loadRecursiveTree(${purpose.prop.toString()})`;
-        case "LOAD_RECURSIVE_TREE_ID":
-            return `loadRecursiveTreeId(${purpose.prop.toString()})`;
+        case "LOAD_RECURSIVE_TREE_KEY":
+            return `loadRecursiveTreeKey(${purpose.prop.toString()})`;
         case "LOAD_RECURSIVE_TREE_NODE":
             return `loadRecursiveTreeNode(${purpose.prop.toString()})`;
     }

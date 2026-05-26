@@ -330,7 +330,7 @@ class AssociationResolver {
             const [sql, args] = buildStatement(this._sqlClient, query);
             const dataRows = await this._sqlClient.executor.executeStatement(sql, args, {
                 kind: isRecursive 
-                    ? (this._byTargetKey ? "LOAD_RECURSIVE_TREE_ID" : "LOAD_RECURSIVE_TREE")
+                    ? (this._byTargetKey ? "LOAD_RECURSIVE_TREE_KEY" : "LOAD_RECURSIVE_TREE")
                     : "LOAD_ASSOCIATION",
                 prop: this._unresolvedField.prop as metadata.EntityProp
             });
