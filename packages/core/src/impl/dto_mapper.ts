@@ -102,6 +102,8 @@ export type DtoMapperField = {
     readonly isDependent: boolean;
 
     readonly columnIndex: number | string | undefined;
+
+    readonly optimizable: boolean;
 }
 
 export type Path = string | ReadonlyArray<string>;
@@ -337,6 +339,30 @@ class Mapper {
             }
         }
     }
+
+    lessThan(props: ReadonlyArray<EntityProp>): boolean {
+        for (const field of this.fieldMap.values()) {
+            if (!field.prop.isEntityProp) {
+                return false;
+            }
+            const fieldPropPath = (field.prop as EntityProp).path;
+            let matched = false;
+            for (const prop of props) {
+                const scalarProps = prop.scalarProps;
+                if (scalarProps == null) {
+                    throw new ArgumentError(`The argument contains "${prop.toString()}" which is not scalar props`);
+                }
+                if (scalarProps.findIndex(p => p.path === fieldPropPath) !== -1) {
+                    matched = true;
+                    break;
+                }
+            }
+            if (!matched) {
+                return false;
+            }
+        }
+        return true;
+    }
 };
 
 class MapperField {
@@ -402,8 +428,31 @@ class MapperField {
             isDependent: this.isDependent,
             columnIndex: this.dependencies !== undefined
                 ? undefined
-                : this.columnIndexAllocator()
+                : this.columnIndexAllocator(),
+            optimizable: this.isOptimizable()
         };
+    }
+
+    private isOptimizable(): boolean {
+        if (this.subMapper == null) {
+            return false;
+        }
+        if (this.bridgeProp != null) {
+            const targetKeyProp = this.bridgeProp.targetKeyProp ?? this.bridgeProp.targetEntity!.idProp;
+            return this.subMapper.lessThan(targetKeyProp.scalarProps!);
+        }
+        if (!this.prop.isEntityProp) {
+            return false;
+        }
+        const entityProp = this.prop as EntityProp;
+        if (entityProp.associationType === null) {
+            return false;
+        }
+        if (entityProp.storageType === "NONE") {
+            return false;
+        }
+        const targetKeyProp = entityProp.targetKeyProp ?? entityProp.targetEntity!.idProp;
+        return this.subMapper.lessThan(targetKeyProp.scalarProps!);
     }
 }
 

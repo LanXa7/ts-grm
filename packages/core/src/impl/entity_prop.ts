@@ -577,6 +577,13 @@ export class EntityProp {
         };
     }
 
+    get path(): string {
+        const subPath = this.subPath;
+        return subPath === "" 
+            ? this.rootProp.name 
+            : `${this.rootProp.name}.${subPath}`;
+    }
+
     get subPath(): string {
         if (this.parentProp == null) {
             return "";
