@@ -56,7 +56,7 @@ describe("ComputedTest", () => {
             }
         });
         expectCode(view.mapper.dtoRowReader.constructor.toString(), `
-            class extends $baseClass {
+            class ThisClass extends $baseClass {
                 read(parents, reader) {
                     const dto = {
                         id: reader.get(0), 
@@ -124,6 +124,11 @@ describe("ComputedTest", () => {
                             throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
                     }
                 }
+                resolveTsFormulas(row) {
+                    const fullNameValue = ThisClass.__FULL_NAME__TS_FORMULA_FN(row.implicit.fullName);
+                    row.dto.fullName = fullNameValue;
+                }
+                static __FULL_NAME__TS_FORMULA_FN = $entity.expandedPropMap.get("fullName").formulaData.formula.fn;
             }
         `);
         const row = view.mapper.dtoRowReader.read(
@@ -202,7 +207,7 @@ describe("ComputedTest", () => {
             "fullName": "fullName"
         });
         expectCode(view.mapper.dtoRowReader.constructor.toString(), `
-            class extends $baseClass {
+            class ThisClass extends $baseClass {
                 read(parents, reader) {
                     const dto = {
                         id: reader.get(0), 
@@ -283,6 +288,11 @@ describe("ComputedTest", () => {
                             throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
                     }
                 }
+                resolveTsFormulas(row) {
+                    const fullNameValue = ThisClass.__FULL_NAME__TS_FORMULA_FN(row.implicit.fullName);
+                    row.dto.fullName = fullNameValue;
+                }
+                static __FULL_NAME__TS_FORMULA_FN = $entity.expandedPropMap.get("fullName").formulaData.formula.fn;
             }
         `);
         const row = view.mapper.dtoRowReader.read(
@@ -360,7 +370,7 @@ describe("ComputedTest", () => {
             }
         });
         expectCode(view.mapper.dtoRowReader.constructor.toString(), `
-            class extends $baseClass {
+            class ThisClass extends $baseClass {
                 read(parents, reader) {
                     const dto = {
                         id: reader.get(0), 
@@ -437,6 +447,11 @@ describe("ComputedTest", () => {
                             throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
                     }
                 }
+                resolveTsFormulas(row) {
+                    const fullNameValue = ThisClass.__FULL_NAME__TS_FORMULA_FN(row.implicit.fullName);
+                    this._formula(row.dto).fn = fullNameValue;
+                }
+                static __FULL_NAME__TS_FORMULA_FN = $entity.expandedPropMap.get("fullName").formulaData.formula.fn;
             }
         `);
         const row = view.mapper.dtoRowReader.read(
@@ -528,7 +543,7 @@ describe("ComputedTest", () => {
             }
         });
         expectCode(view.mapper.dtoRowReader.constructor.toString(), `
-            class extends $baseClass {
+            class ThisClass extends $baseClass {
                 read(parents, reader) {
                     const dto = {
                         newestBooks: null
@@ -666,7 +681,7 @@ describe("ComputedTest", () => {
             }
         });
         expectCode(view.mapper.dtoRowReader.constructor.toString(), `
-            class extends $baseClass {
+            class ThisClass extends $baseClass {
                 read(parents, reader) {
                     const dto = {
                         id: reader.get(0), 
@@ -725,7 +740,7 @@ describe("ComputedTest", () => {
             .find(f => f.prop.name === "specifiedBooks" && f.parameter.maxPrice != null)!
             .subMapper!;
         expectCode(cheapBooksMapper.dtoRowReader.constructor.toString(), `
-            class extends $baseClass {
+            class ThisClass extends $baseClass {
                 read(parents, reader) {
                     const dto = {
                         id: reader.get(0), 
@@ -743,7 +758,7 @@ describe("ComputedTest", () => {
             .find(f => f.prop.name === "specifiedBooks" && f.parameter.minPrice != null)!
             .subMapper!;
         expectCode(expensiveBooksMapper.dtoRowReader.constructor.toString(), `
-            class extends $baseClass {
+            class ThisClass extends $baseClass {
                 read(parents, reader) {
                     const dto = {
                         id: reader.get(0), 
@@ -755,7 +770,7 @@ describe("ComputedTest", () => {
         `);
     });
 
-    it("formulaBasedOnCalculator", () => {
+    it("formulaBasedOnAssociation", () => {
         const view = dto.view(BOOK_STORE, $ => $
             .id
             .bookNames
@@ -770,13 +785,13 @@ describe("ComputedTest", () => {
                     "columnIndex": 0
                 },
                 {
-                    "prop": "BookStore.newestBooks",
+                    "prop": "BookStore.books",
                     "paths": [
-                        ["<implicit:bookNames>", "newestBooks"]
+                        ["<implicit:bookNames>", "books"]
                     ],
                     "subMapper": {
                         "entity": "Book",
-                        "associatedProp": "BookStore.newestBooks",
+                        "associatedProp": "BookStore.books",
                         "fields": [
                             {
                                 "prop": "Book.name",
@@ -799,7 +814,7 @@ describe("ComputedTest", () => {
             "id": 0,
             "__implicit": {
                 "bookNames": {
-                    "newestBooks": {
+                    "books": {
                         "__array": {
                             "name": 0
                         }
@@ -809,7 +824,7 @@ describe("ComputedTest", () => {
             "bookNames": "bookNames"
         });
         expectCode(view.mapper.dtoRowReader.constructor.toString(), `
-            class extends $baseClass {
+            class ThisClass extends $baseClass {
                 read(parents, reader) {
                     const dto = {
                         id: reader.get(0), 
@@ -824,7 +839,7 @@ describe("ComputedTest", () => {
                     let o = implicit.bookNames;
                     if (o == null) {
                         implicit.bookNames = o = {
-                            newestBooks: null
+                            books: null
                         };
                     }
                     return o;
@@ -834,7 +849,7 @@ describe("ComputedTest", () => {
                         case 1:
                             return row.dto.id;
                         case 2:
-                            return row.implicit.bookNames?.newestBooks;
+                            return row.implicit.bookNames?.books;
                         default:
                             throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
                     }
@@ -862,7 +877,7 @@ describe("ComputedTest", () => {
                 resolve(unresolvedFieldIndex, row, value) {
                     switch (unresolvedFieldIndex) {
                         case 1:
-                            this._implicit_bookNames(row.implicit).newestBooks = value;
+                            this._implicit_bookNames(row.implicit).books = value;
                             break;
                         case 2:
                             row.dto.bookNames = value;
@@ -871,6 +886,11 @@ describe("ComputedTest", () => {
                             throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
                     }
                 }
+                resolveTsFormulas(row) {
+                    const bookNamesValue = ThisClass.__BOOK_NAMES__TS_FORMULA_FN(row.implicit.bookNames);
+                    row.dto.bookNames = bookNamesValue;
+                }
+                static __BOOK_NAMES__TS_FORMULA_FN = $entity.expandedPropMap.get("bookNames").formulaData.formula.fn;
             }
         `);
     });

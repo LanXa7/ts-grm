@@ -39,7 +39,7 @@ describe("ViewTest", () => {
         });
 
         expectCode(view.mapper.dtoRowReader.constructor.toString(), `
-            class extends $baseClass {
+            class ThisClass extends $baseClass {
                 read(parents, reader) {
                     const dto = {
                         id: reader.get(0), 
@@ -178,7 +178,7 @@ describe("ViewTest", () => {
         });
 
         expectCode(view.mapper.dtoRowReader.constructor.toString(), `
-            class extends $baseClass {
+            class ThisClass extends $baseClass {
                 read(parents, reader) {
                     const dto = {
                         name: reader.get(0), 
@@ -257,7 +257,7 @@ describe("ViewTest", () => {
             .find(f => f.prop.name === "store")!
             .subMapper!;
         expectCode(storeMapper.dtoRowReader.constructor.toString(), `
-            class extends $baseClass {
+            class ThisClass extends $baseClass {
                 read(parents, reader) {
                     const dto = {
                         id: reader.get(0), 
@@ -284,7 +284,7 @@ describe("ViewTest", () => {
             .find(f => f.prop.name === "authors")!
             .subMapper!;
         expectCode(authorMapper.dtoRowReader.constructor.toString(), `
-            class extends $baseClass {
+            class ThisClass extends $baseClass {
                 read(parents, reader) {
                     const dto = {
                         id: reader.get(0), 
@@ -422,7 +422,7 @@ describe("ViewTest", () => {
         });
 
         expectCode(view.mapper.dtoRowReader.constructor.toString(), `
-            class extends $baseClass {
+            class ThisClass extends $baseClass {
                 read(parents, reader) {
                     const dto = {
                         id: reader.get(0), 
@@ -478,7 +478,7 @@ describe("ViewTest", () => {
         
         const bookMapper = view.mapper.fields.find(f => f.prop.name === "books")!.subMapper!;
         expectCode(bookMapper.dtoRowReader.constructor.toString(), `
-            class extends $baseClass {
+            class ThisClass extends $baseClass {
                 read(parents, reader) {
                     const dto = {
                         id: reader.get(0), 
@@ -534,7 +534,7 @@ describe("ViewTest", () => {
 
         const authorMapper = bookMapper.fields.find(f => f.prop.name === "authors")!.subMapper!;
         expectCode(authorMapper.dtoRowReader.constructor.toString(), `
-            class extends $baseClass {
+            class ThisClass extends $baseClass {
                 read(parents, reader) {
                     const dto = {
                         id: reader.get(0), 
@@ -672,7 +672,7 @@ describe("ViewTest", () => {
         });
 
         expectCode(view.mapper.dtoRowReader.constructor.toString(), `
-            class extends $baseClass {
+            class ThisClass extends $baseClass {
                 read(parents, reader) {
                     const dto = {
                         name: reader.get(0), 
@@ -727,7 +727,7 @@ describe("ViewTest", () => {
 
         const bookMapper = view.mapper.fields.find(f => f.prop.name === "books")!.subMapper!;
         expectCode(bookMapper.dtoRowReader.constructor.toString(), `
-            class extends $baseClass {
+            class ThisClass extends $baseClass {
                 read(parents, reader) {
                     const dto = {
                         name: reader.get(0), 
@@ -782,7 +782,7 @@ describe("ViewTest", () => {
 
         const authorMapper = bookMapper.fields.find(f => f.prop.name === "authors")!.subMapper!;
         expectCode(authorMapper.dtoRowReader.constructor.toString(), `
-            class extends $baseClass {
+            class ThisClass extends $baseClass {
                 read(parents, reader) {
                     const dto = {
                         name: null
@@ -918,7 +918,7 @@ describe("ViewTest", () => {
         });
 
         expectCode(view.mapper.dtoRowReader.constructor.toString(), `
-            class extends $baseClass {
+            class ThisClass extends $baseClass {
                 read(parents, reader) {
                     const dto = {
                         bookId: reader.get(0), 
@@ -998,7 +998,7 @@ describe("ViewTest", () => {
 
         const authorMapper = view.mapper.fields.find(f => f.prop.name === "authors")!.subMapper!;
         expectCode(authorMapper.dtoRowReader.constructor.toString(), `
-            class extends $baseClass {
+            class ThisClass extends $baseClass {
                 read(parents, reader) {
                     const dto = {
                         id: reader.get(0), 

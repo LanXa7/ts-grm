@@ -1,5 +1,7 @@
+import { EntityProp } from ".";
 import { CodeWriter } from "./code_writer";
 import { DataReader } from "./data_reader";
+import { FetchProp } from "./dto";
 import { DtoMapper,DtoMapperField } from "./dto_mapper";
 import { buildShape, isEmptyShape, Shape } from "./shape";
 import { ArgumentError } from "@/error/common";
@@ -19,7 +21,7 @@ export abstract class DtoRowReader {
 
     abstract read(parents: ReadonlyArray<DtoRow> | undefined, reader: DataReader): DtoRow;
 
-    dependency(unresolvedFieldIndex: number, _: DtoRow) {
+    dependency(unresolvedFieldIndex: number, _: DtoRow): any {
         throw new ArgumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
     }
 
@@ -31,9 +33,11 @@ export abstract class DtoRowReader {
         throw new ArgumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
     }
 
-    resolve(unresolvedFieldIndex: number, _1: DtoRow, _2: any) {
+    resolve(unresolvedFieldIndex: number, _1: DtoRow, _2: any): void {
         throw new ArgumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
     }
+
+    resolveTsFormulas(_: DtoRow): void {}
 }
 
 export function createDtoRowReader(mapper: DtoMapper): DtoRowReader {
@@ -42,7 +46,7 @@ export function createDtoRowReader(mapper: DtoMapper): DtoRowReader {
 
     const writer = new CodeWriter();
     writer
-        .code("return class extends $baseClass ")
+        .code("return class ThisClass extends $baseClass ")
         .scope("CURLY_BRACKETS", () => {
             writeRead(shape, mapper, writer);
             writeFold("", shape, mapper.nullAsUndefined, writer);
@@ -54,9 +58,15 @@ export function createDtoRowReader(mapper: DtoMapper): DtoRowReader {
                 writeDependencyNullable(mapper, writer);
                 writeDependencyHash(mapper, writer);
                 writeResolve(mapper, writer);
+                if (mapper.unresolvedFields.find(f => isTsFormula(f.prop)) != null) {
+                    writeResolveTsFormulas(mapper, writer);
+                    writeTsFormulaFns(mapper, writer);
+                }
             }
         });
-    const cls = new Function("$baseClass", "$argumentError", writer.toString())(DtoRowReader, ArgumentError);
+    const cls = new Function(
+        "$baseClass", "$entity", "$argumentError", writer.toString()
+    )(DtoRowReader, mapper.entity, ArgumentError);
     return new cls();
 }
 
@@ -429,4 +439,109 @@ function parentName(parentDepth: number): string {
         return "parent";
     }
     return `parent${parentDepth + 1}`;
+}
+
+function isTsFormula(prop: FetchProp): boolean {
+    return prop.isEntityProp && (prop as EntityProp).formulaDependencies.length !== 0;
+}
+
+function writeResolveTsFormulas(
+    mapper: DtoMapper, 
+    writer: CodeWriter
+) {
+    writer.code("resolveTsFormulas(row) ").scope("CURLY_BRACKETS", () => {
+        const renderedProps = new Set<EntityProp>();
+        for (const field of mapper.fields) {
+            if (isTsFormula(field.prop)) {
+                writeResolveTsFormula(mapper, field, renderedProps, writer);
+            }
+        }
+    }).newLine();
+}
+
+function writeResolveTsFormula(
+    mapper: DtoMapper,
+    field: DtoMapperField, 
+    renderedProps: Set<EntityProp>,
+    writer: CodeWriter
+) {
+    if (!isTsFormula(field.prop)) {
+        return;
+    }
+    const prop = field.prop as EntityProp;
+    if (renderedProps.has(prop)) {
+        return;
+    }
+    renderedProps.add(prop);
+    
+    for (const dependency of prop.formulaDependencies) {
+        const dependencyField = mapper.fields.find(f => f.prop.isEntityProp && (f.prop as EntityProp).path === dependency.path)!;
+        writeResolveTsFormula(mapper, dependencyField, renderedProps, writer);
+    }
+    
+    const valueName = `${prop.name}Value`;
+    writer
+        .code("const ")
+        .code(valueName)
+        .code(" = ThisClass.")
+        .code(tsFormulaFnName(prop))
+        .code("(row.implicit.")
+        .code(prop.name)
+        .code(")")
+        .newLine(";");
+    for (const path of field.paths) {
+       writeTsFormulaAssignments(field, typeof path === "string" ? [path] : path, valueName, 0, writer);
+    }
+}
+
+function writeTsFormulaAssignments(
+    field: DtoMapperField, 
+    path: ReadonlyArray<string>,
+    valueName: string,
+    parentDepth: number,
+    writer: CodeWriter
+) {
+    if (path[parentDepth] === "..") {
+        writer.code(`for (const ${parentName(parentDepth)} of ${parentDepth > 0 ? `${parentName(parentDepth - 1)}.` : ""}parents) `);
+        writer.scope("CURLY_BRACKETS", () => {
+            writeTsFormulaAssignments(field, path, valueName, parentDepth + 1, writer);
+        }).newLine();
+        return;
+    }
+    writeAssignmentTarget("row.", parentDepth > 0, typeof path === "string" ? [path] : path, writer);
+    writer.code(" = ").code(valueName).newLine(";");
+}
+
+function writeTsFormulaFns(
+    mapper: DtoMapper, 
+    writer: CodeWriter
+) {
+    for (const field of mapper.fields) {
+        if (isTsFormula(field.prop)) {
+            writeTsFormulaFn(field.prop as EntityProp, writer);
+        }
+    }
+}
+
+function writeTsFormulaFn(
+    prop: EntityProp, 
+    writer: CodeWriter
+) {
+    writer
+        .code("static ")
+        .code(tsFormulaFnName(prop))
+        .code(" = ")
+        .code(`$entity.expandedPropMap.get("${prop.path}").formulaData.formula.fn`)
+        .newLine(";");
+}
+
+function tsFormulaFnName(prop: EntityProp): string {
+    return `__${toScreamingSnakeCase(prop.path)}__TS_FORMULA_FN`;
+}
+
+function toScreamingSnakeCase(text: string): string {
+    const replaced = text
+        .replace(/([a-z])([A-Z])/g, '$1_$2')
+        .replace(/([A-Z]+)([A-Z][a-z])/g, '$1_$2');
+    return replaced.toUpperCase();
 }

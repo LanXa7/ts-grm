@@ -10,6 +10,8 @@ import { Column, Columns, MiddelEntity, MiddleTable, PropStorage, StorageType } 
 import { ParameterizedTargetCalculator, TargetCalculator } from "@/schema/computed";
 import { z } from "zod";
 import { CascadeType } from "@/schema/join";
+import { View } from "@/schema/dto";
+import { AnyModel } from "@/schema/model";
 
 export class EntityProp {
 
@@ -68,6 +70,10 @@ export class EntityProp {
     private _middleEntity: MiddelEntity | undefined = undefined;
 
     private _middleEntityResolved = false;
+
+    private _formulaView: View<AnyModel, any> | undefined = undefined;
+
+    private _formulaDependencies: ReadonlyArray<EntityProp> | undefined = undefined;
 
     private static readonly _EMPTY_PROP_MAP: ReadonlyMap<string, EntityProp> = 
         new Map<string, EntityProp>();
@@ -325,15 +331,80 @@ export class EntityProp {
             ?? "NONE";
     }
 
+    get formulaView(): View<AnyModel, any> | undefined {
+        let view = this._formulaView;
+        if (view == null) {
+            const formulaData = this._data.formulaData;
+            if (formulaData?.kind !== "TS") {
+                return undefined;
+            }
+            view = formulaData.formula.view();
+            if (view == null || view.mapper.entity !== this.declaringEntity) {
+                this.raise `The typescript formula property must base on the view DTO of current entity "${this.declaringEntity.name}"`;
+            }
+            this._formulaView = view;
+        }
+        return view;
+    }
+
+    get formulaDependencies(): ReadonlyArray<EntityProp> {
+        return this._getFormulaDependencies(new Set());
+    }
+
+    private _getFormulaDependencies(
+        usedDependencies: Set<EntityProp>
+    ): ReadonlyArray<EntityProp> {
+        let dependencies = this._formulaDependencies;
+        if (dependencies == null) {
+            const view = this.formulaView;
+            if (view == null) {
+                dependencies = [];
+            } else {
+                if (usedDependencies.has(this)) {
+                    this.raise `Formula dependency circle`
+                }
+                const arr: Array<EntityProp> = [];
+                for (const field of view.mapper.fields) {
+                    const prop = field.prop as EntityProp;
+                    if (prop._data.calculatorData != null) {
+                        this.raise `Cannot depends on calculation property "${prop.toString()}"`;
+                    }
+                    usedDependencies.add(prop);
+                    arr.push(prop);
+                    prop._getFormulaDependencies(usedDependencies);
+                }
+                dependencies = arr;
+            }
+            this._formulaDependencies = dependencies;
+        }
+        return dependencies;
+    }
+
     private validateData() {
-        if (this._data!.associationType == null) {
-            this.validateSimpleData();
+        if (this._data!.formulaData != null) {
+            this._validateFormulaData();
+        } else if (this._data!.associationType == null) {
+            this._validateSimpleData();
         } else {
-            this.validateAssociationData();
+            this._validateAssociationData();
         }
     }
 
-    private validateSimpleData() {
+    private _validateFormulaData() {
+        const formulaData = this._data.formulaData!;
+        switch (formulaData.kind) {
+            case "SQL":
+                const sourceModel = formulaData.formula.sourceModel();
+                if (sourceModel !== this.declaringEntity.model) {
+                    this.raise `The "sqlFormula" bases on the wrong model "${
+                        (sourceModel as AnyModelImpl).name
+                    }", it must base on the current model "${this.declaringEntity.name}".`;
+                }
+                break;
+        }
+    }
+
+    private _validateSimpleData() {
         const data = this._data;
         if (data.joinColumns != null) {
             this.raise `The "joinColumns" cannot be specified for non-association property.`;
@@ -364,7 +435,7 @@ export class EntityProp {
         }
     }
 
-    private validateAssociationData() {
+    private _validateAssociationData() {
         const data = this._data!;
         if (data.associationType !== "ONE_TO_ONE" &&
             data.associationType !== "ONE_TO_MANY" &&
@@ -382,6 +453,10 @@ export class EntityProp {
         }
         if (data.columnName != null) {
             this.raise `The "columnName" for association property cannot be specified; 
+            please specify either joinColumns or joinTable.`;
+        }
+        if (data.formulaData != null) {
+            this.raise `The "formulaData" for association property cannot be specified; 
             please specify either joinColumns or joinTable.`;
         }
         if (data.joinColumns != null && data.joinTable != null) {

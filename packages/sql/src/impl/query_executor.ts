@@ -75,6 +75,7 @@ async function readDto(
         dtos.push(dtoRow.dto);
     }
     await resolveAssociations(sqlClient, mapper, dtoRows, undefined);
+    resolveTsFormulas(mapper, dtoRows);
     return dtos;
 }
 
@@ -311,6 +312,7 @@ class AssociationResolver {
             targetRows, 
             recursiveContext?.toDeeperContext()
         );
+        resolveTsFormulas(this._targetMapper, targetRows);
     }
 
     private async _resolveBatch(
@@ -644,3 +646,15 @@ type TargetRowMapData = {
     map: Map<any, metadata.DtoRow> | undefined;
 };
 type TargetRowMapGetter = (keys: ReadonlyArray<any>) => Promise<Map<any, metadata.DtoRow>>;
+
+function resolveTsFormulas(
+    mapper: metadata.DtoMapper,
+    sourceRows: ReadonlyArray<metadata.DtoRow>
+): void {
+    if (sourceRows.length === 0) {
+        return;
+    }
+    for (const sourceRow of sourceRows) {
+        mapper.dtoRowReader.resolveTsFormulas(sourceRow);
+    }
+}

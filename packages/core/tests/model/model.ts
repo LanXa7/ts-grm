@@ -49,8 +49,8 @@ const BOOK_STORE_SPECIFIED_BOOK_CALCULATOR = Calculator.parameterizedTargetOf({
 
 const BOOK_STORE_BOOK_NAMES_FORMULA: TsFormula<ReadonlyArray<string>> =
     TsFormula.of({
-        view: () => dto.view(BOOK_STORE, $ => $.newestBooks($ => $.name)),
-        fn: data => data.newestBooks.map(book => book.name)
+        view: () => dto.view(BOOK_STORE, $ => $.books($ => $.name)),
+        fn: data => data.books.map(book => book.name)
     });
 
 export const BOOK_STORE = model("BookStore", "id", class {

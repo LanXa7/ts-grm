@@ -86,7 +86,7 @@ describe("FlatTest", () => {
         });
 
         expectCode(view.mapper.dtoRowReader.constructor.toString(), `
-            class extends $baseClass {
+            class ThisClass extends $baseClass {
                 read(parents, reader) {
                     const dto = {
                         id: reader.get(0), 
@@ -150,7 +150,7 @@ describe("FlatTest", () => {
 
         const storeMapper = view.mapper.fields.find(f => f.prop.name === "store")!.subMapper!;
         expectCode(storeMapper.dtoRowReader.constructor.toString(), `
-            class extends $baseClass {
+            class ThisClass extends $baseClass {
                 read(parents, reader) {
                     const dto = {
                     };
@@ -215,7 +215,7 @@ describe("FlatTest", () => {
         });
 
         expectCode(view.mapper.dtoRowReader.constructor.toString(), `
-            class extends $baseClass {
+            class ThisClass extends $baseClass {
                 read(parents, reader) {
                     const dto = {
                         id: reader.get(0), 
@@ -342,7 +342,7 @@ describe("FlatTest", () => {
         });
         
         expectCode(view.mapper.dtoRowReader.constructor.toString(), `
-            class extends $baseClass {
+            class ThisClass extends $baseClass {
                 read(parents, reader) {
                     const dto = {
                         id: reader.get(0), 
@@ -409,7 +409,7 @@ describe("FlatTest", () => {
 
         const pMapper = view.mapper.fields.find(f => f.prop.name === "parentNode")!.subMapper!;
         expectCode(pMapper.dtoRowReader.constructor.toString(), `
-            class extends $baseClass {
+            class ThisClass extends $baseClass {
                 read(parents, reader) {
                     const dto = {
                     };
@@ -478,7 +478,7 @@ describe("FlatTest", () => {
 
         const ppMapper = pMapper.fields.find(f => f.prop.name === "parentNode")!.subMapper!;
         expectCode(ppMapper.dtoRowReader.constructor.toString(), `
-            class extends $baseClass {
+            class ThisClass extends $baseClass {
                 read(parents, reader) {
                     const dto = {
                     };
