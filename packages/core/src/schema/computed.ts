@@ -7,7 +7,7 @@ import { z } from "zod";
 export class TsFormula<TValue> {
 
     private constructor(
-        readonly view: () => View<AnyModel, any>,
+        readonly dependency: () => View<AnyModel, any>,
         readonly fn: TsFormulaFn<any, TValue>
     ) {}
 

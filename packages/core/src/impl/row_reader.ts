@@ -441,7 +441,7 @@ function parentName(parentDepth: number): string {
 }
 
 function isTsFormula(prop: FetchProp): boolean {
-    return prop.isEntityProp && (prop as EntityProp).formulaDependencies.length !== 0;
+    return prop.isEntityProp && (prop as EntityProp).tsFormulaDependencies.length !== 0;
 }
 
 function writeResolveTsFormulas(
@@ -473,7 +473,7 @@ function writeResolveTsFormula(
     }
     renderedProps.add(prop);
     
-    for (const dependency of prop.formulaDependencies) {
+    for (const dependency of prop.tsFormulaDependencies) {
         const dependencyField = mapper.fields.find(f => f.prop.isEntityProp && (f.prop as EntityProp).path === dependency.path)!;
         writeResolveTsFormula(mapper, dependencyField, renderedProps, writer);
     }

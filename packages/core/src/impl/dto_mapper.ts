@@ -155,7 +155,7 @@ class Mapper {
         if (prop.isEntityProp) {
             const entityProp = prop as EntityProp;
             if (entityProp.formulaData?.kind === "TS") {
-                const view = entityProp.formulaData.formula.view();
+                const view = entityProp.formulaData.formula.dependency();
                 for (const field of view.mapper.fields) {
                     if (field.paths.length === 0) {
                         continue;

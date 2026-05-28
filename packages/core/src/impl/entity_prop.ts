@@ -71,7 +71,7 @@ export class EntityProp {
 
     private _middleEntityResolved = false;
 
-    private _formulaView: View<AnyModel, any> | undefined = undefined;
+    private _tsFormulaDependencyView: View<AnyModel, any> | undefined = undefined;
 
     private _formulaDependencies: ReadonlyArray<EntityProp> | undefined = undefined;
 
@@ -331,23 +331,31 @@ export class EntityProp {
             ?? "NONE";
     }
 
-    get formulaView(): View<AnyModel, any> | undefined {
-        let view = this._formulaView;
-        if (view == null) {
+    get tsFormulaDependencyView(): View<AnyModel, any> | undefined {
+        let dependencyView = this._tsFormulaDependencyView;
+        if (dependencyView == null) {
             const formulaData = this._data.formulaData;
             if (formulaData?.kind !== "TS") {
                 return undefined;
             }
-            view = formulaData.formula.view();
-            if (view == null || view.mapper.entity !== this.declaringEntity) {
+            dependencyView = formulaData.formula.dependency();
+            if (dependencyView == null || dependencyView.mapper.entity !== this.declaringEntity) {
                 this.raise `The typescript formula property must base on the view DTO of current entity "${this.declaringEntity.name}"`;
             }
-            this._formulaView = view;
+            for (const field of dependencyView.mapper.fields) {
+                for (const path of field.paths) {
+                    if (path === "..") {
+                        this.raise `The dependency view for the typescript formula property cannot has flat members`;
+                    }
+                    break;
+                }
+            }
+            this._tsFormulaDependencyView = dependencyView;
         }
-        return view;
+        return dependencyView;
     }
 
-    get formulaDependencies(): ReadonlyArray<EntityProp> {
+    get tsFormulaDependencies(): ReadonlyArray<EntityProp> {
         return this._getFormulaDependencies(new Set());
     }
 
@@ -356,7 +364,7 @@ export class EntityProp {
     ): ReadonlyArray<EntityProp> {
         let dependencies = this._formulaDependencies;
         if (dependencies == null) {
-            const view = this.formulaView;
+            const view = this.tsFormulaDependencyView;
             if (view == null) {
                 dependencies = [];
             } else {
