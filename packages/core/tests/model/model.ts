@@ -49,8 +49,8 @@ const BOOK_STORE_SPECIFIED_BOOK_CALCULATOR = Calculator.parameterizedTargetOf({
 
 const BOOK_STORE_BOOK_NAMES_FORMULA: TsFormula<ReadonlyArray<string>> =
     TsFormula.of({
-        view: () => dto.view(BOOK_STORE, $ => $.books($ => $.name)),
-        fn: data => data.books.map(book => book.name)
+        dependency: () => dto.view(BOOK_STORE, $ => $.books($ => $.name.edition)),
+        fn: data => data.books.map(book => `${book.name}(${book.edition})`)
     });
 
 export const BOOK_STORE = model("BookStore", "id", class {
@@ -140,7 +140,7 @@ export const PDF_ELECTRONIC_BOOK = model.extends(ELECTRONIC_BOOK)(
 
 const AUTHOR_FULL_NAME_FORMULA: TsFormula<string> = 
     TsFormula.of({
-        view: () => dto.view(AUTHOR, $ => $.name()),
+        dependency: () => dto.view(AUTHOR, $ => $.name()),
         fn: data => `${data.name.firstName} ${data.name.lastName}`
     });
 

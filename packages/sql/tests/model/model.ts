@@ -43,6 +43,12 @@ const BOOK_STORE_SPECIFIED_BOOK_CALCULATOR = Calculator.parameterizedTargetOf({
     }
 });
 
+const BOOK_STORE_BOOK_NAMES_FORMULA: TsFormula<ReadonlyArray<string>> =
+    TsFormula.of({
+        dependency: () => dto.view(BOOK_STORE, $ => $.books($ => $.name.edition)),
+        fn: data => data.books.map(book => `${book.name}(${book.edition})`)
+    });
+
 export const BOOK_STORE = model(
     "BookStore", 
     "id", 
@@ -52,6 +58,7 @@ export const BOOK_STORE = model(
         version = prop.i32()
         books = prop.o2m(BOOK).mappedBy("store")
             .orderBy("name", { path: "edition", desc: true })
+        bookNames = prop.formula.ts(BOOK_STORE_BOOK_NAMES_FORMULA)
         newestBooks = prop.calculated.collection(BOOK_STORE_NEWEST_BOOK_CALCULATOR)
         specifiedBooks = prop.calculated.collection(BOOK_STORE_SPECIFIED_BOOK_CALCULATOR)
     },
@@ -176,7 +183,7 @@ export const PDF_ELECTRONIC_BOOK = model.extends(ELECTRONIC_BOOK)(
 
 const AUTHOR_FULL_NAME_FORMULA: TsFormula<string> = 
     TsFormula.of({
-        view: () => dto.view(AUTHOR, $ => $.name()),
+        dependency: () => dto.view(AUTHOR, $ => $.name()),
         fn: data => `${data.name.firstName} ${data.name.lastName}`
     });
 

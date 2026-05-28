@@ -16,11 +16,11 @@ export class TsFormula<TValue> {
         TValue
     >(
         options: {
-            readonly view: () => View<AnyModel, TData>
+            readonly dependency: () => View<AnyModel, TData>
             readonly fn: TsFormulaFn<TData, TValue>;
         }
     ): TsFormula<TValue> {
-        return new TsFormula(options.view, options.fn as any);
+        return new TsFormula(options.dependency, options.fn as any);
     }
 }
 

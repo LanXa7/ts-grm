@@ -797,6 +797,11 @@ describe("ComputedTest", () => {
                                 "prop": "Book.name",
                                 "paths": ["name"],
                                 "columnIndex": 0
+                            },
+                            {
+                                "columnIndex": 1,
+                                "paths": ["edition"],
+                                "prop": "Book.edition"
                             }
                         ]
                     },
@@ -816,7 +821,8 @@ describe("ComputedTest", () => {
                 "bookNames": {
                     "books": {
                         "__array": {
-                            "name": 0
+                            "name": 0,
+                            "edition": 1
                         }
                     }
                 }
@@ -889,6 +895,273 @@ describe("ComputedTest", () => {
                 resolveTsFormulas(row) {
                     const bookNamesValue = ThisClass.__BOOK_NAMES__TS_FORMULA_FN(row.implicit.bookNames);
                     row.dto.bookNames = bookNamesValue;
+                }
+                static __BOOK_NAMES__TS_FORMULA_FN = $entity.expandedPropMap.get("bookNames").formulaData.formula.fn;
+            }
+        `);
+    });
+
+    it("flatFormulaBaseOnAssocoation", () => {
+        const view = dto.view(BOOK, $ => $
+            .name.edition
+            .flat("store", $ => $
+                .bookNames
+            )
+        );
+        expect(mapperJson(view.mapper)).toEqual({
+            "entity": "Book",
+            "fields": [
+                {
+                    "prop": "Book.name",
+                    "paths": ["name"],
+                    "columnIndex": 0
+                },
+                {
+                    "prop": "Book.edition",
+                    "paths": ["edition"],
+                    "columnIndex": 1
+                },
+                {
+                    "prop": "Book.storeId",
+                    "paths": [],
+                    "isDependent": true,
+                    "columnIndex": 2
+                },
+                {
+                    "prop": "Book.store",
+                    "paths": [],
+                    "subMapper": {
+                        "entity": "BookStore",
+                        "associatedProp": "Book.store",
+                        "fields": [
+                            {
+                                "prop": "BookStore.id",
+                                "paths": [],
+                                "isDependent": true,
+                                "columnIndex": 0
+                            },
+                            {
+                                "prop": "BookStore.books",
+                                "paths": [
+                                    ["<implicit:bookNames>", "books"]
+                                ],
+                                "subMapper": {
+                                    "entity": "Book",
+                                    "associatedProp": "BookStore.books",
+                                    "fields": [
+                                        {
+                                            "prop": "Book.name",
+                                            "paths": ["name"],
+                                            "columnIndex": 0
+                                        },
+                                        {
+                                            "prop": "Book.edition",
+                                            "paths": ["edition"],
+                                            "columnIndex": 1
+                                        }
+                                    ]
+                                },
+                                "dependencies": [0],
+                                "isDependent": true
+                            },
+                            {
+                                "prop": "BookStore.bookNames",
+                                "paths": [
+                                    ["..", "storeBookNames"]
+                                ],
+                                "dependencies": [1]
+                            }
+                        ]
+                    },
+                    "dependencies": [2]
+                }
+            ]
+        });
+        expect(buildShape(view.mapper)).toEqual({
+            "name": 0,
+            "edition": 1,
+            "__implicit": {
+                "_2": 2
+            },
+            "storeBookNames": undefined,
+            "store": {
+                "__implicit": {
+                    "_0": 0,
+                    "bookNames": {
+                        "books": {
+                            "__array": {
+                                "name": 0,
+                                "edition": 1
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        expect(Object.keys(buildShape(view.mapper))).toEqual(
+            ['name', 'edition', '__implicit', 'store', 'storeBookNames']
+        );
+        expectCode(view.mapper.dtoRowReader.constructor.toString(), `
+            class ThisClass extends $baseClass {
+                read(parents, reader) {
+                    const dto = {
+                        name: reader.get(0), 
+                        edition: reader.get(1), 
+                        storeBookNames: null
+                    };
+                    const implicit = {
+                        _2: reader.get(2)
+                    };
+                    return { reader: this, parents, dto, implicit };
+                }
+                dependency(unresolvedFieldIndex, row) {
+                    switch (unresolvedFieldIndex) {
+                        case 3:
+                            return row.implicit._2;
+                        default:
+                            throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                    }
+                }
+                dependencyNullable(unresolvedFieldIndex, dependency) {
+                    switch (unresolvedFieldIndex) {
+                        case 3:
+                            return dependency == null;
+                        default:
+                            throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                    }
+                }
+                dependencyHash(unresolvedFieldIndex, dependency) {
+                    switch (unresolvedFieldIndex) {
+                        case 3:
+                            return dependency;
+                        default:
+                            throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                    }
+                }
+                resolve(unresolvedFieldIndex, row, value) {
+                    switch (unresolvedFieldIndex) {
+                        case 3:
+                            break;
+                        default:
+                            throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                    }
+                }
+            }
+        `);
+
+        const storeMapper = view.mapper.fields.find(f => f.prop.name === "store")!.subMapper!;
+        expect(mapperJson(storeMapper)).toEqual({
+            "entity": "BookStore",
+            "associatedProp": "Book.store",
+            "fields": [
+                {
+                    "prop": "BookStore.id",
+                    "paths": [],
+                    "isDependent": true,
+                    "columnIndex": 0
+                },
+                {
+                    "prop": "BookStore.books",
+                    "paths": [
+                        ["<implicit:bookNames>", "books"]
+                    ],
+                    "subMapper": {
+                        "entity": "Book",
+                        "associatedProp": "BookStore.books",
+                        "fields": [
+                            {
+                                "prop": "Book.name",
+                                "paths": ["name"],
+                                "columnIndex": 0
+                            },
+                            {
+                                "prop": "Book.edition",
+                                "paths": ["edition"],
+                                "columnIndex": 1
+                            }
+                        ]
+                    },
+                    "dependencies": [0],
+                    "isDependent": true
+                },
+                {
+                    "prop": "BookStore.bookNames",
+                    "paths": [
+                        ["..", "storeBookNames"]
+                    ],
+                    "dependencies": [1]
+                }
+            ]
+        });
+        expectCode(storeMapper.dtoRowReader.constructor.toString(), `
+            class ThisClass extends $baseClass {
+                read(parents, reader) {
+                    const dto = {
+                    };
+                    const implicit = {
+                        _0: reader.get(0), 
+                        bookNames: null
+                    };
+                    return { reader: this, parents, dto, implicit };
+                }
+                _implicit_bookNames(implicit) {
+                    let o = implicit.bookNames;
+                    if (o == null) {
+                        implicit.bookNames = o = {
+                            books: null
+                        };
+                    }
+                    return o;
+                }
+                dependency(unresolvedFieldIndex, row) {
+                    switch (unresolvedFieldIndex) {
+                        case 1:
+                            return row.implicit._0;
+                        case 2:
+                            return row.implicit.bookNames?.books;
+                        default:
+                            throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                    }
+                }
+                dependencyNullable(unresolvedFieldIndex, dependency) {
+                    switch (unresolvedFieldIndex) {
+                        case 1:
+                            return dependency == null;
+                        case 2:
+                            return dependency == null;
+                        default:
+                            throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                    }
+                }
+                dependencyHash(unresolvedFieldIndex, dependency) {
+                    switch (unresolvedFieldIndex) {
+                        case 1:
+                            return dependency;
+                        case 2:
+                            return dependency;
+                        default:
+                            throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                    }
+                }
+                resolve(unresolvedFieldIndex, row, value) {
+                    switch (unresolvedFieldIndex) {
+                        case 1:
+                            this._implicit_bookNames(row.implicit).books = value;
+                            break;
+                        case 2:
+                            for (const parent of row.parents) {
+                                parent.dto.storeBookNames = value;
+                            }
+                            break;
+                        default:
+                            throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                    }
+                }
+                resolveTsFormulas(row) {
+                    const bookNamesValue = ThisClass.__BOOK_NAMES__TS_FORMULA_FN(row.implicit.bookNames);
+                    for (const parent of row.parents) {
+                        parent.dto.storeBookNames = bookNamesValue;
+                    }
                 }
                 static __BOOK_NAMES__TS_FORMULA_FN = $entity.expandedPropMap.get("bookNames").formulaData.formula.fn;
             }

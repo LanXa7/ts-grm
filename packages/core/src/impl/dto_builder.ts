@@ -98,7 +98,7 @@ class DtoBuilder {
     allScalars() {
         const propMap = this.source instanceof Entity
             ? this.source.allPropMap
-            : this.source.props ?? makeErr("Internal bug");
+            : this.source.props ?? makeErr("Internal bug: cannot get allScalars");
         for (const prop of propMap.values()) {
             if (prop.referenceProp == null && (prop.scalarType != null || prop.props != null)) {
                 this.add(prop);

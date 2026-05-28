@@ -191,7 +191,7 @@ function writeAssignmentTarget(
     const parents: Array<string> = [];
     for (const part of path) {
         if (part === "..") {
-            throw new ArgumentError("Internal bug");
+            throw new ArgumentError("Internal bug: cannot write the parent path '..'");
         } else if (part.startsWith("<implicit:") && part.endsWith(">")) {
             parents.push(`implicit`);
         } else {
@@ -384,8 +384,7 @@ function writeResolve(
             for (const unresolvedField of mapper.unresolvedFields) {
                 writer.code(`case ${unresolvedField.index}:`).scope("BLANK", () => {
                     for (const path of unresolvedField.paths) {
-                        writeAssignmentTarget("row.", false, typeof path === "string" ? [path] : path, writer);
-                        writer.code(" = value").newLine(";");
+                        writeAssignments(unresolvedField, typeof path === "string" ? [path] : path, "value", 0, writer);
                     }
                     writer.code("break").newLine(";");
                 });
@@ -490,11 +489,11 @@ function writeResolveTsFormula(
         .code(")")
         .newLine(";");
     for (const path of field.paths) {
-       writeTsFormulaAssignments(field, typeof path === "string" ? [path] : path, valueName, 0, writer);
+       writeAssignments(field, typeof path === "string" ? [path] : path, valueName, 0, writer);
     }
 }
 
-function writeTsFormulaAssignments(
+function writeAssignments(
     field: DtoMapperField, 
     path: ReadonlyArray<string>,
     valueName: string,
@@ -502,13 +501,22 @@ function writeTsFormulaAssignments(
     writer: CodeWriter
 ) {
     if (path[parentDepth] === "..") {
-        writer.code(`for (const ${parentName(parentDepth)} of ${parentDepth > 0 ? `${parentName(parentDepth - 1)}.` : ""}parents) `);
+        writer.code(`for (const ${parentName(parentDepth)} of ${parentDepth > 0 ? `${parentName(parentDepth - 1)}.` : "row."}parents) `);
         writer.scope("CURLY_BRACKETS", () => {
-            writeTsFormulaAssignments(field, path, valueName, parentDepth + 1, writer);
+            writeAssignments(field, path, valueName, parentDepth + 1, writer);
         }).newLine();
         return;
     }
-    writeAssignmentTarget("row.", parentDepth > 0, typeof path === "string" ? [path] : path, writer);
+    writeAssignmentTarget(
+        parentDepth > 0 ? `${parentName(parentDepth - 1)}.` : "row.", 
+        parentDepth > 0, 
+        typeof path === "string" 
+            ? [path] 
+            : parentDepth === 0 
+                ? path
+                : path.slice(parentDepth, path.length), 
+        writer
+    );
     writer.code(" = ").code(valueName).newLine(";");
 }
 

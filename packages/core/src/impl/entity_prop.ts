@@ -612,7 +612,7 @@ export class EntityProp {
     // @ts-ignore
     private _setReferenceProp(prop: EntityProp) {
         if (this._referenceProp != null || prop._referenceKeyProp != null) {
-            throw new StateError("Internal bug");
+            throw new StateError("Internal bug: cannot set reference prop");
         }
         this._referenceProp = prop;
         prop._referenceKeyProp = this;

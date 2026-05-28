@@ -91,7 +91,7 @@ export class Entity {
 
     get idKey(): string {
         return this.superEntity?.idKey ?? this._idKey ?? 
-            makeErr("Internal bug");
+            makeErr("Internal bug: cannot get idKey");
     }
 
     get idProp(): EntityProp {
