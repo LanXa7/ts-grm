@@ -1,4 +1,4 @@
-import { ast, dsl, err, JoinType, metadata, Predicate } from "@ts-grm/core";
+import { AnyModel, ast, dsl, EntityTable, err, JoinType, metadata, Predicate } from "@ts-grm/core";
 import { JoinMergeScope } from "./join_merge_scope";
 import { SqlBuilder } from "./sql_builder";
 import { BaseQueryMetadata } from "./base_query_metadata";
@@ -24,7 +24,7 @@ export class RealTable {
 
     // Becareful, `symbol.joinOperation.isTargetFilterIgnored` 
     // should not be copied to this object because it is 
-    // field which cannot be nmerged
+    // field which cannot be merged
 
     private _castToEntity: metadata.Entity | undefined = undefined;
 
@@ -41,6 +41,8 @@ export class RealTable {
     private _exportedMap: Map<string, RealTable> | undefined = undefined;
 
     private _children: ReadonlyArray<RealTable> | undefined = undefined;
+
+    private _sqlFormulaMap: Map<metadata.EntityProp, ast.AbstractExpr<any>> | undefined;
 
     cteDefinitionFragment: Fragment | undefined = undefined;
 
@@ -275,5 +277,18 @@ export class RealTable {
         this._filterPred = predicate as ast.AbstractPred | undefined;
         this._filterPredResolved = true;
         return this._filterPred;
+    }
+
+    sqlFormulaExpr(prop: metadata.EntityProp): ast.AbstractExpr<any> {
+        let expr = this._sqlFormulaMap?.get(prop);
+        if (expr == null) {
+            expr = prop.sqlFormulaFn!(this.symbol as any as EntityTable<AnyModel>) as ast.AbstractExpr<any>;
+            let map = this._sqlFormulaMap;
+            if (map == null) {
+                this._sqlFormulaMap = map = new Map();
+            }
+            map.set(prop, expr);
+        }
+        return expr;
     }
 }

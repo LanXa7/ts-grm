@@ -329,10 +329,16 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
             if (field.columnIndex == null) {
                 continue;
             }
-            const column = (field.prop as metadata.EntityProp).toStorage(this._strategy) as metadata.Column;
+            const entityProp = field.prop as metadata.EntityProp;
+
             this._compositeStack.current.separator();
-            const realTable = this._toRealTable(table.__to(field.prop.declaringEntity));
-            this._compositeStack.current.add(this._createColumn(realTable, column.name));
+            const realTable = this._toRealTable(table.__to(entityProp.declaringEntity));
+            if (entityProp.sqlFormulaFn != null) {
+                realTable.sqlFormulaExpr(entityProp).accept(this);
+            } else {
+                const column = entityProp.toStorage(this._strategy) as metadata.Column;
+                this._compositeStack.current.add(this._createColumn(realTable, column.name));
+            }
         }
     }
 
@@ -575,10 +581,12 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
             return this._baseQueryMetadata!.realTable;
         }
         return this._tableMap.get(table.__prototype) 
-            ?? err.makeErr(`No mapped real table for  ${
+            ?? err.makeErr(`No mapped real table for ${
                 table.__entity != null 
                     ? `entity table "${table.__entity.name}"`
-                    : "base table"
+                : table.__associationEntity != null
+                    ? `association table ${table.__associationEntity.toString()}`
+                : `base table`
             }`);
     }
 

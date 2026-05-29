@@ -137,7 +137,7 @@ function buildShapeMember(
     if (ignoreColumnIndex) {
         return undefined;
     }
-    if (field.prop.isEntityProp && (field.prop as EntityProp).formulaData?.kind === "TS") {
+    if (field.prop.isEntityProp && (field.prop as EntityProp).tsFormulaFn != null) {
         return field.prop.name;
     }
     return field.columnIndex;

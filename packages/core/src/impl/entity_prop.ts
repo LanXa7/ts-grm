@@ -1,4 +1,4 @@
-import { AssociationType, CalculatorData, FormulaData, JoinColumnData, Prop, PropData, ScalarType } from "@/schema/prop";
+import { AssociationType, CalculatorData, JoinColumnData, Prop, PropData, ScalarType } from "@/schema/prop";
 import { Entity } from "./entity";
 import { PropError } from "@/error/metadata_error";
 import { AnyModelImpl, ModelImpl } from "./model_impl";
@@ -7,7 +7,7 @@ import { EntityPropOrder } from "./entity_prop_order";
 import { StateError } from "@/error/common";
 import { isIllegal, fixColumn, fixColumnArr, notEmpty, DatabaseStrategy } from "./strategy";
 import { Column, Columns, MiddelEntity, MiddleTable, PropStorage, StorageType } from "./storage";
-import { ParameterizedTargetCalculator, TargetCalculator } from "@/schema/computed";
+import { ParameterizedTargetCalculator, SqlFormulaFn, TargetCalculator, TsFormulaFn } from "@/schema/computed";
 import { z } from "zod";
 import { CascadeType } from "@/schema/join";
 import { View } from "@/schema/dto";
@@ -73,7 +73,15 @@ export class EntityProp {
 
     private _tsFormulaDependencyView: View<AnyModel, any> | undefined = undefined;
 
-    private _formulaDependencies: ReadonlyArray<EntityProp> | undefined = undefined;
+    private _tsFormulaDependencies: ReadonlyArray<EntityProp> | undefined = undefined;
+
+    private _tsFormulaFn: TsFormulaFn<any, any> | undefined = undefined;
+
+    private _tsFormulaResolved = false;
+
+    private _sqlFormulaFn: SqlFormulaFn<AnyModel, any> | undefined = undefined;
+
+    private _sqlFormulaResolved = false;
 
     private static readonly _EMPTY_PROP_MAP: ReadonlyMap<string, EntityProp> = 
         new Map<string, EntityProp>();
@@ -261,10 +269,6 @@ export class EntityProp {
         }
     }
 
-    get formulaData(): FormulaData | undefined {
-        return this._data.formulaData;
-    }
-
     get calculatorData(): CalculatorData | undefined {
         return this._data.calculatorData;
     }
@@ -332,13 +336,22 @@ export class EntityProp {
     }
 
     get tsFormulaDependencyView(): View<AnyModel, any> | undefined {
-        let dependencyView = this._tsFormulaDependencyView;
-        if (dependencyView == null) {
-            const formulaData = this._data.formulaData;
-            if (formulaData?.kind !== "TS") {
-                return undefined;
-            }
-            dependencyView = formulaData.formula.dependency();
+        this._resolveTsFormula();
+        return this._tsFormulaDependencyView;
+    }
+    
+    get tsFormulaFn(): TsFormulaFn<any, any> | undefined {
+        this._resolveTsFormula();
+        return this._tsFormulaFn;
+    }
+
+    private _resolveTsFormula() {
+        if (this._tsFormulaResolved) {
+            return;
+        }
+        const formulaData = this._data.formulaData;
+        if (formulaData?.kind === "TS") {    
+            let  dependencyView = formulaData.formula.dependency();
             if (dependencyView == null || dependencyView.mapper.entity !== this.declaringEntity) {
                 this.raise `The typescript formula property must base on the view DTO of current entity "${this.declaringEntity.name}"`;
             }
@@ -351,8 +364,9 @@ export class EntityProp {
                 }
             }
             this._tsFormulaDependencyView = dependencyView;
+            this._tsFormulaFn = formulaData.formula.fn;
         }
-        return dependencyView;
+        this._tsFormulaResolved = true;
     }
 
     get tsFormulaDependencies(): ReadonlyArray<EntityProp> {
@@ -362,7 +376,7 @@ export class EntityProp {
     private _getFormulaDependencies(
         usedDependencies: Set<EntityProp>
     ): ReadonlyArray<EntityProp> {
-        let dependencies = this._formulaDependencies;
+        let dependencies = this._tsFormulaDependencies;
         if (dependencies == null) {
             const view = this.tsFormulaDependencyView;
             if (view == null) {
@@ -383,9 +397,25 @@ export class EntityProp {
                 }
                 dependencies = arr;
             }
-            this._formulaDependencies = dependencies;
+            this._tsFormulaDependencies = dependencies;
         }
         return dependencies;
+    }
+
+    get sqlFormulaFn(): SqlFormulaFn<AnyModel, any> | undefined {
+        if (this._sqlFormulaResolved) {
+            return this._sqlFormulaFn;
+        }
+        const formulaData = this._data.formulaData;
+        if (formulaData?.kind === "SQL") {
+            const sourceModel = formulaData.formula.sourceModel();
+            if (sourceModel !== this.declaringEntity.model) {
+                this.raise `The SQL formula property must base on the current entity "${this.declaringEntity.name}"`;
+            }
+            this._sqlFormulaFn = formulaData.formula.fn;
+        }
+        this._sqlFormulaResolved = true;
+        return this._sqlFormulaFn;
     }
 
     private validateData() {

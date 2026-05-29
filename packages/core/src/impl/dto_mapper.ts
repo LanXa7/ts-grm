@@ -154,8 +154,8 @@ class Mapper {
     private _addImplicitFields(prop: FetchProp) {
         if (prop.isEntityProp) {
             const entityProp = prop as EntityProp;
-            if (entityProp.formulaData?.kind === "TS") {
-                const view = entityProp.formulaData.formula.dependency();
+            if (entityProp.tsFormulaDependencyView != null) {
+                const view = entityProp.tsFormulaDependencyView;
                 for (const field of view.mapper.fields) {
                     if (field.paths.length === 0) {
                         continue;

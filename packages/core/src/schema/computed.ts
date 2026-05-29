@@ -1,7 +1,6 @@
 import { EntityTable, Expression, SqlClient } from "@/dsl";
 import { AllModelMembers, AnyModel, CalculatorSourceKeys, ModelIdKey } from "./model";
 import { SimpleDataTypeOf, View } from "./dto";
-import { AbstractEntityTable } from "@/impl";
 import { z } from "zod";
 
 export class TsFormula<TValue> {
@@ -33,7 +32,7 @@ export class SqlFormula<TValue> {
 
     private constructor(
         readonly sourceModel: () => AnyModel,
-        readonly fn: (table: AbstractEntityTable) => Expression<TValue>
+        readonly fn: SqlFormulaFn<AnyModel, TValue>
     ) {
     }
 

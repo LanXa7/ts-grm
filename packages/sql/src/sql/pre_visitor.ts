@@ -109,9 +109,12 @@ export class PreVisitor extends ast.AbstractVisitor {
             if (field.columnIndex == null) {
                 continue;
             }
-            this._toRealTable(view.table.__to(field.prop.declaringEntity));
-            if (shadow != null) {
-                const column = (field.prop as metadata.EntityProp).toStorage(this._strategy) as metadata.Column;
+            const realTable = this._toRealTable(view.table.__to(field.prop.declaringEntity));
+            const entityProp = field.prop as metadata.EntityProp;
+            if (entityProp.sqlFormulaFn != null) {
+                realTable.sqlFormulaExpr(entityProp).accept(this);
+            } else if (shadow != null) {
+                const column = entityProp.toStorage(this._strategy) as metadata.Column;
                 shadow.baseQueryMetadata.alias(view.table.__anchor!.exportedName, column.name);
             }
         }

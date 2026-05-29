@@ -539,7 +539,7 @@ function writeTsFormulaFn(
         .code("static ")
         .code(tsFormulaFnName(prop))
         .code(" = ")
-        .code(`$entity.expandedPropMap.get("${prop.path}").formulaData.formula.fn`)
+        .code(`$entity.expandedPropMap.get("${prop.path}").tsFormulaFn`)
         .newLine(";");
 }
 

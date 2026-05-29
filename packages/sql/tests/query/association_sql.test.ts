@@ -2,11 +2,14 @@ import { describe, it } from "vitest";
 import { SIMPLE_AUTHOR_VIEW, SIMPLE_BOOK_VIEW, sql } from "./utils";
 import { dsl } from "@ts-grm/core";
 import { AUTHOR, BOOK, ORDER } from "../model/model";
-import { expectCode, useSqliteClient } from "../utils";
+import { expectCode, newSqlRecord, useSqliteClient } from "../utils";
+import { useSqliteClientWithData } from "../fetch/utils";
 
 describe("AssociationSqlTest", () => {
 
-    const sqlClient = useSqliteClient();
+    const sqlRecord = newSqlRecord();
+
+    const sqlClient = useSqliteClientWithData(sqlRecord);
 
     it("root", () => {
         const q = sqlClient.createQuery(dsl.associationModel(BOOK, "authors"), (q, association) => {
