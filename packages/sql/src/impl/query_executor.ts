@@ -15,7 +15,8 @@ import {
     Predicate, 
     EntityTableLike,
     EntityTable,
-    SelectionLike
+    SelectionLike,
+    RootQuerySelection
 } from "@ts-grm/core";
 import { MergedRootQueryImpl } from "./merged_query";
 import { AtomRootQueryImpl } from "./atom_root_query_impl";
@@ -23,6 +24,17 @@ import { Composite } from "@/sql/fragment";
 import { SqlBuilder } from "@/sql/sql_builder";
 import { DataRow, DataRowReader, DataRows } from "./data_row_reader";
 import { SqlClientImplementor } from "@/sql_client";
+import { Purpose } from "@/transaction/executor";
+import { AsyncLocalStorage } from "node:async_hooks";
+
+const explicitPurposeStorage = new AsyncLocalStorage<Purpose>();
+
+export function usingExplicitPurpose<R>(
+    purpose: Purpose, 
+    fn: () => Promise<R>
+): Promise<R> {
+    return explicitPurposeStorage.run(purpose, fn);
+}
 
 export async function executeQuery<TProjection extends RootQueryProjection<any>>(
     query: RootQuery<TProjection>
@@ -34,19 +46,68 @@ export async function executeQuery<TProjection extends RootQueryProjection<any>>
     const [sql, args] = buildStatement(sqlClient, query);
     const transactionManager = sqlClient.driver.transactionManager;
     return transactionManager.executeReadonly(async () => {
-        const dataRows = await sqlClient.executor.executeStatement(sql, args, { kind: "QUERY" });
+        const dataRows = await sqlClient.executor.executeStatement(
+            sql, 
+            args, 
+            explicitPurposeStorage.getStore() ?? { kind: "QUERY" }
+        );
         const dataRowReader = DataRowReader.of(dataRows);
         switch (contract.projection.kind) {
             case "ROOT_SINGLE":
-                const selection = contract.projection.selection;
-                if (selection instanceof metadata.FetchedViewImpl) {
-                    return await readDto(sqlClient, selection.view.mapper, dataRowReader);
-                }
-                throw new Error();
+                return await readColumn(sqlClient, contract.projection.selection, dataRowReader);
+            case "ROOT_ARRAY":
+                return await readColumnArray(sqlClient, contract.projection.selections, dataRowReader);
             default:
                 throw new Error();
         }
     });
+}
+
+async function readColumn(
+    sqlClient: SqlClientImplementor,
+    selection: RootQuerySelection<any>,
+    dataRowReader: DataRowReader,
+): Promise<ReadonlyArray<any>> {
+    if (selection instanceof metadata.FetchedViewImpl) {
+        return await readDtos(sqlClient, selection.view.mapper, dataRowReader);
+    }
+    const values = [];
+    while (dataRowReader.next()) {
+        values.push(dataRowReader.get(0));
+    }
+    return values;
+}
+
+async function readColumnArray(
+    sqlClient: SqlClientImplementor,
+    selections: ReadonlyArray<RootQuerySelection<any>>,
+    dataRowReader: DataRowReader
+): Promise<ReadonlyArray<any>> {
+    const columns: Array<ReadonlyArray<any>> = [];
+    for (let i = 0; i < selections.length; i++) {
+        dataRowReader.reset();
+        const selection = selections[i]!;
+        const columnValues = await readColumn(sqlClient, selection, dataRowReader);
+        if (columnValues.length === 0) {
+            return [];
+        }
+        if (selection instanceof metadata.FetchedViewImpl) {
+            dataRowReader = dataRowReader.offset(selection.view.mapper.span);
+        } else {
+            dataRowReader = dataRowReader.offset(1);
+        }
+        columns[i] = columnValues;
+    }
+    const rowCount = columns[0]!.length;
+    const rows: Array<Array<any>> = [];
+    for (let r = 0; r < rowCount; r++) {
+        const row = [];
+        for (let c = 0; c < selections.length; c++) {
+            row[c] = columns[c]![r];
+        }
+        rows.push(row);
+    }
+    return rows;
 }
 
 function buildStatement(
@@ -61,7 +122,7 @@ function buildStatement(
     return [sql, args];
 }
 
-async function readDto(
+async function readDtos(
     sqlClient: SqlClientImplementor,
     mapper: metadata.DtoMapper,
     dataRowReader: DataRowReader
@@ -74,8 +135,11 @@ async function readDto(
         dtoRows.push(dtoRow);
         dtos.push(dtoRow.dto);
     }
-    await resolveAssociations(sqlClient, mapper, dtoRows, undefined);
-    resolveTsFormulas(mapper, dtoRows);
+    if (dtoRows.length !== 0) {
+        await resolveAssociations(sqlClient, mapper, dtoRows, undefined);
+        resolveTsFormulas(mapper, dtoRows);
+        await resolveCalculators(sqlClient, mapper, dtoRows);
+    }
     return dtos;
 }
 
@@ -85,10 +149,10 @@ async function resolveAssociations(
     sourceRows: ReadonlyArray<metadata.DtoRow>,
     recursiveContext: RecursiveContext | undefined
 ): Promise<void> {
-    if (sourceRows.length === 0) {
-        return;
-    }
     for (const unresolvedField of mapper.unresolvedFields) {
+        if (unresolvedField.prop.isEntityProp && (unresolvedField.prop as metadata.EntityProp).calculationStrategy != null) {
+            continue;
+        }
         if (unresolvedField.subMapper != null || recursiveContext != null) {
             await new AssociationResolver(
                 sqlClient, 
@@ -115,7 +179,7 @@ class AssociationResolver {
 
     private readonly _batchSize: number;
 
-    private readonly _bindingMap = new Map<any, Binding>();
+    private readonly _bindingMap = new Map<any, AssociationBinding>();
 
     constructor(
         private _sqlClient: SqlClientImplementor,
@@ -306,13 +370,20 @@ class AssociationResolver {
                 );
             }
         }
-        await resolveAssociations(
-            this._sqlClient, 
-            this._targetMapper, 
-            targetRows, 
-            recursiveContext?.toDeeperContext()
-        );
-        resolveTsFormulas(this._targetMapper, targetRows);
+        if (targetRows.length !== 0) {
+            await resolveAssociations(
+                this._sqlClient, 
+                this._targetMapper, 
+                targetRows, 
+                recursiveContext?.toDeeperContext()
+            );
+            resolveTsFormulas(this._targetMapper, targetRows);
+            await resolveCalculators(
+                this._sqlClient, 
+                this._targetMapper, 
+                targetRows
+            );
+        }
     }
 
     private async _resolveBatch(
@@ -511,7 +582,7 @@ class AssociationResolver {
     }
 }
 
-type Binding = {
+type AssociationBinding = {
     readonly dependency: any;
     readonly sourceRows: Array<metadata.DtoRow>;
     targetData: metadata.DtoRow | ReadonlyArray<metadata.DtoRow> | undefined;
@@ -651,10 +722,178 @@ function resolveTsFormulas(
     mapper: metadata.DtoMapper,
     sourceRows: ReadonlyArray<metadata.DtoRow>
 ): void {
-    if (sourceRows.length === 0) {
-        return;
-    }
     for (const sourceRow of sourceRows) {
         mapper.dtoRowReader.resolveTsFormulas(sourceRow);
     }
 }
+
+async function resolveCalculators(
+    sqlClient: SqlClientImplementor,
+    mapper: metadata.DtoMapper,
+    sourceRows: ReadonlyArray<metadata.DtoRow>
+): Promise<void> {
+    for (const unresolvedField of mapper.unresolvedFields) {
+        if (unresolvedField.prop.isEntityProp) {
+            const entityProp = unresolvedField.prop as metadata.EntityProp;
+            if (entityProp.calculationStrategy != null) {
+                await usingExplicitPurpose({
+                    kind: "LOAD_CALCULATOR",
+                    prop: unresolvedField.prop as metadata.EntityProp
+                }, async () => {
+                    await new CalculatorResolver(
+                        sqlClient,
+                        mapper,
+                        unresolvedField,
+                        sourceRows
+                    ).resolve();
+                })
+            }
+        }
+    }
+}
+
+class CalculatorResolver {
+    
+    private _strategy: metadata.CalculationStrategy;
+
+    private _isCollection: boolean;
+
+    private _bindingMap = new Map<any, CalculatorBinding>();
+
+    constructor(
+        private readonly _sqlClient: SqlClientImplementor,
+        private readonly _sourceMapper: metadata.DtoMapper,
+        private readonly _unresolvedField: metadata.DtoMapperField,
+        sourceRows: ReadonlyArray<metadata.DtoRow>
+    ) {
+        const entityProp = _unresolvedField.prop as metadata.EntityProp;
+        this._strategy = entityProp.calculationStrategy!
+        this._isCollection = this._strategy.kind === "COLLECTION" || this._strategy.kind === "PARAMETERIZED_COLLECTION";
+        const dtoRowReader = this._sourceMapper.dtoRowReader;
+        const unresolvedFieldIndex = this._unresolvedField.index;
+        for (const sourceRow of sourceRows) {
+            const dependency = dtoRowReader.dependency(unresolvedFieldIndex, sourceRow);
+            const hash = dtoRowReader.dependencyHash(unresolvedFieldIndex, dependency);
+            let binding = this._bindingMap.get(hash);
+            if (binding != null) {
+                binding.sourceRows.push(sourceRow);
+            } else {
+                this._bindingMap.set(hash, {
+                    dependency,
+                    hash,
+                    sourceRows: [sourceRow],
+                    targetData: undefined
+                })
+            }
+        }
+    }
+
+    async resolve(): Promise<void> {
+        const dependencies: Array<any> = [];
+        for (const binding of this._bindingMap.values()) {
+            dependencies.push(binding.dependency);
+        }
+        const isCollection = this._isCollection;
+        const batchSize = isCollection 
+            ? this._sqlClient.options.defaultListBatchSize
+            : this._sqlClient.options.defaultBatchSize;
+        if (dependencies.length <= batchSize) {
+            await this._resolveBatch(dependencies);
+        } else {
+            let start = 0;
+            while (start < batchSize) {
+                const end = Math.min(dependencies.length, start + batchSize);
+                const batchDependencies = dependencies.slice(start, end);
+                await this._resolveBatch(batchDependencies);
+                start += batchSize;
+            }
+        }
+        const required = (this._strategy.kind === "REFERENCE" || this._strategy.kind === "PARAMETERIZED_REFERENCE")
+            && !this._strategy.nullable;
+        const unresolvedFieldIndex = this._unresolvedField.index;
+        const dtoRowReader = this._sourceMapper.dtoRowReader;
+        for (const binding of this._bindingMap.values()) {
+            if (binding.targetData == null) {
+                if (required) {
+                    throw new err.StateError(
+                        `Illegal calculator for the nonull-property "${
+                            this._unresolvedField.prop.toString()
+                        }", it returns does not returns nonnull value for the source key "${
+                            binding.dependency
+                        }"`
+                    );
+                }
+                if (isCollection) {
+                    for (const sourceRow of binding.sourceRows) {
+                        dtoRowReader.resolve(unresolvedFieldIndex, sourceRow, []);
+                    }
+                }
+            } else {
+                for (const sourceRow of binding.sourceRows) {
+                    dtoRowReader.resolve(unresolvedFieldIndex, sourceRow, binding.targetData);
+                }
+            }
+        }
+    }
+
+    private async _resolveBatch(
+        dependencies: ReadonlyArray<any>
+    ): Promise<void> {
+        const kind = this._strategy.kind;
+        if (kind === "REFERENCE" || kind === "COLLECTION") {
+            const tuples = await this._strategy.fn({
+                sqlClient: this._sqlClient,
+                keys: dependencies,
+                view: new View(this._unresolvedField.subMapper!)
+            });
+            this._processTuples(tuples);
+        } else {
+            throw new Error(`Unsuported operation`);
+        }
+    }
+
+    private _processTuples(
+        tuples: ReadonlyArray<[any, any]>
+    ) {
+        const unresolvedFieldIndex = this._unresolvedField.index;
+        const dtoRowReader = this._sourceMapper.dtoRowReader;
+        const isCollection = this._isCollection;
+        for (const tuple of tuples) {
+            const hash = dtoRowReader.dependencyHash(unresolvedFieldIndex, tuple[0]);
+            let binding = this._bindingMap.get(hash);
+            if (binding == null) {
+                throw new err.StateError(
+                    `Illegal calculator for the property "${
+                        this._unresolvedField.prop.toString()
+                    }", it returns a tuple whose first value is ${
+                        tuple[0]
+                    } which does not exists in sourceKeys`
+                );
+            }
+            if (binding.targetData != null) {
+                if (isCollection) {
+                    (binding.targetData as Array<any>).push(tuple[1]);
+                } else {
+                    throw new err.StateError(
+                        `Illegal calculator for the property "${
+                            this._unresolvedField.prop.toString()
+                        }", duplicate values for source key ${tuple[0]}`
+                    );
+                }
+            } else {
+                if (isCollection) {
+                    binding.targetData = [tuple[1]];
+                } else {
+                    binding.targetData = tuple[1];
+                }
+            }
+        }
+    }
+}
+
+type CalculatorBinding = {
+    readonly dependency: any;
+    readonly hash: any;
+    readonly sourceRows: Array<metadata.DtoRow>;
+    targetData: any;
+};

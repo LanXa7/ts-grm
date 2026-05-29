@@ -57,6 +57,10 @@ export class DataRowReader implements metadata.DataReader {
     get rowIndex(): number {
         return this._rowIndex.current;
     }
+
+    reset() {
+        this._rowIndex.reset();
+    }
 }
 
 export type DataRow = ReadonlyArray<any>;
@@ -72,5 +76,9 @@ class RowIndex {
 
     get current(): number {
         return this._val;
+    }
+
+    reset() {
+        this._val = -1;
     }
 }

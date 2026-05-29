@@ -10,7 +10,7 @@ const BOOK_STORE_NEWEST_BOOK_CALCULATOR = Calculator.targetOf({
                 dsl.tuple(book.name, book.edition).inSubQuery(
                     dsl.subQuery(BOOK, (q, book) => {
                         q.where(book.storeId.in(...ctx.keys));
-                        q.groupBy(book.storeId);
+                        q.groupBy(book.name);
                         return q.select(book.name, dsl.max(book.edition).asNonNull());
                     })
                 )

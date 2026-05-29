@@ -51,20 +51,21 @@ export type Purpose =
     | LoadAssociationPurpose 
     | LoadRecursiveTreePurpose
     | LoadRecursiveTreeKeyPurpose
-    | LoadRecursiveTreeNodePurpose;
+    | LoadRecursiveTreeNodePurpose
+    | LoadCalculatorPurpose;
 
 export type QueryPurpose = {
-    kind: "QUERY"
+    readonly kind: "QUERY"
 };
 
 export type LoadAssociationPurpose = {
-    kind: "LOAD_ASSOCIATION",
-    prop: metadata.EntityProp
+    readonly kind: "LOAD_ASSOCIATION",
+    readonly prop: metadata.EntityProp
 };
 
 export type LoadRecursiveTreePurpose = {
-    kind: "LOAD_RECURSIVE_TREE",
-    prop: metadata.EntityProp
+    readonly kind: "LOAD_RECURSIVE_TREE",
+    readonly prop: metadata.EntityProp
 };
 
 export type LoadRecursiveTreeKeyPurpose = {
@@ -73,6 +74,11 @@ export type LoadRecursiveTreeKeyPurpose = {
 };
 
 export type LoadRecursiveTreeNodePurpose = {
-    kind: "LOAD_RECURSIVE_TREE_NODE",
-    prop: metadata.EntityProp
+    readonly kind: "LOAD_RECURSIVE_TREE_NODE",
+    readonly prop: metadata.EntityProp
+};
+
+export type LoadCalculatorPurpose = {
+    readonly kind: "LOAD_CALCULATOR",
+    readonly prop: metadata.EntityProp
 };
