@@ -3,6 +3,7 @@ import { FetchProp } from "./dto";
 import { DtoMapper, DtoMapperField } from "./dto_mapper";
 import { EntityProp } from "./entity_prop";
 import { CalculatorKind } from "@/schema/prop";
+import { CalculationStrategyKind } from "./calculation_strategy";
 
 export type Shape = {
     [key: string]: ShapeMember;
@@ -146,20 +147,20 @@ function buildShapeMember(
 function isCollection(prop: FetchProp): boolean {
     return prop.associationType === "ONE_TO_MANY" 
         || prop.associationType === "MANY_TO_MANY"
-        || isCalculatorKindEquals(prop, "COLLECTION");
+        || isCalculatorKindEquals(prop, "COLLECTION", "PARAMETERIZED_COLLECTION");
 }
 
 function isReference(prop: FetchProp): boolean {
     return prop.associationType === "ONE_TO_ONE" 
         || prop.associationType === "MANY_TO_ONE"
-        || isCalculatorKindEquals(prop, "NONNULL_REFERENCE", "NULLABLE_REFERENCE");
+        || isCalculatorKindEquals(prop, "REFERENCE", "PARAMETERIZED_REFERENCE");
 }
 
-function isCalculatorKindEquals(prop: FetchProp, ...kinds: Array<CalculatorKind>): boolean {
+function isCalculatorKindEquals(prop: FetchProp, ...kinds: Array<CalculationStrategyKind>): boolean {
     if (!prop.isEntityProp) {
         return false;
     }
-    const kind = (prop as EntityProp).calculatorData?.kind;
+    const kind = (prop as EntityProp).calculationStrategy?.kind;
     if (kind == null) {
         return false;
     }

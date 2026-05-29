@@ -64,21 +64,23 @@ export abstract class Calculator {
 
     static valueOf<
         TSourceModel extends AnyModel,
-        TValue,
+        TValueSchema extends z.ZodType,
         TSourceKeyProp extends CalculatorSourceKeys<TSourceModel> & string = ModelIdKey<TSourceModel>
     >(
         options: {
             readonly sourceModel: () => TSourceModel,
             readonly sourceKeyProp?: TSourceKeyProp,
+            readonly valueType: z.ZodType,
             readonly fn: ValueCalculatorFn<
                 SimpleDataTypeOf<AllModelMembers<TSourceModel>[TSourceKeyProp], "UNDEFINED">, 
-                TValue
+                z.infer<TValueSchema>
             >
         }
-    ): ValueCalculator<TValue> {
+    ): ValueCalculator<z.infer<TValueSchema>> {
         return new (ValueCalculator as any)(
             options.sourceModel,
             options.sourceKeyProp,
+            options.valueType,
             options.fn
         );
     }
@@ -86,24 +88,26 @@ export abstract class Calculator {
     static parameterizedValueOf<
         TParameterSchema extends z.ZodType,
         TSourceModel extends AnyModel,
-        TValue,
+        TValueSchema extends z.ZodType,
         TSourceKeyProp extends CalculatorSourceKeys<TSourceModel> & string = ModelIdKey<TSourceModel>
     >(
         options: {
             readonly parameterType: TParameterSchema,
             readonly sourceModel: () => TSourceModel,
             readonly sourceKeyProp?: TSourceKeyProp,
+            readonly valueType: z.ZodType,
             readonly fn: ParameterizedValueCalculatorFn<
                 z.infer<TParameterSchema>,
                 SimpleDataTypeOf<AllModelMembers<TSourceModel>[TSourceKeyProp], "UNDEFINED">, 
-                TValue
+                z.infer<TValueSchema>
             >
         }
-    ): ParameterizedValueCalculator<z.infer<TParameterSchema>, TValue> {
+    ): ParameterizedValueCalculator<z.infer<TParameterSchema>, z.infer<TValueSchema>> {
         return new (ParameterizedValueCalculator as any)(
             options.parameterType,
             options.sourceModel,
             options.sourceKeyProp,
+            options.valueType,
             options.fn
         );
     }
@@ -167,6 +171,7 @@ export class ValueCalculator<TValue> extends Calculator {
     private constructor(
         sourceModel: () => AnyModel,
         sourceKeyPropName: string | undefined,
+        readonly valueType: z.ZodType,
         readonly fn: ValueCalculatorFn<any, TValue>
     ) {
         super(sourceModel, sourceKeyPropName);
@@ -195,6 +200,7 @@ export class ParameterizedValueCalculator<TParameter, TValue> extends Calculator
         readonly parameterType: z.ZodType,
         sourceModel: () => AnyModel,
         sourceKeyPropName: string | undefined,
+        readonly valueType: z.ZodType,
         readonly fn: ParameterizedValueCalculatorFn<TParameter, any, TValue>
     ) {
         super(sourceModel, sourceKeyPropName);

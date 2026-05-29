@@ -929,7 +929,7 @@ function writePropMeta(prop: EntityProp, writer: CodeWriter) {
         }
         return;
     }
-    if (prop.calculatorData != null) {
+    if (prop.calculationStrategy != null) {
         return;
     }
     if (prop.storageType === "MIDDLE_TABLE") {

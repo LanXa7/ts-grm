@@ -311,7 +311,7 @@ const typedDtoBuilderHandler: ProxyHandler<DtoBuilder> = {
                 }
                 const entityProp = target.prop(prop);
                 if (entityProp.props != null || entityProp.targetEntity != null) {
-                    if (entityProp.calculatorData?.parameterType != null) {
+                    if (entityProp.calculationStrategy?.parameterType != null) {
                         return (parameter: any, fn?: TypedDtoBuilderFn) => {
                             target.add(entityProp, fn, parameter);
                             return receiver;
@@ -322,7 +322,7 @@ const typedDtoBuilderHandler: ProxyHandler<DtoBuilder> = {
                         return receiver;
                     }
                 }
-                if (entityProp.parameterType != null) {
+                if (entityProp.calculationStrategy?.parameterType != null) {
                     return (parameter: any) => {
                         target.add(entityProp, undefined, parameter);
                         return receiver;

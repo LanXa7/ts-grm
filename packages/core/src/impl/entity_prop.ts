@@ -1,4 +1,4 @@
-import { AssociationType, CalculatorData, JoinColumnData, Prop, PropData, ScalarType } from "@/schema/prop";
+import { AssociationType, JoinColumnData, Prop, PropData, ScalarType } from "@/schema/prop";
 import { Entity } from "./entity";
 import { PropError } from "@/error/metadata_error";
 import { AnyModelImpl, ModelImpl } from "./model_impl";
@@ -7,11 +7,11 @@ import { EntityPropOrder } from "./entity_prop_order";
 import { StateError } from "@/error/common";
 import { isIllegal, fixColumn, fixColumnArr, notEmpty, DatabaseStrategy } from "./strategy";
 import { Column, Columns, MiddelEntity, MiddleTable, PropStorage, StorageType } from "./storage";
-import { ParameterizedTargetCalculator, SqlFormulaFn, TargetCalculator, TsFormulaFn } from "@/schema/computed";
-import { z } from "zod";
+import { ParameterizedTargetCalculator, ParameterizedValueCalculator, SqlFormulaFn, TargetCalculator, TsFormulaFn, ValueCalculator } from "@/schema/computed";
 import { CascadeType } from "@/schema/join";
 import { View } from "@/schema/dto";
 import { AnyModel } from "@/schema/model";
+import { CalculationStrategy } from "./calculation_strategy";
 
 export class EntityProp {
 
@@ -82,6 +82,8 @@ export class EntityProp {
     private _sqlFormulaFn: SqlFormulaFn<AnyModel, any> | undefined = undefined;
 
     private _sqlFormulaResolved = false;
+
+    private _calculationStrategy: CalculationStrategy | undefined = undefined; 
 
     private static readonly _EMPTY_PROP_MAP: ReadonlyMap<string, EntityProp> = 
         new Map<string, EntityProp>();
@@ -269,14 +271,6 @@ export class EntityProp {
         }
     }
 
-    get calculatorData(): CalculatorData | undefined {
-        return this._data.calculatorData;
-    }
-
-    get parameterType(): z.ZodType | undefined {
-        return this._data.calculatorData?.parameterType;
-    }
-
     get span(): number {
         let span = this._span;
         if (span == null) {
@@ -343,6 +337,92 @@ export class EntityProp {
     get tsFormulaFn(): TsFormulaFn<any, any> | undefined {
         this._resolveTsFormula();
         return this._tsFormulaFn;
+    }
+
+    get calculationStrategy(): CalculationStrategy | undefined {
+        let strategy = this._calculationStrategy;
+        if (strategy == null) {
+            const calculatorData = this._data.calculatorData;
+            if (calculatorData != null) {
+                const sourceModel = calculatorData.calculator.sourceModel();
+                if (sourceModel !== this.declaringEntity.model) {
+                    this.raise `The source model of the calculator is not the current model "${this.declaringEntity.name}"`;
+                }
+                const sourceKeyPropName = calculatorData.calculator.sourceKeyPropName ?? this.declaringEntity.idProp.name;
+                const sourceKeyProp = this.declaringEntity.expandedPropMap.get(sourceKeyPropName);
+                if (sourceKeyProp == null) {
+                    this.raise `The sourceKeyPropName of the calculator is "${
+                        sourceKeyPropName
+                    }" which is not a property which is not a property of the current model "${
+                        this.declaringEntity.name
+                    }"`;
+                    return;
+                }
+                if (sourceKeyProp.scalarProps == null) {
+                    this.raise `The sourceKeyProp of the calculator is "${
+                        sourceKeyProp.toString()
+                    }" which is not scalar or emebedded property`;
+                }
+                switch (calculatorData.kind) {
+                    case "VALUE":
+                        if (calculatorData.parameterType != null) {
+                            strategy = {
+                                kind: "PARAMETERIZED_VALUE",
+                                sourceKeyProp,
+                                parameterType: calculatorData.parameterType,
+                                fn: (calculatorData.calculator as ParameterizedValueCalculator<any, any>).fn
+                            };
+                        } else {
+                            strategy = {
+                                kind: "VALUE",
+                                sourceKeyProp,
+                                parameterType: undefined,
+                                fn: (calculatorData.calculator as ValueCalculator<any>).fn
+                            };
+                        }
+                        break;
+                    case "NONNULL_REFERENCE":
+                    case "NULLABLE_REFERENCE":
+                        if (calculatorData.parameterType != null) {
+                            strategy = {
+                                kind: "PARAMETERIZED_REFERENCE",
+                                sourceKeyProp,
+                                parameterType: calculatorData.parameterType,
+                                nullable: calculatorData.kind == "NULLABLE_REFERENCE",
+                                fn: (calculatorData.calculator as ParameterizedTargetCalculator<any, any>).fn
+                            };
+                        } else {
+                            strategy = {
+                                kind: "REFERENCE",
+                                sourceKeyProp,
+                                parameterType: undefined,
+                                nullable: calculatorData.kind == "NULLABLE_REFERENCE",
+                                fn: (calculatorData.calculator as TargetCalculator<any>).fn
+                            };
+                        }
+                        break;
+                    case "COLLECTION":
+                        if (calculatorData.parameterType != null) {
+                            strategy = {
+                                kind: "PARAMETERIZED_COLLECTION",
+                                sourceKeyProp,
+                                parameterType: calculatorData.parameterType,
+                                fn: (calculatorData.calculator as ParameterizedTargetCalculator<any, any>).fn
+                            };
+                        } else {
+                            strategy = {
+                                kind: "COLLECTION",
+                                sourceKeyProp,
+                                parameterType: undefined,
+                                fn: (calculatorData.calculator as TargetCalculator<any>).fn
+                            };
+                        }
+                        break;
+                }
+                this._calculationStrategy = strategy;
+            }
+        }
+        return strategy;
     }
 
     private _resolveTsFormula() {
