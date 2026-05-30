@@ -738,7 +738,8 @@ async function resolveCalculators(
             if (entityProp.calculationStrategy != null) {
                 await usingExplicitPurpose({
                     kind: "LOAD_CALCULATOR",
-                    prop: unresolvedField.prop as metadata.EntityProp
+                    prop: unresolvedField.prop as metadata.EntityProp,
+                    parameter: unresolvedField.parameter
                 }, async () => {
                     await new CalculatorResolver(
                         sqlClient,
@@ -840,15 +841,36 @@ class CalculatorResolver {
         dependencies: ReadonlyArray<any>
     ): Promise<void> {
         const kind = this._strategy.kind;
-        if (kind === "REFERENCE" || kind === "COLLECTION") {
+        if (kind === "VALUE") {
+            const tuples = await this._strategy.fn({
+                sqlClient: this._sqlClient,
+                keys: dependencies
+            });
+            this._processTuples(tuples);
+        } else if (kind === "PARAMETERIZED_VALUE") {
+            const tuples = await this._strategy.fn({
+                sqlClient: this._sqlClient,
+                keys: dependencies,
+                parameter: this._unresolvedField.parameter
+            });
+            this._processTuples(tuples);
+        } else if (kind === "REFERENCE" || kind === "COLLECTION") {
             const tuples = await this._strategy.fn({
                 sqlClient: this._sqlClient,
                 keys: dependencies,
                 view: new View(this._unresolvedField.subMapper!)
             });
             this._processTuples(tuples);
+        } else if (kind === "PARAMETERIZED_REFERENCE" || kind === "PARAMETERIZED_COLLECTION") {
+            const tuples = await this._strategy.fn({
+                sqlClient: this._sqlClient,
+                keys: dependencies,
+                parameter: this._unresolvedField.parameter,
+                view: new View(this._unresolvedField.subMapper!)
+            });
+            this._processTuples(tuples);
         } else {
-            throw new Error(`Unsuported operation`);
+            throw new Error(`Unsuported calculator kind: ${kind}`);
         }
     }
 

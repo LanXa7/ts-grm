@@ -177,6 +177,12 @@ function purposeString(purpose: Purpose): string {
         case "LOAD_RECURSIVE_TREE_NODE":
             return `loadRecursiveTreeNode(${purpose.prop.toString()})`;
         case "LOAD_CALCULATOR":
-            return `loadCalculator(${purpose.prop.toString()})`;
+            return `loadCalculator(${
+                purpose.prop.toString()
+            }${
+                purpose.parameter != null
+                    ? `, ${JSON.stringify(purpose.parameter)}`
+                    : ""
+            })`;
     }
 }

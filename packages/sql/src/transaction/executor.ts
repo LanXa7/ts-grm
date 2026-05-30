@@ -80,5 +80,6 @@ export type LoadRecursiveTreeNodePurpose = {
 
 export type LoadCalculatorPurpose = {
     readonly kind: "LOAD_CALCULATOR",
-    readonly prop: metadata.EntityProp
+    readonly prop: metadata.EntityProp,
+    readonly parameter: any
 };
