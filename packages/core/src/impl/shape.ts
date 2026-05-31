@@ -2,7 +2,6 @@ import { StateError } from "@/error/common";
 import { FetchProp } from "./dto";
 import { DtoMapper, DtoMapperField } from "./dto_mapper";
 import { EntityProp } from "./entity_prop";
-import { CalculatorKind } from "@/schema/prop";
 import { CalculationStrategyKind } from "./calculation_strategy";
 
 export type Shape = {

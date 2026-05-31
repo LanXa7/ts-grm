@@ -1,7 +1,7 @@
 import { ArgumentError, StateError } from "@/error/common";
 import { Entity } from "./entity";
 import { EntityProp } from "./entity_prop";
-import { Dto, DtoField, foldDto, InverseFetchProp } from "./dto";
+import { Dto, DtoField, foldDto, InverseFetchProp, TypeNameProp } from "./dto";
 import { capitalize } from "./util";
 import { makeErr } from "@/error/util";
 import { ModelOrder } from "@/schema/order";
@@ -28,13 +28,37 @@ class DtoBuilder {
     private lastPropName: string | undefined = undefined;
 
     constructor(
-        private readonly source: Entity | EntityProp
+        private readonly source: Entity | EntityProp,
+        private downcastTo?: Entity | undefined
     ) {}
+
+    addTypeName() {
+        const entity = this.source as Entity;
+        const field: DtoField = {
+            path: "__typename",
+            downcastTo: undefined,
+            prop: new TypeNameProp(
+                entity,
+                entity.tableSettings.discriminator?.name,
+                entity.tableSettings.discriminator == null ? entity.name : undefined
+            ),
+            bridgeProp: undefined,
+            dto: undefined,
+            fetchType: undefined,
+            orders: undefined,
+            recursiveDepth: undefined,
+            nullable: false,
+            parameter: undefined
+        };
+        this.fields.push(field);
+        this.lastPropName = "__typename";
+    }
 
     prop(name: string): EntityProp {
         if (this.source instanceof Entity) {
-            return this.source.allPropMap.get(name) ?? makeErr(() => 
-                new ArgumentError(`No property "${name}" in model "${this.source.name}"`)
+            const sourceEntity = this.downcastTo ?? this.source;
+            return sourceEntity.allPropMap.get(name) ?? makeErr(() => 
+                new ArgumentError(`No property "${name}" in model "${sourceEntity.name}"`)
             );
         }
         return this.source.props?.get(name) ?? makeErr(() =>
@@ -43,7 +67,7 @@ class DtoBuilder {
     }
 
     add(prop: EntityProp, fn?: TypedDtoBuilderFn, parameter?: any) {
-        const field = dtoField(prop, fn, parameter);
+        const field = dtoField(this.downcastTo, prop, fn, parameter);
         this.fields.push(field);
         this.lastPropName = prop.name;
     }
@@ -56,7 +80,7 @@ class DtoBuilder {
             throw new ArgumentError(`Cannot flat the property "${prop.toString()}" 
             because it is neither reference nor embedded property`);
         }
-        const field: DtoField = dtoField(prop, fn);
+        const field: DtoField = dtoField(this.downcastTo, prop, fn);
         if (prop.targetEntity != null) {
             const convertedField: DtoField = {
                 ...field,
@@ -95,6 +119,29 @@ class DtoBuilder {
         this.lastPropName = undefined;
     }
 
+    instanceOf(proxy: TypedDtoBuilder, derivedModel: AnyModel, fn: TypedDtoBuilderFn) {
+        if (!(this.source instanceof Entity)) {
+            throw new StateError(
+                `Current DTO builder is not based on entity so that "instanceOf" is not supportted`
+            );
+        }
+        const thisEntity = this.source as Entity;
+        const derivedEntity = Entity.of(derivedModel);
+        if (!derivedEntity.ancestors.has(thisEntity)) {
+            throw new ArgumentError(
+                `The model "${derivedEntity.name}" is not derived model of "${thisEntity.name}"`
+            );
+        }
+        const oldDowncastTo = this.downcastTo;
+        this.downcastTo = derivedEntity;
+        try {
+            fn(proxy);
+        } finally {
+            this.downcastTo = oldDowncastTo;
+        }
+        this.lastPropName = undefined;
+    }
+
     allScalars() {
         const propMap = this.source instanceof Entity
             ? this.source.allPropMap
@@ -112,6 +159,9 @@ class DtoBuilder {
             const arr = this.fields;
             for (let i = arr.length - 1; i >= 0; --i) {
                 if (isMatched(arr[i]!, alias)) {
+                    if ((this.fields[i]!.prop instanceof TypeNameProp)) {
+                        throw new Error("Cannot remove the __typename");
+                    }
                     arr.splice(i, 1);
                 }
             }
@@ -146,6 +196,7 @@ class DtoBuilder {
         }
         const field: DtoField = {
             path: alias,
+            downcastTo: this.downcastTo,
             prop: prop,
             bridgeProp: undefined,
             dto: undefined,
@@ -259,6 +310,9 @@ const typedDtoBuilderHandler: ProxyHandler<DtoBuilder> = {
                 return () => {
                     return target;
                 };
+            case "typename":
+                target.addTypeName();
+                return receiver;
             case "allScalars":
                 return () => {
                     target.allScalars();
@@ -278,6 +332,11 @@ const typedDtoBuilderHandler: ProxyHandler<DtoBuilder> = {
             case "fold":
                 return (key: string, fn: TypedDtoBuilderFn) => {
                     target.fold(key, fn);
+                    return receiver;
+                }
+            case "instanceOf":
+                return (derivedModel: AnyModel, fn: TypedDtoBuilderFn) => {
+                    target.instanceOf(receiver, derivedModel, fn);
                     return receiver;
                 }
             case "remove":
@@ -335,6 +394,7 @@ const typedDtoBuilderHandler: ProxyHandler<DtoBuilder> = {
 };
 
 export function dtoField(
+    downcastTo: Entity | undefined,
     prop: EntityProp, 
     fn?: TypedDtoBuilderFn,
     parameter?: any
@@ -349,6 +409,7 @@ export function dtoField(
         const middleDto = middleBuilder.__unwrap().build();
         return {
             path: prop.name,
+            downcastTo,
             prop: InverseFetchProp.of(middleEntity.joinThisProp),
             bridgeProp: prop,
             dto: middleDto,
@@ -365,6 +426,7 @@ export function dtoField(
         const childDto = childBuilder.__unwrap().build();
         return {
             path: prop.name,
+            downcastTo,
             prop: prop,
             bridgeProp: undefined,
             dto: childDto,
@@ -377,13 +439,14 @@ export function dtoField(
     }
     if (prop.props != null) {
         const childBuilder = new Proxy(
-            new DtoBuilder(prop),
+            new DtoBuilder(prop, downcastTo),
             typedDtoBuilderHandler
         ) as any as TypedDtoBuilder;
         (fn ?? ($ => ($ as any).allScalars()))(childBuilder);
         const childDto = childBuilder.__unwrap().build();
         return {
             path: prop.name,
+            downcastTo,
             prop: prop,
             bridgeProp: undefined,
             dto: childDto,
@@ -402,6 +465,7 @@ export function dtoField(
     }
     return {
         path: prop.name,
+        downcastTo,
         prop: prop,
         bridgeProp: undefined,
         dto: undefined,

@@ -15,6 +15,8 @@ export type DtoField = {
 
     path: string | ReadonlyArray<string> | undefined;
 
+    readonly downcastTo: Entity | undefined;
+
     readonly prop: FetchProp;
 
     // m2m property based on middle entity
@@ -34,7 +36,7 @@ export type DtoField = {
     readonly parameter: any;
 };
 
-export type FetchProp = EntityProp | InverseFetchProp;
+export type FetchProp = EntityProp | InverseFetchProp | TypeNameProp;
 
 export class InverseFetchProp {
 
@@ -88,6 +90,47 @@ export class InverseFetchProp {
 
     toString() {
         return `←${this.prop.toString()}`;
+    }
+}
+
+export class TypeNameProp {
+
+    constructor(
+        readonly declaringEntity: Entity,
+        readonly columName: string | undefined,
+        readonly constant: string | undefined
+    ) {}
+
+    get name(): "__typename" {
+        return "__typename";
+    }
+
+    get isEntityProp(): false {
+        return false;
+    }
+
+    get targetEntity(): undefined {
+        return undefined;
+    }
+
+    get referenceKeyProp(): undefined {
+        return undefined;
+    }
+
+    get thisKeyProp(): undefined {
+        return undefined;
+    }
+
+    get targetKeyProp(): undefined {
+        return undefined;
+    }
+
+    get associationType(): undefined {
+        return undefined;
+    }
+
+    toString(): string {
+        return `${this.declaringEntity.name}.__typename`;
     }
 }
 

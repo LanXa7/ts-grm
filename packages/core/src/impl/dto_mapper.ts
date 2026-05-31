@@ -1,5 +1,5 @@
 import { ArgumentError, StateError } from "@/error/common";
-import { Dto, DtoField, FetchProp } from "./dto";
+import { Dto, DtoField, FetchProp, TypeNameProp } from "./dto";
 import { Entity } from "./entity";
 import { dtoField } from "./dto_builder";
 import { createDtoRowReader, DtoRowReader } from "./row_reader";
@@ -79,6 +79,8 @@ export type DtoMapperField = {
 
     readonly index: number;
 
+    readonly downcastTo: Entity | undefined;
+
     readonly prop: FetchProp;
 
     readonly parameter: any;
@@ -135,7 +137,7 @@ class Mapper {
 
         this.dependencyWriter = { indices: [], parent: this.dependencyWriter };
         try {
-            this._addImplicitFields(dtoField.prop);
+            this._addImplicitFields(dtoField);
         } finally {
             if (this.dependencyWriter.indices!.length !== 0) {
                 dependencies = this.dependencyWriter.indices;
@@ -151,7 +153,8 @@ class Mapper {
         }
     }
 
-    private _addImplicitFields(prop: FetchProp) {
+    private _addImplicitFields(field: DtoField) {
+        const prop = field.prop;
         if (prop.isEntityProp) {
             const entityProp = prop as EntityProp;
             if (entityProp.tsFormulaDependencyView != null) {
@@ -177,15 +180,17 @@ class Mapper {
         }
         const referenceKeyProp = prop.referenceKeyProp;
         if (referenceKeyProp != null) {
-            this._add(dtoField(referenceKeyProp), false);
+            this._add(dtoField(field.downcastTo, referenceKeyProp), false);
         } else if (prop.targetEntity != null) {
             let keyProp = prop.thisKeyProp ?? prop.declaringEntity!.idProp;
-            // TODO: backProp may not be id property
-            this._add(dtoField(keyProp), false);
+            this._add(dtoField(field.downcastTo, keyProp), false);
         }
     }
 
     private _addImpl(dtoField: DtoField, mapPath: boolean) {
+        if (dtoField.downcastTo != null) {
+            this._addTypeNameField();
+        }
         let field: MapperField | undefined = undefined;
         if (dtoField.dto == null || dtoField.prop.targetEntity != null) {
             field = this._field(dtoField);
@@ -213,6 +218,31 @@ class Mapper {
         }
     }
 
+    private _addTypeNameField() {
+        for (const field of this.fieldMap.values()) {
+            if (field.prop instanceof TypeNameProp) {
+                return;
+            }
+        }
+        const field: DtoField = {
+            path: "__typename",
+            downcastTo: undefined,
+            prop: new TypeNameProp(
+                this.entity,
+                this.entity.tableSettings.discriminator?.name,
+                this.entity.tableSettings.discriminator == null ? this.entity.name : undefined
+            ),
+            bridgeProp: undefined,
+            dto: undefined,
+            fetchType: undefined,
+            orders: undefined,
+            recursiveDepth: undefined,
+            nullable: false,
+            parameter: undefined
+        };
+        this._add(field, true);
+    }
+
     private _field(dtoField: DtoField) {
         const key = dtoFieldKey(dtoField);
         let field = this.fieldMap.get(key);
@@ -231,6 +261,7 @@ class Mapper {
         }
         field = new MapperField(
             this.nullAsUndefined,
+            dtoField.downcastTo,
             this.fieldMap.size, 
             () => this.columnIndex++,
             dtoField.prop, 
@@ -375,6 +406,7 @@ class MapperField {
 
     constructor(
         nullAsUndefined: boolean,
+        readonly downcastTo: Entity | undefined,
         readonly index: number,
         readonly columnIndexAllocator: () => number,
         readonly prop: FetchProp,
@@ -415,6 +447,7 @@ class MapperField {
         });
         return {
             index: this.index,
+            downcastTo: this.downcastTo,
             prop: this.prop,
             parameter: this.parameter,
             bridgeProp: this.bridgeProp,
@@ -426,9 +459,9 @@ class MapperField {
             recursiveDepth: this.recursiveDepth,
             dependencies: this.dependencies,
             isDependent: this.isDependent,
-            columnIndex: this.dependencies !== undefined
-                ? undefined
-                : this.columnIndexAllocator(),
+            columnIndex: this._hasColumn()
+                ? this.columnIndexAllocator()
+                : undefined,
             optimizable: this.isOptimizable()
         };
     }
@@ -453,6 +486,17 @@ class MapperField {
         }
         const targetKeyProp = entityProp.targetKeyProp ?? entityProp.targetEntity!.idProp;
         return this.subMapper.lessThan(targetKeyProp.scalarProps!);
+    }
+
+    private _hasColumn(): boolean {
+        if (this.dependencies != null) {
+            return false;
+        }
+        if (this.prop instanceof TypeNameProp) {
+            const typedNameProp = this.prop as TypeNameProp;
+            return typedNameProp.columName != null;
+        }
+        return true;
     }
 }
 
@@ -508,6 +552,7 @@ function toDtoFields(
 ): ReadonlyArray<DtoField> {
     const dtoField: DtoField = {
         path: undefined,
+        downcastTo: field.downcastTo,
         prop: field.prop,
         bridgeProp: field.bridgeProp,
         dto: field.subMapper != null ? toDto(field.subMapper) : undefined,

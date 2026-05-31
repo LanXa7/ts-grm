@@ -16,7 +16,8 @@ export function mapperJson(mapper: DtoMapper): any {
                 recursiveDepth: f.recursiveDepth,
                 dependencies: f.dependencies,
                 isDependent: f.isDependent ? true : undefined,
-                columnIndex: f.columnIndex
+                columnIndex: f.columnIndex,
+                downcastTo: f.downcastTo?.name
             };
         })
     } as any;
