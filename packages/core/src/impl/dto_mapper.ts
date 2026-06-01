@@ -29,6 +29,10 @@ export class DtoMapper {
 
     private _unresolvedFields: ReadonlyArray<DtoMapperField> | undefined = undefined;
 
+    private _downcastEntities: ReadonlyArray<Entity> | undefined = undefined;
+
+    private _typeNameIndex: number | undefined = undefined;
+
     constructor(
         readonly entity: Entity,
         readonly nullAsUndefined: boolean,
@@ -72,6 +76,32 @@ export class DtoMapper {
             this._unresolvedFields = unresolvedFields = arr;
         }
         return unresolvedFields;
+    }
+
+    get downcastEntities(): ReadonlyArray<Entity> | undefined {
+        let downcastEntities = this._downcastEntities;
+        if (downcastEntities == null) {
+            const set = new Set<Entity>();
+            for (const field of this.fields) {
+                if (field.downcastTo != null) {
+                    set.add(field.downcastTo);
+                }
+            }
+            this._downcastEntities = downcastEntities = 
+                set.size === 0
+                    ? []
+                    : [this.entity, ...Array.from(set)];
+        }
+        return downcastEntities.length === 0 ? undefined : downcastEntities;
+    }
+
+    get typeNameIndex(): number {
+        let index = this._typeNameIndex;
+        if (index == null) {
+            this._typeNameIndex = index = 
+                this.fields.findIndex(f => f.prop instanceof TypeNameProp);
+        }
+        return index;
     }
 }
 

@@ -47,6 +47,10 @@ export class Entity {
 
     readonly tableEntity: Entity;
 
+    private _typeMapByDiscriminatorValue: Map<any, Entity> | undefined = undefined;
+
+    private _typeMapByTypeName: Map<string, Entity> | undefined = undefined;
+
     static of(model: AnyModel): Entity {
         return (model as ModelImpl<any, any, any, any, any>).toEntity()
     }
@@ -582,6 +586,56 @@ export class Entity {
         return this.tableSettings.discriminator?.type 
             ?? this.superEntity?._discriminiatorType()
             ?? "string";
+    }
+
+    findByDiscriminatorValue(value: any): Entity {
+        let typeMap = this._typeMapByDiscriminatorValue;
+        if (typeMap == null) {
+            typeMap = new Map();
+            for (const ancestor of this.ancestors) {
+                const discriminatorValue = ancestor.tableSettings.discriminatorValue;
+                if (discriminatorValue != null) {
+                    typeMap.set(discriminatorValue, ancestor);
+                }
+            }
+            typeMap.set(this.tableSettings.discriminatorValue ?? this.name, this);
+            for (const descendant of this.descendants) {
+                const discriminatorValue = descendant.tableSettings.discriminatorValue;
+                if (discriminatorValue != null) {
+                    typeMap.set(discriminatorValue, descendant);
+                }
+            }
+            this._typeMapByDiscriminatorValue = typeMap;
+        }
+        const entity = typeMap.get(value);
+        if (entity == null) {
+            throw new ArgumentError(`Illegal discriminator value: ${value}`);
+        }
+        return entity;
+    }
+
+    findByTypeName(name: string): Entity {
+        let typeMap = this._typeMapByTypeName;
+        if (typeMap == null) {
+            typeMap = new Map();
+            for (const ancestor of this.ancestors) {
+                typeMap.set(ancestor.name, ancestor);
+            }
+            typeMap.set(this.name, this);
+            for (const descendant of this.descendants) {
+                typeMap.set(descendant.name, descendant);
+            }
+            this._typeMapByTypeName = typeMap;
+        }
+        const entity = typeMap.get(name)
+        if (entity == null) {
+            throw new ArgumentError(`Illegal type name: ${name}`);
+        }
+        return entity;
+    }
+
+    isAssignableFrom(derivedEntity: Entity): boolean {
+        return this === derivedEntity || derivedEntity.ancestors.has(this);
     }
 }
 

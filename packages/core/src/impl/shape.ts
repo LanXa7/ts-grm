@@ -4,6 +4,7 @@ import { DtoMapper, DtoMapperField } from "./dto_mapper";
 import { EntityProp } from "./entity_prop";
 import { CalculationStrategyKind } from "./calculation_strategy";
 import { ScalarType } from "@/schema/prop";
+import { Entity } from ".";
 
 export type Shape = {
     [key: string]: ShapeMember;
@@ -12,7 +13,7 @@ export type Shape = {
 };
 
 export type ShapeMember = {
-    downcastTo: string | undefined;
+    downcastTo: Entity | undefined;
     columnIndex: number | string | undefined;
     scalarType: ScalarType | undefined;
     targetShape: Shape | undefined;
@@ -57,7 +58,7 @@ function fillShapeNode(
             buildShapeMember(field, false);
             if (field.isDependent) {
                 shapeScope!.implicit[`_${i}`] = {
-                    downcastTo: field.downcastTo?.name,
+                    downcastTo: field.downcastTo,
                     columnIndex: field.columnIndex,
                     scalarType: field.prop.isEntityProp ? (field.prop as EntityProp).scalarType : undefined,
                     targetShape: undefined,
@@ -97,7 +98,7 @@ function handleExplictField(field: DtoMapperField) {
                     if (foldShape == null) {
                         foldShape = {};
                         const newMember: ShapeMember = {
-                            downcastTo: field.downcastTo?.name,
+                            downcastTo: field.downcastTo,
                             columnIndex: undefined,
                             scalarType: field.prop.isEntityProp ? (field.prop as EntityProp).scalarType : undefined,
                             targetShape: foldShape,
@@ -136,7 +137,7 @@ function buildShapeMember(
     if (field.subMapper) {
         if (isCollection(field.prop)) {
             return {
-                downcastTo: field.downcastTo?.name,
+                downcastTo: field.downcastTo,
                 columnIndex: field.columnIndex,
                 scalarType: field.prop.isEntityProp ? (field.prop as EntityProp).scalarType : undefined,
                 targetShape: buildShapeImpl(field.subMapper, field),
@@ -146,7 +147,7 @@ function buildShapeMember(
         } 
         if (isReference(field.prop)) {
             return {
-                downcastTo: field.downcastTo?.name,
+                downcastTo: field.downcastTo,
                 columnIndex: field.columnIndex,
                 scalarType: field.prop.isEntityProp ? (field.prop as EntityProp).scalarType : undefined,
                 targetShape: buildShapeImpl(field.subMapper, field),
@@ -155,7 +156,7 @@ function buildShapeMember(
             };
         }
         return {
-            downcastTo: field.downcastTo?.name,
+            downcastTo: field.downcastTo,
             columnIndex: field.columnIndex,
             scalarType: field.prop.isEntityProp ? (field.prop as EntityProp).scalarType : undefined,
             targetShape: buildShapeImpl(field.subMapper, field),
@@ -172,7 +173,7 @@ function buildShapeMember(
         columnIndex = field.columnIndex;
     }
     return {
-        downcastTo: field.downcastTo?.name,
+        downcastTo: field.downcastTo,
         columnIndex,
         scalarType: field.prop.isEntityProp ? (field.prop as EntityProp).scalarType : undefined,
         targetShape: undefined,

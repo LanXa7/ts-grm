@@ -1,4 +1,4 @@
-import { EntityProp } from ".";
+import { Entity, EntityProp } from ".";
 import { CodeWriter } from "./code_writer";
 import { DataReader } from "./data_reader";
 import { FetchProp } from "./dto";
@@ -15,6 +15,8 @@ export type DtoRow = {
     readonly dto: object;
 
     readonly implicit: object;
+
+    readonly typeName: string | undefined;
 }
 
 export abstract class DtoRowReader {
@@ -78,39 +80,109 @@ function writeRead(
     const implicit = shape.__implicit;
     writer.code("read(parents, reader) ");
     writer.scope("CURLY_BRACKETS", () => {
+        const downcastEntities = mapper.downcastEntities;
+        if (downcastEntities != null) {
+            writer
+            .code("const typeName = $entity.findByDiscriminatorValue(reader.get(")
+            .code(mapper.typeNameIndex.toString())
+            .code("))").newLine(";");
+        }
+        if (downcastEntities == null) {
+            writeDtoDeclaration(undefined, shape, mapper, writer);
+        } else {
+            writer.code("let dto").newLine(";");
+            writer.code("switch (typeName) ").scope("CURLY_BRACKETS", () => {
+                for (const downcastEntity of downcastEntities!) {
+                    writer.code("case '").code(downcastEntity.name).code("':");
+                    writer.scope("BLANK", () => {
+                        writeDtoDeclaration(downcastEntity, shape, mapper, writer);
+                        writer.code("break").newLine(";");
+                    });
+                }
+            }).newLine();
+        }
+        if (implicit != null) {
+            if (downcastEntities == null) {
+                writieImplicitDeclaration(undefined, implicit, mapper, writer);
+            } else {
+                writer.code("let implicit").newLine(";");
+                writer.code("switch (typeName) ").scope("CURLY_BRACKETS", () => {
+                    for (const downcastEntity of downcastEntities!) {
+                        writer.code("case '").code(downcastEntity.name).code("':");
+                        writer.scope("BLANK", () => {
+                            writieImplicitDeclaration(downcastEntity, implicit, mapper, writer);
+                            writer.code("break").newLine(";");
+                        });
+                    }
+                }).newLine();
+            }
+        }
+        if (downcastEntities == null) {
+            writeDepthAssignments(undefined, mapper, writer);
+        } else {
+            writer.code("switch (typeName) ").scope("CURLY_BRACKETS", () => {
+                for (const downcastEntity of downcastEntities!) {
+                    writer.code("case '").code(downcastEntity.name).code("':");
+                    writer.scope("BLANK", () => {
+                        writeDepthAssignments(downcastEntity, mapper, writer);
+                        writer.code("break").newLine(";");
+                    });
+                }
+            }).newLine();
+        }
         writer
-            .code("const dto = ")
-            .scope("CURLY_BRACKETS", () => {
-                for (const key in shape) {
-                    if (key !== "__implicit") {
-                        writeRootMember(key, shape[key], mapper.nullAsUndefined, writer);
+            .code("return { reader: this, parents, dto")
+            .code(implicit != null ? ", implicit" : ", implicit: undefined")
+            .code(downcastEntities != null ? ", typeName" : ", typeName: undefined")
+            .code(" }")
+            .newLine(";");
+    }).newLine();
+}
+
+function writeDtoDeclaration(
+    downcastTo: Entity | undefined,
+    shape: Shape,
+    mapper: DtoMapper,
+    writer: CodeWriter
+) {
+    writer
+        .codeIf("const ", downcastTo == null)
+        .code("dto = ")
+        .scope("CURLY_BRACKETS", () => {
+            for (const key in shape) {
+                if (key !== "__implicit") {
+                    if (downcastTo == null || shape[key]!.downcastTo == null || shape[key]!.downcastTo!.isAssignableFrom(downcastTo)) {
+                        writeRootMember(key, shape[key], mapper, writer);
                     }
                 }
-            })
-            .newLine(";");
-        if (implicit != null) {
-            writer
-                .code("const implicit = ")
-                .scope("CURLY_BRACKETS", () => {
-                    for (const key in implicit) {
-                        writeRootMember(key, implicit[key], mapper.nullAsUndefined, writer);
-                    }
-                })
-                .newLine(";");
-        }
-        writeDepthAssignments(mapper, writer);
-        if (implicit == null) {
-            writer.code("return { reader: this, parents, dto, implicit: undefined };");
-            return;
-        }
-        writer.code("return { reader: this, parents, dto, implicit };");
-    }).newLine();
+            }
+        })
+        .newLine(";");
+}
+
+function writieImplicitDeclaration(
+    downcastTo: Entity | undefined,
+    shape: Shape,
+    mapper: DtoMapper,
+    writer: CodeWriter
+) {
+    writer
+        .codeIf("const ", downcastTo == null)
+        .code("implicit = ")
+        .scope("CURLY_BRACKETS", () => {
+            for (const key in shape) {
+                if (downcastTo == null || shape[key]!.downcastTo == null || shape[key]!.downcastTo!.isAssignableFrom(downcastTo)) {
+                    writeRootMember(key, shape[key], mapper, writer);
+                }
+            }
+        })
+        .newLine(";");
 }
 
 function writeRootMember(
     key: string, 
     member: any, 
-    nullAsUndefined: boolean,
+    mapper: DtoMapper,
     writer: CodeWriter
 ) {
     if (member.targetShape != null && isEmptyShape(member.targetShape)) {
@@ -118,9 +190,11 @@ function writeRootMember(
     }
     const keyStr = key.startsWith("←") ? `"${key}"` : key;
     writer.separator();
-    if (typeof member.columnIndex === "number") {
+    if (member.columnIndex === mapper.typeNameIndex) {
+        writer.code(keyStr).code(": typeName");
+    } else if (typeof member.columnIndex === "number") {
         writer.code(keyStr).code(": reader.get(").code(`${member.columnIndex}`).code(")");
-    } else if (nullAsUndefined) {
+    } else if (mapper.nullAsUndefined) {
         writer.code(keyStr).code(": undefined");
     } else {
         writer.code(keyStr).code(": null");
@@ -128,6 +202,7 @@ function writeRootMember(
 }
 
 function writeDepthAssignments(
+    downcastTo: Entity | undefined,
     mapper: DtoMapper,
     writer: CodeWriter
 ) {
@@ -137,6 +212,9 @@ function writeDepthAssignments(
         }
         for (const path of field.paths) {
             if (typeof path === "string") {
+                continue;
+            }
+            if (downcastTo != null && field.downcastTo != null && !field.downcastTo.isAssignableFrom(downcastTo)) {
                 continue;
             }
             writeDepthAssignment(
@@ -472,6 +550,26 @@ function writeResolveTsFormula(
         writeResolveTsFormula(mapper, dependencyField, renderedProps, writer);
     }
     
+    if (field.downcastTo == null) {
+        writeResolveTsFormulaImpl(field, writer);
+    } else {
+        writer.code("switch (row.typeName)" ).scope("CURLY_BRACKETS", () => {
+            writer.code(`case '${mapper.entity.name}':`);
+            for (const descendant of mapper.entity.descendants) {
+                writer.newLine().code(`case '${descendant.name}':`);
+            }
+            writer.scope("BLANK", () => {
+                writeResolveTsFormulaImpl(field, writer);
+            });
+        }).newLine();
+    }
+}
+
+function writeResolveTsFormulaImpl(
+    field: DtoMapperField, 
+    writer: CodeWriter
+) {
+    const prop = field.prop as EntityProp;
     const valueName = `${prop.name}Value`;
     writer
         .code("const ")

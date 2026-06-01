@@ -66,7 +66,7 @@ describe("ComputedTest", () => {
                     };
                     this._implicit_fullName_name(implicit).firstName = reader.get(1);
                     this._implicit_fullName_name(implicit).lastName = reader.get(2);
-                    return { reader: this, parents, dto, implicit };
+                    return { reader: this, parents, dto, implicit, typeName: undefined };
                 }
                 _implicit_fullName(implicit) {
                     let o = implicit.fullName;
@@ -220,7 +220,7 @@ describe("ComputedTest", () => {
                     this._name(dto).firstName = reader.get(1);
                     this._implicit_fullName_name(implicit).lastName = reader.get(2);
                     this._name(dto).lastName = reader.get(2);
-                    return { reader: this, parents, dto, implicit };
+                    return { reader: this, parents, dto, implicit, typeName: undefined };
                 }
                 _name(dto) {
                     let o = dto.name;
@@ -380,7 +380,7 @@ describe("ComputedTest", () => {
                     };
                     this._implicit_fullName_name(implicit).firstName = reader.get(1);
                     this._implicit_fullName_name(implicit).lastName = reader.get(2);
-                    return { reader: this, parents, dto, implicit };
+                    return { reader: this, parents, dto, implicit, typeName: undefined };
                 }
                 _formula(dto) {
                     let o = dto.formula;
@@ -550,7 +550,7 @@ describe("ComputedTest", () => {
                     const implicit = {
                         _0: reader.get(0)
                     };
-                    return { reader: this, parents, dto, implicit };
+                    return { reader: this, parents, dto, implicit, typeName: undefined };
                 }
                 dependency(unresolvedFieldIndex, row) {
                     switch (unresolvedFieldIndex) {
@@ -687,7 +687,7 @@ describe("ComputedTest", () => {
                         cheapBooks: null, 
                         expensiveBooks: null
                     };
-                    return { reader: this, parents, dto, implicit: undefined };
+                    return { reader: this, parents, dto, implicit: undefined, typeName: undefined };
                 }
                 dependency(unresolvedFieldIndex, row) {
                     switch (unresolvedFieldIndex) {
@@ -747,7 +747,7 @@ describe("ComputedTest", () => {
                         edition: reader.get(2), 
                         price: reader.get(3)
                     };
-                    return { reader: this, parents, dto, implicit: undefined };
+                    return { reader: this, parents, dto, implicit: undefined, typeName: undefined };
                 }
             }
         `);
@@ -763,7 +763,7 @@ describe("ComputedTest", () => {
                         id: reader.get(0), 
                         name: reader.get(1)
                     };
-                    return { reader: this, parents, dto, implicit: undefined };
+                    return { reader: this, parents, dto, implicit: undefined, typeName: undefined };
                 }
             }
         `);
@@ -838,7 +838,7 @@ describe("ComputedTest", () => {
                     const implicit = {
                         bookNames: null
                     };
-                    return { reader: this, parents, dto, implicit };
+                    return { reader: this, parents, dto, implicit, typeName: undefined };
                 }
                 _implicit_bookNames(implicit) {
                     let o = implicit.bookNames;
@@ -1011,7 +1011,7 @@ describe("ComputedTest", () => {
                     const implicit = {
                         _2: reader.get(2)
                     };
-                    return { reader: this, parents, dto, implicit };
+                    return { reader: this, parents, dto, implicit, typeName: undefined };
                 }
                 dependency(unresolvedFieldIndex, row) {
                     switch (unresolvedFieldIndex) {
@@ -1101,7 +1101,7 @@ describe("ComputedTest", () => {
                         _0: reader.get(0), 
                         bookNames: null
                     };
-                    return { reader: this, parents, dto, implicit };
+                    return { reader: this, parents, dto, implicit, typeName: undefined };
                 }
                 _implicit_bookNames(implicit) {
                     let o = implicit.bookNames;

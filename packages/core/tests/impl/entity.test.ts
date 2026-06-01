@@ -12,19 +12,25 @@ describe("EntityTest", () => {
         expect(
             [...paperBookEntity.declaredPropMap.keys()].sort()
         ).toEqual(
-            ["id", "size"].sort()
+            ["area", "id", "size"].sort()
         );
         expect(
             [...paperBookEntity.allPropMap.keys()].sort()
         ).toEqual(
-            ["id", "name", "edition", "price", "store", "storeId", "authors", "authorCount",
-                "size"].sort()
+            [
+                "area",
+                "id", "name", "edition", "price", "store", "storeId", "authors", "authorCount",
+                "size"
+            ].sort()
         ); 
         expect(
             [...paperBookEntity.expandedPropMap.keys()].sort()
         ).toEqual(
-            ["id", "name", "edition", "price", "store", "storeId", "authors", "authorCount", 
-                "size", "size.width", "size.height"].sort()
+            [
+                "area",
+                "id", "name", "edition", "price", "store", "storeId", "authors", "authorCount", 
+                "size", "size.width", "size.height"
+            ].sort()
         ); 
 
         const bookDotStore = paperBookEntity.prop("store");

@@ -329,15 +329,23 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
             if (field.columnIndex == null) {
                 continue;
             }
-            const entityProp = field.prop as metadata.EntityProp;
+            if (!field.prop.isEntityProp) {
 
+            }
             this._compositeStack.current.separator();
-            const realTable = this._toRealTable(table.__to(entityProp.declaringEntity));
-            if (entityProp.sqlFormulaFn != null) {
-                realTable.sqlFormulaExpr(entityProp).accept(this);
+            const prop = field.prop;
+            const realTable = this._toRealTable(table.__to(prop.declaringEntity));
+            if (!prop.isEntityProp) {
+                const columnName = table.__entity.tableSettings.discriminator!.name;
+                this._compositeStack.current.add(this._createColumn(realTable, columnName));
             } else {
-                const column = entityProp.toStorage(this._strategy) as metadata.Column;
-                this._compositeStack.current.add(this._createColumn(realTable, column.name));
+                const entityProp = prop as metadata.EntityProp;
+                if (entityProp.sqlFormulaFn != null) {
+                    realTable.sqlFormulaExpr(entityProp).accept(this);
+                } else {
+                    const column = entityProp.toStorage(this._strategy) as metadata.Column;
+                    this._compositeStack.current.add(this._createColumn(realTable, column.name));
+                }
             }
         }
     }

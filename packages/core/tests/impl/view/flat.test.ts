@@ -98,7 +98,7 @@ describe("FlatTest", () => {
                     const implicit = {
                         _4: reader.get(4)
                     };
-                    return { reader: this, parents, dto, implicit };
+                    return { reader: this, parents, dto, implicit, typeName: undefined };
                 }
                 dependency(unresolvedFieldIndex, row) {
                     switch (unresolvedFieldIndex) {
@@ -161,7 +161,7 @@ describe("FlatTest", () => {
                     for (const parent of parents) {
                         parent.dto.storeName = reader_1;
                     }
-                    return { reader: this, parents, dto, implicit: undefined };
+                    return { reader: this, parents, dto, implicit: undefined, typeName: undefined };
                 }
             }
         `);
@@ -221,7 +221,7 @@ describe("FlatTest", () => {
                         flattenFirstName: reader.get(1), 
                         flattenLastName: reader.get(2)
                     };
-                    return { reader: this, parents, dto, implicit: undefined };
+                    return { reader: this, parents, dto, implicit: undefined, typeName: undefined };
                 }
             }
         `);
@@ -354,7 +354,7 @@ describe("FlatTest", () => {
                     const implicit = {
                         _2: reader.get(2)
                     };
-                    return { reader: this, parents, dto, implicit };
+                    return { reader: this, parents, dto, implicit, typeName: undefined };
                 }
                 dependency(unresolvedFieldIndex, row) {
                     switch (unresolvedFieldIndex) {
@@ -423,7 +423,7 @@ describe("FlatTest", () => {
                     for (const parent of parents) {
                         parent.dto.parentName = reader_1;
                     }
-                    return { reader: this, parents, dto, implicit };
+                    return { reader: this, parents, dto, implicit, typeName: undefined };
                 }
                 dependency(unresolvedFieldIndex, row) {
                     switch (unresolvedFieldIndex) {
@@ -493,7 +493,7 @@ describe("FlatTest", () => {
                             parent2.dto.parentGrandName = reader_1;
                         }
                     }
-                    return { reader: this, parents, dto, implicit: undefined };
+                    return { reader: this, parents, dto, implicit: undefined, typeName: undefined };
                 }
             }
         `);

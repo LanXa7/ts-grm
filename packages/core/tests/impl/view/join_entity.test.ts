@@ -93,7 +93,7 @@ describe("JoinEntityTest", () => {
                         name: reader.get(1), 
                         courses: null
                     };
-                    return { reader: this, parents, dto, implicit: undefined };
+                    return { reader: this, parents, dto, implicit: undefined, typeName: undefined };
                 }
                 dependency(unresolvedFieldIndex, row) {
                     switch (unresolvedFieldIndex) {
@@ -152,7 +152,7 @@ describe("JoinEntityTest", () => {
                     const implicit = {
                         _0: reader.get(0)
                     };
-                    return { reader: this, parents, dto, implicit };
+                    return { reader: this, parents, dto, implicit, typeName: undefined };
                 }
                 dependency(unresolvedFieldIndex, row) {
                     switch (unresolvedFieldIndex) {
@@ -212,7 +212,7 @@ describe("JoinEntityTest", () => {
                     for (const parent of parents) {
                         parent.dto.name = reader_1;
                     }
-                    return { reader: this, parents, dto, implicit: undefined };
+                    return { reader: this, parents, dto, implicit: undefined, typeName: undefined };
                 }
             }
         `);
@@ -313,7 +313,7 @@ describe("JoinEntityTest", () => {
                         name: reader.get(1), 
                         students: null
                     };
-                    return { reader: this, parents, dto, implicit: undefined };
+                    return { reader: this, parents, dto, implicit: undefined, typeName: undefined };
                 }
                 dependency(unresolvedFieldIndex, row) {
                     switch (unresolvedFieldIndex) {
@@ -372,7 +372,7 @@ describe("JoinEntityTest", () => {
                     const implicit = {
                         _0: reader.get(0)
                     };
-                    return { reader: this, parents, dto, implicit };
+                    return { reader: this, parents, dto, implicit, typeName: undefined };
                 }
                 dependency(unresolvedFieldIndex, row) {
                     switch (unresolvedFieldIndex) {
@@ -432,7 +432,7 @@ describe("JoinEntityTest", () => {
                     for (const parent of parents) {
                         parent.dto.name = reader_1;
                     }
-                    return { reader: this, parents, dto, implicit: undefined };
+                    return { reader: this, parents, dto, implicit: undefined, typeName: undefined };
                 }
             }
         `);

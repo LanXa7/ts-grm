@@ -45,7 +45,7 @@ describe("ViewTest", () => {
                         name: reader.get(1), 
                         edition: reader.get(2)
                     };
-                    return { reader: this, parents, dto, implicit: undefined };
+                    return { reader: this, parents, dto, implicit: undefined, typeName: undefined };
                 }
             }
         `);
@@ -189,7 +189,7 @@ describe("ViewTest", () => {
                         _2: reader.get(2), 
                         _4: reader.get(3)
                     };
-                    return { reader: this, parents, dto, implicit };
+                    return { reader: this, parents, dto, implicit, typeName: undefined };
                 }
                 dependency(unresolvedFieldIndex, row) {
                     switch (unresolvedFieldIndex) {
@@ -263,7 +263,7 @@ describe("ViewTest", () => {
                         name: reader.get(1), 
                         version: reader.get(2)
                     };
-                    return { reader: this, parents, dto, implicit: undefined };
+                    return { reader: this, parents, dto, implicit: undefined, typeName: undefined };
                 }
             }
         `);
@@ -291,7 +291,7 @@ describe("ViewTest", () => {
                     };
                     this._name(dto).firstName = reader.get(1);
                     this._name(dto).lastName = reader.get(2);
-                    return { reader: this, parents, dto, implicit: undefined };
+                    return { reader: this, parents, dto, implicit: undefined, typeName: undefined };
                 }
                 _name(dto) {
                     let o = dto.name;
@@ -428,7 +428,7 @@ describe("ViewTest", () => {
                         name: reader.get(1), 
                         books: null
                     };
-                    return { reader: this, parents, dto, implicit: undefined };
+                    return { reader: this, parents, dto, implicit: undefined, typeName: undefined };
                 }
                 dependency(unresolvedFieldIndex, row) {
                     switch (unresolvedFieldIndex) {
@@ -484,7 +484,7 @@ describe("ViewTest", () => {
                         name: reader.get(1), 
                         authors: null
                     };
-                    return { reader: this, parents, dto, implicit: undefined };
+                    return { reader: this, parents, dto, implicit: undefined, typeName: undefined };
                 }
                 dependency(unresolvedFieldIndex, row) {
                     switch (unresolvedFieldIndex) {
@@ -541,7 +541,7 @@ describe("ViewTest", () => {
                     };
                     this._name(dto).firstName = reader.get(1);
                     this._name(dto).lastName = reader.get(2);
-                    return { reader: this, parents, dto, implicit: undefined };
+                    return { reader: this, parents, dto, implicit: undefined, typeName: undefined };
                 }
                 _name(dto) {
                     let o = dto.name;
@@ -680,7 +680,7 @@ describe("ViewTest", () => {
                     const implicit = {
                         _1: reader.get(1)
                     };
-                    return { reader: this, parents, dto, implicit };
+                    return { reader: this, parents, dto, implicit, typeName: undefined };
                 }
                 dependency(unresolvedFieldIndex, row) {
                     switch (unresolvedFieldIndex) {
@@ -735,7 +735,7 @@ describe("ViewTest", () => {
                     const implicit = {
                         _1: reader.get(1)
                     };
-                    return { reader: this, parents, dto, implicit };
+                    return { reader: this, parents, dto, implicit, typeName: undefined };
                 }
                 dependency(unresolvedFieldIndex, row) {
                     switch (unresolvedFieldIndex) {
@@ -788,7 +788,7 @@ describe("ViewTest", () => {
                     };
                     this._name(dto).firstName = reader.get(0);
                     this._name(dto).lastName = reader.get(1);
-                    return { reader: this, parents, dto, implicit: undefined };
+                    return { reader: this, parents, dto, implicit: undefined, typeName: undefined };
                 }
                 _name(dto) {
                     let o = dto.name;
@@ -926,7 +926,7 @@ describe("ViewTest", () => {
                     };
                     this._key(dto).bookName = reader.get(1);
                     this._key(dto).bookEdition = reader.get(2);
-                    return { reader: this, parents, dto, implicit: undefined };
+                    return { reader: this, parents, dto, implicit: undefined, typeName: undefined };
                 }
                 _key(dto) {
                     let o = dto.key;
@@ -1004,7 +1004,7 @@ describe("ViewTest", () => {
                         flattenFn: reader.get(1), 
                         flattenLn: reader.get(2)
                     };
-                    return { reader: this, parents, dto, implicit: undefined };
+                    return { reader: this, parents, dto, implicit: undefined, typeName: undefined };
                 }
             }
         `);

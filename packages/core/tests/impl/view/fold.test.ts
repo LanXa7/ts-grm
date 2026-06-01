@@ -52,7 +52,7 @@ describe("FoldTest", () => {
                     };
                     this._key(dto).name = reader.get(1);
                     this._key(dto).edition = reader.get(2);
-                    return { reader: this, parents, dto, implicit: undefined };
+                    return { reader: this, parents, dto, implicit: undefined, typeName: undefined };
                 }
                 _key(dto) {
                     let o = dto.key;
@@ -154,7 +154,7 @@ describe("FoldTest", () => {
                         id: reader.get(0), 
                         associations: null
                     };
-                    return { reader: this, parents, dto, implicit: undefined };
+                    return { reader: this, parents, dto, implicit: undefined, typeName: undefined };
                 }
                 _associations(dto) {
                     let o = dto.associations;
@@ -219,7 +219,7 @@ describe("FoldTest", () => {
                     };
                     this._name(dto).firstName = reader.get(1);
                     this._name(dto).lastName = reader.get(2);
-                    return { reader: this, parents, dto, implicit: undefined };
+                    return { reader: this, parents, dto, implicit: undefined, typeName: undefined };
                 }
                 _name(dto) {
                     let o = dto.name;
@@ -386,7 +386,7 @@ describe("FoldTest", () => {
                     };
                     this._key(dto).name = reader.get(0);
                     this._key(dto).edition = reader.get(1);
-                    return { reader: this, parents, dto, implicit };
+                    return { reader: this, parents, dto, implicit, typeName: undefined };
                 }
                 _key(dto) {
                     let o = dto.key;
@@ -497,7 +497,7 @@ describe("FoldTest", () => {
                     for (const parent of parents) {
                         parent.reader._associations_storeKey(parent.dto).version = reader_2;
                     }
-                    return { reader: this, parents, dto, implicit: undefined };
+                    return { reader: this, parents, dto, implicit: undefined, typeName: undefined };
                 }
             }
         `);

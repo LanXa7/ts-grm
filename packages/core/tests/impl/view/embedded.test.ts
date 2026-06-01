@@ -79,7 +79,7 @@ describe("EmbeddedTest", () => {
                         _1: reader.get(1), 
                         _2: reader.get(2)
                     };
-                    return { reader: this, parents, dto, implicit };
+                    return { reader: this, parents, dto, implicit, typeName: undefined };
                 }
                 dependency(unresolvedFieldIndex, row) {
                     switch (unresolvedFieldIndex) {
@@ -137,7 +137,7 @@ describe("EmbeddedTest", () => {
                     const dto = {
                         name: reader.get(0)
                     };
-                    return { reader: this, parents, dto, implicit: undefined };
+                    return { reader: this, parents, dto, implicit: undefined, typeName: undefined };
                 }
             }
         `);
@@ -231,7 +231,7 @@ describe("EmbeddedTest", () => {
                     this._orderId(dto).x = reader.get(0);
                     this._orderId_y(dto).a = reader.get(1);
                     this._orderId_y(dto).b = reader.get(2);
-                    return { reader: this, parents, dto, implicit: undefined };
+                    return { reader: this, parents, dto, implicit: undefined, typeName: undefined };
                 }
                 _orderId(dto) {
                     let o = dto.orderId;
@@ -314,7 +314,7 @@ describe("EmbeddedTest", () => {
                     const dto = {
                         name: reader.get(0)
                     };
-                    return { reader: this, parents, dto, implicit: undefined };
+                    return { reader: this, parents, dto, implicit: undefined, typeName: undefined };
                 }
             }
         `);
@@ -410,7 +410,7 @@ describe("EmbeddedTest", () => {
                     };
                     this._orderId_y(dto).a = reader.get(0);
                     this._orderId_y(dto).b = reader.get(1);
-                    return { reader: this, parents, dto, implicit };
+                    return { reader: this, parents, dto, implicit, typeName: undefined };
                 }
                 _orderId(dto) {
                     let o = dto.orderId;
@@ -494,7 +494,7 @@ describe("EmbeddedTest", () => {
                     const dto = {
                         name: reader.get(0)
                     };
-                    return { reader: this, parents, dto, implicit: undefined };
+                    return { reader: this, parents, dto, implicit: undefined, typeName: undefined };
                 }
             }
         `);

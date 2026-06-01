@@ -100,6 +100,12 @@ export const BOOK = model("Book", "id", class {
     }).unique("name", "edition");
 });
 
+const PAPER_BOOK_FORMULA: TsFormula<number> = 
+    TsFormula.of({
+        dependency: () => dto.view(PAPER_BOOK, $ => $.size()),
+        fn: data => data.size.width * data.size.height
+    });
+
 export const PAPER_BOOK = model.extends(BOOK)(
     "PaperBook", 
     class {
@@ -107,6 +113,7 @@ export const PAPER_BOOK = model.extends(BOOK)(
             width: prop.i32(),
             height: prop.i32()
         })
+        area = prop.formula.ts(PAPER_BOOK_FORMULA)
     },
     ctx => ctx.table({
         name: "THE_PAPER_BOOK",

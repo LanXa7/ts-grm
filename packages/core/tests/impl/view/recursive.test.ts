@@ -81,7 +81,7 @@ describe("RecursiveTest", () => {
                     const implicit = {
                         _1: reader.get(1)
                     };
-                    return { reader: this, parents, dto, implicit };
+                    return { reader: this, parents, dto, implicit, typeName: undefined };
                 }
                 dependency(unresolvedFieldIndex, row) {
                     switch (unresolvedFieldIndex) {
@@ -142,7 +142,7 @@ describe("RecursiveTest", () => {
                     const implicit = {
                         _1: reader.get(1)
                     };
-                    return { reader: this, parents, dto, implicit };
+                    return { reader: this, parents, dto, implicit, typeName: undefined };
                 }
                 dependency(unresolvedFieldIndex, row) {
                     switch (unresolvedFieldIndex) {
@@ -316,7 +316,7 @@ describe("RecursiveTest", () => {
                         _1: reader.get(1), 
                         _3: reader.get(2)
                     };
-                    return { reader: this, parents, dto, implicit };
+                    return { reader: this, parents, dto, implicit, typeName: undefined };
                 }
                 dependency(unresolvedFieldIndex, row) {
                     switch (unresolvedFieldIndex) {
@@ -387,7 +387,7 @@ describe("RecursiveTest", () => {
                     const implicit = {
                         _1: reader.get(1)
                     };
-                    return { reader: this, parents, dto, implicit };
+                    return { reader: this, parents, dto, implicit, typeName: undefined };
                 }
                 dependency(unresolvedFieldIndex, row) {
                     switch (unresolvedFieldIndex) {
@@ -447,7 +447,7 @@ describe("RecursiveTest", () => {
                     const implicit = {
                         _1: reader.get(1)
                     };
-                    return { reader: this, parents, dto, implicit };
+                    return { reader: this, parents, dto, implicit, typeName: undefined };
                 }
                 dependency(unresolvedFieldIndex, row) {
                     switch (unresolvedFieldIndex) {
@@ -612,7 +612,7 @@ describe("RecursiveTest", () => {
                     const implicit = {
                         _2: reader.get(2)
                     };
-                    return { reader: this, parents, dto, implicit };
+                    return { reader: this, parents, dto, implicit, typeName: undefined };
                 }
                 dependency(unresolvedFieldIndex, row) {
                     switch (unresolvedFieldIndex) {
@@ -671,7 +671,7 @@ describe("RecursiveTest", () => {
                     const implicit = {
                         _2: reader.get(2)
                     };
-                    return { reader: this, parents, dto, implicit };
+                    return { reader: this, parents, dto, implicit, typeName: undefined };
                 }
                 dependency(unresolvedFieldIndex, row) {
                     switch (unresolvedFieldIndex) {
@@ -750,7 +750,7 @@ describe("RecursiveTest", () => {
                     const implicit = {
                         _2: reader.get(2)
                     };
-                    return { reader: this, parents, dto, implicit };
+                    return { reader: this, parents, dto, implicit, typeName: undefined };
                 }
                 dependency(unresolvedFieldIndex, row) {
                     switch (unresolvedFieldIndex) {
