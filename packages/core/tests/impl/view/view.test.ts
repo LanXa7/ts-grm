@@ -1,9 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { dto } from "@/schema/dto";
 import { BOOK, BOOK_STORE } from "../../model/model";
-import { buildShape } from "@/impl/shape";
 import { expectCode } from "../../utils";
-import { mapperJson, makeReader } from "./utils";
+import { mapperJson, makeReader, shapeJson } from "./utils";
 
 describe("ViewTest", () => {
 
@@ -32,7 +31,7 @@ describe("ViewTest", () => {
                 }
             ]
         });
-        expect(buildShape(view.mapper)).toEqual({
+        expect(shapeJson(view.mapper)).toEqual({
             "id": 0,
             "name": 1,
             "edition": 2
@@ -152,7 +151,7 @@ describe("ViewTest", () => {
                 }
             ]
         });
-        expect(buildShape(view.mapper)).toEqual({
+        expect(shapeJson(view.mapper)).toEqual({
                 "name": 0,
                 "edition": 1,
                 "store": {
@@ -401,7 +400,7 @@ describe("ViewTest", () => {
                 }
             ]
         });
-        expect(buildShape(view.mapper)).toEqual({
+        expect(shapeJson(view.mapper)).toEqual({
             "id": 0,
             "name": 1,
             "books": {
@@ -648,7 +647,7 @@ describe("ViewTest", () => {
                 }
             ]
         });
-        expect(buildShape(view.mapper)).toEqual({
+        expect(shapeJson(view.mapper)).toEqual({
             "name": 0,
             "__implicit": {
                 "_1": 1
@@ -900,7 +899,7 @@ describe("ViewTest", () => {
                 }
             ]
         });
-        expect(buildShape(view.mapper)).toEqual({
+        expect(shapeJson(view.mapper)).toEqual({
             "bookId": 0,
             "key": {
                 "bookName": 1,

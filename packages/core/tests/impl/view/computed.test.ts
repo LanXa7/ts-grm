@@ -1,8 +1,7 @@
 import { dto } from "@/index";
 import { describe, expect, it } from "vitest";
 import { AUTHOR, BOOK, BOOK_STORE } from "../../model/model";
-import { makeReader, mapperJson } from "./utils";
-import { buildShape } from "@/impl/shape";
+import { makeReader, mapperJson, shapeJson } from "./utils";
 import { expectCode } from "../../utils";
 
 describe("ComputedTest", () => {
@@ -43,7 +42,7 @@ describe("ComputedTest", () => {
                 }
             ]
         });
-        expect(buildShape(view.mapper)).toEqual({
+        expect(shapeJson(view.mapper)).toEqual({
             "id": 0,
             "fullName": "fullName",
             "__implicit": {
@@ -190,7 +189,7 @@ describe("ComputedTest", () => {
                 }
             ]
         });
-        expect(buildShape(view.mapper)).toEqual({
+        expect(shapeJson(view.mapper)).toEqual({
             "id": 0,
             "__implicit": {
                 "fullName": {
@@ -355,7 +354,7 @@ describe("ComputedTest", () => {
                 }
             ]
         });
-        expect(buildShape(view.mapper)).toEqual({
+        expect(shapeJson(view.mapper)).toEqual({
             "id": 0,
             "formula": {
                 "fn": "fullName"
@@ -484,7 +483,7 @@ describe("ComputedTest", () => {
                 }
             ]
         });
-        expect(buildShape(view.mapper)).toEqual({"authorCount":0});
+        expect(shapeJson(view.mapper)).toEqual({"authorCount":0});
         const row = view.mapper.dtoRowReader.read(
             undefined,
             makeReader(2)
@@ -531,7 +530,7 @@ describe("ComputedTest", () => {
                 }
             ]
         });
-        expect(buildShape(view.mapper)).toEqual({
+        expect(shapeJson(view.mapper)).toEqual({
             "newestBooks": {
                 "__array": {
                     "id": 0,
@@ -663,7 +662,7 @@ describe("ComputedTest", () => {
                 ]
             }
         `);
-        expect(buildShape(view.mapper)).toEqual({
+        expect(shapeJson(view.mapper)).toEqual({
             "id": 0,
             "cheapBooks": {
                 "__array": {
@@ -815,7 +814,7 @@ describe("ComputedTest", () => {
                 }
             ]
         });
-        expect(buildShape(view.mapper)).toEqual({
+        expect(shapeJson(view.mapper)).toEqual({
             "id": 0,
             "__implicit": {
                 "bookNames": {
@@ -977,7 +976,7 @@ describe("ComputedTest", () => {
                 }
             ]
         });
-        expect(buildShape(view.mapper)).toEqual({
+        expect(shapeJson(view.mapper)).toEqual({
             "name": 0,
             "edition": 1,
             "__implicit": {
@@ -998,7 +997,7 @@ describe("ComputedTest", () => {
                 }
             }
         });
-        expect(Object.keys(buildShape(view.mapper))).toEqual(
+        expect(Object.keys(shapeJson(view.mapper))).toEqual(
             ['name', 'edition', '__implicit', 'store', 'storeBookNames']
         );
         expectCode(view.mapper.dtoRowReader.constructor.toString(), `

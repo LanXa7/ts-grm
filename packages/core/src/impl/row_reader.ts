@@ -113,13 +113,13 @@ function writeRootMember(
     nullAsUndefined: boolean,
     writer: CodeWriter
 ) {
-    if (typeof member === "object" && isEmptyShape(member)) {
+    if (member.targetShape != null && isEmptyShape(member.targetShape)) {
         return;
     }
     const keyStr = key.startsWith("←") ? `"${key}"` : key;
     writer.separator();
-    if (typeof member === "number") {
-        writer.code(keyStr).code(": reader.get(").code(`${member}`).code(")");
+    if (typeof member.columnIndex === "number") {
+        writer.code(keyStr).code(": reader.get(").code(`${member.columnIndex}`).code(")");
     } else if (nullAsUndefined) {
         writer.code(keyStr).code(": undefined");
     } else {
@@ -230,13 +230,7 @@ function writeFold(
             continue;
         }
         const member = shape[key];
-        if (typeof member !== "object") {
-            continue;
-        }
-        if ((member as any).__array != null || (member as any).__ref != null) {
-            continue;
-        }
-        if (isEmptyShape(member)) {
+        if (member?.targetShape == null || member.targetKind != null || isEmptyShape(member.targetShape)) {
             continue;
         }
         writer.code(contextPath).code("_").code(key).code("(").code(parameterName).code(") ");
@@ -246,14 +240,14 @@ function writeFold(
             writer.code("if (o == null) ").scope("CURLY_BRACKETS", () => {
                 writer.code(`${parent}.${key} = o = `);
                 writer.scope("CURLY_BRACKETS", () => {
-                    writeFoldBody(member, nullAsUndefined, writer);
+                    writeFoldBody(member.targetShape!, nullAsUndefined, writer);
                 }).newLine(";");
             }).newLine();
             writer.code("return o").newLine(";");
         }).newLine();
         writeFold(
             `${contextPath}_${key}`,
-            member,
+            member.targetShape!,
             nullAsUndefined,
             writer
         );

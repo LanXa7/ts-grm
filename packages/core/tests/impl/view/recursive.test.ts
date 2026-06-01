@@ -1,9 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { dto } from "@/schema/dto";
 import { LIBRARY, TREE_NODE } from "../../model/model";
-import { buildShape } from "@/impl/shape";
 import { expectCode } from "../../utils";
-import { mapperJson, makeReader } from "./utils";
+import { mapperJson, makeReader, shapeJson } from "./utils";
 
 describe("RecursiveTest", () => {
 
@@ -56,7 +55,7 @@ describe("RecursiveTest", () => {
                 }
             ]
         });
-        expect(buildShape(view.mapper)).toEqual({
+        expect(shapeJson(view.mapper)).toEqual({
             "name": 0,
             "parentNode": {
                 "__recursive": 1,
@@ -277,7 +276,7 @@ describe("RecursiveTest", () => {
                 }
             ]
         });
-        expect(buildShape(view.mapper)).toEqual({
+        expect(shapeJson(view.mapper)).toEqual({
             "name": 0,
             "parentNode": {
                 "__recursive": 1,

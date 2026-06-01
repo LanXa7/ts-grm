@@ -1,9 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { dto } from "@/schema/dto";
 import { BOOK, AUTHOR, TREE_NODE } from "../../model/model";
-import { buildShape } from "@/impl/shape";
 import { expectCode } from "../../utils";
-import { mapperJson, makeReader } from "./utils";
+import { mapperJson, makeReader, shapeJson } from "./utils";
 
 describe("FlatTest", () => {
 
@@ -73,7 +72,7 @@ describe("FlatTest", () => {
                 }
             ]
         });
-        expect(buildShape(view.mapper)).toEqual({
+        expect(shapeJson(view.mapper)).toEqual({
             "id": 0,
             "name": 1,
             "edition": 2,
@@ -208,7 +207,7 @@ describe("FlatTest", () => {
                 }
             ]
         });
-        expect(buildShape(view.mapper)).toEqual({
+        expect(shapeJson(view.mapper)).toEqual({
             "id": 0,
             "flattenFirstName": 1,
             "flattenLastName": 2
@@ -324,7 +323,7 @@ describe("FlatTest", () => {
                 }
             ]
         });
-        expect(buildShape(view.mapper)).toEqual({
+        expect(shapeJson(view.mapper)).toEqual({
             "__implicit": {
                 "_2": 2
             },

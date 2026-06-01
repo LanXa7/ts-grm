@@ -1,8 +1,7 @@
 import { dto } from "@/index";
 import { describe, it, expect } from "vitest";
 import { COURSE, STUDENT } from "../../model/model";
-import { makeReader, mapperJson } from "./utils";
-import { buildShape } from "@/impl/shape";
+import { makeReader, mapperJson, shapeJson } from "./utils";
 import { expectCode } from "../../utils";
 
 describe("JoinEntityTest", () => {
@@ -72,7 +71,7 @@ describe("JoinEntityTest", () => {
                 }
             ]
         });
-        expect(buildShape(view.mapper)).toEqual({
+        expect(shapeJson(view.mapper)).toEqual({
             "id": 0,
             "name": 1,
             "courses": {
@@ -292,7 +291,7 @@ describe("JoinEntityTest", () => {
                 }
             ]
         });
-        expect(buildShape(view.mapper)).toEqual({
+        expect(shapeJson(view.mapper)).toEqual({
             "id": 0,
             "name": 1,
             "students": {

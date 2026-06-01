@@ -159,6 +159,7 @@ class SqlRecordExecutor extends AbstractExecutorWrapper {
         values: ReadonlyArray<Value>,
         purpose: Purpose
     ): Promise<DataRows> {
+        console.log(sql)
         this.sqlRecord.add(sql, values.map(v => v.value), purpose);
         return super.executeStatement(sql, values, purpose);
     }

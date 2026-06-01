@@ -1,9 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { dto } from "@/schema/dto";
 import { ORDER_ITEM } from "../../model/model";
-import { buildShape } from "@/impl/shape";
 import { expectCode } from "../../utils";
-import { mapperJson, makeReader } from "./utils";
+import { mapperJson, makeReader, shapeJson } from "./utils";
 
 describe("EmbeddedTest", () => {
 
@@ -56,7 +55,7 @@ describe("EmbeddedTest", () => {
                 }
             ]
         });
-        expect(buildShape(view.mapper)).toEqual({
+        expect(shapeJson(view.mapper)).toEqual({
             "order": {
                 "__ref": {
                     "name": 0
@@ -207,7 +206,7 @@ describe("EmbeddedTest", () => {
                 }
             ]
         });
-        expect(buildShape(view.mapper)).toEqual({
+        expect(shapeJson(view.mapper)).toEqual({
             "orderId": {
                 "x": 0,
                 "y": {
@@ -382,7 +381,7 @@ describe("EmbeddedTest", () => {
                 }
             ]
         });
-        expect(buildShape(view.mapper)).toEqual({
+        expect(shapeJson(view.mapper)).toEqual({
             "orderId": {
                 "y": {
                     "a": 0,

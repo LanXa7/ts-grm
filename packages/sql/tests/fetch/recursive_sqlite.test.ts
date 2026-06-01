@@ -401,6 +401,7 @@ describe.sequential("RecursiveTest", () => {
                 depth: 2
             })
         );
+        console.log(view.mapper.dtoRowReader.constructor.toString())
         const row = await sqlClient.createQuery(TREE_NODE, (q, treeNode) => {
             q.where(treeNode.id.eq(1));
             return q.select(treeNode.fetch(view));

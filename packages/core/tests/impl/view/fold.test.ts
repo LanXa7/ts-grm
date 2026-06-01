@@ -1,9 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { dto } from "@/schema/dto";
 import { BOOK} from "../../model/model";
-import { buildShape } from "@/impl/shape";
 import { expectCode } from "../../utils";
-import { mapperJson, makeReader } from "./utils";
+import { mapperJson, makeReader, shapeJson } from "./utils";
 
 describe("FoldTest", () => {
 
@@ -36,7 +35,8 @@ describe("FoldTest", () => {
                 }
             ]
         });
-        expect(buildShape(view.mapper)).toEqual({
+        console.log(JSON.stringify(shapeJson(view.mapper)));
+        expect(shapeJson(view.mapper)).toEqual({
             "id": 0,
             "key": {
                 "name": 1,
@@ -132,7 +132,7 @@ describe("FoldTest", () => {
                 }
             ]
         });
-        expect(buildShape(view.mapper)).toEqual({
+        expect(shapeJson(view.mapper)).toEqual({
             "id": 0,
             "associations": {
                 "authors": {
@@ -351,7 +351,7 @@ describe("FoldTest", () => {
                 }
             ]
         });
-        expect(buildShape(view.mapper)).toEqual({
+        expect(shapeJson(view.mapper)).toEqual({
             "key": {
                 "name": 0,
                 "edition": 1

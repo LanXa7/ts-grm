@@ -3,18 +3,22 @@ import { FetchProp } from "./dto";
 import { DtoMapper, DtoMapperField } from "./dto_mapper";
 import { EntityProp } from "./entity_prop";
 import { CalculationStrategyKind } from "./calculation_strategy";
+import { ScalarType } from "@/schema/prop";
 
 export type Shape = {
     [key: string]: ShapeMember;
 } & {
-    __implicit?: { [key: string]: number };
+    __implicit?: { [key: string]: ShapeMember };
 };
 
-export type ShapeMember = 
-    (number | string | undefined)
-    | Shape
-    | { __array: Shape }
-    | { __ref: Shape };
+export type ShapeMember = {
+    downcastTo: string | undefined;
+    columnIndex: number | string | undefined;
+    scalarType: ScalarType | undefined;
+    targetShape: Shape | undefined;
+    targetKind: "REFERENCE" | "COLLECTION" | undefined;
+    recursiveDepth: number | undefined;
+}
 
 export function isEmptyShape(shape: Shape): boolean {
     const keys = Object.keys(shape);
@@ -52,7 +56,14 @@ function fillShapeNode(
         if (field.paths.length === 0) {
             buildShapeMember(field, false);
             if (field.isDependent) {
-                shapeScope!.implicit[`_${i}`] = field.columnIndex!;
+                shapeScope!.implicit[`_${i}`] = {
+                    downcastTo: field.downcastTo?.name,
+                    columnIndex: field.columnIndex,
+                    scalarType: field.prop.isEntityProp ? (field.prop as EntityProp).scalarType : undefined,
+                    targetShape: undefined,
+                    targetKind: undefined,
+                    recursiveDepth: undefined
+                };
             }
         } else {
             handleExplictField(field);
@@ -81,13 +92,22 @@ function handleExplictField(field: DtoMapperField) {
                             : undefined;
                     let foldShape: Shape | undefined = 
                         implicitName != null
-                            ? scope.implicit[implicitName] as Shape
-                            : scope.shape[path[i]!] as Shape;
+                            ? scope.implicit[implicitName]?.targetShape as Shape
+                            : scope.shape[path[i]!]?.targetShape as Shape;
                     if (foldShape == null) {
+                        foldShape = {};
+                        const newMember: ShapeMember = {
+                            downcastTo: field.downcastTo?.name,
+                            columnIndex: undefined,
+                            scalarType: field.prop.isEntityProp ? (field.prop as EntityProp).scalarType : undefined,
+                            targetShape: foldShape,
+                            targetKind: undefined,
+                            recursiveDepth: undefined
+                        };
                         if (implicitName != null) {
-                            scope.implicit[implicitName] = foldShape = {};
+                            scope.implicit[implicitName] = newMember;
                         } else {
-                            scope.assign(path[i]!, foldShape = {});
+                            scope.assign(path[i]!, newMember);
                         }
                     }
                     scope = scope.fold(foldShape);
@@ -112,35 +132,53 @@ function handleExplictField(field: DtoMapperField) {
 function buildShapeMember(
     field: DtoMapperField,
     ignoreColumnIndex: boolean
-): ShapeMember | undefined {
+): ShapeMember {
     if (field.subMapper) {
         if (isCollection(field.prop)) {
-            return field.recursiveDepth != null 
-                ? { 
-                    ...recursive,
-                    __array: buildShapeImpl(field.subMapper, field)
-                } : { 
-                    __array: buildShapeImpl(field.subMapper, field)
-                };
+            return {
+                downcastTo: field.downcastTo?.name,
+                columnIndex: field.columnIndex,
+                scalarType: field.prop.isEntityProp ? (field.prop as EntityProp).scalarType : undefined,
+                targetShape: buildShapeImpl(field.subMapper, field),
+                targetKind: "COLLECTION",
+                recursiveDepth: field.recursiveDepth
+            }
         } 
         if (isReference(field.prop)) {
-            return field.recursiveDepth != null 
-                ? {
-                    ...recursive,
-                    __ref: buildShapeImpl(field.subMapper, field)
-                } : {
-                    __ref: buildShapeImpl(field.subMapper, field)
-                };
+            return {
+                downcastTo: field.downcastTo?.name,
+                columnIndex: field.columnIndex,
+                scalarType: field.prop.isEntityProp ? (field.prop as EntityProp).scalarType : undefined,
+                targetShape: buildShapeImpl(field.subMapper, field),
+                targetKind: "REFERENCE",
+                recursiveDepth: field.recursiveDepth
+            };
         }
-        return buildShapeImpl(field.subMapper, field);
+        return {
+            downcastTo: field.downcastTo?.name,
+            columnIndex: field.columnIndex,
+            scalarType: field.prop.isEntityProp ? (field.prop as EntityProp).scalarType : undefined,
+            targetShape: buildShapeImpl(field.subMapper, field),
+            targetKind: undefined,
+            recursiveDepth: undefined
+        }
     }
+    let columnIndex: number | string | undefined;
     if (ignoreColumnIndex) {
-        return undefined;
+        columnIndex = undefined;
+    } else if (field.prop.isEntityProp && (field.prop as EntityProp).tsFormulaFn != null) {
+        columnIndex = field.prop.name;
+    } else {
+        columnIndex = field.columnIndex;
     }
-    if (field.prop.isEntityProp && (field.prop as EntityProp).tsFormulaFn != null) {
-        return field.prop.name;
-    }
-    return field.columnIndex;
+    return {
+        downcastTo: field.downcastTo?.name,
+        columnIndex,
+        scalarType: field.prop.isEntityProp ? (field.prop as EntityProp).scalarType : undefined,
+        targetShape: undefined,
+        targetKind: undefined,
+        recursiveDepth: undefined
+    };
 }
 
 function isCollection(prop: FetchProp): boolean {
@@ -231,8 +269,15 @@ class ShapeScope {
         }
         parent._modelScope._reachable();
         const name = this.mapper?.bridgeProp?.name ?? this.mapper.associatedProp!.name;
-        if (parent._modelScope.shape[name] !== this.shape) {
-            parent._modelScope.assign(name, this.shape);
+        if (parent._modelScope.shape[name]?.targetShape !== this.shape) {
+            parent._modelScope.assign(name, {
+                downcastTo: undefined,
+                columnIndex: undefined,
+                scalarType: undefined,
+                targetShape: this.shape,
+                targetKind: undefined,
+                recursiveDepth: undefined
+            });
         }
     }
 
@@ -262,5 +307,3 @@ class ShapeScope {
         return `${this.parent!.toString()}.${this.field.prop.name}`;
     }
 };
-
-const recursive: Shape = { __recursive: 1 };
