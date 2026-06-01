@@ -80,6 +80,9 @@ class DtoBuilder {
             throw new ArgumentError(`Cannot flat the property "${prop.toString()}" 
             because it is neither reference nor embedded property`);
         }
+        if (this.downcastTo != null) {
+            throw new StateError(`"flat" cannot be invoked in "instanceOf"`);
+        }
         const field: DtoField = dtoField(this.downcastTo, prop, fn);
         if (prop.targetEntity != null) {
             const convertedField: DtoField = {
