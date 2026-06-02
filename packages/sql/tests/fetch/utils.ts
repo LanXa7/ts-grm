@@ -41,9 +41,30 @@ insert into BOOK(ID, TYPE, NAME, EDITION, PRICE, STORE_ID) values
     (7, 'PaperBook', 'YugabyteDB: The Definitive Guide', 1, 69.99, 1),
     (8, 'PaperBook', 'YugabyteDB: The Definitive Guide', 2, 79.99, 1),
     (9, 'PaperBook', 'YugabyteDB: The Definitive Guide', 3, 89.99, 1),
-    (10, 'PaperBook', 'GraphQL in Action', 1, 59.99, 2),
-    (11, 'PaperBook', 'GraphQL in Action', 2, 69.99, 2),
-    (12, 'PaperBook', 'GraphQL in Action', 3, 79.99, 2);
+    (10, 'PdfElectronicBook', 'GraphQL in Action', 1, 59.99, 2),
+    (11, 'PdfElectronicBook', 'GraphQL in Action', 2, 69.99, 2),
+    (12, 'PdfElectronicBook', 'GraphQL in Action', 3, 79.99, 2);
+
+insert into PAPER_BOOK(PB_ID, WIDTH, HEIGHT) values
+    (4, 140, 203),
+    (5, 140, 203),
+    (6, 140, 203),
+    (7, 145, 210),
+    (8, 145, 210),
+    (9, 145, 210);
+
+insert into ELECTRONIC_BOOK(EB_ID, EB_TYPE, ADDRESS) values
+    (1, 'ElectronicBook', 'https://www.oreilly.com/learning-graphql?version=1'),
+    (2, 'ElectronicBook', 'https://www.oreilly.com/learning-graphql?version=2'),
+    (3, 'ElectronicBook', 'https://www.oreilly.com/learning-graphql?version=3'),
+    (10, 'PdfElectronicBook', 'https://www.manning.com/grahql-in-action?version=1'),
+    (11, 'PdfElectronicBook', 'https://www.manning.com/grahql-in-action?version=2'),
+    (12, 'PdfElectronicBook', 'https://www.manning.com/grahql-in-action?version=3');
+
+insert into PDF_ELECTRONIC_BOOK(PEB_ID, PDF_VERSION) values
+    (10, '2.0'),
+    (11, '2.0'),
+    (12, '2.0');
 
 insert into author(id, first_name, last_name) values
     (1, 'Eve', 'Procello'),

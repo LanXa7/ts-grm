@@ -1,7 +1,7 @@
 import { dsl } from "@/dsl";
 import { dto } from "@/index";
 import { SqlFormula, TsFormula, Calculator } from "@/schema/computed";
-import { DV_MODEL_NAME, model } from "@/schema/model";
+import { DV_ABSTRACT, DV_MODEL_NAME, model, TB_INHERIT } from "@/schema/model";
 import { prop } from "@/schema/prop";
 import { z } from "zod"; 
 
@@ -63,7 +63,35 @@ export const BOOK_STORE = model("BookStore", "id", class {
     bookNames = prop.formula.ts(BOOK_STORE_BOOK_NAMES_FORMULA);
     newestBooks = prop.calculated.collection(BOOK_STORE_NEWEST_BOOK_CALCULATOR)
     specifiedBooks = prop.calculated.collection(BOOK_STORE_SPECIFIED_BOOK_CALCULATOR)
+}, ctx => {
+    ctx.table({
+        discriminator: "TYPE",
+        discriminatorValue: DV_ABSTRACT
+    });
 });
+
+export const PHYSICAL_BOOK_STORE = model.extends(BOOK_STORE)(
+    "PhysicalBookStore", 
+    class {
+        city = prop.str();
+        street = prop.str();
+    },
+    ctx => ctx.table({
+        name: TB_INHERIT,
+        discriminatorValue: DV_MODEL_NAME
+    })
+);
+
+export const ONLINE_BOOK_STORE = model.extends(BOOK_STORE)(
+    "OnlineBookStore", 
+    class {
+        url = prop.str()
+    },
+    ctx => ctx.table({
+        name: TB_INHERIT,
+        discriminatorValue: DV_MODEL_NAME
+    })
+);
 
 const BOOK_AUTHOR_COUNT_FORMULA: SqlFormula<number> = 
     SqlFormula.of({
@@ -100,7 +128,7 @@ export const BOOK = model("Book", "id", class {
     }).unique("name", "edition");
 });
 
-const PAPER_BOOK_FORMULA: TsFormula<number> = 
+const PAPER_BOOK_AREA_FORMULA: TsFormula<number> = 
     TsFormula.of({
         dependency: () => dto.view(PAPER_BOOK, $ => $.size()),
         fn: data => data.size.width * data.size.height
@@ -113,7 +141,7 @@ export const PAPER_BOOK = model.extends(BOOK)(
             width: prop.i32(),
             height: prop.i32()
         })
-        area = prop.formula.ts(PAPER_BOOK_FORMULA)
+        area = prop.formula.ts(PAPER_BOOK_AREA_FORMULA)
     },
     ctx => ctx.table({
         name: "THE_PAPER_BOOK",

@@ -109,9 +109,10 @@ export class PreVisitor extends ast.AbstractVisitor {
             if (field.columnIndex == null) {
                 continue;
             }
+
             const realTable = this._toRealTable(view.table.__to(field.prop.declaringEntity));
             if (!field.prop.isEntityProp) {
-                return;
+                continue;
             }
             const entityProp = field.prop as metadata.EntityProp;
             if (entityProp.sqlFormulaFn != null) {

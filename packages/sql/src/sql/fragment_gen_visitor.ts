@@ -329,9 +329,6 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
             if (field.columnIndex == null) {
                 continue;
             }
-            if (!field.prop.isEntityProp) {
-
-            }
             this._compositeStack.current.separator();
             const prop = field.prop;
             const realTable = this._toRealTable(table.__to(prop.declaringEntity));

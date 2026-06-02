@@ -154,13 +154,16 @@ async function resolveAssociations(
             continue;
         }
         if (unresolvedField.subMapper != null || recursiveContext != null) {
-            await new AssociationResolver(
-                sqlClient, 
-                mapper, 
-                unresolvedField, 
-                sourceRows, 
-                recursiveContext
-            ).resolve();
+            const filteredSourceRows = filterSourceRows(sourceRows, unresolvedField);
+            if (filteredSourceRows.length !== 0) {
+                await new AssociationResolver(
+                    sqlClient, 
+                    mapper, 
+                    unresolvedField, 
+                    filteredSourceRows, 
+                    recursiveContext
+                ).resolve();
+            }
         }
     }
 }
@@ -736,18 +739,21 @@ async function resolveCalculators(
         if (unresolvedField.prop.isEntityProp) {
             const entityProp = unresolvedField.prop as metadata.EntityProp;
             if (entityProp.calculationStrategy != null) {
-                await usingExplicitPurpose({
-                    kind: "LOAD_CALCULATOR",
-                    prop: unresolvedField.prop as metadata.EntityProp,
-                    parameter: unresolvedField.parameter
-                }, async () => {
-                    await new CalculatorResolver(
-                        sqlClient,
-                        mapper,
-                        unresolvedField,
-                        sourceRows
-                    ).resolve();
-                })
+                const filteredSourceRows = filterSourceRows(sourceRows, unresolvedField);
+                if (filteredSourceRows.length !== 0) {
+                    await usingExplicitPurpose({
+                        kind: "LOAD_CALCULATOR",
+                        prop: unresolvedField.prop as metadata.EntityProp,
+                        parameter: unresolvedField.parameter
+                    }, async () => {
+                        await new CalculatorResolver(
+                            sqlClient,
+                            mapper,
+                            unresolvedField,
+                            filteredSourceRows
+                        ).resolve();
+                    })
+                }
             }
         }
     }
@@ -919,3 +925,19 @@ type CalculatorBinding = {
     readonly sourceRows: Array<metadata.DtoRow>;
     targetData: any;
 };
+
+function filterSourceRows(
+    rows: ReadonlyArray<metadata.DtoRow>,
+    field: metadata.DtoMapperField
+): ReadonlyArray<metadata.DtoRow> {
+    const downcastTo = field.downcastTo;
+    if (downcastTo == null) {
+        return rows;
+    }
+    const typeNames = new Set<string>();
+    typeNames.add(downcastTo.name);
+    for (const descendant of downcastTo.descendants) {
+        typeNames.add(descendant.name);
+    }
+    return rows.filter(row => typeNames.has(row.typeName!));
+}

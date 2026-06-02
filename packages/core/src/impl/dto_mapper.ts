@@ -163,6 +163,10 @@ class Mapper {
     
     private _add(dtoField: DtoField, mapPath: boolean) {
         
+        if (dtoField.downcastTo != null) {
+            this._addTypeNameField();
+        }
+
         let dependencies: ReadonlyArray<number> | undefined = undefined;
 
         this.dependencyWriter = { indices: [], parent: this.dependencyWriter };
@@ -189,15 +193,16 @@ class Mapper {
             const entityProp = prop as EntityProp;
             if (entityProp.tsFormulaDependencyView != null) {
                 const view = entityProp.tsFormulaDependencyView;
-                for (const field of view.mapper.fields) {
-                    if (field.paths.length === 0) {
+                for (const viewField of view.mapper.fields) {
+                    if (viewField.paths.length === 0) {
                         continue;
                     }
-                    let dtoField = toDtoFields(field, false)[0]!;
-                    if (field.paths.length === 0) {
+                    let dtoField = toDtoFields(viewField, false)[0]!;
+                    dtoField = {...dtoField, downcastTo: field.downcastTo};
+                    if (viewField.paths.length === 0) {
                         this._add(dtoField, false);
                     } else {
-                        for (const path of field.paths) {
+                        for (const path of viewField.paths) {
                             const newPath = typeof path === "string"
                                 ? [`<implicit:${prop.name}>`, path]
                                 : [`<implicit:${prop.name}>`, ...path];
@@ -218,9 +223,6 @@ class Mapper {
     }
 
     private _addImpl(dtoField: DtoField, mapPath: boolean) {
-        if (dtoField.downcastTo != null) {
-            this._addTypeNameField();
-        }
         let field: MapperField | undefined = undefined;
         if (dtoField.dto == null || dtoField.prop.targetEntity != null) {
             field = this._field(dtoField);

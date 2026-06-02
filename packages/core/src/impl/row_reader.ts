@@ -85,7 +85,7 @@ function writeRead(
             writer
             .code("const typeName = $entity.findByDiscriminatorValue(reader.get(")
             .code(mapper.typeNameIndex.toString())
-            .code("))").newLine(";");
+            .code(")).name").newLine(";");
         }
         if (downcastEntities == null) {
             writeDtoDeclaration(undefined, shape, mapper, writer);
@@ -120,15 +120,18 @@ function writeRead(
         if (downcastEntities == null) {
             writeDepthAssignments(undefined, mapper, writer);
         } else {
-            writer.code("switch (typeName) ").scope("CURLY_BRACKETS", () => {
-                for (const downcastEntity of downcastEntities!) {
-                    writer.code("case '").code(downcastEntity.name).code("':");
-                    writer.scope("BLANK", () => {
-                        writeDepthAssignments(downcastEntity, mapper, writer);
-                        writer.code("break").newLine(";");
-                    });
-                }
-            }).newLine();
+            const hasEmbedded = mapper.fields.find(f => f.paths.find(path => typeof path !== "string") != null) != null;
+            if (hasEmbedded) {
+                writer.code("switch (typeName) ").scope("CURLY_BRACKETS", () => {
+                    for (const downcastEntity of downcastEntities!) {
+                        writer.code("case '").code(downcastEntity.name).code("':");
+                        writer.scope("BLANK", () => {
+                            writeDepthAssignments(downcastEntity, mapper, writer);
+                            writer.code("break").newLine(";");
+                        });
+                    }
+                }).newLine();
+            }
         }
         writer
             .code("return { reader: this, parents, dto")
@@ -162,7 +165,7 @@ function writeDtoDeclaration(
 
 function writieImplicitDeclaration(
     downcastTo: Entity | undefined,
-    shape: Shape,
+    implicit: Shape,
     mapper: DtoMapper,
     writer: CodeWriter
 ) {
@@ -170,9 +173,9 @@ function writieImplicitDeclaration(
         .codeIf("const ", downcastTo == null)
         .code("implicit = ")
         .scope("CURLY_BRACKETS", () => {
-            for (const key in shape) {
-                if (downcastTo == null || shape[key]!.downcastTo == null || shape[key]!.downcastTo!.isAssignableFrom(downcastTo)) {
-                    writeRootMember(key, shape[key], mapper, writer);
+            for (const key in implicit) {
+                if (downcastTo == null || implicit[key]!.downcastTo == null || implicit[key]!.downcastTo!.isAssignableFrom(downcastTo)) {
+                    writeRootMember(key, implicit[key], mapper, writer);
                 }
             }
         })
@@ -554,8 +557,8 @@ function writeResolveTsFormula(
         writeResolveTsFormulaImpl(field, writer);
     } else {
         writer.code("switch (row.typeName)" ).scope("CURLY_BRACKETS", () => {
-            writer.code(`case '${mapper.entity.name}':`);
-            for (const descendant of mapper.entity.descendants) {
+            writer.code(`case '${field.downcastTo!.name}':`);
+            for (const descendant of field.downcastTo!.descendants) {
                 writer.newLine().code(`case '${descendant.name}':`);
             }
             writer.scope("BLANK", () => {
@@ -618,20 +621,25 @@ function writeTsFormulaFns(
 ) {
     for (const field of mapper.fields) {
         if (isTsFormula(field.prop)) {
-            writeTsFormulaFn(field.prop as EntityProp, writer);
+            writeTsFormulaFn(field, writer);
         }
     }
 }
 
 function writeTsFormulaFn(
-    prop: EntityProp, 
+    field: DtoMapperField, 
     writer: CodeWriter
 ) {
+    const prop = field.prop as EntityProp;
     writer
         .code("static ")
         .code(tsFormulaFnName(prop))
-        .code(" = ")
-        .code(`$entity.expandedPropMap.get("${prop.path}").tsFormulaFn`)
+        .code(" = $entity");
+    if (field.downcastTo != null) {
+        writer.code(`.findByTypeName('${field.downcastTo.name}')`);
+    }
+    writer
+        .code(`.expandedPropMap.get("${prop.path}").tsFormulaFn`)
         .newLine(";");
 }
 
