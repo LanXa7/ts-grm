@@ -182,6 +182,10 @@ class AssociationResolver {
 
     private readonly _batchSize: number;
 
+    private readonly _isOptimizable: boolean;
+
+    private readonly _optimizationIndices: ReadonlyArray<number> | undefined;
+
     private readonly _bindingMap = new Map<any, AssociationBinding>();
 
     constructor(
@@ -206,6 +210,32 @@ class AssociationResolver {
             this._batchSize = _sqlClient.options.defaultListBatchSize;
         } else {
             this._batchSize = _sqlClient.options.defaultBatchSize;
+        }
+        this._isOptimizable = unresolvedField.optimizable && 
+            _sqlClient.getFilters(unresolvedField.subMapper!.entity).length === 0;
+        if (this._isOptimizable && this._keySpan > 1) {
+            const indexMap = new Map<string, number>();
+            let index = 0;
+            if (unresolvedField.prop.referenceKeyProp != null) {
+                for (const dependency of this._unresolvedField.dependencies!) {
+                    indexMap.set(_sourceMapper.fields[dependency]!.prop.subPath, index++);
+                }
+            } else {
+                for (const subPath of this._unresolvedField.prop!.targetKeyProp!.flattenScalarProps.keys()) {
+                    indexMap.set(subPath, index++);
+                }
+            }
+            const indices: Array<number> = [];
+            for (const field of this._targetMapper.fields) {
+                const index = indexMap.get(field.prop.subPath);
+                if (index == null) {
+                    throw new Error(`Internal bug: cannot find optimizaiton index for "${field.prop.toString()}"`);
+                }
+                indices.push(index);
+            }
+            this._optimizationIndices = indices;
+        } else {
+            this._optimizationIndices = undefined;
         }
     }
 
@@ -240,6 +270,10 @@ class AssociationResolver {
     }
 
     private get _keySpan(): number {
+        return this._unresolvedField.dependencies!.length;
+    }
+
+    private get _targetKeySpan(): number {
         return (
             this._unresolvedField.prop.targetKeyProp 
             ?? this._unresolvedField.prop.targetEntity!.idProp
@@ -392,8 +426,44 @@ class AssociationResolver {
     private async _resolveBatch(
         dependencies: ReadonlyArray<any>
     ): Promise<RecursiveContext | undefined> {
+        const [keyRowReader, valueRowReader, recursiveContext] = await this._createRowReaders(dependencies);
+        const sourceDtoRowReader = this._sourceDtoRowReader;
+        const targetDtoRowReader = this._targetDtoRowReader;
+        while (keyRowReader.next()) {
+            const key = keyRowReader.get(0, this._keySpan);
+            const binding = this._bindingMap.get(sourceDtoRowReader.dependencyHash(this._unresolvedField.index, key))
+            if (binding == null) {
+                continue;
+            }
+            const row = this._byTargetKey 
+                ? valueRowReader.get(0, this._targetKeySpan)
+                : targetDtoRowReader.read(binding.sourceRows, valueRowReader);
+            if (this._byTargetKey) {
+                let map = binding.targetIdMap;
+                if (map == null) {
+                    binding.targetIdMap = map = new Map();
+                }
+                map.set(hashOf(row), row);
+            } else if (binding.targetData == null) {
+                binding.targetData = row;
+            } else if (!this._isCollection) {
+                // Do nothing
+            } else if (!Array.isArray(binding.targetData)) {
+                binding.targetData = [binding.targetData as metadata.DtoRow, row];
+            } else {
+                binding.targetData.push(row);
+            }
+        }
+        return recursiveContext;
+    }
+
+    private async _createRowReaders(
+        dependencies: ReadonlyArray<any>
+    ): Promise<[DataRowReader, DataRowReader, RecursiveContext | undefined]> {
+        if (this._isOptimizable) {
+            return this._createOptimizedRowReaders(dependencies);
+        }
         const view = new View<AnyModel, any>(this._unresolvedField.subMapper!);
-        const keySpan = this._unresolvedField.dependencies!.length;
         let keyRowReader: DataRowReader;
         let recursiveContext = this._recursiveContext;
         if (recursiveContext != null) {
@@ -413,8 +483,8 @@ class AssociationResolver {
             if (isRecursive && recursiveContext == null) {
                 recursiveContext = new RecursiveContext(
                     dataRows, 
-                    keySpan, 
-                    this._byTargetKey ? this._keySpan : view.mapper.span, 
+                    this._keySpan, 
+                    this._byTargetKey ? this._targetKeySpan : view.mapper.span, 
                     this._byTargetKey 
                         ? { 
                             getter: async(ids: ReadonlyArray<any>) => this._targetRowMap(ids, view), 
@@ -427,35 +497,59 @@ class AssociationResolver {
             }
             keyRowReader = recursiveContext?.toKeyRowReader() ?? DataRowReader.of(dataRows);
         }
-        const valueRowReader = keyRowReader.offset(keySpan);
-        const sourceDtoRowReader = this._sourceDtoRowReader;
-        const targetDtoRowReader = this._targetDtoRowReader;
-        while (keyRowReader.next()) {
-            const key = keyRowReader.get(0, keySpan);
-            const binding = this._bindingMap.get(sourceDtoRowReader.dependencyHash(this._unresolvedField.index, key))
-            if (binding == null) {
-                continue;
-            }
-            const row = this._byTargetKey 
-                ? valueRowReader.get(0, this._keySpan)
-                : targetDtoRowReader.read(binding.sourceRows, valueRowReader);
-            if (this._byTargetKey) {
-                let map = binding.targetIdMap;
-                if (map == null) {
-                    binding.targetIdMap = map = new Map();
-                }
-                map.set(hashOf(row), row);
-            } else if (binding.targetData == null) {
-                binding.targetData = row;
-            } else if (!this._isCollection) {
-                // Do nothing
-            } else if (!Array.isArray(binding.targetData)) {
-                binding.targetData = [binding.targetData as metadata.DtoRow, row];
-            } else {
-                binding.targetData.push(row);
-            }
+        const valueRowReader = keyRowReader.offset(this._keySpan);
+        return [keyRowReader, valueRowReader, recursiveContext];
+    }
+
+    private async _createOptimizedRowReaders(
+        dependencies: ReadonlyArray<any>
+    ): Promise<[DataRowReader, DataRowReader, RecursiveContext | undefined]> {
+        const prop = this._unresolvedField.prop as metadata.EntityProp;
+        const referenceKeyProp = prop.referenceKeyProp;
+        if (referenceKeyProp != null) {
+            const keyRowReader = DataRowReader.of(
+                this._keySpan > 1
+                    ? dependencies
+                    : dependencies.map(v => [v])
+            );
+            return [
+                keyRowReader, 
+                keyRowReader.mapColIndices(this._optimizationIndices), 
+                undefined
+            ];
         }
-        return recursiveContext;
+        const model = dsl.associationModel(this._sourceMapper.entity.model, prop.name);
+        const sourceKeyProp = prop.thisKeyProp ?? prop.declaringEntity.idProp;
+        const targetKeyProp = prop.targetKeyProp ?? prop.targetEntity!.idProp;
+        const query = this._sqlClient.createQuery(model, (q, association) => {
+            const sourceKey = 
+                sourceKeyProp.props == null
+                    ? (association as any)[`source${capitalize(sourceKeyProp.name)}`]
+                    : (association as any)[`source${capitalize(sourceKeyProp.name)}`]();
+            const targetKey = 
+                targetKeyProp.props == null
+                    ? (association as any)[`target${capitalize(targetKeyProp.name)}`]
+                    : (association as any)[`target${capitalize(targetKeyProp.name)}`]();
+            const sourceExprs = metadata.AbstractEntityTable.expandExprArr(sourceKey, sourceKeyProp);
+            let targetExprs = metadata.AbstractEntityTable.expandExprArr(targetKey, targetKeyProp);
+            if (this._optimizationIndices != null) {
+                targetExprs = this._optimizationIndices.map(i => targetExprs[i]!);
+            }
+            const selections = [...sourceExprs, ...targetExprs] as any as RootQuerySelectArrArgs;
+            q.where(expressionsToAst(sourceExprs).in(...dependencies));
+            return q.select(...selections);
+        });
+        const [sql, args] = buildStatement(this._sqlClient, query);
+        const dataRows = await this._sqlClient.executor.executeStatement(sql, args, {
+            kind: "LOAD_ASSOCIATION",
+            prop: this._unresolvedField.prop as metadata.EntityProp
+        });
+        const keyRowReader = DataRowReader.of(dataRows);
+        return [
+            keyRowReader, 
+            keyRowReader.offset(this._keySpan), 
+            undefined
+        ];
     }
 
     private _createQuery(
@@ -529,7 +623,7 @@ class AssociationResolver {
                 }
             }
             const keyExpressions: Array<ExpressionLike> = [];
-            for (let i = 0; i < this._unresolvedField.dependencies!.length; i++) {
+            for (let i = 0; i < this._keySpan; i++) {
                 keyExpressions.push((base as any)[`_${i}`]);
             }
             const selections = [
@@ -940,4 +1034,13 @@ function filterSourceRows(
         typeNames.add(descendant.name);
     }
     return rows.filter(row => typeNames.has(row.typeName!));
+}
+
+export function capitalize(str: string): string {
+    if (str.length === 0) {
+        return str;
+    }
+    const firstChar = String.fromCodePoint(str.codePointAt(0)!);
+    const rest = str.slice(firstChar.length);
+    return firstChar.toUpperCase() + rest;
 }

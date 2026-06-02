@@ -619,7 +619,7 @@ export abstract class AbstractEntityTable implements AbstractTable {
         if (keyProp.flattenScalarProps.size === 0) {
             return [exprOrEmbedded];
         }
-        return AbstractEntityTable._expandTupleArr(exprOrEmbedded, keyProp);
+        return AbstractEntityTable.expandExprArr(exprOrEmbedded, keyProp);
     }
 
     private _validateToThisProp(
@@ -661,11 +661,14 @@ export abstract class AbstractEntityTable implements AbstractTable {
     }
 
     static expandTuple(ast: any, prop: EntityProp): ExprTuple<ExpressionLike[]> {
-        const arr = AbstractEntityTable._expandTupleArr(ast, prop);
+        const arr = AbstractEntityTable.expandExprArr(ast, prop);
         return toTuple(arr as any);
     }
 
-    private static _expandTupleArr(ast: any, prop: EntityProp): Expression<any>[] {
+    static expandExprArr(ast: any, prop: EntityProp): Expression<any>[] {
+        if (prop.props == null) {
+            return [ast as Expression<any>];
+        }
         const arr: Array<Expression<any>> = [];
         for (const subProp of prop.flattenScalarProps.values()) {
             const parts = subProp.subPath.split('.');

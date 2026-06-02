@@ -2,18 +2,24 @@ import { err, metadata } from "@ts-grm/core";
 
 export class DataRowReader implements metadata.DataReader {
 
-    private _rowIndex: RowIndex;
+    private readonly _rows: DataRows;
 
-    private constructor(
-        parent: DataRowReader | undefined,
-        private readonly _rows: DataRows,
-        private readonly _offset: number
+    private readonly _rowIndex: RowIndex;
+
+    protected constructor(
+        data: DataRowReader | DataRows
     ) {
-        this._rowIndex = parent?._rowIndex ?? new RowIndex();
+        if (data instanceof DataRowReader) {
+            this._rows = data._rows;
+            this._rowIndex = data._rowIndex;
+        } else {
+            this._rows = data;
+            this._rowIndex = new RowIndex();
+        }
     }
 
     static of(rows: DataRows): DataRowReader {
-        return new DataRowReader(undefined, rows, 0);
+        return new DataRowReader(rows);
     }
 
     next(): boolean {
@@ -30,7 +36,7 @@ export class DataRowReader implements metadata.DataReader {
             throw new err.StateError("Illegal row index");
         }
         const row = this._rows[rowIndex]!;
-        const colIndex = this._offset + col;
+        const colIndex = this.translateCol(col);
         if (colIndex < 0 || colIndex >= row.length) {
             throw new err.ArgumentError("Illegal col index");
         }
@@ -51,7 +57,14 @@ export class DataRowReader implements metadata.DataReader {
         if (offset === 0) {
             return this;
         }
-        return new DataRowReader(this, this._rows, this._offset + offset);
+        return new OffsetDataReader(this, offset);
+    }
+
+    mapColIndices(indices: ReadonlyArray<number> | undefined): DataRowReader {
+        if (indices == null) {
+            return this;
+        }
+        return new ColIndexMappedDataReader(this, indices);
     }
 
     get rowIndex(): number {
@@ -60,6 +73,55 @@ export class DataRowReader implements metadata.DataReader {
 
     reset() {
         this._rowIndex.reset();
+    }
+
+    protected translateCol(col: number): number {
+        return col;
+    }
+}
+
+class OffsetDataReader extends DataRowReader {
+
+    constructor(
+        parent: DataRowReader,
+        private readonly _offset: number
+    ) {
+        super(parent);
+    }
+
+    protected translateCol(col: number): number {
+        return this._offset + col;
+    }
+
+    offset(offset: number): DataRowReader {
+        if (offset == 0) {
+            return this;
+        }
+        return new OffsetDataReader(this, this._offset + offset);
+    }
+}
+
+class ColIndexMappedDataReader extends DataRowReader {
+
+    constructor(
+        parent: DataRowReader,
+        private readonly _indices: ReadonlyArray<number>
+    ) {
+        super(parent);
+    }
+
+    protected translateCol(col: number): number {
+        return this._indices[col]!;
+    }
+
+    mapColIndices(
+        indices: ReadonlyArray<number> | undefined
+    ): DataRowReader {
+        if (indices == null) {
+            return this;
+        }
+        const newIndicies = indices.map(i => this.translateCol(i));
+        return new ColIndexMappedDataReader(this, newIndicies);
     }
 }
 

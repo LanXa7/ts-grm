@@ -52,6 +52,10 @@ export class InverseFetchProp {
         return `←${this.prop.declaringEntity.name}.${this.prop.name}`;
     }
 
+    get subPath(): string {
+        return this.prop.subPath;
+    }
+
     get isEntityProp(): boolean {
         return false;
     }
@@ -103,6 +107,10 @@ export class TypeNameProp {
 
     get name(): "__typename" {
         return "__typename";
+    }
+
+    get subPath(): "" {
+        return "";
     }
 
     get isEntityProp(): false {

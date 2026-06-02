@@ -256,4 +256,26 @@ insert into LIBRARY_DEPENDENCY_MAPPING(DEPENDENT_ID, DEPENDENCY_ID) values
     (35, 20),  -- eslint-scope depends on estraverse
     (35, 21),  -- eslint-scope depends on esrecurse
     (21, 8);   -- esrecurse depends on esutils
+
+insert into STUDENT(ID, NAME) values
+    (1, 'Tim'),
+    (2, 'Sam'),
+    (3, 'Tom'),
+    (4, 'Jim');
+
+insert into COURSE(ID, NAME) values
+    (1, 'Psychology and Life'),
+    (2, 'Film Appreciation'),
+    (3, 'Workplace Communication and Presentation'),
+    (4, 'Introduction to Artificial Intelligence');
+
+insert into LEARNING_LINK(STUDENT_ID, COURSE_ID) values
+    (1, 2),
+    (1, 3),
+    (2, 4),
+    (2, 1),
+    (3, 2),
+    (3, 3),
+    (4, 4),
+    (4, 1);
 `;
