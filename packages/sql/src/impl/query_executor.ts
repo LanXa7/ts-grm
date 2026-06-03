@@ -16,7 +16,8 @@ import {
     EntityTableLike,
     EntityTable,
     SelectionLike,
-    RootQuerySelection
+    RootQuerySelection,
+    BaseModel
 } from "@ts-grm/core";
 import { MergedRootQueryImpl } from "./merged_query";
 import { AtomRootQueryImpl } from "./atom_root_query_impl";
@@ -241,7 +242,7 @@ class AssociationResolver {
 
     private _dependencyArr(
         targetTable: any
-    ): ReadonlyArray<Expression<any>> {
+    ): ReadonlyArray<Expression<any, any>> {
         const entityTable = targetTable as any as metadata.AbstractEntityTable;
         if (this._unresolvedField.prop.referenceKeyProp != null) {
             const keyProps = this._unresolvedField.prop.targetKeyProp!.scalarProps!;
@@ -255,7 +256,7 @@ class AssociationResolver {
 
     private _keyExprArr(
         targetTable: any
-    ): ReadonlyArray<Expression<any>> {
+    ): ReadonlyArray<Expression<any, any>> {
         let keyProps: ReadonlyArray<metadata.EntityProp>;
         if (this._unresolvedField.prop.referenceKeyProp != null) {
             keyProps = this._unresolvedField.prop.referenceKeyProp.scalarProps!;
@@ -474,6 +475,7 @@ class AssociationResolver {
                 ? this._createRecursiveQuery(dependencies, view)
                 : this._createQuery(dependencies, view);
             const [sql, args] = buildStatement(this._sqlClient, query);
+            console.log(sql);
             const dataRows = await this._sqlClient.executor.executeStatement(sql, args, {
                 kind: isRecursive 
                     ? (this._byTargetKey ? "LOAD_RECURSIVE_TREE_KEY" : "LOAD_RECURSIVE_TREE")
@@ -586,17 +588,13 @@ class AssociationResolver {
                     baseQuerySelectionMapArgs(
                         dependencyArr,
                         target,
-                        dsl.native.num `row_number() over(partition by ${
-                            dependencyArr
-                        } order by ${
-                            orders
-                        })`
+                        { rank: this._rankExpr(dependencyArr, orders) }
                     )
                 );
             })
         );
         return this._sqlClient.createQuery(baseModel, (q, base) => {
-            q.where(base.number.lte(limit));
+            q.where(base.rank.lte(limit));
             q.orderBy(...this._orders(base.target));
             const keyExpressions: Array<ExpressionLike> = [];
             for (let i = 0; i < this._keySpan; i++) {
@@ -627,7 +625,7 @@ class AssociationResolver {
                     baseQuerySelectionMapArgs(
                         dependencyArr, 
                         target, 
-                        dsl.constant(0)
+                        { depth: dsl.constant(0) }
                     )
                 );
             }).unionAllRecursively(model, {
@@ -648,27 +646,29 @@ class AssociationResolver {
                     return expressionsToAst(dependencyArr).eq(expressionsToAst(prevExpressions)) as Predicate;
                 },
                 query: (q, target) => {
+                    const dependencyArr = this._dependencyArr(target) as any;
                     if (predicateFn != null) {
                         q.where(predicateFn(target as any as metadata.AbstractEntityTable));
                     }
                     return q.select(
                         baseQuerySelectionMapArgs(
-                            this._dependencyArr(target), 
+                            dependencyArr, 
                             target, 
-                            (q.prev.number as Expression<number>).plus(dsl.constant(1))
+                            { depth: (q.prev.depth as Expression<number>).plus(dsl.constant(1)) }
                         )
                     );
                 }
             })
         );
-        return this._sqlClient.createQuery(baseModel, (q, base) => {
-            if (this._unresolvedField.recursiveDepth != -1) {
-                q.where(base.number.lt(this._unresolvedField.recursiveDepth!));
+        const limitedBaseModel = this._limitBaseModel(baseModel);
+        return this._sqlClient.createQuery(limitedBaseModel, (q, base) => {
+            if (limitedBaseModel === baseModel && this._unresolvedField.recursiveDepth != -1) {
+                q.where(base.depth.lt(this._unresolvedField.recursiveDepth!));
             }
             if (this._isCollection) {
                 const orders = this._orders(base.target);
                 if (orders.length !== 0) {
-                    q.orderBy(...[base.number.asc(), ...orders]);
+                    q.orderBy(...[base.depth.asc(), ...orders]);
                 }
             }
             const keyExpressions: Array<ExpressionLike> = [];
@@ -678,7 +678,7 @@ class AssociationResolver {
             const selections = [
                 ...keyExpressions, 
                 ...(this._byTargetKey ? this._keyExprArr(base.target) : [(base.target as EntityTable<AnyModel>).fetch(view)]),
-                base.number
+                base.depth
             ] as any as RootQuerySelectArrArgs;
             return q.select(...selections);
         });
@@ -726,6 +726,52 @@ class AssociationResolver {
         }
         return map;
     }
+
+    private _rankExpr(
+        dependencyArr: ReadonlyArray<Expression<any, any>>,
+        orders: ReadonlyArray<ExpressionOrder>
+    ): Expression<number> {
+        if (orders.length === 0) {
+            throw new err.StateError(
+                `For fetching collection elements of "${
+                    this._unresolvedField.prop.toString()
+                }" with a quantity limit specified via the "$limit" method, the feild must have sorting configuration, whether it's the default order of entity field or the order after DTO field overriding.`
+            );
+        }
+        return dsl.native.num `row_number() over(partition by ${dependencyArr} order by ${orders})`
+    }
+
+    private _limitBaseModel<
+        TBaseModel extends BaseModel<any>
+    >(
+        baseModel: TBaseModel
+    ) : TBaseModel {
+        const limit = this._unresolvedField.limit;
+        if (limit == null) {
+            return baseModel;
+        }
+        return dsl.derivedModel(
+            dsl.baseQuery(baseModel, (q, base) => {
+                if (this._unresolvedField.recursiveDepth != -1) {
+                    q.where(base.depth.lt(this._unresolvedField.recursiveDepth!));
+                }
+                const dependencyArr: Array<Expression<any>> = [];
+                for (let i = 0; i < this._keySpan; i++) {
+                    dependencyArr.push((base as any)[`_${i}`]);
+                }
+                return q.select(
+                    baseQuerySelectionMapArgs(
+                        dependencyArr, 
+                        base.target, 
+                        {
+                            depth: base.depth,
+                            rank: this._rankExpr(dependencyArr, this._orders(base.target))
+                        }
+                    )
+                );
+            })
+        ) as TBaseModel;
+    }
 }
 
 type AssociationBinding = {
@@ -744,25 +790,23 @@ function expressionsToAst(
     return dsl.tuple(...(expressions as AtLeastTwo<any>));
 }
 
-function baseQuerySelectionMapArgs(
+function baseQuerySelectionMapArgs<
+    TMap extends { readonly [key: string]: ExpressionLike; }
+>(
     dependencyArr: ReadonlyArray<Expression<any>>,
     target: EntityTableLike,
-    number: Expression<number>
-): {
-    readonly [key: string]: ExpressionLike | EntityTableLike;
-    readonly target: EntityTableLike;
-    readonly number: Expression<number>;
-} {
+    map: TMap
+): { 
+    [key: string]: ExpressionLike | EntityTableLike;
+} & TMap {
     const args: { 
         [key: string]: ExpressionLike | EntityTableLike;
-        readonly target: EntityTableLike;
-        readonly number: Expression<number>;
-    } = {
+    } & TMap = {
         target,
-        number
+        ...map
     };
     for (let i = 0; i < dependencyArr.length; i++) {
-        args[`_${i}`] = dependencyArr[i]!;
+        (args as any)[`_${i}`] = dependencyArr[i]!;
     }
     return args;
 }

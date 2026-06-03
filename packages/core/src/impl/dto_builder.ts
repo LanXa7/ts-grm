@@ -201,6 +201,9 @@ class DtoBuilder {
         const orders = typeof options === "string"
             ? undefined
             : options.orders;
+        const limit = typeof options === "string"
+            ? undefined
+            : options.limit;
         if (depth !== -1 && depth < 1) {
             throw new ArgumentError(`The recursive depth must be at least 1`);
         }
@@ -224,7 +227,7 @@ class DtoBuilder {
             fetchType: undefined,
             predicateFn: filter,
             orders: orders != null ? toEntityPropOrders(this.source as Entity, orders) : prop.orders,
-            limit: undefined,
+            limit,
             recursiveDepth: depth,
             nullable: prop.nullable,
             parameter: undefined
@@ -621,4 +624,5 @@ type RecursiveOptions = string | {
     readonly depth: number | null | undefined;
     readonly filter: ((table: AbstractEntityTable) => Predicate | null | undefined) | undefined;
     readonly orders: ReadonlyArray<ModelOrder<AnyModel>> | undefined;
+    readonly limit: number | undefined;
 };

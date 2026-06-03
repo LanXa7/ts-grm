@@ -773,4 +773,40 @@ describe.sequential("ActionSqliteTest", () => {
             }
         ]);
     });
+
+    it("recursiveLimitFailed", async () => {
+        await expect(async () => {
+            const view = dto.view(TREE_NODE, $ => $
+                .name
+                .recursive({
+                    prop: "childNodes",
+                    limit: 2
+                })
+            );
+            await sqlClient.createQuery(TREE_NODE, (q, treeNode) => {
+                q.where(treeNode.parentNodeId.isNull());
+                return q.select(
+                    treeNode.fetch(view)
+                );
+            }).fetchOptional();
+        }).rejects.toThrow(`For fetching collection elements of "TreeNode.childNodes" with a quantity limit specified via the "$limit" method, the feild must have sorting configuration, whether it's the default order of entity field or the order after DTO field overriding.`);
+    });
+
+    it("recursiveLimit", async() => {
+        const view = dto.view(TREE_NODE, $ => $
+            .name
+            .recursive({
+                prop: "childNodes",
+                orders: ["name"],
+                limit: 2
+            })
+        );
+        await sqlClient.createQuery(TREE_NODE, (q, treeNode) => {
+            q.where(treeNode.parentNodeId.isNull());
+            return q.select(
+                treeNode.fetch(view)
+            );
+        }).fetchOptional();
+        sqlRecord.log();
+    });
 });

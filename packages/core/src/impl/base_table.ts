@@ -7,6 +7,7 @@ import { JoinFilter, JoinOperation } from "./entity_table";
 
 class BaseTableTarget {
 
+    // This class is uesed to be stub of proxy, _self means the proxy
     private _self: TypedBaseTable | undefined;
 
     private _args: BaseQuerySelectMapArgs | undefined;
