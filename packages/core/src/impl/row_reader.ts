@@ -43,6 +43,25 @@ export abstract class DtoRowReader {
 }
 
 export function createDtoRowReader(mapper: DtoMapper): DtoRowReader {
+    const creator = getDtoRowReaderCreator(mapper);
+    return new creator();
+}
+
+type DtoRowReaderCreator = new () => DtoRowReader;
+
+const DTO_ROW_READER_CREATOR_MAP = new Map<string, DtoRowReaderCreator>();
+
+function getDtoRowReaderCreator(mapper: DtoMapper): DtoRowReaderCreator {
+    const hash = mapper.hash;
+    let creator = DTO_ROW_READER_CREATOR_MAP.get(hash);
+    if (creator == null) {
+        creator = createDtoRowReaderCreator(mapper);
+        DTO_ROW_READER_CREATOR_MAP.set(hash, creator);
+    }
+    return creator;
+}
+
+function createDtoRowReaderCreator(mapper: DtoMapper): DtoRowReaderCreator {
 
     const shape = buildShape(mapper);
 
@@ -66,10 +85,9 @@ export function createDtoRowReader(mapper: DtoMapper): DtoRowReader {
                 }
             }
         });
-    const cls = new Function(
+    return new Function(
         "$baseClass", "$entity", "$argumentError", writer.toString()
     )(DtoRowReader, mapper.entity, ArgumentError);
-    return new cls();
 }
 
 function writeRead(

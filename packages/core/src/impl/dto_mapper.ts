@@ -33,6 +33,8 @@ export class DtoMapper {
 
     private _typeNameIndex: number | undefined = undefined;
 
+    private _hash: string | undefined = undefined;
+
     constructor(
         readonly entity: Entity,
         readonly nullAsUndefined: boolean,
@@ -102,6 +104,23 @@ export class DtoMapper {
                 this.fields.findIndex(f => f.prop instanceof TypeNameProp);
         }
         return index;
+    }
+
+    get hash(): string {
+        let hash = this._hash;
+        if (hash == null) {
+            this._hash = hash = 
+                `${
+                    this.entity.name
+                }|${
+                    this.nullAsUndefined
+                }|${
+                    this.associatedProp?.toString()
+                }|(${
+                    this.fields.map(f => fieldHash(f)).join(",")
+                })`;
+        }
+        return hash;
     }
 }
 
@@ -600,4 +619,20 @@ function toDtoFields(
     return field.paths.map(path => {
         return { ...dtoField, path };
     });
+}
+
+function fieldHash(field: DtoMapperField): string {
+    return `${
+        field.downcastTo?.name ?? ""
+    }|${
+        field.prop.name
+    }|${
+        field.bridgeProp?.name ?? ""
+    }|${
+        field.paths.map(path => typeof path === "string" ? path : `(${path.join(",")})`).join(",")
+    }|${
+        field.subMapper != null ? `(${field.subMapper.hash})` : ""
+    }|${
+        field.recursiveDepth ?? ""
+    }`;
 }

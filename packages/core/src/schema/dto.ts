@@ -1,5 +1,5 @@
 import { AtLeastOne } from "../dsl/utils";
-import { AllModelMembers, AnyModel, DerivedModel, Extends, RequiredModelKey, ModelName, ModelSuperNames } from "@/schema/model";
+import { AllModelMembers, AnyModel, DerivedModel, Extends, RequiredModelKey, ModelName, ModelSuperNames, DeclaredModelMembers } from "@/schema/model";
 import { CollectionProp, EmbeddedProp, NullityOf, ReferenceProp, DirectTypeOf, ScalarProp, NullityType, AssociatedProp, Prop, FormulaProp, CalculatedValueProp, ParameterizedCalculatedValueProp, CalculatedReferenceProp, ParameterizedCalculatedReferenceProp, CalculatedCollectionProp, ParameterizedCalculatedCollectionProp } from "@/schema/prop";
 import { Prettify, UnionToIntersection } from "@/utils";
 import { ModelOrder } from "./order";
@@ -730,7 +730,7 @@ type InstanceOf<
         fn: (
             builder: ViewBuilder<
                 TDerivedModel, 
-                AllModelMembers<TDerivedModel>, 
+                DeclaredModelMembers<TDerivedModel>, 
                 TViewNullType,
                 {}, 
                 {}, 
@@ -739,7 +739,7 @@ type InstanceOf<
             >
         ) => ViewBuilder<
             TDerivedModel, 
-            AllModelMembers<TDerivedModel>, 
+            DeclaredModelMembers<TDerivedModel>, 
             TViewNullType, 
             X, 
             any, 

@@ -57,9 +57,19 @@ class DtoBuilder {
     prop(name: string): EntityProp {
         if (this.source instanceof Entity) {
             const sourceEntity = this.downcastTo ?? this.source;
-            return sourceEntity.allPropMap.get(name) ?? makeErr(() => 
+            const prop = sourceEntity.allPropMap.get(name) ?? makeErr(() => 
                 new ArgumentError(`No property "${name}" in model "${sourceEntity.name}"`)
             );
+            if (this.downcastTo != null && prop.declaringEntity != this.downcastTo) {
+                throw new ArgumentError(
+                    `Cannot fetch the property "${
+                        prop.toString
+                    }" during the current instanceOf scope, only the declared properties of "${
+                        this.downcastTo.name
+                    }" can only be fetched`
+                )
+            }
+            return prop;
         }
         return this.source.props?.get(name) ?? makeErr(() =>
             new ArgumentError(`No property "${name}" in embeded path "${this.source.toString()}"`)
