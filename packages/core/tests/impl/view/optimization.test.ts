@@ -35,7 +35,7 @@ describe("OptimizationTest", () => {
     it("m2m", () => {
         const view1 = dto.view(BOOK, $ => $
             .allScalars()
-            .authors($ => $.id)
+            .authors($ => $.id).$orderBy()
         );
         expect(
             view1.mapper.fields.find(f => f.prop.name === "authors")!.optimizable
@@ -138,11 +138,11 @@ describe("OptimizationTest", () => {
         ).toEqual(false);
     });
 
-    it("multipleColumns", () => {
+    it("multipleColumnsM2M", () => {
 
         const view1 = dto.view(ORDER, $ => $
             .allScalars()
-            .tags($ => $.id())
+            .tags($ => $.id()).$orderBy()
         );
         expect(
             view1.mapper.fields.find(f => f.prop.name === "tags")!.optimizable
@@ -150,7 +150,7 @@ describe("OptimizationTest", () => {
 
         const view2 = dto.view(ORDER, $ => $
             .allScalars()
-            .tags($ => $.id($ => $.low))
+            .tags($ => $.id($ => $.low)).$orderBy()
         );
         expect(
             view2.mapper.fields.find(f => f.prop.name === "tags")!.optimizable
@@ -158,7 +158,7 @@ describe("OptimizationTest", () => {
 
         const view3 = dto.view(ORDER, $ => $
             .allScalars()
-            .tags($ => $.id().name)
+            .tags($ => $.id().name).$orderBy()
         );
         expect(
             view3.mapper.fields.find(f => f.prop.name === "tags")!.optimizable
@@ -166,10 +166,28 @@ describe("OptimizationTest", () => {
 
         const view4 = dto.view(ORDER, $ => $
             .allScalars()
-            .tags($ => $.id($ => $.low).name)
+            .tags($ => $.id($ => $.low).name).$orderBy()
         );
         expect(
             view4.mapper.fields.find(f => f.prop.name === "tags")!.optimizable
+        ).toEqual(false);
+    });
+
+    it("brokenByFilter", () => {
+        const view1 = dto.view(BOOK, $ => $
+            .allScalars()
+            .store($ => $.id)
+        );
+        expect(
+            view1.mapper.fields.find(f => f.prop.name === "store")!.optimizable
+        ).toEqual(true);
+
+        const view2 = dto.view(BOOK, $ => $
+            .allScalars()
+            .store($ => $.id).$where(table => table.version.eq(1))
+        );
+        expect(
+            view2.mapper.fields.find(f => f.prop.name === "store")!.optimizable
         ).toEqual(false);
     });
 });

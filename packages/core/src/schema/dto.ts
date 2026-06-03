@@ -3,7 +3,7 @@ import { AllModelMembers, AnyModel, DerivedModel, Extends, RequiredModelKey, Mod
 import { CollectionProp, EmbeddedProp, NullityOf, ReferenceProp, DirectTypeOf, ScalarProp, NullityType, AssociatedProp, Prop, FormulaProp, CalculatedValueProp, ParameterizedCalculatedValueProp, CalculatedReferenceProp, ParameterizedCalculatedReferenceProp, CalculatedCollectionProp, ParameterizedCalculatedCollectionProp } from "@/schema/prop";
 import { Prettify, UnionToIntersection } from "@/utils";
 import { ModelOrder } from "./order";
-import { EntityTable } from "../dsl/table";
+import { EntityTable, Table } from "../dsl/table";
 import { Predicate } from "@/dsl/expression";
 import { createTypedDtoBuilder } from "@/impl/dto_builder";
 import { Entity } from "@/impl/entity";
@@ -281,8 +281,8 @@ export type ViewBuilder<
 & ReferenceKeyMembers<TModel, TMembers, TViewNullType, TCurrent, TRecursiveKindMap>
 & As<TModel, TMembers, TViewNullType, TCurrent, TRecursiveKindMap, TLastProp, TLastName>
 & InstanceOf<TModel, TMembers, TViewNullType, TCurrent, TRecursiveKindMap>
-& ReferenceFetch<TModel, TMembers, TViewNullType, TCurrent, TRecursiveKindMap, TLastProp, TLastName> 
-& CollectionOrderBy<TModel, TMembers, TViewNullType, TCurrent, TRecursiveKindMap, TLastProp, TLastName>;
+& ReferenceActions<TModel, TMembers, TViewNullType, TCurrent, TRecursiveKindMap, TLastProp, TLastName> 
+& CollectionActions<TModel, TMembers, TViewNullType, TCurrent, TRecursiveKindMap, TLastProp, TLastName>;
 
 type As<
     TModel extends AnyModel, 
@@ -313,7 +313,7 @@ type As<
             >;
         };
 
-type ReferenceFetch<
+type ReferenceActions<
     TModel extends AnyModel, 
     TMembers, 
     TViewNullType extends ViewNullType,
@@ -322,8 +322,20 @@ type ReferenceFetch<
     TLastProp, 
     TLastName extends string
 > =
-    TLastProp extends ReferenceProp<any, any, any, any, any, any>
+    TLastProp extends ReferenceProp<infer TTargetModel, any, any, any, any, any>
         ? {
+            $where(
+                fn: (table: EntityTable<TTargetModel>) => Predicate | null | undefined
+            ): ViewBuilder<
+                TModel, 
+                TMembers, 
+                TViewNullType,
+                TCurrent, 
+                TRecursiveKindMap, 
+                TLastProp, 
+                TLastName
+            >;
+
             $fetch(
                 fetchType: ReferenceFetchType
             ): ViewBuilder<
@@ -338,7 +350,7 @@ type ReferenceFetch<
         }
         : object;
 
-type CollectionOrderBy<
+type CollectionActions<
     TModel extends AnyModel, 
     TMembers, 
     TViewNullType extends ViewNullType,
@@ -371,7 +383,19 @@ type CollectionOrderBy<
                 TRecursiveKindMap, 
                 TLastProp, 
                 TLastName
-            > 
+            >;
+
+            $limit(
+                limit: number | undefined
+            ): ViewBuilder<
+                TModel, 
+                TMembers, 
+                TViewNullType,
+                TCurrent, 
+                TRecursiveKindMap, 
+                TLastProp, 
+                TLastName
+            >;
         }
         : object;
 
@@ -835,11 +859,24 @@ type Recursive<
                 TAlias extends string = TPropName,
                 TDepth extends number = -1
             >(
-                options: TPropName | {
-                    prop: TPropName,
-                    alias?: TAlias,
-                    depth?: TDepth
-                }
+                options: TPropName 
+                | (
+                    TMembers[TPropName] extends CollectionProp<any>
+                        ? {
+                            prop: TPropName,
+                            alias?: TAlias,
+                            depth?: TDepth,
+                            filter?: (table: Table<TModel>) => Predicate | null,
+                            orders?: ReadonlyArray<ModelOrder<TModel>>
+                            limit?: number
+                        } 
+                        : {
+                            prop: TPropName,
+                            alias?: TAlias,
+                            depth?: TDepth,
+                            filter?: (table: Table<TModel>) => Predicate | null | undefined
+                        }
+                )
             ): ViewBuilder<
                 TModel,
                 TMembers,

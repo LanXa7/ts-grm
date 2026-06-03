@@ -3,7 +3,7 @@ import { Entity } from "./entity";
 import { PropError } from "@/error/metadata_error";
 import { AnyModelImpl, ModelImpl } from "./model_impl";
 import { dedent, makeErr } from "@/error/util";
-import { EntityPropOrder } from "./entity_prop_order";
+import { EntityPropOrder, toEntityPropOrders } from "./entity_prop_order";
 import { StateError } from "@/error/common";
 import { isIllegal, fixColumn, fixColumnArr, notEmpty, DatabaseStrategy } from "./strategy";
 import { Column, Columns, MiddelEntity, MiddleTable, PropStorage, StorageType } from "./storage";
@@ -630,24 +630,8 @@ export class EntityProp {
                 }
             }
         } else {
-            const orders = new Array<EntityPropOrder>(this._data.orders.length);
-            const paths = new Set<string>();
-            let index = 0;
-            for (const ord of this._data.orders) {
-                const path = typeof ord === "string" ? ord as string : ord.path;
-                const desc = typeof ord === "string" ? false : ord.desc;
-                const nulls = typeof ord === "string" ? "UNSPECIFIED" : ord.nulls;
-                if (paths.has(ord.path)) {
-                    this.raise `Duplicated order paths "${path}"`
-                }
-                const prop = this._targetEntity!.expandedPropMap.get(path);
-                if (prop == null) {
-                    throw this.raise `Illegal order path "${path}" 
-                    which deos not exists in target model ${this._targetEntity?.name}`
-                }
-                orders[index++] = { prop, desc, nulls };
-            }
-            this._orders = orders;
+            const targetEntity = this._targetEntity!;
+            this._orders = toEntityPropOrders(targetEntity, this._data.orders);
         }
     }
 

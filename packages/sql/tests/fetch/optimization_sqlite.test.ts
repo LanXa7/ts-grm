@@ -128,7 +128,7 @@ describe.sequential("OptimizationTest", () => {
     it("m2m", async () => {
         const view = dto.view(BOOK, $ => $
             .name
-            .authors(_ => _.id)
+            .authors(_ => _.id).$orderBy()
         );
         const rows = await sqlClient.createQuery(BOOK, (q, book) => {
             q.where(book.edition.eq(3));

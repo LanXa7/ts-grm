@@ -1,7 +1,14 @@
 import { collectNativeParts, NativeDtExpr, NativeNumExpr, NativeStrExpr } from "@/impl/ast/native_expr";
-import { Expression, ExpressionLike } from ".";
+import { Expression, ExpressionLike, ExpressionOrder } from ".";
 
-export type NativeValueType = ExpressionLike | boolean | number | boolean | Date;
+export type NativeValueType = 
+    ExpressionLike 
+    | boolean 
+    | number 
+    | boolean 
+    | Date 
+    | ReadonlyArray<ExpressionLike> 
+    | ReadonlyArray<ExpressionOrder>;
 
 type NativeNumCreator = {
     (

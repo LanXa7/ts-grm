@@ -14,6 +14,7 @@ import { ExistsPred, SubQueryExprContract } from "./sub_query_expr";
 import { TupleCmpPred, TupleContract, TupleInCollectionPred, TupleInSubQueryPred } from "./tuple";
 import { Node } from "./node";
 import { IsPred } from "./is_pred";
+import { ExpressionOrder } from "@/dsl";
 
 export interface Visitor {
 
@@ -205,6 +206,15 @@ export abstract class AbstractVisitor implements Visitor {
 
     visitNativeExpr(expr: NativeExprContract): void {
         for (const part of expr.parts) {
+            if (Array.isArray(part)) {
+                for (const e of part) {
+                    if (e instanceof ExpressionOrder) {
+                        (e.expression as AbstractExpr<any>).accept(this);
+                    } else {
+                        (e as AbstractExpr<any>).accept(this);
+                    }
+                }
+            }
             if (part instanceof AbstractExpr) {
                 part.accept(this);
             }

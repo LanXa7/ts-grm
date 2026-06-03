@@ -3,6 +3,8 @@ import { EntityProp } from "./entity_prop";
 import { EntityPropOrder } from "./entity_prop_order";
 import { Entity } from "./entity";
 import { AssociationType } from "@/schema/prop";
+import { AbstractEntityTable } from ".";
+import { Predicate } from "@/dsl";
 
 export type Dto = {
 
@@ -13,7 +15,7 @@ export type Dto = {
 
 export type DtoField = {
 
-    path: string | ReadonlyArray<string> | undefined;
+    readonly path: string | ReadonlyArray<string> | undefined;
 
     readonly downcastTo: Entity | undefined;
 
@@ -27,7 +29,11 @@ export type DtoField = {
 
     readonly fetchType: ReferenceFetchType | undefined;
 
+    readonly predicateFn: ((table: AbstractEntityTable) => Predicate | null | undefined) | undefined;
+
     readonly orders: ReadonlyArray<EntityPropOrder> | undefined;
+
+    readonly limit: number | undefined;
 
     readonly recursiveDepth: number | undefined;
 

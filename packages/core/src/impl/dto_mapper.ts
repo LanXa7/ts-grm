@@ -4,9 +4,10 @@ import { Entity } from "./entity";
 import { dtoField } from "./dto_builder";
 import { createDtoRowReader, DtoRowReader } from "./row_reader";
 import { makeErr } from "@/error/util";
-import { EntityProp } from ".";
+import { AbstractEntityTable, EntityProp } from ".";
 import { ReferenceFetchType } from "@/schema/dto";
 import { EntityPropOrder } from "./entity_prop_order";
+import { Predicate } from "@/dsl";
 
 export function dtoMapper(dto: Dto, nullAsUndefined: boolean): DtoMapper {
     const mapper = new Mapper(
@@ -142,7 +143,11 @@ export type DtoMapperField = {
 
     readonly fetchType: ReferenceFetchType | undefined;
 
+    readonly predicateFn: ((table: AbstractEntityTable) => Predicate | null | undefined) | undefined;
+
     readonly orders: ReadonlyArray<EntityPropOrder> | undefined;
+
+    readonly limit: number | undefined;
 
     readonly subMapper: DtoMapper | undefined;
 
@@ -286,7 +291,9 @@ class Mapper {
             bridgeProp: undefined,
             dto: undefined,
             fetchType: undefined,
+            predicateFn: undefined,
             orders: undefined,
+            limit: undefined,
             recursiveDepth: undefined,
             nullable: false,
             parameter: undefined
@@ -317,7 +324,9 @@ class Mapper {
             () => this.columnIndex++,
             dtoField.prop, 
             dtoField.fetchType,
+            dtoField.predicateFn,
             dtoField.orders,
+            dtoField.limit,
             dtoField.parameter,
             dtoField.nullable,
             dtoField.bridgeProp,
@@ -462,7 +471,9 @@ class MapperField {
         readonly columnIndexAllocator: () => number,
         readonly prop: FetchProp,
         readonly fetchType: ReferenceFetchType | undefined,
+        readonly predicateFn: ((table: AbstractEntityTable) => Predicate | null | undefined) | undefined,
         readonly orders: ReadonlyArray<EntityPropOrder> | undefined,
+        readonly limit: number | undefined,
         readonly parameter: any,
         readonly nullable: boolean,
         readonly bridgeProp: EntityProp | undefined,
@@ -506,7 +517,9 @@ class MapperField {
             paths,
             subMapper: this.subMapper?.toDtoMapper(),
             fetchType: this.fetchType,
+            predicateFn: this.predicateFn,
             orders: this.orders,
+            limit: this.limit,
             recursiveDepth: this.recursiveDepth,
             dependencies: this.dependencies,
             isDependent: this.isDependent,
@@ -519,6 +532,12 @@ class MapperField {
 
     private isOptimizable(): boolean {
         if (this.subMapper == null) {
+            return false;
+        }
+        if (this.predicateFn != null) {
+            return false;
+        }
+        if (this.orders != null && this.orders.length !== 0) {
             return false;
         }
         if (this.bridgeProp != null) {
@@ -608,7 +627,9 @@ function toDtoFields(
         bridgeProp: field.bridgeProp,
         dto: field.subMapper != null ? toDto(field.subMapper) : undefined,
         fetchType: field.fetchType,
+        predicateFn: field.predicateFn,
         orders: field.orders,
+        limit: field.limit,
         recursiveDepth: field.recursiveDepth,
         nullable: field.nullable,
         parameter: field.parameter

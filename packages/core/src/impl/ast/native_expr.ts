@@ -1,4 +1,4 @@
-import { ExpressionLike } from "@/dsl";
+import { ExpressionLike, ExpressionOrder } from "@/dsl";
 import { AbstractExpr } from "./expr";
 import { AbstractNumExpr } from "./num_expr";
 import { Visitor } from "./visitor";
@@ -12,7 +12,7 @@ export interface NativeExprContract {
     readonly parts: ReadonlyArray<NativePart>;
 }
 
-export type NativePart = string | ExpressionLike;
+export type NativePart = string | ExpressionLike | ReadonlyArray<ExpressionLike> | ReadonlyArray<ExpressionOrder>;
 
 export function collectNativeParts(
     strings: TemplateStringsArray, 
@@ -26,7 +26,9 @@ export function collectNativeParts(
     }
     for (let i = 0; i < values.length; i++) {
         const value = values[i]!;
-        if (typeof value === "boolean") {
+        if (Array.isArray(value)) {
+            parts[cursor++] = value;
+        } else if (typeof value === "boolean") {
             parts[cursor++] = getInternalFactory().createLiteral(value);
         } else if (typeof value === "number") {
             parts[cursor++] = getInternalFactory().createLiteral(value);

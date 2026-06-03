@@ -195,7 +195,7 @@ class AssociationResolver {
         private readonly _sourceRows: ReadonlyArray<metadata.DtoRow>,
         private readonly _recursiveContext: RecursiveContext | undefined
     ) {
-        if (unresolvedField.subMapper != null) { // Assocaition
+        if (unresolvedField.subMapper != null) { // Association
             this._unresolvedField = unresolvedField;
             this._targetMapper = unresolvedField.subMapper!;
         } else { // Recursive
@@ -557,15 +557,57 @@ class AssociationResolver {
         view: View<AnyModel, any>
     ): RootQuery<any> {
         const model = this._unresolvedField.subMapper!.entity.model;
-        return this._sqlClient.createQuery(model, (q, target) => {
-            const dependencyArr = this._dependencyArr(target);
-            q.where(expressionsToAst(dependencyArr).in(...dependencies));  
-            if (this._isCollection) {
+        const predicateFn = this._unresolvedField.predicateFn;
+        const limit = this._unresolvedField.limit;
+        if (limit == null) {
+            return this._sqlClient.createQuery(model, (q, target) => {
+                const dependencyArr = this._dependencyArr(target);
+                q.where(expressionsToAst(dependencyArr).in(...dependencies));  
+                if (predicateFn != null) {
+                    q.where(predicateFn(target as any as metadata.AbstractEntityTable));
+                }
+                if (this._isCollection) {
+                    q.orderBy(...this._orders(target));
+                }
+                const selections = [...dependencyArr, target.fetch(view)] as any as RootQuerySelectArrArgs;
+                return q.select(...selections);
+            });
+        }
+        const baseModel = dsl.derivedModel(
+            dsl.baseQuery(model, (q, target) => {
+                const dependencyArr = this._dependencyArr(target);
+                q.where(expressionsToAst(dependencyArr).in(...dependencies));  
+                if (predicateFn != null) {
+                    q.where(predicateFn(target as any as metadata.AbstractEntityTable));
+                }
+                const orders = this._orders(target);
                 q.orderBy(...this._orders(target));
+                return q.select(
+                    baseQuerySelectionMapArgs(
+                        dependencyArr,
+                        target,
+                        dsl.native.num `row_number() over(partition by ${
+                            dependencyArr
+                        } order by ${
+                            orders
+                        })`
+                    )
+                );
+            })
+        );
+        return this._sqlClient.createQuery(baseModel, (q, base) => {
+            q.where(base.number.lte(limit));
+            q.orderBy(...this._orders(base.target));
+            const keyExpressions: Array<ExpressionLike> = [];
+            for (let i = 0; i < this._keySpan; i++) {
+                keyExpressions.push((base as any)[`_${i}`]);
             }
-            const selections = [...dependencyArr, target.fetch(view)] as any as RootQuerySelectArrArgs;
+            const selections = [
+                ...keyExpressions, 
+                ...(this._byTargetKey ? this._keyExprArr(base.target) : [(base.target as EntityTable<AnyModel>).fetch(view)])
+            ] as any as RootQuerySelectArrArgs;
             return q.select(...selections);
-        })
+        });
     }
 
     private _createRecursiveQuery(
@@ -573,10 +615,14 @@ class AssociationResolver {
         view: View<AnyModel, any>
     ): RootQuery<any> {
         const model = this._unresolvedField.subMapper!.entity.model;
+        const predicateFn = this._unresolvedField.predicateFn;
         const baseModel = dsl.cteModel(
             dsl.baseQuery(model, (q, target) => {
                 const dependencyArr = this._dependencyArr(target) as any;
                 q.where((expressionsToAst(dependencyArr)).in(...dependencies));
+                if (predicateFn != null) {
+                    q.where(predicateFn(target as any as metadata.AbstractEntityTable));
+                }
                 return q.select(
                     baseQuerySelectionMapArgs(
                         dependencyArr, 
@@ -602,11 +648,14 @@ class AssociationResolver {
                     return expressionsToAst(dependencyArr).eq(expressionsToAst(prevExpressions)) as Predicate;
                 },
                 query: (q, target) => {
+                    if (predicateFn != null) {
+                        q.where(predicateFn(target as any as metadata.AbstractEntityTable));
+                    }
                     return q.select(
                         baseQuerySelectionMapArgs(
                             this._dependencyArr(target), 
                             target, 
-                            (q.prev.depth as Expression<number>).plus(dsl.constant(1))
+                            (q.prev.number as Expression<number>).plus(dsl.constant(1))
                         )
                     );
                 }
@@ -614,12 +663,12 @@ class AssociationResolver {
         );
         return this._sqlClient.createQuery(baseModel, (q, base) => {
             if (this._unresolvedField.recursiveDepth != -1) {
-                q.where(base.depth.lt(this._unresolvedField.recursiveDepth!));
+                q.where(base.number.lt(this._unresolvedField.recursiveDepth!));
             }
             if (this._isCollection) {
                 const orders = this._orders(base.target);
                 if (orders.length !== 0) {
-                    q.orderBy(...[base.depth.asc(), ...orders]);
+                    q.orderBy(...[base.number.asc(), ...orders]);
                 }
             }
             const keyExpressions: Array<ExpressionLike> = [];
@@ -629,7 +678,7 @@ class AssociationResolver {
             const selections = [
                 ...keyExpressions, 
                 ...(this._byTargetKey ? this._keyExprArr(base.target) : [(base.target as EntityTable<AnyModel>).fetch(view)]),
-                base.depth
+                base.number
             ] as any as RootQuerySelectArrArgs;
             return q.select(...selections);
         });
@@ -698,19 +747,19 @@ function expressionsToAst(
 function baseQuerySelectionMapArgs(
     dependencyArr: ReadonlyArray<Expression<any>>,
     target: EntityTableLike,
-    depth: Expression<number>
+    number: Expression<number>
 ): {
     readonly [key: string]: ExpressionLike | EntityTableLike;
     readonly target: EntityTableLike;
-    readonly depth: Expression<number>;
+    readonly number: Expression<number>;
 } {
     const args: { 
         [key: string]: ExpressionLike | EntityTableLike;
         readonly target: EntityTableLike;
-        readonly depth: Expression<number>;
+        readonly number: Expression<number>;
     } = {
         target,
-        depth
+        number
     };
     for (let i = 0; i < dependencyArr.length; i++) {
         args[`_${i}`] = dependencyArr[i]!;

@@ -1,4 +1,4 @@
-import { AnyModel, ast, dsl, EntityTable, err, metadata, Predicate } from "@ts-grm/core";
+import { AnyModel, ast, dsl, EntityTable, err, ExpressionOrder, metadata, Predicate } from "@ts-grm/core";
 import { Alias, Column, Composite, Query, Scope, ShadowExpr, Source, Value } from "./fragment";
 import { Stack } from "./stack";
 import { Precedence } from "./precedence";
@@ -395,7 +395,22 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
         using _ = this._precedenceStack.with(Precedence.ROOT);
         const current = this._compositeStack.current;
         for (const part of expr.parts) {
-            if (typeof part === "string") {
+            if (Array.isArray(part)) {
+                using __ = this._compositeStack.with(new Scope("COMMA", false));
+                const current = this._compositeStack.current;
+                for (const e of part) {
+                    current.separator();
+                    if (e instanceof ExpressionOrder) {
+                        (e.expression as ast.AbstractExpr<any>).accept(this);
+                        current.add(e.desc ? " desc" : " asc");
+                        if (e.nullsType !== "UNSPECIFIED") {
+                            current.add(`nulls ${e.nullsType.toLowerCase()}`);
+                        }
+                    } else {
+                        (e as ast.AbstractExpr<any>).accept(this);
+                    }
+                }
+            } else if (typeof part === "string") {
                 current.add(part);
             } else {
                 (part as ast.AbstractExpr<any>).accept(this);

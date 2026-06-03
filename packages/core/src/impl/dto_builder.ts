@@ -8,7 +8,7 @@ import { ModelOrder } from "@/schema/order";
 import { AnyModel } from "@/schema/model";
 import { AbstractEntityTable } from ".";
 import { Predicate } from "@/dsl";
-import { EntityPropOrder } from "./entity_prop_order";
+import { toEntityPropOrders } from "./entity_prop_order";
 
 export function createTypedDtoBuilder(entity: Entity): TypedDtoBuilder {
     const builder = new DtoBuilder(entity);
@@ -45,7 +45,9 @@ class DtoBuilder {
             bridgeProp: undefined,
             dto: undefined,
             fetchType: undefined,
+            predicateFn: undefined,
             orders: undefined,
+            limit: undefined,
             recursiveDepth: undefined,
             nullable: false,
             parameter: undefined
@@ -193,6 +195,12 @@ class DtoBuilder {
         const depth = typeof options === "string"
             ? -1
             : options.depth ?? -1;
+        const filter = typeof options === "string"
+            ? undefined
+            : options.filter;
+        const orders = typeof options === "string"
+            ? undefined
+            : options.orders;
         if (depth !== -1 && depth < 1) {
             throw new ArgumentError(`The recursive depth must be at least 1`);
         }
@@ -214,7 +222,9 @@ class DtoBuilder {
             bridgeProp: undefined,
             dto: undefined,
             fetchType: undefined,
-            orders: prop.orders,
+            predicateFn: filter,
+            orders: orders != null ? toEntityPropOrders(this.source as Entity, orders) : prop.orders,
+            limit: undefined,
             recursiveDepth: depth,
             nullable: prop.nullable,
             parameter: undefined
@@ -245,47 +255,50 @@ class DtoBuilder {
     }
 
     $where(
-        _: (table: AbstractEntityTable) => Predicate | null | undefined
+        predicateFn: (table: AbstractEntityTable) => Predicate | null | undefined
     ) {
-
+        if (this.lastPropName == null) {
+            throw new StateError(`"$where" function cannot be invoked because there is no last property`);
+        }
+        const arr = this.fields;
+        for (let i = arr.length - 1; i >= 0; --i) {
+            if (isMatched(arr[i]!, this.lastPropName)) {
+                arr[i] = {...arr[i]!, predicateFn};
+                break;
+            }
+        }
     }
 
     $orderBy(
         ...orders: ReadonlyArray<ModelOrder<AnyModel>>
     ) {
         if (this.lastPropName == null) {
-            throw new StateError(`"$as" function cannot be invoked because there is no last property`);
+            throw new StateError(`"$orderBy" function cannot be invoked because there is no last property`);
         }
-        const entity = this.source as Entity;
-        const actualOrders = orders.length !== 0 
-            ? orders.map(ord => {
-                const path = typeof ord === "string"
-                    ? ord
-                    : ord.path;
-                const desc = typeof ord === "string"
-                    ? false
-                    : (ord.desc ?? false);
-                const nulls = typeof ord === "string"
-                    ? "UNSPECIFIED"
-                    : (ord.nulls ?? "UNSPECIFIED");
-                const prop = entity.expandedPropMap.get(path);
-                if (prop == null) {
-                    throw new ArgumentError(
-                        `There is no property "${path}" in the entity "${entity.name}"`
-                    );
-                }
-                const order: EntityPropOrder = {
-                    prop,
-                    desc,
-                    nulls
-                };
-                return order;
-            }) 
-            : undefined;
+        const actualOrders = toEntityPropOrders(
+            (this.source as Entity).allPropMap.get(this.lastPropName)!.targetEntity!, 
+            orders
+        );
         const arr = this.fields;
         for (let i = arr.length - 1; i >= 0; --i) {
             if (isMatched(arr[i]!, this.lastPropName)) {
                 arr[i] = {...arr[i]!, orders: actualOrders};
+                break;
+            }
+        }
+    }
+
+    $limit(limit: number | undefined) {
+        if (this.lastPropName == null) {
+            throw new StateError(`"$orderBy" function cannot be invoked because there is no last property`);
+        }
+        if (limit != null && limit < 1) {
+            throw new ArgumentError(`limit must be a positive number`);
+        }
+        const arr = this.fields;
+        for (let i = arr.length - 1; i >= 0; --i) {
+            if (isMatched(arr[i]!, this.lastPropName)) {
+                arr[i] = {...arr[i]!, limit};
                 break;
             }
         }
@@ -427,7 +440,9 @@ export function dtoField(
             bridgeProp: prop,
             dto: middleDto,
             fetchType: undefined,
+            predicateFn: undefined,
             orders: prop.orders,
+            limit: undefined,
             recursiveDepth: undefined,
             nullable: prop.nullable,
             parameter: undefined
@@ -444,7 +459,9 @@ export function dtoField(
             bridgeProp: undefined,
             dto: childDto,
             fetchType: undefined,
+            predicateFn: undefined,
             orders: prop.orders,
+            limit: undefined,
             recursiveDepth: undefined,
             nullable: prop.nullable,
             parameter
@@ -464,7 +481,9 @@ export function dtoField(
             bridgeProp: undefined,
             dto: childDto,
             fetchType: undefined,
+            predicateFn: undefined,
             orders: prop.orders,
+            limit: undefined,
             recursiveDepth: undefined,
             nullable: prop.nullable,
             parameter: undefined
@@ -483,7 +502,9 @@ export function dtoField(
         bridgeProp: undefined,
         dto: undefined,
         fetchType: undefined,
+        predicateFn: undefined,
         orders: prop.orders,
+        limit: undefined,
         recursiveDepth: undefined,
         nullable: false,
         parameter
@@ -595,7 +616,9 @@ function flattenPath(
 }
 
 type RecursiveOptions = string | {
-    readonly prop: string,
-    readonly alias?: string | null | undefined,
-    readonly depth?: number | null | undefined
+    readonly prop: string;
+    readonly alias: string | null | undefined;
+    readonly depth: number | null | undefined;
+    readonly filter: ((table: AbstractEntityTable) => Predicate | null | undefined) | undefined;
+    readonly orders: ReadonlyArray<ModelOrder<AnyModel>> | undefined;
 };
