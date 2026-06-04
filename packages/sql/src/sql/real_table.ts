@@ -291,4 +291,11 @@ export class RealTable {
         }
         return expr;
     }
+
+    get toppest(): RealTable {
+        if (this.shadow == null) {
+            return this;
+        }
+        return this.shadow.toppest;
+    }
 }

@@ -56,6 +56,11 @@ export class PreVisitor extends ast.AbstractVisitor {
                     const value = projection.args[key];
                     if (value instanceof ast.AbstractExpr) {
                         value.accept(this);
+                    } else {
+                        const table = value as metadata.AbstractEntityTable;
+                        if (table.__shadow != null) {
+                            this._toRealTable(table);
+                        }
                     }
                 }
                 break;

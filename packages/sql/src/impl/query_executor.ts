@@ -475,7 +475,6 @@ class AssociationResolver {
                 ? this._createRecursiveQuery(dependencies, view)
                 : this._createQuery(dependencies, view);
             const [sql, args] = buildStatement(this._sqlClient, query);
-            console.log(sql);
             const dataRows = await this._sqlClient.executor.executeStatement(sql, args, {
                 kind: isRecursive 
                     ? (this._byTargetKey ? "LOAD_RECURSIVE_TREE_KEY" : "LOAD_RECURSIVE_TREE")

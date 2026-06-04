@@ -501,8 +501,13 @@ export abstract class AbstractEntityTable implements AbstractTable {
             );
         }
         const cloned = Object.assign(Object.create(Object.getPrototypeOf(this)), this) as AbstractEntityTable;
-        cloned._sharedData.shadow = shadow;
-        cloned._sharedData.nullable = shadow.__isNullable;
+        const newSharedData: SharedData = { 
+            shadow,
+            nullable: shadow.__isNullable,
+            downcastMap: undefined
+        };
+        (cloned as any).__prototype = cloned;
+        (cloned as any)._sharedData = newSharedData;
         return cloned;
     }
 
@@ -684,6 +689,14 @@ export abstract class AbstractEntityTable implements AbstractTable {
             arr.push(prev as Expression<any>);
         }
         return arr;
+    }
+
+    get orignal(): AbstractEntityTable {
+        const anchor = this.__anchor;
+        if (anchor == null) {
+            return this;
+        }
+        return (anchor.original as AbstractEntityTable).orignal;
     }
 }
 
