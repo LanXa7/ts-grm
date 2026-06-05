@@ -690,14 +690,6 @@ export abstract class AbstractEntityTable implements AbstractTable {
         }
         return arr;
     }
-
-    get orignal(): AbstractEntityTable {
-        const anchor = this.__anchor;
-        if (anchor == null) {
-            return this;
-        }
-        return (anchor.original as AbstractEntityTable).orignal;
-    }
 }
 
 export type JoinOperation = {

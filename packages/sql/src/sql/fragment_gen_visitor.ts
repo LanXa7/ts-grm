@@ -584,11 +584,7 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
                     } else {
                         const table = projection.args[selection.exportedName] as metadata.AbstractEntityTable;
                         const realTable = this._toRealTable(table);
-                        if (realTable.shadow == null) {
-                            this._compositeStack.current.add(new Alias(realTable)).add(".").add(selection.columnName);
-                        } else {
-                            this._compositeStack.current.add(new Alias(realTable.toppest)).add(".").add(selection.alias);
-                        }
+                        this._compositeStack.current.add(new Alias(realTable)).add(".").add(selection.columnName);
                         if (!this._baseQueryMetadata!.isCte) {
                             this._compositeStack.current.add(" ").add(selection.alias);
                         }

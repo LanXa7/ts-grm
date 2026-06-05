@@ -4,6 +4,7 @@ import { AbstractEntityTable } from "./entity_table";
 import { AbstractExpr } from "./ast";
 import { getInternalFactory } from "./ast/internal_factory";
 import { TableLike } from "@/dsl/table";
+import { StateError } from "@/error/common";
 
 export type ShadowAnchor = {
 
@@ -28,6 +29,10 @@ export function withShadowAnchor<
         const value = args[key];
         const anchor: ShadowAnchor = { baseModel, exportedName: key, original: value as any };
         if (value instanceof AbstractEntityTable) {
+            if (value.__anchor != null) {
+                // Current technical limitations
+                throw new StateError(`The table exported by another base query cannot be exported again`);
+            }
             const table = value.__entity.table(anchor);
             withAnchorArgs[key] = table;
         } else if (value instanceof AbstractExpr) {

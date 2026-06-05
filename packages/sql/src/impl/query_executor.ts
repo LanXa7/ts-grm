@@ -17,9 +17,10 @@ import {
     EntityTable,
     SelectionLike,
     RootQuerySelection,
-    BaseModel
+    BaseModel,
+    BaseQuerySelectMapArgs
 } from "@ts-grm/core";
-import { MergedRootQueryImpl } from "./merged_query";
+import { MergedNumSubQueryImpl, MergedRootQueryImpl } from "./merged_query";
 import { AtomRootQueryImpl } from "./atom_root_query_impl";
 import { Composite } from "@/sql/fragment";
 import { SqlBuilder } from "@/sql/sql_builder";
@@ -281,6 +282,20 @@ class AssociationResolver {
         ).span;
     }
 
+    private _orderExprArr(
+        targetTable: any
+    ): ReadonlyArray<Expression<any, any>> {
+        const entityTable = targetTable as any as metadata.AbstractEntityTable;
+        const arr: Array<Expression<any, any>> = [];
+        const orders = this._unresolvedField.orders;
+        if (orders != null) {
+            for (const order of orders) {
+                arr.push(entityTable.__expression(order.prop));
+            }
+        };
+        return arr;
+    }
+
     private _orders(
         targetTable: any
     ): ReadonlyArray<ExpressionOrder> {
@@ -299,6 +314,23 @@ class AssociationResolver {
             }
         };
         return arr;
+    }
+
+    private _ordersByExprs(
+        baseTable: any,
+        offset: number
+    ): ReadonlyArray<ExpressionOrder> {
+        const orders: Array<ExpressionOrder> = [];
+        for (const order of this._unresolvedField.orders!) {
+            orders.push(
+                new ExpressionOrder(
+                    baseTable[`_${offset + orders.length}`] as Expression<any, any>,
+                    order.desc,
+                    order.nulls
+                )
+            )
+        }
+        return orders;
     }
 
     async resolve(): Promise<void> {
@@ -586,14 +618,16 @@ class AssociationResolver {
                 return q.select(
                     baseQuerySelectionMapArgs(
                         dependencyArr,
-                        target,
+                        this._byTargetKey 
+                            ? this._keyExprArr(target)
+                            : { target },
                         { rank: this._rankExpr(dependencyArr, orders) }
                     )
                 );
             })
         );
         return this._sqlClient.createQuery(baseModel, (q, base) => {
-            q.where(base.rank.lte(limit));
+            q.where((base as any).rank.lte(limit));
             q.orderBy(...this._orders(base.target));
             const keyExpressions: Array<ExpressionLike> = [];
             for (let i = 0; i < this._keySpan; i++) {
@@ -623,7 +657,12 @@ class AssociationResolver {
                 return q.select(
                     baseQuerySelectionMapArgs(
                         dependencyArr, 
-                        target, 
+                        this._byTargetKey
+                            ? this._keyExprArr(target)
+                            : { target }, 
+                        this._unresolvedField.limit != null && this._byTargetKey
+                            ? this._orderExprArr(target)
+                            : undefined,
                         { depth: dsl.constant(0) }
                     )
                 );
@@ -639,8 +678,10 @@ class AssociationResolver {
                             ?? this._unresolvedField.prop.targetEntity!.idProp
                         ).scalarProps!;
                     }
-                    const prevExpressions = keyProps.map(keyProp => 
-                        (prev.target as any as metadata.AbstractEntityTable).__expression(keyProp)
+                    const prevExpressions = keyProps.map((keyProp, index) => 
+                        this._byTargetKey
+                            ? prev[`_${this._keySpan + index}`] as Expression<any, any>
+                            : (prev.target as any as metadata.AbstractEntityTable).__expression(keyProp)
                     );
                     return expressionsToAst(dependencyArr).eq(expressionsToAst(prevExpressions)) as Predicate;
                 },
@@ -652,7 +693,12 @@ class AssociationResolver {
                     return q.select(
                         baseQuerySelectionMapArgs(
                             dependencyArr, 
-                            target, 
+                            this._byTargetKey
+                                ? this._keyExprArr(target)
+                                : { target }, 
+                            this._unresolvedField.limit != null && this._byTargetKey
+                                ? this._orderExprArr(target)
+                                : undefined,
                             { depth: (q.prev.depth as Expression<number>).plus(dsl.constant(1)) }
                         )
                     );
@@ -661,22 +707,31 @@ class AssociationResolver {
         );
         const limitedBaseModel = this._limitBaseModel(baseModel);
         return this._sqlClient.createQuery(limitedBaseModel, (q, base) => {
-            if (limitedBaseModel === baseModel && this._unresolvedField.recursiveDepth != -1) {
-                q.where(base.depth.lt(this._unresolvedField.recursiveDepth!));
+            if (baseModel === limitedBaseModel && this._unresolvedField.recursiveDepth != -1) {
+                q.where((base as any).depth.lt(this._unresolvedField.recursiveDepth!));
             }
-            if (this._isCollection) {
+            if (this._unresolvedField.limit != null) {
+                q.where((base as any).rank.lte(this._unresolvedField.limit))
+            }
+            if (this._isCollection && !this._byTargetKey) {
                 const orders = this._orders(base.target);
                 if (orders.length !== 0) {
-                    q.orderBy(...[base.depth.asc(), ...orders]);
+                    q.orderBy(...[(base as any).depth.asc(), ...orders]);
                 }
             }
             const keyExpressions: Array<ExpressionLike> = [];
             for (let i = 0; i < this._keySpan; i++) {
                 keyExpressions.push((base as any)[`_${i}`]);
             }
+            const valueExpressions: Array<ExpressionLike> = [];
+            if (this._byTargetKey) {
+                for (let i = 0; i < this._targetKeySpan; i++) {
+                    valueExpressions.push((base as any)[`_${keyExpressions.length + valueExpressions.length}`]);
+                }
+            }
             const selections = [
                 ...keyExpressions, 
-                ...(this._byTargetKey ? this._keyExprArr(base.target) : [(base.target as EntityTable<AnyModel>).fetch(view)]),
+                ...(this._byTargetKey ? valueExpressions : [(base.target as EntityTable<AnyModel>).fetch(view)]),
                 base.depth
             ] as any as RootQuerySelectArrArgs;
             return q.select(...selections);
@@ -684,8 +739,16 @@ class AssociationResolver {
     }
 
     private get _byTargetKey(): boolean {
+        if (this._unresolvedField.recursiveDepth != null && this._unresolvedField.limit != null) {
+            /*
+             * Current technical limitations:
+             *
+             * The table exported by another base query cannot be exported again 
+             */
+            return true;
+        }
         return this._recursiveContext?.targetKeyOnly ?? (
-            this._unresolvedField.recursiveDepth != null &&
+            this._unresolvedField.recursiveDepth != null && 
             this._unresolvedField.prop.associationType === "MANY_TO_MANY"
         );
     }
@@ -754,17 +817,26 @@ class AssociationResolver {
                 if (this._unresolvedField.recursiveDepth != -1) {
                     q.where(base.depth.lt(this._unresolvedField.recursiveDepth!));
                 }
+                const arr: Array<Expression<any>> = [];
                 const dependencyArr: Array<Expression<any>> = [];
                 for (let i = 0; i < this._keySpan; i++) {
-                    dependencyArr.push((base as any)[`_${i}`]);
+                    const selection = (base as any)[`_${arr.length}`];
+                    arr.push(selection);
+                    dependencyArr.push(selection);
+                }
+                for (let i = 0; i < this._targetKeySpan; i++) {
+                    arr.push((base as any)[`_${arr.length}`]);
+                }
+                const orders = this._ordersByExprs(base, arr.length);
+                if (this._unresolvedField.recursiveDepth != -1) {
+                    q.where(base.depth.lt(this._unresolvedField.recursiveDepth));
                 }
                 return q.select(
                     baseQuerySelectionMapArgs(
-                        dependencyArr, 
-                        base.target, 
+                        arr, 
                         {
                             depth: base.depth,
-                            rank: this._rankExpr(dependencyArr, this._orders(base.target))
+                            rank: this._rankExpr(dependencyArr, orders)
                         }
                     )
                 );
@@ -789,23 +861,28 @@ function expressionsToAst(
     return dsl.tuple(...(expressions as AtLeastTwo<any>));
 }
 
-function baseQuerySelectionMapArgs<
-    TMap extends { readonly [key: string]: ExpressionLike; }
->(
-    dependencyArr: ReadonlyArray<Expression<any>>,
-    target: EntityTableLike,
-    map: TMap
-): { 
-    [key: string]: ExpressionLike | EntityTableLike;
-} & TMap {
+function baseQuerySelectionMapArgs(
+    ...partials: ReadonlyArray<
+        ReadonlyArray<ExpressionLike> 
+        | { readonly [key: string]: ExpressionLike | EntityTableLike }
+        | null
+        | undefined
+    >
+): BaseQuerySelectMapArgs {
     const args: { 
         [key: string]: ExpressionLike | EntityTableLike;
-    } & TMap = {
-        target,
-        ...map
-    };
-    for (let i = 0; i < dependencyArr.length; i++) {
-        (args as any)[`_${i}`] = dependencyArr[i]!;
+    } = {};
+    let autoIndex = 0;
+    for (const partial of partials) {
+        if (partial == null) {
+            continue;
+        }
+        if (Array.isArray(partial)) {
+            for (const selection of partial) {
+                args[`_${autoIndex++}`] = selection;
+            }
+        }
+        Object.assign(args, partial);
     }
     return args;
 }
