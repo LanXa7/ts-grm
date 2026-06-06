@@ -20,7 +20,7 @@ import {
     BaseModel,
     BaseQuerySelectMapArgs
 } from "@ts-grm/core";
-import { MergedNumSubQueryImpl, MergedRootQueryImpl } from "./merged_query";
+import { MergedRootQueryImpl } from "./merged_query";
 import { AtomRootQueryImpl } from "./atom_root_query_impl";
 import { Composite } from "@/sql/fragment";
 import { SqlBuilder } from "@/sql/sql_builder";
@@ -282,6 +282,10 @@ class AssociationResolver {
         ).span;
     }
 
+    private get _orderSpan(): number {
+        return this._unresolvedField.orders?.length ?? 0;
+    }
+
     private _orderExprArr(
         targetTable: any
     ): ReadonlyArray<Expression<any, any>> {
@@ -322,9 +326,13 @@ class AssociationResolver {
     ): ReadonlyArray<ExpressionOrder> {
         const orders: Array<ExpressionOrder> = [];
         for (const order of this._unresolvedField.orders!) {
+            const item = baseTable[`_${offset + orders.length}`];
+            if (item == null) {
+                throw new err.StateError(`There is no item ${`_${offset + orders.length}`} from base table`);
+            }
             orders.push(
                 new ExpressionOrder(
-                    baseTable[`_${offset + orders.length}`] as Expression<any, any>,
+                    item as Expression<any, any>,
                     order.desc,
                     order.nulls
                 )
@@ -518,6 +526,7 @@ class AssociationResolver {
                     dataRows, 
                     this._keySpan, 
                     this._byTargetKey ? this._targetKeySpan : view.mapper.span, 
+                    this._byTargetKey ? this._orderSpan : 0,
                     this._byTargetKey 
                         ? { 
                             getter: async(ids: ReadonlyArray<any>) => this._targetRowMap(ids, view), 
@@ -660,7 +669,7 @@ class AssociationResolver {
                         this._byTargetKey
                             ? this._keyExprArr(target)
                             : { target }, 
-                        this._unresolvedField.limit != null && this._byTargetKey
+                        this._byTargetKey
                             ? this._orderExprArr(target)
                             : undefined,
                         { depth: dsl.constant(0) }
@@ -696,7 +705,7 @@ class AssociationResolver {
                             this._byTargetKey
                                 ? this._keyExprArr(target)
                                 : { target }, 
-                            this._unresolvedField.limit != null && this._byTargetKey
+                            this._byTargetKey
                                 ? this._orderExprArr(target)
                                 : undefined,
                             { depth: (q.prev.depth as Expression<number>).plus(dsl.constant(1)) }
@@ -706,15 +715,17 @@ class AssociationResolver {
             })
         );
         const limitedBaseModel = this._limitBaseModel(baseModel);
-        return this._sqlClient.createQuery(limitedBaseModel, (q, base) => {
+        return this._sqlClient.createQuery(limitedBaseModel, (q, base: any) => {
             if (baseModel === limitedBaseModel && this._unresolvedField.recursiveDepth != -1) {
                 q.where((base as any).depth.lt(this._unresolvedField.recursiveDepth!));
             }
             if (this._unresolvedField.limit != null) {
                 q.where((base as any).rank.lte(this._unresolvedField.limit))
             }
-            if (this._isCollection && !this._byTargetKey) {
-                const orders = this._orders(base.target);
+            if (this._isCollection) {
+                const orders = this._byTargetKey 
+                    ? this._ordersByExprs(base, this._keySpan + this._targetKeySpan)
+                    : this._orders(base.target);
                 if (orders.length !== 0) {
                     q.orderBy(...[(base as any).depth.asc(), ...orders]);
                 }
@@ -729,9 +740,16 @@ class AssociationResolver {
                     valueExpressions.push((base as any)[`_${keyExpressions.length + valueExpressions.length}`]);
                 }
             }
+            const orderExpressions: Array<ExpressionLike> = [];
+            if (this._byTargetKey) {
+                for (let i = 0; i < this._orderSpan; i++) {
+                    orderExpressions.push((base as any)[`_${keyExpressions.length + valueExpressions.length + orderExpressions.length}`]);
+                }
+            }
             const selections = [
                 ...keyExpressions, 
                 ...(this._byTargetKey ? valueExpressions : [(base.target as EntityTable<AnyModel>).fetch(view)]),
+                ...orderExpressions,
                 base.depth
             ] as any as RootQuerySelectArrArgs;
             return q.select(...selections);
@@ -828,8 +846,10 @@ class AssociationResolver {
                     arr.push((base as any)[`_${arr.length}`]);
                 }
                 const orders = this._ordersByExprs(base, arr.length);
-                if (this._unresolvedField.recursiveDepth != -1) {
-                    q.where(base.depth.lt(this._unresolvedField.recursiveDepth));
+                if (this._byTargetKey) {
+                    for (let i = 0; i < this._orderSpan; i++) {
+                        arr.push((base as any)[`_${arr.length}`]);
+                    }
                 }
                 return q.select(
                     baseQuerySelectionMapArgs(
@@ -907,6 +927,7 @@ class RecursiveContext {
         private readonly _allDataRows: DataRows,
         private readonly _keySpan: number,
         private readonly _valueSpan: number,
+        private readonly _orderSpan: number,
         private readonly _targetRowMapData: TargetRowMapData | undefined,
         private readonly _maxDepth: number,
         private readonly _depth: number,
@@ -914,7 +935,7 @@ class RecursiveContext {
 
     toKeyRowReader(): DataRowReader {
         const depth = this._depth;
-        const dci = this._keySpan + this._valueSpan;
+        const dci = this._keySpan + this._valueSpan + this._orderSpan;
         const rows = this._allDataRows.filter(row => row[dci] === depth);
         return DataRowReader.of(rows);
     }
@@ -924,6 +945,7 @@ class RecursiveContext {
             this._allDataRows,
             this._keySpan,
             this._valueSpan,
+            this._orderSpan,
             this._targetRowMapData,
             this._maxDepth,
             this._depth + 1
@@ -971,6 +993,7 @@ class RecursiveContext {
             rows,
             firstContext._keySpan,
             firstContext._valueSpan,
+            firstContext._orderSpan,
             firstContext._targetRowMapData,
             firstContext._maxDepth,
             firstContext._depth

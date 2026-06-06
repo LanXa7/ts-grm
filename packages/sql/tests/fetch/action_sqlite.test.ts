@@ -1,6 +1,6 @@
 import { dto } from "@ts-grm/core";
 import { describe, it, expect } from "vitest";
-import { BOOK, BOOK_STORE, TREE_NODE } from "../model/model";
+import { BOOK, BOOK_STORE, LIBRARY, TREE_NODE } from "../model/model";
 import { newSqlRecord } from "../utils";
 import { useSqliteClientWithData } from "./utils";
 
@@ -825,15 +825,16 @@ describe.sequential("ActionSqliteTest", () => {
                     select 
                         tb_1_.c1,
                         tb_1_.c2,
-                        tb_1_.c3
+                        tb_1_.c3,
+                        tb_1_.c4
                     from (
                         with
                             recursive tb_2_(c1, c2, c3, c4) as (
                                 select 
                                     tb_3_.PARENT_NODE_ID,
                                     tb_3_.ID,
-                                    0,
-                                    tb_3_.NAME
+                                    tb_3_.NAME,
+                                    0
                                 from TREE_NODE tb_3_
                                 where 
                                     tb_3_.PARENT_NODE_ID = ?
@@ -841,8 +842,8 @@ describe.sequential("ActionSqliteTest", () => {
                                 select 
                                     tb_4_.PARENT_NODE_ID,
                                     tb_4_.ID,
-                                    tb_2_.c3 + 1,
-                                    tb_4_.NAME
+                                    tb_4_.NAME,
+                                    tb_2_.c4 + 1
                                 from TREE_NODE tb_4_
                                 inner join tb_2_ on 
                                     tb_4_.PARENT_NODE_ID = tb_2_.c2
@@ -851,11 +852,15 @@ describe.sequential("ActionSqliteTest", () => {
                             tb_2_.c1 c1,
                             tb_2_.c2 c2,
                             tb_2_.c3 c3,
-                            row_number() over(partition by tb_2_.c1 order by tb_2_.c4 asc) c4
+                            tb_2_.c4 c4,
+                            row_number() over(partition by tb_2_.c1 order by tb_2_.c3 asc) c5
                         from tb_2_
                     ) tb_1_
                     where 
-                        tb_1_.c4 <= ?
+                        tb_1_.c5 <= ?
+                    order by 
+                        tb_1_.c4 asc,
+                        tb_1_.c3 asc
                 `,
                 args: [1, 2],
                 purpose: "loadRecursiveTreeKey(TreeNode.childNodes)"
@@ -871,10 +876,7 @@ describe.sequential("ActionSqliteTest", () => {
                         tb_1_.ID in(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 `,
                 args: [
-                    9,  2,  6,  3,  4,  5,  7,
-                    8, 18, 10, 11, 15, 12, 14,
-                    17, 16, 19, 22, 20, 21, 24,
-                    23
+                    9, 2, 6, 3, 18, 10, 7, 11, 19, 8, 4, 5, 15, 22, 12, 20, 14, 21, 17, 24, 16, 23
                 ],
                 purpose: "loadRecursiveTreeNode(TreeNode.childNodes)"
             }
@@ -979,6 +981,148 @@ describe.sequential("ActionSqliteTest", () => {
                             ]
                         }
                     ]
+                }
+            ]
+        });
+    });
+
+    it("recursiveLimitOnM2M", async () => {
+        const view = dto.view(LIBRARY, $ => $
+            .name
+            .version
+            .recursive({
+                prop: "dependencies",
+                orders: [{path: "name", desc: true}],
+                limit: 2
+            })
+        );
+        const row = await sqlClient.createQuery(LIBRARY, (q, lib) => {
+            q.where(lib.id.eq(41));
+            return q.select(
+                lib.fetch(view)
+            );
+        }).fetchRequired();
+        sqlRecord.assert(
+            {
+                sql: `
+                    select 
+                        tb_1_.NAME,
+                        tb_1_.VERSION,
+                        tb_1_.ID
+                    from LIBRARY tb_1_
+                    where 
+                        tb_1_.ID = ?
+                `,
+                args: [41],
+                purpose: "query"
+            },
+            {
+                sql: `
+                    select 
+                        tb_1_.c1,
+                        tb_1_.c2,
+                        tb_1_.c3,
+                        tb_1_.c4
+                    from (
+                        with
+                            recursive tb_2_(c1, c2, c3, c4) as (
+                                select 
+                                    tb_4_.DEPENDENT_ID,
+                                    tb_3_.ID,
+                                    tb_3_.NAME,
+                                    0
+                                from LIBRARY tb_3_
+                                inner join LIBRARY_DEPENDENCY_MAPPING tb_4_ on 
+                                    tb_3_.ID = tb_4_.DEPENDENCY_ID
+                                where 
+                                    tb_4_.DEPENDENT_ID = ?
+                                union all
+                                select 
+                                    tb_6_.DEPENDENT_ID,
+                                    tb_5_.ID,
+                                    tb_5_.NAME,
+                                    tb_2_.c4 + 1
+                                from LIBRARY tb_5_
+                                inner join LIBRARY_DEPENDENCY_MAPPING tb_6_ on 
+                                    tb_5_.ID = tb_6_.DEPENDENCY_ID
+                                inner join tb_2_ on 
+                                    tb_6_.DEPENDENT_ID = tb_2_.c2
+                            )
+                        select 
+                            tb_2_.c1 c1,
+                            tb_2_.c2 c2,
+                            tb_2_.c3 c3,
+                            tb_2_.c4 c4,
+                            row_number() over(partition by tb_2_.c1 order by tb_2_.c3 desc) c5
+                        from tb_2_
+                    ) tb_1_
+                    where 
+                        tb_1_.c5 <= ?
+                    order by 
+                        tb_1_.c4 asc,
+                        tb_1_.c3 desc
+                `,
+                args: [41, 2],
+                purpose: "loadRecursiveTreeKey(Library.dependencies)"
+            },
+            {
+                sql: `
+                    select 
+                        tb_1_.ID,
+                        tb_1_.NAME,
+                        tb_1_.VERSION,
+                        tb_1_.ID
+                    from LIBRARY tb_1_
+                    where 
+                        tb_1_.ID in(?, ?, ?, ?, ?, ?, ?, ?, ?)
+                `,
+                args: [31, 1, 11, 18, 12, 7, 16, 17, 4],
+                purpose: "loadRecursiveTreeNode(Library.dependencies)"
+            }
+        );
+        expect(row).toEqual({
+            "name": "express",
+            "version": "4.18.2",
+            "dependencies": [
+                {
+                    "name": "serve-static",
+                    "version": "1.15.0",
+                    "dependencies": [
+                        {
+                            "name": "send",
+                            "version": "0.18.0",
+                            "dependencies": [
+                                {
+                                    "name": "parseurl",
+                                    "version": "1.3.3",
+                                    "dependencies": [
+                                        {
+                                            "name": "depd",
+                                            "version": "2.0.0",
+                                            "dependencies": [
+                                                {
+                                                    "name": "http-errors",
+                                                    "version": "2.0.0",
+                                                    "dependencies": [
+                                                        {
+                                                            "name": "toidentifier",
+                                                            "version": "1.0.1",
+                                                            "dependencies": []
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "name": "lodash",
+                    "version": "4.17.21",
+                    "dependencies": []
                 }
             ]
         });
