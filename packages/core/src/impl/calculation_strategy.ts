@@ -16,6 +16,7 @@ export type ValueCalculationStragegy = {
     readonly kind: "VALUE";
     readonly sourceKeyProp: EntityProp;
     readonly parameterType: undefined;
+    readonly nullable: boolean;
     readonly fn: ValueCalculatorFn<any, any>;
 };
 
@@ -23,6 +24,7 @@ export type ParameterizedValueCalculationStragegy = {
     readonly kind: "PARAMETERIZED_VALUE";
     readonly sourceKeyProp: EntityProp;
     readonly parameterType: z.ZodType;
+    readonly nullable: boolean;
     readonly fn: ParameterizedValueCalculatorFn<any, any, any>;
 };
 

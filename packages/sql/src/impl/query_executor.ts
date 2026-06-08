@@ -1101,7 +1101,9 @@ class CalculatorResolver {
                 start += batchSize;
             }
         }
-        const required = (this._strategy.kind === "REFERENCE" || this._strategy.kind === "PARAMETERIZED_REFERENCE")
+        const required = 
+            this._strategy.kind !== "COLLECTION" 
+            && this._strategy.kind !== "PARAMETERIZED_COLLECTION"
             && !this._strategy.nullable;
         const unresolvedFieldIndex = this._unresolvedField.index;
         const dtoRowReader = this._sourceMapper.dtoRowReader;

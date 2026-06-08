@@ -6,20 +6,22 @@ import { z } from "zod";
 export class TsFormula<TValue> {
 
     private constructor(
+        readonly valueType: z.ZodType,
         readonly dependency: () => View<AnyModel, any>,
         readonly fn: TsFormulaFn<any, TValue>
     ) {}
 
     static of<
+        TValueType extends z.ZodType,
         TData, 
-        TValue
     >(
         options: {
+            readonly valueType: TValueType,
             readonly dependency: () => View<AnyModel, TData>
-            readonly fn: TsFormulaFn<TData, TValue>;
+            readonly fn: TsFormulaFn<TData, z.infer<TValueType>>;
         }
-    ): TsFormula<TValue> {
-        return new TsFormula(options.dependency, options.fn as any);
+    ): TsFormula<z.infer<TValueType>> {
+        return new TsFormula(options.valueType, options.dependency, options.fn as any);
     }
 }
 
@@ -31,19 +33,24 @@ export type TsFormulaFn<
 export class SqlFormula<TValue> {
 
     private constructor(
+        readonly valueType: z.ZodType,
         readonly sourceModel: () => AnyModel,
         readonly fn: SqlFormulaFn<AnyModel, TValue>
     ) {
     }
 
     static of<
+        TValueType extends z.ZodType,
         TSourceModel extends AnyModel, 
-        TValue
-    >(options: {
-        readonly sourceModel: () => TSourceModel,
-        readonly fn: SqlFormulaFn<TSourceModel, TValue>
-    }): SqlFormula<TValue> {
+    >(
+        options: {
+            readonly valueType: TValueType,
+            readonly sourceModel: () => TSourceModel,
+            readonly fn: SqlFormulaFn<TSourceModel, z.infer<TValueType>>
+        }
+    ): SqlFormula<z.infer<TValueType>> {
         return new SqlFormula(
+            options.valueType,
             options.sourceModel,
             options.fn as any
         );
@@ -64,7 +71,7 @@ export abstract class Calculator {
 
     static valueOf<
         TSourceModel extends AnyModel,
-        TValueSchema extends z.ZodType,
+        TValueType extends z.ZodType,
         TSourceKeyProp extends CalculatorSourceKeys<TSourceModel> & string = ModelIdKey<TSourceModel>
     >(
         options: {
@@ -73,10 +80,10 @@ export abstract class Calculator {
             readonly valueType: z.ZodType,
             readonly fn: ValueCalculatorFn<
                 SimpleDataTypeOf<AllModelMembers<TSourceModel>[TSourceKeyProp], "UNDEFINED">, 
-                z.infer<TValueSchema>
+                z.infer<TValueType>
             >
         }
-    ): ValueCalculator<z.infer<TValueSchema>> {
+    ): ValueCalculator<z.infer<TValueType>> {
         return new (ValueCalculator as any)(
             options.sourceModel,
             options.sourceKeyProp,
@@ -86,23 +93,23 @@ export abstract class Calculator {
     }
 
     static parameterizedValueOf<
-        TParameterSchema extends z.ZodType,
+        TParameterType extends z.ZodType,
         TSourceModel extends AnyModel,
-        TValueSchema extends z.ZodType,
+        TValueType extends z.ZodType,
         TSourceKeyProp extends CalculatorSourceKeys<TSourceModel> & string = ModelIdKey<TSourceModel>
     >(
         options: {
-            readonly parameterType: TParameterSchema,
+            readonly parameterType: TParameterType,
             readonly sourceModel: () => TSourceModel,
             readonly sourceKeyProp?: TSourceKeyProp,
             readonly valueType: z.ZodType,
             readonly fn: ParameterizedValueCalculatorFn<
-                z.infer<TParameterSchema>,
+                z.infer<TParameterType>,
                 SimpleDataTypeOf<AllModelMembers<TSourceModel>[TSourceKeyProp], "UNDEFINED">, 
-                z.infer<TValueSchema>
+                z.infer<TValueType>
             >
         }
-    ): ParameterizedValueCalculator<z.infer<TParameterSchema>, z.infer<TValueSchema>> {
+    ): ParameterizedValueCalculator<z.infer<TParameterType>, z.infer<TValueType>> {
         return new (ParameterizedValueCalculator as any)(
             options.parameterType,
             options.sourceModel,
@@ -136,24 +143,24 @@ export abstract class Calculator {
     }
 
     static parameterizedTargetOf<
-        TParameterSchema extends z.ZodType,
+        TParameterType extends z.ZodType,
         TSourceModel extends AnyModel,
         TTargetModel extends AnyModel,
         TSourceKeyProp extends keyof CalculatorSourceKeys<TSourceModel> & string = ModelIdKey<TSourceModel>
     >(
         options: {
-            readonly parameterType: TParameterSchema,
+            readonly parameterType: TParameterType,
             readonly sourceModel: () => TSourceModel,
             readonly sourceKeyProp?: TSourceKeyProp,
             readonly targetModel: () => TTargetModel,
             readonly fn: ParameterizedTargetCalculatorFn<
-                z.infer<TParameterSchema>,
+                z.infer<TParameterType>,
                 SimpleDataTypeOf<AllModelMembers<TSourceModel>[TSourceKeyProp], "UNDEFINED">, 
                 TTargetModel
             >
         }
     ): ParameterizedTargetCalculator<
-        z.infer<TParameterSchema>,
+        z.infer<TParameterType>,
         TTargetModel
     > {
         return new (ParameterizedTargetCalculator as any)(

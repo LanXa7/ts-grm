@@ -366,18 +366,24 @@ export class EntityProp {
                 switch (calculatorData.kind) {
                     case "VALUE":
                         if (calculatorData.parameterType != null) {
+                            const calculator = calculatorData.calculator as ParameterizedValueCalculator<any, any>;
                             strategy = {
                                 kind: "PARAMETERIZED_VALUE",
                                 sourceKeyProp,
                                 parameterType: calculatorData.parameterType,
-                                fn: (calculatorData.calculator as ParameterizedValueCalculator<any, any>).fn
+                                nullable: calculator.valueType.safeParse(null).success 
+                                    || calculator.valueType.safeParse(undefined).success,
+                                fn: calculator.fn
                             };
                         } else {
+                            const calculator = calculatorData.calculator as ValueCalculator<any>;
                             strategy = {
                                 kind: "VALUE",
                                 sourceKeyProp,
                                 parameterType: undefined,
-                                fn: (calculatorData.calculator as ValueCalculator<any>).fn
+                                nullable: calculator.valueType.safeParse(null).success 
+                                    || calculator.valueType.safeParse(undefined).success,
+                                fn: calculator.fn
                             };
                         }
                         break;

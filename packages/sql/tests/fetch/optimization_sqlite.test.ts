@@ -308,7 +308,7 @@ describe.sequential("OptimizationTest", () => {
             {
                 "name": "cyan",
                 "orders": [
-                    {
+                    { 
                         "id": {
                             "x": 1,
                             "y": {
