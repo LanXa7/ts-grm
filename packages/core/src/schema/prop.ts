@@ -14,9 +14,10 @@ import {
 import { CascadeType, JoinTable, JoinColumns, JoinEntity } from "./join";
 import { FlattenMembers } from "@/utils";
 import { ArgumentError } from "@/error/common";
-import { IsNull } from "@/dsl/utils";
+import { AtLeastTwo, IsNull } from "@/dsl/utils";
 import { Calculator, ParameterizedTargetCalculator, ParameterizedValueCalculator, SqlFormula, TargetCalculator, TsFormula, ValueCalculator } from "./computed";
 import { z } from "zod"; 
+import { enumProvider, jsonbProvider, jsonProvider, ScalarProvider } from "./scalar";
 
 export const prop = {
 
@@ -54,6 +55,26 @@ export const prop = {
 
     date(): ScalarProp<Date> {
         return new ScalarProp({...EMPTY_PROP_DEFINITION_DATA, scalarType: "DATE"});
+    },
+
+    scalar<TValueType extends z.ZodType>(
+        provider: ScalarProvider<TValueType, any>
+    ): ScalarProp<z.infer<TValueType>> {
+        return new ScalarProp({...EMPTY_PROP_DEFINITION_DATA, scalarType: "CUSTOMIZED", scalarProvider: provider});
+    },
+
+    enum: enumCreator(),
+
+    json<TValueType extends z.ZodType>(
+        valueType: TValueType
+    ): ScalarProp<z.infer<TValueType>> {
+        return this.scalar(jsonProvider(valueType));
+    },
+
+    jsonb<TValueType extends z.ZodType>(
+        valueType: TValueType
+    ): ScalarProp<z.infer<TValueType>> {
+        return this.scalar(jsonbProvider(valueType));
     },
 
     embedded<TProps extends Record<string, EmbeddedMember>>(
@@ -1033,6 +1054,32 @@ export class ParameterizedCalculatedCollectionProp<
     }
 }
 
+type EnumCreator = {
+
+    <TValues extends AtLeastTwo<string>>(
+        ...values: TValues
+    ): ScalarProp<TValues[number]>;
+
+    <TMap extends { readonly [key: string]: string; }>(
+        map: TMap
+    ): ScalarProp<keyof TMap>;
+
+    <TMap extends { readonly [key: string]: number; }>(
+        map: TMap
+    ): ScalarProp<keyof TMap>;
+}
+
+function enumCreator(): EnumCreator {
+    function impl(...args: ReadonlyArray<any>): ScalarProp<ScalarProp<any>> {
+        return new ScalarProp({
+            ...EMPTY_PROP_DEFINITION_DATA, 
+            scalarType: "CUSTOMIZED",
+            scalarProvider: enumProvider(...args)
+        });
+    }
+    return impl as any;
+}
+
 export type AssociationType = "ONE_TO_ONE" | "ONE_TO_MANY" | "MANY_TO_ONE" | "MANY_TO_MANY";
 
 export type NullityType = "NONNULL" | "NULLABLE" | "INPUT_NONNULL";
@@ -1057,6 +1104,7 @@ export type EmbeddedMember =
 export type PropData = {
     readonly nullity: NullityType;
     readonly scalarType: ScalarType | undefined;
+    readonly scalarProvider: ScalarProvider<any, any> | undefined;
     readonly length: number | undefined;
     readonly props: Record<string, Prop<any, any>> | undefined;
     readonly targetModel: ModelRef<AnyModel> | undefined;
@@ -1121,11 +1169,13 @@ export type ScalarType =
     | "I8" | "I16" | "I32" | "I64" 
     | "F32" | "F64" | "NUM" 
     | "DATE"
-    | "BOOL";
+    | "BOOL"
+    | "CUSTOMIZED";
 
 const EMPTY_PROP_DEFINITION_DATA: PropData = {
     nullity: "NONNULL",
     scalarType: undefined,
+    scalarProvider: undefined,
     length: undefined,
     props: undefined,
     targetModel: undefined,

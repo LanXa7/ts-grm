@@ -291,6 +291,7 @@ export class Entity {
                         : "NULLABLE"
                     : "NONNULL",
                 scalarType: undefined,
+                scalarProvider: undefined,
                 length: undefined,
                 props: undefined,
                 targetModel: undefined,
