@@ -52,9 +52,9 @@ export type UnionToIntersection<U> =
 export type CompilationError<T extends string> =
     `\u274C ts-grm: ${T}`;
 
-export function suppressUnused(_x: any) {}
-
 export type Mutable<T> = 
     T extends object
         ? { -readonly [P in keyof T]: Mutable<T[P]> }
         : T;
+
+export function suppressUnused(_x: any) {}

@@ -1,39 +1,35 @@
 import { ArgumentError } from "@/error/common";
 import { makeErr } from "@/error/util";
-import { z } from "zod";
+import { acceptsNullOrUndefined } from "@/impl/util";
+import { StandardSchemaV1 } from "@standard-schema/spec";
 
 export class ScalarProvider<
-    TValueType extends z.ZodType, 
-    TSqlType extends z.ZodType
+    TValueType extends StandardSchemaV1, 
+    TSqlType extends StandardSchemaV1
 > {
     private constructor(
         readonly valueType: TValueType,
         readonly sqlType: TSqlType,
         readonly toValue: (
-            sqlValue: z.infer<TSqlType>
-        ) => z.infer<TValueType>,
+            sqlValue: StandardSchemaV1.InferOutput<TSqlType>
+        ) => StandardSchemaV1.InferOutput<TValueType>,
         readonly toSql: (
-            value: z.infer<TValueType>
-        ) => z.infer<TSqlType>
+            value: StandardSchemaV1.InferOutput<TValueType>
+        ) => StandardSchemaV1.InferOutput<TSqlType>
     ) {}
 
-    static of<
-    TValueType extends z.ZodType, 
-    TSqlType extends z.ZodType
->(
-    options: {
-        readonly valueType: TValueType;
-        readonly sqlType: TSqlType;
-        readonly toValue: (sqlValue: z.infer<TSqlType>) => z.infer<TValueType>;
-        readonly toSql: (sqlValue: z.infer<TValueType>) => z.infer<TSqlType>;
-    }
-): ScalarProvider<TValueType, TSqlType> {
-    if (options.valueType.safeParse(null).success 
-        || options.valueType.safeParse(undefined).success) {
+    static of(
+        options: {
+            readonly valueType: any;
+            readonly sqlType: any;
+            readonly toValue: (sqlValue: any) => StandardSchemaV1.InferOutput<any>;
+            readonly toSql: (sqlValue: any) => StandardSchemaV1.InferOutput<any>;
+        }
+    ): ScalarProvider<any, any> {
+        if (acceptsNullOrUndefined(options.valueType)) {
             throw new ArgumentError(`The valueType "${options.valueType}" cannot contain null or undefined`);
         }
-        if (options.sqlType.safeParse(null).success 
-        || options.sqlType.safeParse(undefined).success) {
+        if (acceptsNullOrUndefined(options.sqlType)) {
             throw new ArgumentError(`The sqlType "${options.sqlType}" cannot contain null or undefined`);
         }
         return new ScalarProvider(options.valueType, options.sqlType, options.toValue, options.toSql);
@@ -44,23 +40,35 @@ export function enumProvider<
     TValues extends ReadonlyArray<string>
 >(
     ...values: TValues
-): ScalarProvider<z.ZodEnum<z.util.ToEnum<TValues[number]>>, z.ZodString>;
+): ScalarProvider<
+    StandardSchemaV1<unknown, TValues[number]>, 
+    StandardSchemaV1<unknown, string>
+>;
 
 export function enumProvider<
     TMap extends {readonly [key: string]: string}
 >(
     map: TMap
-): ScalarProvider<z.ZodEnum<TMap>, z.ZodString>;
+): ScalarProvider<
+    StandardSchemaV1<unknown, keyof TMap>, 
+    StandardSchemaV1<unknown, string>
+>;
 
 export function enumProvider<
     TMap extends {readonly [key: string]: number}
 >(
     map: TMap
-): ScalarProvider<z.ZodEnum<TMap>, z.ZodNumber>;
+): ScalarProvider<
+    StandardSchemaV1<unknown, keyof TMap>, 
+    StandardSchemaV1<unknown, number>
+>;
 
 export function enumProvider(
     ...args: ReadonlyArray<any>
-): ScalarProvider<z.ZodEnum<any>, z.ZodType> {
+): ScalarProvider<
+    StandardSchemaV1<unknown, any>, 
+    StandardSchemaV1<unknown, any>
+> {
     if (typeof args[0] === "string") {
         if (args.length < 2) {
             throw new ArgumentError("The must be at least two enum values");
@@ -78,8 +86,8 @@ export function enumProvider(
             values.add(value);
         }
         return ScalarProvider.of({
-            valueType: z.enum(args as ReadonlyArray<string>),
-            sqlType: z.string(),
+            valueType: standardEnum(args as ReadonlyArray<string>),
+            sqlType: standardString(),
             toValue: _ => _,
             toSql: _ => _
         });
@@ -116,8 +124,12 @@ export function enumProvider(
         }
     }
     return ScalarProvider.of({
-        valueType: typeof args[0] === "string" ? z.enum(args) : z.enum(enumOptions),
-        sqlType: mergedValueType === "string" ? z.string() : z.number(),
+        valueType: typeof args[0] === "string" 
+            ? standardEnum(args as ReadonlyArray<string>) 
+            : standardEnum(Object.keys(enumOptions)),
+        sqlType: mergedValueType === "string" 
+            ? standardString() 
+            : standardNumber(),
         toValue: v => keyMap.get(v) 
             ?? makeErr(() => new ArgumentError(`Illegal sql value: ${v}`)),
         toSql: v => valueMap.get(v as any) 
@@ -126,27 +138,33 @@ export function enumProvider(
 }
 
 export function jsonProvider<
-    TValueType extends z.ZodType
+    TValueType extends StandardSchemaV1
 >(
     valueType: TValueType
-): ScalarProvider<TValueType, z.ZodString> {
+): ScalarProvider<
+    TValueType, 
+    StandardSchemaV1<unknown, string>
+> {
     return ScalarProvider.of({
         valueType,
-        sqlType: z.string(),
+        sqlType: standardString(),
         toValue: v => JSON.parse(v),
         toSql: v => JSON.stringify(v)
     });
 }
 
 export function jsonbProvider<
-    TValueType extends z.ZodType
+    TValueType extends StandardSchemaV1
 >(
     valueType: TValueType
-): ScalarProvider<TValueType, z.ZodType> {
+): ScalarProvider<
+    TValueType, 
+    StandardSchemaV1<unknown, any>
+> {
     if (typeof Buffer !== "undefined") {
         return ScalarProvider.of({ // Node
             valueType,
-            sqlType: z.instanceof(Buffer),
+            sqlType: standardInstanceof(Buffer),
             toValue: v => JSON.parse(v.toString("utf-8")),
             toSql: v => {
                 const str = JSON.stringify(v);
@@ -159,7 +177,7 @@ export function jsonbProvider<
     }
     return ScalarProvider.of({ // Deno, Bun
         valueType,
-        sqlType: z.instanceof(Uint8Array),
+        sqlType: standardInstanceof(Uint8Array),
         toValue: v => JSON.parse(sharedDecoder.decode(v)),
         toSql: v => sharedEncoder.encode(JSON.stringify(v))
     });
@@ -168,3 +186,55 @@ export function jsonbProvider<
 const sharedEncoder = new TextEncoder();
 
 const sharedDecoder = new TextDecoder("utf-8");
+
+const standardString = (): StandardSchemaV1<unknown, string> => ({
+    '~standard': {
+        version: 1,
+        vendor: 'custom',
+        validate(value) {
+        return typeof value === 'string' 
+            ? { value } 
+            : { issues: [{ message: 'Expected string' }] };
+        },
+    },
+});
+
+const standardNumber = (): StandardSchemaV1<unknown, number> => ({
+    '~standard': {
+        version: 1,
+        vendor: 'custom',
+        validate(value) {
+        return typeof value === 'number' 
+            ? { value } 
+            : { issues: [{ message: 'Expected number' }] };
+        },
+    },
+});
+
+const standardEnum = <T extends string>(
+    options: ReadonlyArray<T>
+): StandardSchemaV1<unknown, T> => ({
+    '~standard': {
+        version: 1,
+        vendor: 'custom',
+        validate(value) {
+        return typeof value === 'string' && options.includes(value as T)
+            ? { value: value as T }
+            : { issues: [{ message: `Expected one of ${options.join(', ')}` }] };
+        },
+    },
+});
+
+const standardInstanceof = <T extends abstract new (...args: any) => any>(
+  expectedClass: T
+): StandardSchemaV1<unknown, InstanceType<T>> => ({
+    '~standard': {
+        version: 1,
+        vendor: 'custom',
+        validate(value) {
+        return value instanceof expectedClass
+            ? { value: value as InstanceType<T> }
+            : { issues: [{ message: `Expected an instance of ${expectedClass.name}` }] };
+        },
+    },
+});

@@ -12,6 +12,7 @@ import { CascadeType } from "@/schema/join";
 import { View } from "@/schema/dto";
 import { AnyModel } from "@/schema/model";
 import { CalculationStrategy } from "./calculation_strategy";
+import { acceptsNullOrUndefined } from "./util";
 
 export class EntityProp {
 
@@ -371,8 +372,7 @@ export class EntityProp {
                                 kind: "PARAMETERIZED_VALUE",
                                 sourceKeyProp,
                                 parameterType: calculatorData.parameterType,
-                                nullable: calculator.valueType.safeParse(null).success 
-                                    || calculator.valueType.safeParse(undefined).success,
+                                nullable: acceptsNullOrUndefined(calculator.valueType),
                                 fn: calculator.fn
                             };
                         } else {
@@ -381,8 +381,7 @@ export class EntityProp {
                                 kind: "VALUE",
                                 sourceKeyProp,
                                 parameterType: undefined,
-                                nullable: calculator.valueType.safeParse(null).success 
-                                    || calculator.valueType.safeParse(undefined).success,
+                                nullable: acceptsNullOrUndefined(calculator.valueType),
                                 fn: calculator.fn
                             };
                         }

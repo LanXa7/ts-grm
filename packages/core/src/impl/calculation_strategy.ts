@@ -1,5 +1,5 @@
 import { ParameterizedTargetCalculatorFn, ParameterizedValueCalculatorFn, TargetCalculatorFn, ValueCalculatorFn } from "@/schema/computed";
-import { z } from "zod";
+import { StandardSchemaV1 } from '@standard-schema/spec';
 import { EntityProp } from ".";
 
 export type CalculationStrategyKind = CalculationStrategy["kind"];
@@ -23,7 +23,7 @@ export type ValueCalculationStragegy = {
 export type ParameterizedValueCalculationStragegy = {
     readonly kind: "PARAMETERIZED_VALUE";
     readonly sourceKeyProp: EntityProp;
-    readonly parameterType: z.ZodType;
+    readonly parameterType: StandardSchemaV1;
     readonly nullable: boolean;
     readonly fn: ParameterizedValueCalculatorFn<any, any, any>;
 };
@@ -39,7 +39,7 @@ export type ReferenceCalculationStragegy = {
 export type ParameterizedReferenceCalculationStragegy = {
     readonly kind: "PARAMETERIZED_REFERENCE";
     readonly sourceKeyProp: EntityProp;
-    readonly parameterType: z.ZodType;
+    readonly parameterType: StandardSchemaV1;
     readonly nullable: boolean;
     readonly fn: ParameterizedTargetCalculatorFn<any, any, any>;
 };
@@ -54,6 +54,6 @@ export type CollectionCalculationStragegy = {
 export type ParameterizedCollectionCalculationStragegy = {
     readonly kind: "PARAMETERIZED_COLLECTION";
     readonly sourceKeyProp: EntityProp;
-    readonly parameterType: z.ZodType;
+    readonly parameterType: StandardSchemaV1;
     readonly fn: ParameterizedTargetCalculatorFn<any, any, any>;
 };

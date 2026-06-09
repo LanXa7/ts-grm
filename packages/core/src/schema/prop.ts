@@ -16,7 +16,7 @@ import { FlattenMembers } from "@/utils";
 import { ArgumentError } from "@/error/common";
 import { AtLeastTwo, IsNull } from "@/dsl/utils";
 import { Calculator, ParameterizedTargetCalculator, ParameterizedValueCalculator, SqlFormula, TargetCalculator, TsFormula, ValueCalculator } from "./computed";
-import { z } from "zod"; 
+import { StandardSchemaV1 } from "@standard-schema/spec"; 
 import { enumProvider, jsonbProvider, jsonProvider, ScalarProvider } from "./scalar";
 
 export const prop = {
@@ -57,23 +57,23 @@ export const prop = {
         return new ScalarProp({...EMPTY_PROP_DEFINITION_DATA, scalarType: "DATE"});
     },
 
-    scalar<TValueType extends z.ZodType>(
+    scalar<TValueType extends StandardSchemaV1>(
         provider: ScalarProvider<TValueType, any>
-    ): ScalarProp<z.infer<TValueType>> {
+    ): ScalarProp<StandardSchemaV1.InferOutput<TValueType>> {
         return new ScalarProp({...EMPTY_PROP_DEFINITION_DATA, scalarType: "CUSTOMIZED", scalarProvider: provider});
     },
 
     enum: enumCreator(),
 
-    json<TValueType extends z.ZodType>(
+    json<TValueType extends StandardSchemaV1>(
         valueType: TValueType
-    ): ScalarProp<z.infer<TValueType>> {
+    ): ScalarProp<StandardSchemaV1.InferOutput<TValueType>> {
         return this.scalar(jsonProvider(valueType));
     },
 
-    jsonb<TValueType extends z.ZodType>(
+    jsonb<TValueType extends StandardSchemaV1>(
         valueType: TValueType
-    ): ScalarProp<z.infer<TValueType>> {
+    ): ScalarProp<StandardSchemaV1.InferOutput<TValueType>> {
         return this.scalar(jsonbProvider(valueType));
     },
 
@@ -1160,7 +1160,7 @@ export type CalculatorKind =
 
 export type CalculatorData = {
     readonly kind: CalculatorKind;
-    readonly parameterType: z.ZodType | undefined;
+    readonly parameterType: StandardSchemaV1 | undefined;
     readonly calculator: Calculator;
 };
 
