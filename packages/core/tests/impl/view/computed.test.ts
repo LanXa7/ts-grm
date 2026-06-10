@@ -127,7 +127,7 @@ describe("ComputedTest", () => {
                     const fullNameValue = ThisClass.__FULL_NAME__TS_FORMULA_FN(row.implicit.fullName);
                     row.dto.fullName = fullNameValue;
                 }
-                static __FULL_NAME__TS_FORMULA_FN = $entity.expandedPropMap.get("fullName").tsFormulaFn;
+                static __FULL_NAME__TS_FORMULA_FN = $entity.expandedPropMap.get("fullName").getTsFormulaFn(false);
             }
         `);
         const row = view.mapper.dtoRowReader.read(
@@ -291,7 +291,7 @@ describe("ComputedTest", () => {
                     const fullNameValue = ThisClass.__FULL_NAME__TS_FORMULA_FN(row.implicit.fullName);
                     row.dto.fullName = fullNameValue;
                 }
-                static __FULL_NAME__TS_FORMULA_FN = $entity.expandedPropMap.get("fullName").tsFormulaFn;
+                static __FULL_NAME__TS_FORMULA_FN = $entity.expandedPropMap.get("fullName").getTsFormulaFn(false);
             }
         `);
         const row = view.mapper.dtoRowReader.read(
@@ -450,7 +450,7 @@ describe("ComputedTest", () => {
                     const fullNameValue = ThisClass.__FULL_NAME__TS_FORMULA_FN(row.implicit.fullName);
                     this._formula(row.dto).fn = fullNameValue;
                 }
-                static __FULL_NAME__TS_FORMULA_FN = $entity.expandedPropMap.get("fullName").tsFormulaFn;
+                static __FULL_NAME__TS_FORMULA_FN = $entity.expandedPropMap.get("fullName").getTsFormulaFn(false);
             }
         `);
         const row = view.mapper.dtoRowReader.read(
@@ -895,7 +895,7 @@ describe("ComputedTest", () => {
                     const bookNamesValue = ThisClass.__BOOK_NAMES__TS_FORMULA_FN(row.implicit.bookNames);
                     row.dto.bookNames = bookNamesValue;
                 }
-                static __BOOK_NAMES__TS_FORMULA_FN = $entity.expandedPropMap.get("bookNames").tsFormulaFn;
+                static __BOOK_NAMES__TS_FORMULA_FN = $entity.expandedPropMap.get("bookNames").getTsFormulaFn(false);
             }
         `);
     });
@@ -1162,7 +1162,7 @@ describe("ComputedTest", () => {
                         parent.dto.storeBookNames = bookNamesValue;
                     }
                 }
-                static __BOOK_NAMES__TS_FORMULA_FN = $entity.expandedPropMap.get("bookNames").tsFormulaFn;
+                static __BOOK_NAMES__TS_FORMULA_FN = $entity.expandedPropMap.get("bookNames").getTsFormulaFn(false);
             }
         `);
     });

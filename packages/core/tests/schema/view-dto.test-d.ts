@@ -424,7 +424,8 @@ describe("ViewShapeTest", () => {
                 name: {
                     firstName: string;
                     lastName: string;
-                }
+                },
+                gender: "MALE" | "FEMALE"
             }[];
         }>();
     });

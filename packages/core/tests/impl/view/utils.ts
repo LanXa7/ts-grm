@@ -22,23 +22,28 @@ export function mapperJson(mapper: DtoMapper): any {
             };
         })
     } as any;
-    function removeUndefinedValues(o: any): any {
-        if (typeof o !== "object") {
-            return o;
-        }
-        if (Array.isArray(o)) {
-            return o.map(e => removeUndefinedValues(e));
-        }
-        const n = {} as any;
-        for (const k in o) {
-            const v = removeUndefinedValues(o[k]);
-            if (v !== undefined) {
-                n[k] = v;
-            }
-        }
-        return n;
-    }
     return removeUndefinedValues(json);
+}
+
+function removeUndefinedValues(o: any): any {
+    if (typeof o !== "object") {
+        return o;
+    }
+    if (Array.isArray(o)) {
+        return o.map(e => removeUndefinedValues(e));
+    }
+    const proto = Object.getPrototypeOf(o);
+    if (proto !== null && proto !== Object.prototype) {
+        return o;
+    }
+    const n = {} as any;
+    for (const k in o) {
+        const v = removeUndefinedValues(o[k]);
+        if (v !== undefined) {
+            n[k] = v;
+        }
+    }
+    return n;
 }
 
 export function shapeJson(mapper: DtoMapper): any {

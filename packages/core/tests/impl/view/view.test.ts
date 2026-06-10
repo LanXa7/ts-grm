@@ -824,7 +824,7 @@ describe("ViewTest", () => {
             .fold("associations", $ => $
                 .authors($ => $
                     .allScalars()
-                    .remove("name")
+                    .remove("name", "gender")
                     .flat({
                         prop: "name",
                         prefix: "flatten"

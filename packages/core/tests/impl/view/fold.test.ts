@@ -35,7 +35,6 @@ describe("FoldTest", () => {
                 }
             ]
         });
-        console.log(JSON.stringify(shapeJson(view.mapper)));
         expect(shapeJson(view.mapper)).toEqual({
             "id": 0,
             "key": {
@@ -126,6 +125,11 @@ describe("FoldTest", () => {
                                 "paths": [
                                     ["name", "lastName"]
                                 ]
+                            },
+                            {
+                                "columnIndex": 3,
+                                "prop": "Author.gender",
+                                "paths": ["gender"]
                             }
                         ]
                     }
@@ -141,7 +145,8 @@ describe("FoldTest", () => {
                         "name": {
                             "firstName": 1,
                             "lastName": 2
-                        }
+                        },
+                        "gender": 3
                     }
                 }
             }
@@ -215,7 +220,8 @@ describe("FoldTest", () => {
                 read(parents, reader) {
                     const dto = {
                         id: reader.get(0), 
-                        name: null
+                        name: null, 
+                        gender: ThisClass.__GENDER__OUTPUT_FN(reader.get(3))
                     };
                     this._name(dto).firstName = reader.get(1);
                     this._name(dto).lastName = reader.get(2);
@@ -231,18 +237,20 @@ describe("FoldTest", () => {
                     }
                     return o;
                 }
+                static __GENDER__OUTPUT_FN = $entity.expandedPropMap.get("gender").getOutputFn(false);
             }
         `);
         const authorRow = authorMapper.dtoRowReader.read(
             undefined,
-            makeReader(3, "Alex", "Banks")
+            makeReader(3, "Alex", "Banks", "M")
         );
         expect(authorRow.dto).toEqual({
             id: 3,
             name: {
                 firstName: "Alex",
                 lastName: "Banks"
-            }
+            },
+            gender: "MALE"
         });
     });
 

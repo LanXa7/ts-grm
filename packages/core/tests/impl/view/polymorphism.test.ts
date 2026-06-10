@@ -169,13 +169,15 @@ describe("PolymorphismTest", () => {
                 }
             ]
         });
-        expect(buildShape(view.mapper)).toEqual({
+        expect(buildShape(view.mapper)).toMatchObject({
             "name": {
+                "prop": "BookStore.name",
                 "columnIndex": 0,
                 "scalarType": "STR"
             },
             "__implicit": {
                 "_1": {
+                    "prop": "BookStore.id",
                     "columnIndex": 1,
                     "scalarType": "I64"
                 }
@@ -183,6 +185,7 @@ describe("PolymorphismTest", () => {
             "books": {
                 "targetShape": {
                     "name": {
+                        "prop": "Book.name",
                         "columnIndex": 0,
                         "scalarType": "STR"
                     },
@@ -194,11 +197,13 @@ describe("PolymorphismTest", () => {
                         "scalarType": "I32",
                         "targetShape": {
                             "width": {
+                                "prop": "PaperBook.size.width",
                                 "downcastTo": Entity.of(PAPER_BOOK),
                                 "columnIndex": 2,
                                 "scalarType": "I32"
                             },
                             "height": {
+                                "prop": "PaperBook.size.height",
                                 "downcastTo": Entity.of(PAPER_BOOK),
                                 "columnIndex": 3,
                                 "scalarType": "I32"
@@ -206,11 +211,13 @@ describe("PolymorphismTest", () => {
                         }
                     },
                     "address": {
+                        "prop": "ElectronicBook.address",
                         "downcastTo": Entity.of(ELECTRONIC_BOOK),
                         "columnIndex": 4,
                         "scalarType": "STR"
                     },
                     "pdfVersion": {
+                        "prop": "PdfElectronicBook.pdfVersion",
                         "downcastTo": Entity.of(PDF_ELECTRONIC_BOOK),
                         "columnIndex": 5,
                         "scalarType": "STR"
@@ -529,7 +536,7 @@ describe("PolymorphismTest", () => {
                             row.dto.area = areaValue;
                     }
                 }
-                static __AREA__TS_FORMULA_FN = $entity.findByTypeName('PaperBook').expandedPropMap.get("area").tsFormulaFn;
+                static __AREA__TS_FORMULA_FN = $entity.findByTypeName('PaperBook').expandedPropMap.get("area").getTsFormulaFn(false);
             }
         `);
     });

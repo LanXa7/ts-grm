@@ -13,6 +13,7 @@ export type Shape = {
 };
 
 export type ShapeMember = {
+    prop: EntityProp | undefined;
     downcastTo: Entity | undefined;
     columnIndex: number | string | undefined;
     scalarType: ScalarType | undefined;
@@ -58,9 +59,10 @@ function fillShapeNode(
             buildShapeMember(field, false);
             if (field.isDependent) {
                 shapeScope!.implicit[`_${i}`] = {
+                    prop: scalaProp(field),
                     downcastTo: field.downcastTo,
                     columnIndex: field.columnIndex,
-                    scalarType: field.prop.isEntityProp ? (field.prop as EntityProp).scalarType : undefined,
+                    scalarType: field.prop.asEntityProp?.scalarType,
                     targetShape: undefined,
                     targetKind: undefined,
                     recursiveDepth: undefined
@@ -98,9 +100,10 @@ function handleExplictField(field: DtoMapperField) {
                     if (foldShape == null) {
                         foldShape = {};
                         const newMember: ShapeMember = {
+                            prop: undefined,
                             downcastTo: field.downcastTo,
                             columnIndex: undefined,
-                            scalarType: field.prop.isEntityProp ? (field.prop as EntityProp).scalarType : undefined,
+                            scalarType: field.prop.asEntityProp?.scalarType,
                             targetShape: foldShape,
                             targetKind: undefined,
                             recursiveDepth: undefined
@@ -137,9 +140,10 @@ function buildShapeMember(
     if (field.subMapper) {
         if (isCollection(field.prop)) {
             return {
+                prop: scalaProp(field),
                 downcastTo: field.downcastTo,
                 columnIndex: field.columnIndex,
-                scalarType: field.prop.isEntityProp ? (field.prop as EntityProp).scalarType : undefined,
+                scalarType: field.prop.asEntityProp?.scalarType,
                 targetShape: buildShapeImpl(field.subMapper, field),
                 targetKind: "COLLECTION",
                 recursiveDepth: field.recursiveDepth
@@ -147,18 +151,20 @@ function buildShapeMember(
         } 
         if (isReference(field.prop)) {
             return {
+                prop: scalaProp(field),
                 downcastTo: field.downcastTo,
                 columnIndex: field.columnIndex,
-                scalarType: field.prop.isEntityProp ? (field.prop as EntityProp).scalarType : undefined,
+                scalarType: field.prop.asEntityProp?.scalarType,
                 targetShape: buildShapeImpl(field.subMapper, field),
                 targetKind: "REFERENCE",
                 recursiveDepth: field.recursiveDepth
             };
         }
         return {
+            prop: scalaProp(field),
             downcastTo: field.downcastTo,
             columnIndex: field.columnIndex,
-            scalarType: field.prop.isEntityProp ? (field.prop as EntityProp).scalarType : undefined,
+            scalarType: field.prop.asEntityProp?.scalarType,
             targetShape: buildShapeImpl(field.subMapper, field),
             targetKind: undefined,
             recursiveDepth: undefined
@@ -167,15 +173,16 @@ function buildShapeMember(
     let columnIndex: number | string | undefined;
     if (ignoreColumnIndex) {
         columnIndex = undefined;
-    } else if (field.prop.isEntityProp && (field.prop as EntityProp).tsFormulaFn != null) {
+    } else if (field.prop.asEntityProp?.getTsFormulaFn(false) != null) {
         columnIndex = field.prop.name;
     } else {
         columnIndex = field.columnIndex;
     }
     return {
+        prop: scalaProp(field),
         downcastTo: field.downcastTo,
         columnIndex,
-        scalarType: field.prop.isEntityProp ? (field.prop as EntityProp).scalarType : undefined,
+        scalarType: field.prop.asEntityProp?.scalarType,
         targetShape: undefined,
         targetKind: undefined,
         recursiveDepth: undefined
@@ -228,6 +235,13 @@ function isColumnIgnored(
     return true;
 }
 
+function scalaProp(
+    field: DtoMapperField
+): EntityProp | undefined {
+    const prop = field.prop.asEntityProp;
+    return prop?.scalarType != null || prop?.sqlFormulaFn != null ? prop : undefined;
+}
+
 let shapeScope: ShapeScope | undefined = undefined;
 
 class ShapeScope {
@@ -272,6 +286,7 @@ class ShapeScope {
         const name = this.mapper?.bridgeProp?.name ?? this.mapper.associatedProp!.name;
         if (parent._modelScope.shape[name]?.targetShape !== this.shape) {
             parent._modelScope.assign(name, {
+                prop: undefined,
                 downcastTo: undefined,
                 columnIndex: undefined,
                 scalarType: undefined,
@@ -291,7 +306,7 @@ class ShapeScope {
     }
 
     assign(key: string, member: ShapeMember) {
-        if (typeof this.shape[key] === "number") {
+        if (typeof this.shape[key]?.columnIndex === "number") {
             throw new StateError(
                 `Conflict mapping for "${
                     this.toString()

@@ -190,7 +190,11 @@ export const AUTHOR = model("Author", "id", class {
         lastName: prop.str()
     })
     books = prop.m2m(BOOK).mappedBy("authors")
-    fullName = prop.formula.ts(AUTHOR_FULL_NAME_FORMULA);
+    gender = prop.enum({
+        MALE: 'M',
+        FEMALE: 'F'
+    })
+    fullName = prop.formula.ts(AUTHOR_FULL_NAME_FORMULA)
 }, ctx => ctx.unique("name.firstName", "name.lastName"));
 
 export const TREE_NODE = model("TreeNode", "id", class {

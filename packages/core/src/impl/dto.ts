@@ -62,8 +62,12 @@ export class InverseFetchProp {
         return this.prop.subPath;
     }
 
-    get isEntityProp(): boolean {
+    get isEntityProp(): false {
         return false;
+    }
+
+    get asEntityProp(): undefined {
+        return undefined;
     }
 
     get associationType(): AssociationType | undefined {
@@ -121,6 +125,10 @@ export class TypeNameProp {
 
     get isEntityProp(): false {
         return false;
+    }
+
+    get asEntityProp(): undefined {
+        return undefined;
     }
 
     get targetEntity(): undefined {

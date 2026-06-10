@@ -74,6 +74,14 @@ function createDtoRowReaderCreator(mapper: DtoMapper): DtoRowReaderCreator {
             if (shape.__implicit != null) {
                 writeFold("_implicit", shape.__implicit, mapper.nullAsUndefined, writer);
             }
+            for (const field of mapper.fields) {
+                if (field.prop.isEntityProp) {
+                    const prop = field.prop as EntityProp;
+                    if (prop.getOutputFn(false) != null) {
+                        writeOutputFn(field, mapper.nullAsUndefined, writer);
+                    }
+                }
+            }
             if (mapper.unresolvedFields.length !== 0) {
                 writeDependency(mapper, writer);
                 writeDependencyNullable(mapper, writer);
@@ -214,7 +222,13 @@ function writeRootMember(
     if (member.columnIndex === mapper.typeNameIndex) {
         writer.code(keyStr).code(": typeName");
     } else if (typeof member.columnIndex === "number") {
-        writer.code(keyStr).code(": reader.get(").code(`${member.columnIndex}`).code(")");
+        writer.code(keyStr).code(": ");
+        if (member.prop.getOutputFn(false) != null) {
+            writer.code("ThisClass.").code(outputFnName(member.prop));
+            writer.code("(reader.get(").code(`${member.columnIndex}`).code("))");
+        } else {
+            writer.code("reader.get(").code(`${member.columnIndex}`).code(")");
+        }
     } else if (mapper.nullAsUndefined) {
         writer.code(keyStr).code(": undefined");
     } else {
@@ -241,6 +255,7 @@ function writeDepthAssignments(
             writeDepthAssignment(
                 0,
                 path,
+                field.prop.asEntityProp!,
                 field.columnIndex,
                 writer
             );
@@ -251,20 +266,24 @@ function writeDepthAssignments(
 function writeDepthAssignment(
     parentDepth: number,
     path: ReadonlyArray<string>,
+    prop: EntityProp,
     columnIndex: string | number,
     writer: CodeWriter
 ) {
     if (path[parentDepth] === "..") {
         if (parentDepth === 0) {
-            writer
-                .code(`const reader_${columnIndex} = reader.get(`)
-                .code(`${columnIndex}`)
-                .code(")")
-                .newLine(";");
+            writer.code(`const reader_${columnIndex} = `);
+            if (prop.getOutputFn(false) != null) {
+                writer.code("ThisClass.").code(outputFnName(prop));
+                writer.code("(reader.get(").code(`${columnIndex}`).code("))");
+            } else {
+                writer.code("reader.get(").code(`${columnIndex}`).code(")");
+            }
+            writer.newLine(";");
         }
         writer.code(`for (const ${parentName(parentDepth)} of ${parentDepth > 0 ? `${parentName(parentDepth - 1)}.` : ""}parents) `);
         writer.scope("CURLY_BRACKETS", () => {
-            writeDepthAssignment(parentDepth + 1, path, columnIndex, writer);
+            writeDepthAssignment(parentDepth + 1, path, prop, columnIndex, writer);
         }).newLine();
     } else {
         if (parentDepth > 0) {
@@ -272,11 +291,14 @@ function writeDepthAssignment(
             writer.code(` = reader_${columnIndex}`).newLine(";");
         } else {
             writeAssignmentTarget("", false, path, writer);
-            writer
-                .code(" = reader.get(")
-                .code(`${columnIndex}`)
-                .code(")")
-                .newLine(";");
+            writer.code(" = ");
+            if (prop.getOutputFn(false) != null) {
+                writer.code("ThisClass.").code(outputFnName(prop));
+                writer.code("(reader.get(").code(`${columnIndex}`).code("))");
+            } else {
+                writer.code("reader.get(").code(`${columnIndex}`).code(")");
+            }
+            writer.newLine(";");
         }
     }
 }
@@ -633,19 +655,38 @@ function writeAssignments(
     writer.code(" = ").code(valueName).newLine(";");
 }
 
+function writeOutputFn(
+    field: DtoMapperField,
+    nullAsUndefined: boolean,
+    writer: CodeWriter
+) {
+    const prop = field.prop as EntityProp;
+    writer
+        .code("static ")
+        .code(outputFnName(prop))
+        .code(" = $entity");
+    if (field.downcastTo != null) {
+        writer.code(`.findByTypeName('${field.downcastTo.name}')`);
+    }
+    writer
+        .code(`.expandedPropMap.get("${prop.path}").getOutputFn(${nullAsUndefined})`)
+        .newLine(";");
+}
+
 function writeTsFormulaFns(
     mapper: DtoMapper, 
     writer: CodeWriter
 ) {
     for (const field of mapper.fields) {
         if (isTsFormula(field.prop)) {
-            writeTsFormulaFn(field, writer);
+            writeTsFormulaFn(field, mapper.nullAsUndefined, writer);
         }
     }
 }
 
 function writeTsFormulaFn(
     field: DtoMapperField, 
+    nullAsUndefined: boolean,
     writer: CodeWriter
 ) {
     const prop = field.prop as EntityProp;
@@ -657,8 +698,12 @@ function writeTsFormulaFn(
         writer.code(`.findByTypeName('${field.downcastTo.name}')`);
     }
     writer
-        .code(`.expandedPropMap.get("${prop.path}").tsFormulaFn`)
+        .code(`.expandedPropMap.get("${prop.path}").getTsFormulaFn(${nullAsUndefined})`)
         .newLine(";");
+}
+
+function outputFnName(prop: EntityProp): string {
+    return `__${toScreamingSnakeCase(prop.path)}__OUTPUT_FN`;
 }
 
 function tsFormulaFnName(prop: EntityProp): string {

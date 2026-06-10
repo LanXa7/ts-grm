@@ -212,6 +212,7 @@ describe("RuntimeTableTest", () => {
                 }
                 _id = undefined;
                 _name = undefined;
+                _gender = undefined;
                 get id() {
                     let expr = this._id;
                     if (expr == null) {
@@ -250,9 +251,17 @@ describe("RuntimeTableTest", () => {
                     const ignoreTargetFilters = typeof options === "object" ? options?.ignoreTargetFilters ?? false : false;
                     return this.association("books", {joinType, ignoreTargetFilters}).target(filter);
                 }
+                get gender() {
+                    let expr = this._gender;
+                    if (expr == null) {
+                        this._gender = expr = $createTableProp(this, ThisClass.__gender);
+                    }
+                    return expr;
+                }
                 static __id = $entity.expandedPropMap.get("id");
                 static __name_firstName = $entity.expandedPropMap.get("name.firstName");
                 static __name_lastName = $entity.expandedPropMap.get("name.lastName");
+                static __gender = $entity.expandedPropMap.get("gender");
             }
         `);
         expect(table.id instanceof AbstractNumExpr).toEqual(true);

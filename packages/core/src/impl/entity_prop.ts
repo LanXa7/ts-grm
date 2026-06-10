@@ -76,7 +76,9 @@ export class EntityProp {
 
     private _tsFormulaDependencies: ReadonlyArray<EntityProp> | undefined = undefined;
 
-    private _tsFormulaFn: TsFormulaFn<any, any> | undefined = undefined;
+    private _tsFormulaWithNullFn: TsFormulaFn<any, any> | undefined = undefined;
+
+    private _tsFormulaWithUndefinedFn: TsFormulaFn<any, any> | undefined = undefined;
 
     private _tsFormulaResolved = false;
 
@@ -85,6 +87,12 @@ export class EntityProp {
     private _sqlFormulaResolved = false;
 
     private _calculationStrategy: CalculationStrategy | undefined = undefined; 
+
+    private _outputWithNullFn: ((value: any) => any) | undefined = undefined;
+
+    private _outputWithUndefinedFn: ((value: any) => any) | undefined = undefined;
+
+    private _outputFnResolved = false;
 
     private static readonly _EMPTY_PROP_MAP: ReadonlyMap<string, EntityProp> = 
         new Map<string, EntityProp>();
@@ -142,6 +150,10 @@ export class EntityProp {
 
     get isEntityProp(): true {
         return true;
+    }
+
+    get asEntityProp(): EntityProp {
+        return this;
     }
 
     get isMiddleTableProp(): false {
@@ -335,9 +347,9 @@ export class EntityProp {
         return this._tsFormulaDependencyView;
     }
     
-    get tsFormulaFn(): TsFormulaFn<any, any> | undefined {
+    getTsFormulaFn(nullAsUndefined: boolean): TsFormulaFn<any, any> | undefined {
         this._resolveTsFormula();
-        return this._tsFormulaFn;
+        return nullAsUndefined ? this._tsFormulaWithUndefinedFn : this._tsFormulaWithNullFn;
     }
 
     get calculationStrategy(): CalculationStrategy | undefined {
@@ -449,7 +461,9 @@ export class EntityProp {
                 }
             }
             this._tsFormulaDependencyView = dependencyView;
-            this._tsFormulaFn = formulaData.formula.fn;
+            const fn = formulaData.formula.fn;
+            this._tsFormulaWithNullFn = v => v != null ? fn(v) : null;
+            this._tsFormulaWithUndefinedFn = v => v != null ? fn(v) : undefined;
         }
         this._tsFormulaResolved = true;
     }
@@ -752,11 +766,7 @@ export class EntityProp {
     }
 
     toJSON(): any {
-        return {
-            prop: true,
-            declaringEntity: this.declaringEntity,
-            name: this.name
-        };
+        return this.toString();
     }
 
     get path(): string {
@@ -1336,5 +1346,20 @@ export class EntityProp {
                 EntityProp._collectFlattenProps(subProp, subPrefix, outputPropMap);
             }
         }
+    }
+
+    getOutputFn(nullAsUndefined: boolean): ((value: any) => any) | undefined {
+        if (!this._outputFnResolved) {
+            const fn = this._data.scalarProvider?.toValue;
+            if (fn != null) {
+                this._outputWithNullFn = v => v != null ? fn(v) : null;
+                this._outputWithUndefinedFn = v => v != null ? fn(v) : undefined;
+            }
+        }
+        return nullAsUndefined ? this._outputWithUndefinedFn : this._outputWithNullFn;
+    }
+
+    get inputFn(): ((value: any) => any) | undefined {
+        return this._data.scalarProvider?.toSql;
     }
 }
