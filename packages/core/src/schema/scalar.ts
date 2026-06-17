@@ -3,29 +3,106 @@ import { makeErr } from "@/error/util";
 import { acceptsNullOrUndefined } from "@/impl/util";
 import { StandardSchemaV1 } from "@standard-schema/spec";
 
+export type ScalarKind = 
+    "STR" 
+    | "I8" | "I16" | "I32" | "I64" 
+    | "F32" | "F64" | "NUM" 
+    | "DATE"
+    | "BOOL"
+    | "BINARY";
+
+export class ScalarType<T> {
+
+    readonly _dummy: T | undefined = undefined;
+
+    private constructor(
+        readonly kind: ScalarKind,
+        readonly length: number | undefined
+    ) {}
+
+    static BOOL = new ScalarType<boolean>("BOOL", undefined);
+
+    static DATE = new ScalarType<Date>("DATE", undefined);
+
+    static I8 = new ScalarType<number>("I8", undefined);
+
+    static I16 = new ScalarType<number>("I16", undefined);
+
+    static I32 = new ScalarType<number>("I32", undefined);
+
+    static I64 = new ScalarType<number>("I64", undefined);
+
+    static F32 = new ScalarType<number>("F32", undefined);
+
+    static F64 = new ScalarType<number>("F64", undefined);
+
+    static NUM = new ScalarType<number>("NUM", undefined);
+
+    static str(length: number): ScalarType<string> {
+        if (length < 1) {
+            throw new ArgumentError("length cannot be less than 1");
+        }
+        return new ScalarType<string>("STR", length);
+    }
+
+    static text(): ScalarType<string> {
+        return new ScalarType<string>("STR", undefined);
+    }
+
+    static binary(length: number): ScalarType<Uint8Array> {
+        if (length < 1) {
+            throw new ArgumentError("length cannot be less than 1");
+        }
+        return new ScalarType<Uint8Array>("BINARY", length);
+    }
+
+    static image(): ScalarType<Uint8Array> {
+        return new ScalarType<Uint8Array>("BINARY", undefined);
+    }
+
+    toString(): string {
+        if (this.length == null) {
+            return this.kind;
+        }
+        return `${this.kind}(${this.length})`;
+    }
+}
+
+export type ScalarTypeOf<T extends ScalarType<any>> =
+    T extends ScalarType<infer ValueType>
+        ? ValueType
+        : never;
+
 export class ScalarProvider<
     TValueType extends StandardSchemaV1, 
-    TSqlType extends StandardSchemaV1
+    TSqlType extends ScalarType<any>
 > {
     private constructor(
         readonly valueType: TValueType,
         readonly sqlType: TSqlType,
         readonly toValue: (
-            sqlValue: StandardSchemaV1.InferOutput<TSqlType>
+            sqlValue: ScalarTypeOf<TSqlType>
         ) => StandardSchemaV1.InferOutput<TValueType>,
         readonly toSql: (
             value: StandardSchemaV1.InferOutput<TValueType>
-        ) => StandardSchemaV1.InferOutput<TSqlType>
+        ) => ScalarTypeOf<TSqlType>
     ) {}
 
-    static of(
+    static of<
+        TValueType extends StandardSchemaV1, 
+        TSqlType extends ScalarType<any>
+    >(
         options: {
-            readonly valueType: any;
-            readonly sqlType: any;
-            readonly toValue: (sqlValue: any) => StandardSchemaV1.InferOutput<any>;
-            readonly toSql: (sqlValue: any) => StandardSchemaV1.InferOutput<any>;
+            readonly valueType: TValueType;
+            readonly sqlType: TSqlType;
+            readonly toValue: (
+                sqlValue: ScalarTypeOf<TSqlType>
+            ) => StandardSchemaV1.InferOutput<TValueType>;
+            readonly toSql: (
+                sqlValue: StandardSchemaV1.InferOutput<TValueType>
+            ) => ScalarTypeOf<TSqlType>;
         }
-    ): ScalarProvider<any, any> {
+    ): ScalarProvider<TValueType, TSqlType> {
         if (acceptsNullOrUndefined(options.valueType)) {
             throw new ArgumentError(`The valueType "${options.valueType}" cannot contain null or undefined`);
         }
@@ -42,7 +119,7 @@ export function enumProvider<
     ...values: TValues
 ): ScalarProvider<
     StandardSchemaV1<unknown, TValues[number]>, 
-    StandardSchemaV1<unknown, string>
+    ScalarType<string>
 >;
 
 export function enumProvider<
@@ -51,7 +128,7 @@ export function enumProvider<
     map: TMap
 ): ScalarProvider<
     StandardSchemaV1<unknown, keyof TMap>, 
-    StandardSchemaV1<unknown, string>
+    ScalarType<string>
 >;
 
 export function enumProvider<
@@ -60,14 +137,14 @@ export function enumProvider<
     map: TMap
 ): ScalarProvider<
     StandardSchemaV1<unknown, keyof TMap>, 
-    StandardSchemaV1<unknown, number>
+    ScalarType<number>
 >;
 
 export function enumProvider(
     ...args: ReadonlyArray<any>
 ): ScalarProvider<
     StandardSchemaV1<unknown, any>, 
-    StandardSchemaV1<unknown, any>
+    ScalarType<any>
 > {
     if (typeof args[0] === "string") {
         if (args.length < 2) {
@@ -75,19 +152,21 @@ export function enumProvider(
         }
         for (let i = 1; i < args.length; i++) {
             if (typeof args[i] !== "string") {
-                throw new ArgumentError(`The enumValues[%d] must be string`);
+                throw new ArgumentError(`The enumValues[${i}] must be string`);
             }
         }
         const values = new Set<any>();
+        let len = 0;
         for (const value of args) {
             if (values.has(value)) {
                 throw new ArgumentError(`The value of enum map is not unique, duplicated value: "${value}"`);
             }
             values.add(value);
+            len = Math.max(len, value.length);
         }
         return ScalarProvider.of({
             valueType: standardEnum(args as ReadonlyArray<string>),
-            sqlType: standardString(),
+            sqlType: ScalarType.str(len),
             toValue: _ => _,
             toSql: _ => _
         });
@@ -123,13 +202,17 @@ export function enumProvider(
                 throw new ArgumentError("The values of enum map must be string of number");
         }
     }
+    let len = 0;
+    if (mergedValueType === "string") {
+        for (const key in enumOptions) {
+            len = Math.max(len, (enumOptions[key] as string).length);
+        }
+    }
     return ScalarProvider.of({
-        valueType: typeof args[0] === "string" 
-            ? standardEnum(args as ReadonlyArray<string>) 
-            : standardEnum(Object.keys(enumOptions)),
+        valueType: standardEnum(Object.keys(enumOptions)),
         sqlType: mergedValueType === "string" 
-            ? standardString() 
-            : standardNumber(),
+            ? ScalarType.str(len) 
+            : ScalarType.I32,
         toValue: v => keyMap.get(v) 
             ?? makeErr(() => new ArgumentError(`Illegal sql value: ${v}`)),
         toSql: v => valueMap.get(v as any) 
@@ -143,11 +226,11 @@ export function jsonProvider<
     valueType: TValueType
 ): ScalarProvider<
     TValueType, 
-    StandardSchemaV1<unknown, string>
+    ScalarType<string>
 > {
     return ScalarProvider.of({
         valueType,
-        sqlType: standardString(),
+        sqlType: ScalarType.text(),
         toValue: v => JSON.parse(v),
         toSql: v => JSON.stringify(v)
     });
@@ -159,13 +242,13 @@ export function jsonbProvider<
     valueType: TValueType
 ): ScalarProvider<
     TValueType, 
-    StandardSchemaV1<unknown, any>
+    ScalarType<Uint8Array>
 > {
     if (typeof Buffer !== "undefined") {
         return ScalarProvider.of({ // Node
             valueType,
-            sqlType: standardInstanceof(Buffer),
-            toValue: v => JSON.parse(v.toString("utf-8")),
+            sqlType: ScalarType.image(),
+            toValue: v => JSON.parse((v as Buffer).toString("utf-8")),
             toSql: v => {
                 const str = JSON.stringify(v);
                 const len = Buffer.byteLength(str, "utf-8");
@@ -177,7 +260,7 @@ export function jsonbProvider<
     }
     return ScalarProvider.of({ // Deno, Bun
         valueType,
-        sqlType: standardInstanceof(Uint8Array),
+        sqlType: ScalarType.image(),
         toValue: v => JSON.parse(sharedDecoder.decode(v)),
         toSql: v => sharedEncoder.encode(JSON.stringify(v))
     });
@@ -186,30 +269,6 @@ export function jsonbProvider<
 const sharedEncoder = new TextEncoder();
 
 const sharedDecoder = new TextDecoder("utf-8");
-
-const standardString = (): StandardSchemaV1<unknown, string> => ({
-    '~standard': {
-        version: 1,
-        vendor: 'custom',
-        validate(value) {
-        return typeof value === 'string' 
-            ? { value } 
-            : { issues: [{ message: 'Expected string' }] };
-        },
-    },
-});
-
-const standardNumber = (): StandardSchemaV1<unknown, number> => ({
-    '~standard': {
-        version: 1,
-        vendor: 'custom',
-        validate(value) {
-        return typeof value === 'number' 
-            ? { value } 
-            : { issues: [{ message: 'Expected number' }] };
-        },
-    },
-});
 
 const standardEnum = <T extends string>(
     options: ReadonlyArray<T>
@@ -221,20 +280,6 @@ const standardEnum = <T extends string>(
         return typeof value === 'string' && options.includes(value as T)
             ? { value: value as T }
             : { issues: [{ message: `Expected one of ${options.join(', ')}` }] };
-        },
-    },
-});
-
-const standardInstanceof = <T extends abstract new (...args: any) => any>(
-  expectedClass: T
-): StandardSchemaV1<unknown, InstanceType<T>> => ({
-    '~standard': {
-        version: 1,
-        vendor: 'custom',
-        validate(value) {
-        return value instanceof expectedClass
-            ? { value: value as InstanceType<T> }
-            : { issues: [{ message: `Expected an instance of ${expectedClass.name}` }] };
         },
     },
 });

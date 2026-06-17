@@ -17,50 +17,50 @@ import { ArgumentError } from "@/error/common";
 import { AtLeastTwo, IsNull } from "@/dsl/utils";
 import { Calculator, ParameterizedTargetCalculator, ParameterizedValueCalculator, SqlFormula, TargetCalculator, TsFormula, ValueCalculator } from "./computed";
 import { StandardSchemaV1 } from "@standard-schema/spec"; 
-import { enumProvider, jsonbProvider, jsonProvider, ScalarProvider } from "./scalar";
+import { enumProvider, jsonbProvider, jsonProvider, ScalarProvider, ScalarType } from "./scalar";
 
 export const prop = {
 
-    str(): StrProp {
-        return new StrProp({...EMPTY_PROP_DEFINITION_DATA, scalarType: "STR"});
+    str(length: number): StrProp {
+        return new StrProp({...EMPTY_PROP_DEFINITION_DATA, scalarType: ScalarType.str(length)});
     },
 
     i8(): ScalarProp<number> {
-        return new ScalarProp({...EMPTY_PROP_DEFINITION_DATA, scalarType: "I8"});
+        return new ScalarProp({...EMPTY_PROP_DEFINITION_DATA, scalarType: ScalarType.I8});
     },
 
     i16(): ScalarProp<number> {
-        return new ScalarProp({...EMPTY_PROP_DEFINITION_DATA, scalarType: "I16"});
+        return new ScalarProp({...EMPTY_PROP_DEFINITION_DATA, scalarType: ScalarType.I16});
     },
 
     i32(): ScalarProp<number> {
-        return new ScalarProp({...EMPTY_PROP_DEFINITION_DATA, scalarType: "I32"});
+        return new ScalarProp({...EMPTY_PROP_DEFINITION_DATA, scalarType: ScalarType.I32});
     },
 
     i64(): I64Prop<number> {
-        return new I64Prop({...EMPTY_PROP_DEFINITION_DATA, scalarType: "I64"});
+        return new I64Prop({...EMPTY_PROP_DEFINITION_DATA, scalarType: ScalarType.I64});
     },
 
     f32(): ScalarProp<number> {
-        return new ScalarProp({...EMPTY_PROP_DEFINITION_DATA, scalarType: "F32"});
+        return new ScalarProp({...EMPTY_PROP_DEFINITION_DATA, scalarType: ScalarType.F32});
     },
 
     f64(): ScalarProp<number> {
-        return new ScalarProp({...EMPTY_PROP_DEFINITION_DATA, scalarType: "F64"});
+        return new ScalarProp({...EMPTY_PROP_DEFINITION_DATA, scalarType: ScalarType.F64});
     },
 
     num(): ScalarProp<number> {
-        return new ScalarProp({...EMPTY_PROP_DEFINITION_DATA, scalarType: "NUM"});
+        return new ScalarProp({...EMPTY_PROP_DEFINITION_DATA, scalarType: ScalarType.NUM});
     },
 
     date(): ScalarProp<Date> {
-        return new ScalarProp({...EMPTY_PROP_DEFINITION_DATA, scalarType: "DATE"});
+        return new ScalarProp({...EMPTY_PROP_DEFINITION_DATA, scalarType: ScalarType.DATE});
     },
 
     scalar<TValueType extends StandardSchemaV1>(
         provider: ScalarProvider<TValueType, any>
     ): ScalarProp<StandardSchemaV1.InferOutput<TValueType>> {
-        return new ScalarProp({...EMPTY_PROP_DEFINITION_DATA, scalarType: "CUSTOMIZED", scalarProvider: provider});
+        return new ScalarProp({...EMPTY_PROP_DEFINITION_DATA, scalarType: provider.sqlType, scalarProvider: provider});
     },
 
     enum: enumCreator(),
@@ -1071,10 +1071,11 @@ type EnumCreator = {
 
 function enumCreator(): EnumCreator {
     function impl(...args: ReadonlyArray<any>): ScalarProp<ScalarProp<any>> {
+        const scalarProvider = enumProvider(...args);
         return new ScalarProp({
             ...EMPTY_PROP_DEFINITION_DATA, 
-            scalarType: "CUSTOMIZED",
-            scalarProvider: enumProvider(...args)
+            scalarType: scalarProvider.sqlType,
+            scalarProvider
         });
     }
     return impl as any;
@@ -1103,7 +1104,7 @@ export type EmbeddedMember =
 
 export type PropData = {
     readonly nullity: NullityType;
-    readonly scalarType: ScalarType | undefined;
+    readonly scalarType: ScalarType<any> | undefined;
     readonly scalarProvider: ScalarProvider<any, any> | undefined;
     readonly length: number | undefined;
     readonly props: Record<string, Prop<any, any>> | undefined;
@@ -1163,14 +1164,6 @@ export type CalculatorData = {
     readonly parameterType: StandardSchemaV1 | undefined;
     readonly calculator: Calculator;
 };
-
-export type ScalarType = 
-    "STR" 
-    | "I8" | "I16" | "I32" | "I64" 
-    | "F32" | "F64" | "NUM" 
-    | "DATE"
-    | "BOOL"
-    | "CUSTOMIZED";
 
 const EMPTY_PROP_DEFINITION_DATA: PropData = {
     nullity: "NONNULL",

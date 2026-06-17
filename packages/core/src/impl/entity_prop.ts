@@ -1,4 +1,4 @@
-import { AssociationType, JoinColumnData, Prop, PropData, ScalarType } from "@/schema/prop";
+import { AssociationType, JoinColumnData, Prop, PropData } from "@/schema/prop";
 import { Entity } from "./entity";
 import { PropError } from "@/error/metadata_error";
 import { AnyModelImpl, ModelImpl } from "./model_impl";
@@ -13,6 +13,7 @@ import { View } from "@/schema/dto";
 import { AnyModel } from "@/schema/model";
 import { CalculationStrategy } from "./calculation_strategy";
 import { acceptsNullOrUndefined } from "./util";
+import { ScalarType } from "@/schema/scalar";
 
 export class EntityProp {
 
@@ -22,7 +23,7 @@ export class EntityProp {
 
     private _rootProp: EntityProp | undefined = undefined;
 
-    private _scalarType: ScalarType | undefined = undefined;
+    private _scalarType: ScalarType<any> | undefined = undefined;
 
     private _length: number | undefined = undefined;
 
@@ -168,7 +169,7 @@ export class EntityProp {
         return rootProp;
     }
 
-    get scalarType(): ScalarType | undefined {
+    get scalarType(): ScalarType<any> | undefined {
         return this._scalarType;
     }
 

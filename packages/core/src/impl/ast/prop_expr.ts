@@ -35,7 +35,7 @@ export function createTableProp(
     const directTable = prop instanceof EntityProp
         ? (table as AbstractEntityTable).__to(prop.declaringEntity)
         : table;
-    switch (prop.scalarType) {
+    switch (prop.scalarType.kind) {
         case "I8":
         case "I16":
         case "I32":

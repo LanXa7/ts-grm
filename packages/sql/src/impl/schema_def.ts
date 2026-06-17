@@ -26,7 +26,7 @@ export interface ColumnDef {
     
     readonly name: string;
 
-    readonly type: ScalarType;
+    readonly type: ScalarType<any>;
 
     readonly nullable: boolean;
 
@@ -220,7 +220,7 @@ export class ColumnDefImpl implements ColumnDef {
         readonly prop: metadata.EntityProp | undefined,
         readonly name: string,
         readonly referenceColumnDef: ColumnDefImpl | undefined,
-        readonly type: ScalarType,
+        readonly type: ScalarType<any>,
         readonly nullable: boolean,
         readonly length: number | undefined,
         readonly when: ReadonlyArray<metadata.Entity> | undefined
@@ -230,7 +230,7 @@ export class ColumnDefImpl implements ColumnDef {
         return {
             name: this.name,
             referenceName: this.referenceColumnDef?.name,
-            type: this.type,
+            type: this.type.toString(),
             nullable: this.nullable,
             length: this.length,
             when: this.when?.map(e => e.tableSettings.discriminatorValue!)

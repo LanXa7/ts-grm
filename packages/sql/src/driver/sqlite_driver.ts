@@ -31,7 +31,7 @@ export class SqliteDriver implements Driver {
     }
 
     typeName(columnDef: ColumnDef): string {
-        switch (columnDef.type) {
+        switch (columnDef.type.kind) {
             case "BOOL":
             case "I8":
             case "I16":

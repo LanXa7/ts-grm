@@ -4,9 +4,9 @@ import { Column, Columns, DatabaseStrategy, Entity, JoinOperation, MiddleTable, 
 import { capitalize } from "./util";
 import { makeErr } from "@/error/util";
 import { AbstractAssociationTable, AssociationTableCtor, createAssociationTableClass } from "./association_table";
-import { ScalarType } from "@/schema/prop";
 import { AnyAssociationModel } from "@/dsl/association";
 import { AssociationModelImpl } from "./association_model_impl";
+import { ScalarType } from "@/schema/scalar";
 
 export class AssociationEntity {
 
@@ -162,7 +162,7 @@ export interface AssociationProp {
 
     readonly referenceProp: AssociationProp | undefined;
 
-    readonly scalarType: ScalarType | undefined;
+    readonly scalarType: ScalarType<any> | undefined;
 
     readonly props: ReadonlyMap<string, AssociationProp> | undefined;
 
@@ -216,7 +216,7 @@ class AssociationPropImpl implements AssociationProp {
 
     props: ReadonlyMap<string, AssociationProp> | undefined = undefined;
 
-    scalarType: ScalarType | undefined = undefined;
+    scalarType: ScalarType<any> | undefined = undefined;
 
     targetKeyProp: EntityProp | undefined = undefined;
 

@@ -54,9 +54,10 @@ export type {
     M2OCreator,
     M2MCreator,
     FormulaCreator,
-    CalculatedCreator,
-    ScalarType
+    CalculatedCreator
 } from "./schema/prop";
+export { ScalarType } from "./schema/scalar";
+export type { ScalarKind } from "./schema/scalar";
 export type { 
     TsFormulaFn,
     SqlFormulaFn,
