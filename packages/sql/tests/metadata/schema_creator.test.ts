@@ -157,6 +157,12 @@ describe.sequential("SchemaCreatorTest", () => {
                         "type": "STR",
                         "nullable": false,
                         "length": 50
+                    },
+                    {
+                        "name": "GENDER",
+                        "type": "STR",
+                        "nullable": false,
+                        "length": 6
                     }
                 ],
                 "constraints": [
@@ -893,6 +899,7 @@ describe.sequential("SchemaCreatorTest", () => {
                 ID integer not null, 
                 FIRST_NAME text not null, 
                 LAST_NAME text not null, 
+                GENDER text not null, 
 
                 constraint AUTHOR_constraint_1
                     primary key(ID)

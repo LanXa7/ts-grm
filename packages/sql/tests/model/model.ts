@@ -209,6 +209,10 @@ export const AUTHOR = model("Author", "id", class {
         .mappedBy("authors")
         .orderBy("name", "edition")
     fullName = prop.formula.ts(AUTHOR_FULL_NAME_FORMULA)
+    gender = prop.enum({
+        "MALE": "M", 
+        "FEMALE": "F"
+    })
 });
 
 export const TREE_NODE = model(

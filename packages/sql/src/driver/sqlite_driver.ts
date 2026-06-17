@@ -44,7 +44,7 @@ export class SqliteDriver implements Driver {
             case "STR":
                 return "text";
             case "BINARY":
-                return "blob"
+                return "blob";
             default:
                 throw new err.StateError(`Unsuported scalar type: ${columnDef.type.kind}`);
         }

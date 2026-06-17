@@ -66,14 +66,14 @@ insert into PDF_ELECTRONIC_BOOK(PEB_ID, PDF_VERSION) values
     (11, '2.0'),
     (12, '2.0');
 
-insert into author(id, first_name, last_name) values
-    (1, 'Eve', 'Procello'),
-    (2, 'Alex', 'Banks'),
-    (3, 'Dan', 'Vanderkam'),
-    (4, 'Karthik', 'Ranganathan'),
-    (5, 'Kannappan', 'Muthukkaruppan'),
-    (6, 'Mikhail', 'Bautin'),
-    (7, 'Samer', 'Buna');
+insert into author(id, first_name, last_name, GENDER) values
+    (1, 'Eve', 'Procello', 'F'),
+    (2, 'Alex', 'Banks', 'M'),
+    (3, 'Dan', 'Vanderkam', 'M'),
+    (4, 'Karthik', 'Ranganathan', 'M'),
+    (5, 'Kannappan', 'Muthukkaruppan', 'M'),
+    (6, 'Mikhail', 'Bautin', 'M'),
+    (7, 'Samer', 'Buna', 'M');
 
 insert into book_author_mapping(book_id, author_id) values
     (1, 1),

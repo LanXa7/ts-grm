@@ -423,7 +423,8 @@ describe.sequential("SimpleSqliteFetchTest", () => {
                     select 
                         tb_1_.ID,
                         tb_1_.FIRST_NAME,
-                        tb_1_.LAST_NAME
+                        tb_1_.LAST_NAME,
+                        tb_1_.GENDER
                     from AUTHOR tb_1_
                     where 
                         tb_1_.ID in(?, ?)
@@ -458,6 +459,7 @@ describe.sequential("SimpleSqliteFetchTest", () => {
                     "firstName": "Dan",
                     "lastName": "Vanderkam"
                 },
+                "gender": "MALE",
                 "books": [
                     {
                         "id": 4,
@@ -482,6 +484,7 @@ describe.sequential("SimpleSqliteFetchTest", () => {
                     "firstName": "Samer",
                     "lastName": "Buna"
                 },
+                "gender": "MALE",
                 "books": [
                     {
                         "id": 10,
