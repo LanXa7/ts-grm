@@ -3,7 +3,7 @@ import { FetchProp } from "./dto";
 import { DtoMapper, DtoMapperField } from "./dto_mapper";
 import { EntityProp } from "./entity_prop";
 import { CalculationStrategyKind } from "./calculation_strategy";
-import { ScalarType } from "@/schema/prop";
+import { ScalarType } from "@/schema/scalar";
 import { Entity } from ".";
 
 export type Shape = {
@@ -16,7 +16,7 @@ export type ShapeMember = {
     prop: EntityProp | undefined;
     downcastTo: Entity | undefined;
     columnIndex: number | string | undefined;
-    scalarType: ScalarType | undefined;
+    scalarType: ScalarType<any> | undefined;
     targetShape: Shape | undefined;
     targetKind: "REFERENCE" | "COLLECTION" | undefined;
     recursiveDepth: number | undefined;

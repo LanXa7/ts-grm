@@ -27,7 +27,8 @@ describe.sequential("SchemaCreatorTest", () => {
                     {
                         "name": "NAME",
                         "type": "STR",
-                        "nullable": false
+                        "nullable": false,
+                        "length": 50
                     },
                     {
                         "name": "VERSION",
@@ -38,18 +39,21 @@ describe.sequential("SchemaCreatorTest", () => {
                         "name": "CITY",
                         "type": "STR",
                         "nullable": true,
+                        "length": 50,
                         "when": ["PhysicalBookStore"]
                     },
                     {
                         "name": "STREET",
                         "type": "STR",
                         "nullable": true,
+                        "length": 50,
                         "when": ["PhysicalBookStore"]
                     },
                     {
                         "name": "URL",
                         "type": "STR",
                         "nullable": true,
+                        "length": 50,
                         "when": ["OnlineBookStore"]
                     }
                 ],
@@ -86,7 +90,8 @@ describe.sequential("SchemaCreatorTest", () => {
                     {
                         "name": "NAME",
                         "type": "STR",
-                        "nullable": false
+                        "nullable": false,
+                        "length": 50
                     },
                     {
                         "name": "EDITION",
@@ -144,12 +149,14 @@ describe.sequential("SchemaCreatorTest", () => {
                     {
                         "name": "FIRST_NAME",
                         "type": "STR",
-                        "nullable": false
+                        "nullable": false,
+                        "length": 50
                     },
                     {
                         "name": "LAST_NAME",
                         "type": "STR",
-                        "nullable": false
+                        "nullable": false,
+                        "length": 50
                     }
                 ],
                 "constraints": [
@@ -245,7 +252,8 @@ describe.sequential("SchemaCreatorTest", () => {
                     {
                         "name": "ADDRESS",
                         "type": "STR",
-                        "nullable": false
+                        "nullable": false,
+                        "length": 50
                     }
                 ],
                 "constraints": [
@@ -282,7 +290,8 @@ describe.sequential("SchemaCreatorTest", () => {
                     {
                         "name": "PDF_VERSION",
                         "type": "STR",
-                        "nullable": true
+                        "nullable": true,
+                        "length": 50
                     }
                 ],
                 "constraints": [
@@ -318,7 +327,8 @@ describe.sequential("SchemaCreatorTest", () => {
                     {
                         "name": "NAME",
                         "type": "STR",
-                        "nullable": false
+                        "nullable": false,
+                        "length": 50
                     },
                     {
                         "name": "PARENT_NODE_ID",
@@ -360,12 +370,14 @@ describe.sequential("SchemaCreatorTest", () => {
                     {
                         "name": "LOCATION",
                         "type": "STR",
-                        "nullable": false
+                        "nullable": false,
+                        "length": 50
                     },
                     {
                         "name": "KIND",
                         "type": "STR",
-                        "nullable": false
+                        "nullable": false,
+                        "length": 50
                     }
                 ],
                 "constraints": [
@@ -393,7 +405,8 @@ describe.sequential("SchemaCreatorTest", () => {
                     {
                         "name": "EMAIL",
                         "type": "STR",
-                        "nullable": false
+                        "nullable": false,
+                        "length": 50
                     }
                 ],
                 "constraints": [
@@ -431,7 +444,8 @@ describe.sequential("SchemaCreatorTest", () => {
                     {
                         "name": "NAME",
                         "type": "STR",
-                        "nullable": false
+                        "nullable": false,
+                        "length": 50
                     }
                 ],
                 "constraints": [
@@ -457,7 +471,8 @@ describe.sequential("SchemaCreatorTest", () => {
                     {
                         "name": "NAME",
                         "type": "STR",
-                        "nullable": false
+                        "nullable": false,
+                        "length": 50
                     }
                 ],
                 "constraints": [
@@ -538,12 +553,14 @@ describe.sequential("SchemaCreatorTest", () => {
                     {
                         "name": "NAME",
                         "type": "STR",
-                        "nullable": false
+                        "nullable": false,
+                        "length": 50
                     },
                     {
                         "name": "TEXT",
                         "type": "STR",
-                        "nullable": false
+                        "nullable": false,
+                        "length": 50
                     }
                 ],
                 "constraints": [
@@ -617,7 +634,8 @@ describe.sequential("SchemaCreatorTest", () => {
                     {
                         "name": "PRODUCT_NAME",
                         "type": "STR",
-                        "nullable": false
+                        "nullable": false,
+                        "length": 50
                     },
                     {
                         "name": "order_x",
@@ -664,7 +682,8 @@ describe.sequential("SchemaCreatorTest", () => {
                     {
                         "name": "NAME",
                         "type": "STR",
-                        "nullable": false
+                        "nullable": false,
+                        "length": 50
                     }
                 ],
                 "constraints": [
@@ -685,7 +704,8 @@ describe.sequential("SchemaCreatorTest", () => {
                     {
                         "name": "NAME",
                         "type": "STR",
-                        "nullable": false
+                        "nullable": false,
+                        "length": 50
                     }
                 ],
                 "constraints": [
@@ -756,11 +776,13 @@ describe.sequential("SchemaCreatorTest", () => {
                         "name": "NAME",
                         "nullable": false,
                         "type": "STR",
+                        "length": 50
                     },
                     {
                         "name": "VERSION",
                         "nullable": false,
                         "type": "STR",
+                        "length": 50
                     },
                 ],
                 "constraints": [

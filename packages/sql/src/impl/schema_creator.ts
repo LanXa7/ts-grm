@@ -1,5 +1,5 @@
 import { SqlClientImplementor } from "@/sql_client";
-import { CascadeType, err, metadata } from "@ts-grm/core";
+import { CascadeType, err, metadata, ScalarType } from "@ts-grm/core";
 import { ColumnDefImpl, ForeignKeyConstraintDef, TableDef, TableDefImpl } from "./schema_def";
 
 export async function createSchema(
@@ -85,11 +85,12 @@ class SchemaCreatorExecutor {
                     undefined,
                     discriminator.name,
                     undefined,
-                    discriminator.type === "string" ? "STR" : "I32",
+                    discriminator.type === "string" 
+                        ? ScalarType.str(
+                            entity.discriminatorValues.map(v => (v as string).length).reduce((a, b) => Math.max(a, b), 0)
+                        ) 
+                        : ScalarType.I32,
                     false,
-                    discriminator.type === "string"
-                        ? entity.discriminatorValues.map(v => (v as string).length).reduce((a, b) => Math.max(a, b), 0)
-                        : undefined,
                     undefined
                 )
             );
@@ -149,7 +150,6 @@ class SchemaCreatorExecutor {
                 referenceColumnDef,
                 scalarProp.scalarType!,
                 (scalarProp.nullable && !scalarProp.inputNonNull) || condition,
-                scalarProp.length,
                 condition ? subEntities(scalarProp.declaringEntity) : undefined
             );
             tableDefImpl.addColumnDef(columnDefImpl);
@@ -192,7 +192,6 @@ class SchemaCreatorExecutor {
                 referencedColumnDef,
                 referencedColumnDef.type,
                 referencedColumnDef.nullable,
-                referencedColumnDef.length,
                 undefined
             );
             tableDefImpl.addColumnDef(columnDefImpl);
@@ -207,7 +206,6 @@ class SchemaCreatorExecutor {
                 referencedColumnDef,
                 referencedColumnDef.type,
                 referencedColumnDef.nullable,
-                referencedColumnDef.length,
                 undefined
             );
             tableDefImpl.addColumnDef(columnDefImpl);

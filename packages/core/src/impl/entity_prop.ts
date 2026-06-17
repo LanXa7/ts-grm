@@ -25,8 +25,6 @@ export class EntityProp {
 
     private _scalarType: ScalarType<any> | undefined = undefined;
 
-    private _length: number | undefined = undefined;
-
     readonly associationType: AssociationType | undefined = undefined;
 
     private _span: number | undefined = undefined;
@@ -108,7 +106,6 @@ export class EntityProp {
         this.nullable = _data.nullity !== "NONNULL";
         this.inputNonNull = _data.nullity != "NULLABLE";   
         this._scalarType = _data.scalarType; 
-        this._length = _data.length;
         this.associationType = _data.associationType;
         if (_data.props != null) {
             this._props = this._createProps(_data.props);
@@ -171,10 +168,6 @@ export class EntityProp {
 
     get scalarType(): ScalarType<any> | undefined {
         return this._scalarType;
-    }
-
-    get length(): number | undefined {
-        return this._length;
     }
 
     get props(): ReadonlyMap<string, EntityProp> | undefined {

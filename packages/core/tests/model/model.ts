@@ -56,7 +56,7 @@ const BOOK_STORE_BOOK_NAMES_FORMULA: TsFormula<ReadonlyArray<string>> =
 
 export const BOOK_STORE = model("BookStore", "id", class {
     id = prop.i64().asString()
-    name = prop.str()
+    name = prop.str(50)
     version = prop.i32()
     books = prop.o2m(BOOK)
         .mappedBy("store")
@@ -74,8 +74,8 @@ export const BOOK_STORE = model("BookStore", "id", class {
 export const PHYSICAL_BOOK_STORE = model.extends(BOOK_STORE)(
     "PhysicalBookStore", 
     class {
-        city = prop.str();
-        street = prop.str();
+        city = prop.str(50);
+        street = prop.str(50);
     },
     ctx => ctx.table({
         name: TB_INHERIT,
@@ -86,7 +86,7 @@ export const PHYSICAL_BOOK_STORE = model.extends(BOOK_STORE)(
 export const ONLINE_BOOK_STORE = model.extends(BOOK_STORE)(
     "OnlineBookStore", 
     class {
-        url = prop.str()
+        url = prop.str(50)
     },
     ctx => ctx.table({
         name: TB_INHERIT,
@@ -111,7 +111,7 @@ const BOOK_AUTHOR_COUNT_FORMULA: SqlFormula<number> =
 
 export const BOOK = model("Book", "id", class {
     id = prop.i64()
-    name = prop.str()
+    name = prop.str(50)
     edition = prop.i32()
     price = prop.num()
     store = prop.m2o(BOOK_STORE)
@@ -155,7 +155,7 @@ export const PAPER_BOOK = model.extends(BOOK)(
 export const ELECTRONIC_BOOK = model.extends(BOOK)(
     "ElectronicBook", 
     class {
-        address = prop.str();
+        address = prop.str(50);
     },
     ctx => ctx.table({
         discriminator: "TYPE",
@@ -169,7 +169,7 @@ export const ELECTRONIC_BOOK = model.extends(BOOK)(
 export const PDF_ELECTRONIC_BOOK = model.extends(ELECTRONIC_BOOK)(
     "PdfElectronicBook",
     class {
-        pdfVersion = prop.str().nullable()
+        pdfVersion = prop.str(50).nullable()
     },
     ctx => ctx.table({
         discriminatorValue: DV_MODEL_NAME
@@ -186,8 +186,8 @@ const AUTHOR_FULL_NAME_FORMULA : TsFormula<string> =
 export const AUTHOR = model("Author", "id", class {
     id = prop.i64()
     name = prop.embedded({
-        firstName: prop.str(),
-        lastName: prop.str()
+        firstName: prop.str(50),
+        lastName: prop.str(50)
     })
     books = prop.m2m(BOOK).mappedBy("authors")
     gender = prop.enum({
@@ -199,7 +199,7 @@ export const AUTHOR = model("Author", "id", class {
 
 export const TREE_NODE = model("TreeNode", "id", class {
     id = prop.i64()
-    name = prop.str()
+    name = prop.str(50)
     parentNode = prop.m2o.self(() => TREE_NODE, { joinColumns: { cascade: "DELETE" } })
     childNodes = prop.o2m.self(() => TREE_NODE, { mappedBy: "parentNode", sourceKeyProp: "id", targetKeyProp: "id" })
 }, ctx => {
@@ -286,18 +286,18 @@ export const TAG = model("Tag", "id", class {
         low: prop.i32(),
         high: prop.i32()
     });
-    name = prop.str()
+    name = prop.str(50)
     orders = prop.m2m(ORDER).mappedBy("tags").orderBy("id.y.a", "name")
 });
 
 export const COMMENT = model("Comment", "id", class {
     id = prop.i64()
-    name = prop.str()
+    name = prop.str(50)
 });
 
 export const STUDENT = model("Student", "id", class {
     id = prop.i64()
-    name = prop.str()
+    name = prop.str(50)
     courses = prop.m2m(COURSE).joinEntity({
         model: LEARNING_LINK,
         joinThisProp: "student",
@@ -309,7 +309,7 @@ export const STUDENT = model("Student", "id", class {
 
 export const COURSE = model("Course", "id", class {
     id = prop.i64()
-    name = prop.str()
+    name = prop.str(50)
     students = prop.m2m(STUDENT).mappedBy("courses")
     // Without learningLinks
 });
@@ -323,8 +323,8 @@ export const LEARNING_LINK = model("LearningLink", "id", class {
 
 export const LIBRARY = model("Library", "id", class {
     id = prop.i64()
-    name = prop.str()
-    version = prop.str()
+    name = prop.str(50)
+    version = prop.str(50)
     dependencies = prop.m2m.self(() => LIBRARY, {
         joinTable: {
             name: "LIBRARY_DEPENDENCY_MAPPING",

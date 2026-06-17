@@ -151,10 +151,6 @@ export class StrProp<
     override nullable(): StrProp<"NULLABLE"> {
         return new StrProp({...this.__data, nullity: "NULLABLE"});
     }
-
-    length(length: number): StrProp<TNullity> {
-        return new StrProp({...this.__data, length});
-    }
 }
 
 export class I64Prop<
@@ -1106,7 +1102,6 @@ export type PropData = {
     readonly nullity: NullityType;
     readonly scalarType: ScalarType<any> | undefined;
     readonly scalarProvider: ScalarProvider<any, any> | undefined;
-    readonly length: number | undefined;
     readonly props: Record<string, Prop<any, any>> | undefined;
     readonly targetModel: ModelRef<AnyModel> | undefined;
     readonly associationType: AssociationType | undefined;
@@ -1169,7 +1164,6 @@ const EMPTY_PROP_DEFINITION_DATA: PropData = {
     nullity: "NONNULL",
     scalarType: undefined,
     scalarProvider: undefined,
-    length: undefined,
     props: undefined,
     targetModel: undefined,
     associationType: undefined,

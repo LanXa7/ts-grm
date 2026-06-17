@@ -12,7 +12,7 @@ export default defineConfig({
     environment: 'node',
     typecheck: {
       enabled: true,
-      include: ['**/*.{test,spec}-d.{ts,tsx}'],
+      include: ['tests/**/*.{test,spec}-d.{ts,tsx}'],
       exclude: ['**/node_modules/**', '**/dist/**'],
     },
     coverage: {

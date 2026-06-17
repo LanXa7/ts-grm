@@ -292,7 +292,6 @@ export class Entity {
                     : "NONNULL",
                 scalarType: undefined,
                 scalarProvider: undefined,
-                length: undefined,
                 props: undefined,
                 targetModel: undefined,
                 associationType: undefined,

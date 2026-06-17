@@ -222,17 +222,20 @@ export class ColumnDefImpl implements ColumnDef {
         readonly referenceColumnDef: ColumnDefImpl | undefined,
         readonly type: ScalarType<any>,
         readonly nullable: boolean,
-        readonly length: number | undefined,
         readonly when: ReadonlyArray<metadata.Entity> | undefined
     ) {}
+
+    get length(): number | undefined {
+        return this.type.length;
+    }
 
     toJSON(): any {
         return {
             name: this.name,
             referenceName: this.referenceColumnDef?.name,
-            type: this.type.toString(),
+            type: this.type.kind,
             nullable: this.nullable,
-            length: this.length,
+            length: this.type.length,
             when: this.when?.map(e => e.tableSettings.discriminatorValue!)
         };
     }

@@ -2,8 +2,6 @@ import { dto } from "@/index";
 import { describe, it, expect } from "vitest";
 import { BOOK_STORE, ONLINE_BOOK_STORE, PHYSICAL_BOOK_STORE, PAPER_BOOK, ELECTRONIC_BOOK, PDF_ELECTRONIC_BOOK } from "../../model/model";
 import { mapperJson, shapeJson } from "./utils";
-import { buildShape } from "@/impl/shape";
-import { Entity } from "@/impl";
 import { expectCode } from "../../utils";
 
 describe("PolymorphismTest", () => {
@@ -169,61 +167,22 @@ describe("PolymorphismTest", () => {
                 }
             ]
         });
-        expect(buildShape(view.mapper)).toMatchObject({
-            "name": {
-                "prop": "BookStore.name",
-                "columnIndex": 0,
-                "scalarType": "STR"
-            },
+        expect(shapeJson(view.mapper)).toEqual({
+            "name": 0,
             "__implicit": {
-                "_1": {
-                    "prop": "BookStore.id",
-                    "columnIndex": 1,
-                    "scalarType": "I64"
-                }
+                "_1": 1
             },
             "books": {
-                "targetShape": {
-                    "name": {
-                        "prop": "Book.name",
-                        "columnIndex": 0,
-                        "scalarType": "STR"
-                    },
-                    "__typename": {
-                        "columnIndex": 1
-                    },
+                "__array": {
+                    "name": 0,
+                    "__typename": 1,
                     "size": {
-                        "downcastTo": Entity.of(PAPER_BOOK),
-                        "scalarType": "I32",
-                        "targetShape": {
-                            "width": {
-                                "prop": "PaperBook.size.width",
-                                "downcastTo": Entity.of(PAPER_BOOK),
-                                "columnIndex": 2,
-                                "scalarType": "I32"
-                            },
-                            "height": {
-                                "prop": "PaperBook.size.height",
-                                "downcastTo": Entity.of(PAPER_BOOK),
-                                "columnIndex": 3,
-                                "scalarType": "I32"
-                            }
-                        }
+                        "width": 2,
+                        "height": 3
                     },
-                    "address": {
-                        "prop": "ElectronicBook.address",
-                        "downcastTo": Entity.of(ELECTRONIC_BOOK),
-                        "columnIndex": 4,
-                        "scalarType": "STR"
-                    },
-                    "pdfVersion": {
-                        "prop": "PdfElectronicBook.pdfVersion",
-                        "downcastTo": Entity.of(PDF_ELECTRONIC_BOOK),
-                        "columnIndex": 5,
-                        "scalarType": "STR"
-                    }
-                },
-                "targetKind": "COLLECTION"
+                    "address": 4,
+                    "pdfVersion": 5
+                }
             }
         });
         const bookMapper = view.mapper.fields.find(f => f.prop.name === "books")!.subMapper!;
