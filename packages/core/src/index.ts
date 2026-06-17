@@ -56,8 +56,6 @@ export type {
     FormulaCreator,
     CalculatedCreator
 } from "./schema/prop";
-export { ScalarType } from "./schema/scalar";
-export type { ScalarKind } from "./schema/scalar";
 export type { 
     TsFormulaFn,
     SqlFormulaFn,
@@ -79,7 +77,8 @@ export {
     TargetCalculator,
     ParameterizedTargetCalculator
 } from "./schema/computed";
-export { ScalarProvider } from "./schema/scalar";
+export { ScalarProvider, ScalarType, scalars } from "./schema/scalar";
+export type { ScalarKind } from "./schema/scalar";
 export type { TypeOf, ModelOf } from "./schema/dto";
 export { View } from "./schema/dto";
 export { EntityManager } from "./schema/entity_manager";

@@ -17,7 +17,7 @@ import { ArgumentError } from "@/error/common";
 import { AtLeastTwo, IsNull } from "@/dsl/utils";
 import { Calculator, ParameterizedTargetCalculator, ParameterizedValueCalculator, SqlFormula, TargetCalculator, TsFormula, ValueCalculator } from "./computed";
 import { StandardSchemaV1 } from "@standard-schema/spec"; 
-import { enumProvider, jsonbProvider, jsonProvider, ScalarProvider, ScalarType } from "./scalar";
+import { scalars, ScalarProvider, ScalarType } from "./scalar";
 
 export const prop = {
 
@@ -65,16 +65,18 @@ export const prop = {
 
     enum: enumCreator(),
 
+    enumSet: enumSetCreator(),
+
     json<TValueType extends StandardSchemaV1>(
         valueType: TValueType
     ): ScalarProp<StandardSchemaV1.InferOutput<TValueType>> {
-        return this.scalar(jsonProvider(valueType));
+        return this.scalar(scalars.jsonProvider(valueType));
     },
 
     jsonb<TValueType extends StandardSchemaV1>(
         valueType: TValueType
     ): ScalarProp<StandardSchemaV1.InferOutput<TValueType>> {
-        return this.scalar(jsonbProvider(valueType));
+        return this.scalar(scalars.jsonbProvider(valueType));
     },
 
     embedded<TProps extends Record<string, EmbeddedMember>>(
@@ -1067,7 +1069,30 @@ type EnumCreator = {
 
 function enumCreator(): EnumCreator {
     function impl(...args: ReadonlyArray<any>): ScalarProp<ScalarProp<any>> {
-        const scalarProvider = enumProvider(...args);
+        const scalarProvider = scalars.enumProvider(...args);
+        return new ScalarProp({
+            ...EMPTY_PROP_DEFINITION_DATA, 
+            scalarType: scalarProvider.sqlType,
+            scalarProvider
+        });
+    }
+    return impl as any;
+}
+
+type EnumSetCreator = {
+
+    <TValues extends AtLeastTwo<string>>(
+        ...values: TValues
+    ): ScalarProp<ReadonlyArray<TValues[number]>>;
+
+    <TMap extends { readonly [key: string]: string; }>(
+        map: TMap
+    ): ScalarProp<ReadonlyArray<keyof TMap>>;
+}
+
+function enumSetCreator(): EnumSetCreator {
+    function impl(...args: ReadonlyArray<any>): ScalarProp<ScalarProp<any>> {
+        const scalarProvider = scalars.enumSetProvider(...args);
         return new ScalarProp({
             ...EMPTY_PROP_DEFINITION_DATA, 
             scalarType: scalarProvider.sqlType,

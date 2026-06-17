@@ -162,7 +162,7 @@ describe.sequential("SchemaCreatorTest", () => {
                         "name": "GENDER",
                         "type": "STR",
                         "nullable": false,
-                        "length": 6
+                        "length": 1
                     }
                 ],
                 "constraints": [

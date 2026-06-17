@@ -113,34 +113,7 @@ export class ScalarProvider<
     }
 }
 
-export function enumProvider<
-    TValues extends ReadonlyArray<string>
->(
-    ...values: TValues
-): ScalarProvider<
-    StandardSchemaV1<unknown, TValues[number]>, 
-    ScalarType<string>
->;
-
-export function enumProvider<
-    TMap extends {readonly [key: string]: string}
->(
-    map: TMap
-): ScalarProvider<
-    StandardSchemaV1<unknown, keyof TMap>, 
-    ScalarType<string>
->;
-
-export function enumProvider<
-    TMap extends {readonly [key: string]: number}
->(
-    map: TMap
-): ScalarProvider<
-    StandardSchemaV1<unknown, keyof TMap>, 
-    ScalarType<number>
->;
-
-export function enumProvider(
+function enumProvider(
     ...args: ReadonlyArray<any>
 ): ScalarProvider<
     StandardSchemaV1<unknown, any>, 
@@ -148,7 +121,7 @@ export function enumProvider(
 > {
     if (typeof args[0] === "string") {
         if (args.length < 2) {
-            throw new ArgumentError("The must be at least two enum values");
+            throw new ArgumentError("There must be at least two enum values");
         }
         for (let i = 1; i < args.length; i++) {
             if (typeof args[i] !== "string") {
@@ -173,7 +146,7 @@ export function enumProvider(
     }
     const enumOptions = args[0] as { readonly [key: string]: string | number };
     if (Object.keys(enumOptions).length < 2) {
-        throw new ArgumentError("The must be at least two enum values");
+        throw new ArgumentError("There must be at least two enum values");
     }
     let mergedValueType: "string" | "number" | undefined = undefined;
     const valueMap = new Map<string, any>();
@@ -199,7 +172,7 @@ export function enumProvider(
                 keyMap.set(value, key);
                 break;
             default:
-                throw new ArgumentError("The values of enum map must be string of number");
+                throw new ArgumentError("The values of enum map must be string or number");
         }
     }
     let len = 0;
@@ -220,7 +193,86 @@ export function enumProvider(
     });
 }
 
-export function jsonProvider<
+function enumSetProvider(
+    ...args: ReadonlyArray<any>
+): ScalarProvider<
+    StandardSchemaV1<unknown, any>, 
+    ScalarType<number>
+> {
+    let keys: ReadonlyArray<string>;
+    const valueMap = new Map<string, number>();
+    if (typeof args[0] === "string") {
+        keys = args;
+        if (args.length < 2) {
+            throw new ArgumentError("There must be at least two enum values");
+        }
+        if (args.length > 32) {
+            throw new ArgumentError("There must be at most 32 enum values");
+        }
+        for (let i = 1; i < args.length; i++) {
+            if (typeof args[i] !== "string") {
+                throw new ArgumentError(`The enumValues[${i}] must be string`);
+            }
+        }
+        const set = new Set<string>();
+        for (let i = 0; i < args.length; i++) {
+            if (set.has(args[i])) {
+                throw new ArgumentError(`The value of enum map is not unique, duplicated value: "${args[i]}"`);
+            }
+            set.add(args[i]);
+            valueMap.set(args[i], i);
+        }
+    } else {
+        const enumOptions = args[0] as { readonly [key: string]: number };
+        keys = Object.keys(enumOptions);
+        if (keys.length < 2) {
+            throw new ArgumentError("There must be at least two enum values");
+        }
+        const values = new Set<number>();
+        for (const key in enumOptions) {
+            if (typeof key !== "string") {
+                throw new ArgumentError("The key of enum map key must be string");
+            }
+            const value = enumOptions[key];
+            if (typeof value !== "number") {
+                throw new ArgumentError("The value of enum map key must be number");
+            }
+            if (values.has(value)) {
+                throw new ArgumentError(`The value of enum map is not unique, duplicated value: "${value}"`);
+            }
+            if (value < 0 || value >= 32) {
+                throw new ArgumentError(`The value of enum map is must be between 0 and 31, illegal value: "${value}"`);
+            }
+            values.add(value);
+            valueMap.set(key, value);
+        }
+    }
+    return ScalarProvider.of({
+        valueType: standardEnumSet(keys),
+        sqlType: ScalarType.I32,
+        toValue: v => {
+            const arr: Array<string> = [];
+            for (let i = 0; i < keys.length; i++) {
+                if (((v & (1 << valueMap.get(keys[i]!)!))) !== 0) {
+                    arr.push(keys[i]!);
+                }
+            }
+            return arr;
+        },
+        toSql: v => {
+            let flags = 0;
+            for (const item of v) {
+                const value = valueMap.get(item);
+                if (value != null) {
+                    flags |= 1 << value;
+                }
+            }
+            return flags;
+        }
+    });
+}
+
+function jsonProvider<
     TValueType extends StandardSchemaV1
 >(
     valueType: TValueType
@@ -236,7 +288,7 @@ export function jsonProvider<
     });
 }
 
-export function jsonbProvider<
+function jsonbProvider<
     TValueType extends StandardSchemaV1
 >(
     valueType: TValueType
@@ -266,6 +318,77 @@ export function jsonbProvider<
     });
 }
 
+export const scalars = {
+    enumProvider,
+    enumSetProvider,
+    jsonProvider,
+    jsonbProvider
+} as {
+
+    enumProvider<
+        TValues extends ReadonlyArray<string>
+    >(
+        ...values: TValues
+    ): ScalarProvider<
+        StandardSchemaV1<unknown, TValues[number]>, 
+        ScalarType<string>
+    >;
+
+    enumProvider<
+        TMap extends {readonly [key: string]: string}
+    >(
+        map: TMap
+    ): ScalarProvider<
+        StandardSchemaV1<unknown, keyof TMap>, 
+        ScalarType<string>
+    >;
+
+    enumProvider<
+        TMap extends {readonly [key: string]: number}
+    >(
+        map: TMap
+    ): ScalarProvider<
+        StandardSchemaV1<unknown, keyof TMap>, 
+        ScalarType<number>
+    >;
+
+    enumSetProvider<
+        TValues extends ReadonlyArray<string>
+    >(
+        ...args: TValues
+    ): ScalarProvider<
+        StandardSchemaV1<unknown, ReadonlyArray<TValues[number]>>, 
+        ScalarType<number>
+    >;
+
+    enumSetProvider<
+        TMap extends {readonly [key: string]: number}
+    >(
+        map: TMap
+    ): ScalarProvider<
+        StandardSchemaV1<unknown, ReadonlyArray<keyof TMap>>, 
+        ScalarType<number>
+    >;
+
+    jsonProvider<
+        TValueType extends StandardSchemaV1
+    >(
+        valueType: TValueType
+    ): ScalarProvider<
+        TValueType, 
+        ScalarType<string>
+    >;
+
+    jsonbProvider<
+        TValueType extends StandardSchemaV1
+    >(
+        valueType: TValueType
+    ): ScalarProvider<
+        TValueType, 
+        ScalarType<Uint8Array>
+    >;
+};
+
 const sharedEncoder = new TextEncoder();
 
 const sharedDecoder = new TextDecoder("utf-8");
@@ -275,11 +398,31 @@ const standardEnum = <T extends string>(
 ): StandardSchemaV1<unknown, T> => ({
     '~standard': {
         version: 1,
-        vendor: 'custom',
+        vendor: 'ts-grm',
         validate(value) {
-        return typeof value === 'string' && options.includes(value as T)
-            ? { value: value as T }
-            : { issues: [{ message: `Expected one of ${options.join(', ')}` }] };
-        },
-    },
+            return typeof value === 'string' && options.includes(value as T)
+                ? { value: value as T }
+                : { issues: [{ message: `Expected one of ${options.join(', ')}` }] };
+        }
+    }
+});
+
+const standardEnumSet = <T extends string>(
+    options: ReadonlyArray<T>
+): StandardSchemaV1<unknown, ReadonlyArray<T>> => ({
+    '~standard': {
+        version: 1,
+        vendor: 'ts-grm',
+        validate(value) {
+            if (!Array.isArray(value)) {
+                return { issues: [{ message: `Expected array` }] };
+            }
+            for (const item of value) {
+                if (typeof item !== 'string' || !options.includes(item as T)) {
+                    return { issues: [{ message: `Each element must be one of ${options.join(', ')}` }] };
+                }
+            }
+            return { value: value as ReadonlyArray<T> };
+        }
+    }
 });
