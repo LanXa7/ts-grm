@@ -201,6 +201,14 @@ export abstract class AbstractExpr<T> extends AbstractSelection implements Node 
         return this;
     }
 
+    get isPropExpr(): boolean {
+        return false;
+    }
+
+    get isValueExpr(): boolean {
+        return false;
+    }
+
     abstract accept(visitor: Visitor): void;
 }
 

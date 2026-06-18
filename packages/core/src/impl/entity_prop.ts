@@ -13,7 +13,7 @@ import { View } from "@/schema/dto";
 import { AnyModel } from "@/schema/model";
 import { CalculationStrategy } from "./calculation_strategy";
 import { acceptsNullOrUndefined } from "./util";
-import { ScalarType } from "@/schema/scalar";
+import { ScalarProvider, ScalarType } from "@/schema/scalar";
 
 export class EntityProp {
 
@@ -1355,5 +1355,9 @@ export class EntityProp {
 
     get inputFn(): ((value: any) => any) | undefined {
         return this._data.scalarProvider?.toSql;
+    }
+
+    get scalarProvider(): ScalarProvider<any, any> | undefined {
+        return this._data.scalarProvider;
     }
 }

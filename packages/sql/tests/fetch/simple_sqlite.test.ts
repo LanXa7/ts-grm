@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { useSqliteClientWithData } from "./utils";
+import { useSqliteClientWithData } from "../data_utils";
 import { AUTHOR, BOOK, BOOK_STORE } from "../model/model";
 import { newSqlRecord } from "../utils";
 import { dto } from "@ts-grm/core";

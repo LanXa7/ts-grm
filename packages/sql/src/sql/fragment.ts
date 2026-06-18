@@ -273,7 +273,10 @@ export class ShadowExpr extends Fragment {
 
 export class Value extends Fragment {
 
-    constructor(readonly value: any) {
+    constructor(
+        readonly value: any,
+        readonly originalValue?: any
+    ) {
         super();
     }
 

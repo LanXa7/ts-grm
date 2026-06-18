@@ -9,8 +9,8 @@ import { AssociationProp } from "../association_entity";
 import { AbstractAssociationTable } from "../association_table";
 
 export interface PropExprContract {
-    readonly table: AbstractEntityTable | AbstractAssociationTable,
-    readonly prop: EntityProp | AssociationProp
+    readonly table: AbstractEntityTable | AbstractAssociationTable;
+    readonly prop: EntityProp | AssociationProp;
 }
 
 export function createTableProp(
@@ -67,6 +67,10 @@ class PropNumExpr<T extends string | number> extends AbstractNumExpr<T> implemen
         super();
     }
 
+    override get isPropExpr(): true {
+        return true;
+    }
+
     accept(visitor: Visitor): void {
         visitor.visitPropExpr(this);
     }
@@ -82,6 +86,10 @@ class PropStrExpr extends AbstractStrExpr implements PropExprContract {
         super();
     }
 
+    override get isPropExpr(): true {
+        return true;
+    }
+
     accept(visitor: Visitor): void {
         visitor.visitPropExpr(this);
     }
@@ -95,6 +103,10 @@ class PropDtExpr extends AbstractDtExpr implements PropExprContract {
         readonly isAssociation: boolean
     ) {
         super();
+    }
+
+    override get isPropExpr(): true {
+        return true;
     }
 
     accept(visitor: Visitor): void {

@@ -1,4 +1,4 @@
-import { AnyModel, ast, dsl, EntityTable, err, ExpressionOrder, metadata, Predicate } from "@ts-grm/core";
+import { AnyModel, ast, dsl, EntityTable, err, ExpressionOrder, metadata, Predicate, ScalarProvider } from "@ts-grm/core";
 import { Alias, Column, Composite, Query, Scope, ShadowExpr, Source, Value } from "./fragment";
 import { Stack } from "./stack";
 import { Precedence } from "./precedence";
@@ -219,19 +219,41 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
     }
 
     visitTuple(tuple: ast.TupleContract): void {
+        this._visitTuple(tuple, []);
+    }
+
+    private _visitTuple(
+        tuple: ast.TupleContract, 
+        providers: ReadonlyArray<ScalarProvider<any, any> | undefined>
+    ): void {
         using _ = this._precedenceStack.with(Precedence.ROOT);
         using __ = this._compositeStack.with(new Scope("VALUES", false));
-        for (const expr of tuple.exprs) {
+        const span = tuple.exprs.length;
+        for (let i = 0; i < span; i++) {
+            const expr = tuple.exprs[i]!;
             this._compositeStack.current.separator();
-            expr.accept(this);
+            if (providers[i] != null && expr.isValueExpr) {
+                this._compositeStack.current.add(valueOf(expr, providers[i]!));
+            } else {
+                expr.accept(this);
+            }
         }
     }
 
     visitTupleCmpPred(pred: ast.TupleCmpPred): void {
+        const span = pred.leftTuple.exprs.length;
+        const providers: Array<ScalarProvider<any, any> | undefined> = [];
+        for (let i = 0; i < span; i++) {
+            if (pred.leftTuple.exprs[i]!.isPropExpr && pred.rightTuple.exprs[i]!.isValueExpr) {
+                providers[i] = scalarProviderOf(pred.leftTuple.exprs[i]!);
+            } else if (pred.leftTuple.exprs[i]!.isValueExpr && pred.rightTuple.exprs[i]!.isPropExpr) {
+                providers[i] = scalarProviderOf(pred.rightTuple.exprs[i]!);
+            }
+        }
         using _ = this._precedenceStack.with(Precedence.COMPARISON);
-        pred.leftTuple.accept(this);
+        this._visitTuple(pred.leftTuple, providers);
         this._compositeStack.current.add(" ").add(pred.op).add(" ");
-        pred.rightTuple.accept(this);
+        this._visitTuple(pred.rightTuple, providers);
     }
 
     visitTupleInCollectionPred(pred: ast.TupleInCollectionPred): void {
@@ -267,6 +289,24 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
 
     visitCmpPred(pred: ast.CmpPred): void {
         using _ = this._precedenceStack.with(Precedence.COMPARISON);
+        if (pred.leftExpr.isPropExpr && pred.rightExpr.isValueExpr) {
+            const provider = scalarProviderOf(pred.leftExpr);
+            if (provider != null) {
+                pred.leftExpr.accept(this);
+                this._compositeStack.current.add(" ").add(pred.op).add(" ");
+                this._compositeStack.current.add(valueOf(pred.rightExpr, provider));
+                return;
+            }
+        }
+        if (pred.leftExpr.isValueExpr && pred.rightExpr.isPropExpr) {
+            const provider = scalarProviderOf(pred.rightExpr);
+            if (provider != null) {
+                this._compositeStack.current.add(valueOf(pred.leftExpr, provider));
+                this._compositeStack.current.add(" ").add(pred.op).add(" ");
+                pred.rightExpr.accept(this);
+                return;
+            }
+        }
         pred.leftExpr.accept(this);
         this._compositeStack.current.add(" ").add(pred.op).add(" ");
         pred.rightExpr.accept(this);
@@ -644,4 +684,30 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
             this._fillTableFragments(table.children);
         }
     }
+}
+
+function scalarProviderOf(
+    expr: ast.AbstractExpr<any>
+): ScalarProvider<any, any> | undefined {
+    if (!expr.isPropExpr) {
+        return undefined;
+    }
+    const prop = (expr as any as ast.PropExprContract).prop;
+    if (!(prop instanceof metadata.EntityProp)) {
+        return undefined;
+    }
+    return prop.scalarProvider;
+}
+
+function valueOf(
+    expr: ast.AbstractExpr<any>,
+    provider: ScalarProvider<any, any>
+): Value | string {
+    const valueContract = expr as any as ast.ValueExprContract;
+    const originalValue = valueContract.value;
+    const value = provider.toSql(originalValue);
+    if (valueContract.isConstant) {
+        return typeof value === "string" ? value : `${value}`;
+    }
+    return new Value(value, originalValue);
 }

@@ -19,6 +19,7 @@ export type {
     BetweenPred
 } from "./pred";
 export type { IsPred } from "./is_pred";
+export type { ValueExprContract } from "./literal";
 export type { PropExprContract } from "./prop_expr";
 export type { CoalesceExprContract } from "./coalesce_expr";
 export type { AggregateExpr } from "./aggregate_expr";

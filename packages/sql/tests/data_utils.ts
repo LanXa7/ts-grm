@@ -1,5 +1,5 @@
 import { SqlClient } from "@ts-grm/core";
-import { SqlRecord, useSqliteClient } from "../utils";
+import { SqlRecord, useSqliteClient } from "./utils";
 import { beforeAll } from "vitest";
 
 export function useSqliteClientWithData(sqlRecord: SqlRecord): SqlClient {

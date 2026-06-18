@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { AUTHOR, BOOK, BOOK_STORE } from "../model/model";
 import { dto } from "@ts-grm/core";
 import { newSqlRecord } from "../utils";
-import { useSqliteClientWithData } from "./utils";
+import { useSqliteClientWithData } from "../data_utils";
 
 describe.sequential("TsFormulaTest", () => {
 

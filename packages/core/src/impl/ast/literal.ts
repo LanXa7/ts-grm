@@ -27,10 +27,23 @@ export function createLiteral(
     }   
 }
 
-class LiteralExpr<T> extends AbstractExpr<T> {
+export interface ValueExprContract {
+    readonly isConstant: boolean;
+    readonly value: any;
+}
+
+class LiteralExpr<T> extends AbstractExpr<T> implements ValueExprContract {
 
     constructor(readonly value: T) {
         super();
+    }
+
+    get isConstant(): false {
+        return false;
+    }
+
+    override get isValueExpr(): true {
+        return true;
     }
 
     accept(visitor: Visitor): void {
@@ -38,10 +51,18 @@ class LiteralExpr<T> extends AbstractExpr<T> {
     }
 }
 
-class LiteralNumExpr<T extends number | string> extends AbstractNumExpr<T> {
+class LiteralNumExpr<T extends number | string> extends AbstractNumExpr<T> implements ValueExprContract {
 
     constructor(readonly value: T) {
         super();
+    }
+
+    get isConstant(): false {
+        return false;
+    }
+
+    override get isValueExpr(): true {
+        return true;
     }
 
     accept(visitor: Visitor): void {
@@ -49,21 +70,37 @@ class LiteralNumExpr<T extends number | string> extends AbstractNumExpr<T> {
     }
 }
 
-export class LiteralStrExpr extends AbstractStrExpr {
+export class LiteralStrExpr extends AbstractStrExpr implements ValueExprContract {
 
     constructor(readonly value: string) {
         super();
     }
 
+    get isConstant(): false {
+        return false;
+    }
+
+    override get isValueExpr(): true {
+        return true;
+    }
+
     accept(visitor: Visitor): void {
         visitor.visitLiteral(this.value);
     }
 }
 
-export class LiteralDtExpr extends AbstractDtExpr {
+export class LiteralDtExpr extends AbstractDtExpr implements ValueExprContract {
 
     constructor(readonly value: Date) {
         super();
+    }
+
+    get isConstant(): false {
+        return false;
+    }
+    
+    override get isValueExpr(): true {
+        return true;
     }
 
     accept(visitor: Visitor): void {

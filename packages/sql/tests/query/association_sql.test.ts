@@ -3,7 +3,7 @@ import { SIMPLE_AUTHOR_VIEW, SIMPLE_BOOK_VIEW, sql } from "./utils";
 import { dsl } from "@ts-grm/core";
 import { AUTHOR, BOOK, ORDER } from "../model/model";
 import { expectCode, newSqlRecord, useSqliteClient } from "../utils";
-import { useSqliteClientWithData } from "../fetch/utils";
+import { useSqliteClientWithData } from "../data_utils";
 
 describe("AssociationSqlTest", () => {
 

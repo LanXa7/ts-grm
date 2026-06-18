@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { newSqlRecord } from "../utils";
-import { useSqliteClientWithData } from "./utils";
+import { useSqliteClientWithData } from "../data_utils";
 import { dto } from "@ts-grm/core";
 import { ORDER, ORDER_ITEM, TAG } from "../model/model";
 

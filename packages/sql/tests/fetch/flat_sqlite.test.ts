@@ -2,7 +2,7 @@ import { dto } from "@ts-grm/core";
 import { describe, it, expect } from "vitest";
 import { BOOK, TREE_NODE } from "../model/model";
 import { newSqlRecord } from "../utils";
-import { useSqliteClientWithData } from "./utils";
+import { useSqliteClientWithData } from "../data_utils";
 
 describe.sequential("FlatTest", () => {
 

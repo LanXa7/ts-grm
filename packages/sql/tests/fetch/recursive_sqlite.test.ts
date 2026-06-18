@@ -1,7 +1,7 @@
 import { dto } from "@ts-grm/core";
 import { describe, it, expect } from "vitest";
 import { LIBRARY, TREE_NODE } from "../model/model";
-import { useSqliteClientWithData } from "./utils";
+import { useSqliteClientWithData } from "../data_utils";
 import { newSqlRecord } from "../utils";
 
 describe.sequential("RecursiveTest", () => {
