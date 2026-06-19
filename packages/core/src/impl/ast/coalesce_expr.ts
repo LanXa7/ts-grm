@@ -1,4 +1,5 @@
 import { AbstractDtExpr } from "./dt_expr";
+import { AbstractEsExpr } from "./es_expr";
 import { AbstractCmpExpr, AbstractExpr } from "./expr";
 import { AbstractNumExpr } from "./num_expr";
 import { AbstractStrExpr } from "./str_expr";
@@ -56,6 +57,20 @@ export class CoalesceStrExpr extends AbstractStrExpr implements CoalesceExprCont
     constructor(
         readonly expr: AbstractStrExpr,
         readonly defaultExprs: ReadonlyArray<AbstractStrExpr>
+    ) {
+        super();
+    }
+
+    accept(visitor: Visitor): void {
+        visitor.visitCoalesceExpr(this);
+    }
+}
+
+export class CoalesceEsExpr<T extends string> extends AbstractEsExpr<T> implements CoalesceExprContract {
+
+    constructor(
+        readonly expr: AbstractEsExpr<T>,
+        readonly defaultExprs: ReadonlyArray<AbstractEsExpr<T>>
     ) {
         super();
     }

@@ -18,7 +18,7 @@ export abstract class AbstractNumExpr<T extends string | number> extends Abstrac
             this, 
             value instanceof AbstractNumExpr ? value : 
                 typeof value === "string"
-                    ? getInternalFactory().createLiteral(value, true)
+                    ? getInternalFactory().createLiteral(value, "AS_NUMBER")
                     : getInternalFactory().createLiteral(value)
         );
     }
@@ -31,7 +31,7 @@ export abstract class AbstractNumExpr<T extends string | number> extends Abstrac
             this, 
             value instanceof AbstractNumExpr ? value : 
                 typeof value === "string"
-                    ? getInternalFactory().createLiteral(value, true)
+                    ? getInternalFactory().createLiteral(value, "AS_NUMBER")
                     : getInternalFactory().createLiteral(value)
         );
     }
@@ -44,7 +44,7 @@ export abstract class AbstractNumExpr<T extends string | number> extends Abstrac
             this, 
             value instanceof AbstractNumExpr ? value : 
                 typeof value === "string"
-                    ? getInternalFactory().createLiteral(value, true)
+                    ? getInternalFactory().createLiteral(value, "AS_NUMBER")
                     : getInternalFactory().createLiteral(value)
         );
     }
@@ -57,7 +57,7 @@ export abstract class AbstractNumExpr<T extends string | number> extends Abstrac
             this, 
             value instanceof AbstractNumExpr ? value : 
                 typeof value === "string"
-                    ? getInternalFactory().createLiteral(value, true)
+                    ? getInternalFactory().createLiteral(value, "AS_NUMBER")
                     : getInternalFactory().createLiteral(value)
         );
     }
@@ -70,7 +70,7 @@ export abstract class AbstractNumExpr<T extends string | number> extends Abstrac
             this, 
             value instanceof AbstractNumExpr ? value : 
                 typeof value === "string"
-                    ? getInternalFactory().createLiteral(value, true)
+                    ? getInternalFactory().createLiteral(value, "AS_NUMBER")
                     : getInternalFactory().createLiteral(value)
         );
     }
@@ -86,7 +86,7 @@ export abstract class AbstractNumExpr<T extends string | number> extends Abstrac
                 return value;
             }
             if (typeof value === "string") {
-                return getInternalFactory().createLiteral(value, true) as AbstractNumExpr<T>;
+                return getInternalFactory().createLiteral(value, "AS_NUMBER") as AbstractNumExpr<T>;
             }
             return getInternalFactory().createLiteral(value) as AbstractNumExpr<T>;
         });

@@ -2,20 +2,23 @@ import { ArgumentError } from "@/error/common";
 import { AbstractExpr } from "./expr";
 import { AbstractNumExpr } from "./num_expr";
 import { AbstractStrExpr } from "./str_expr";
+import { AbstractEsExpr } from "./es_expr";
 import { AbstractDtExpr } from "./dt_expr";
 import { Visitor } from "./visitor";
 
 export function createLiteral(
     value: any,
-    asNumber?: boolean
+    as?: "AS_NUMBER" | "AS_ENUM_SET"
 ): AbstractExpr<any> {
     if (value == null) {
         throw new ArgumentError("The argument cannot be null");
     }
     switch (typeof value) {
         case "string":
-            return asNumber == true 
-                ? new LiteralNumExpr(value)
+            return as === "AS_NUMBER"
+                    ? new LiteralNumExpr(value)
+                : as === "AS_ENUM_SET"
+                    ? new LiteralEsExpr(value)
                 : new LiteralStrExpr(value);
         case "number":
             return new LiteralNumExpr(value);
@@ -73,6 +76,25 @@ class LiteralNumExpr<T extends number | string> extends AbstractNumExpr<T> imple
 export class LiteralStrExpr extends AbstractStrExpr implements ValueExprContract {
 
     constructor(readonly value: string) {
+        super();
+    }
+
+    get isConstant(): false {
+        return false;
+    }
+
+    override get isValueExpr(): true {
+        return true;
+    }
+
+    accept(visitor: Visitor): void {
+        visitor.visitLiteral(this.value);
+    }
+}
+
+class LiteralEsExpr<T extends string> extends AbstractEsExpr<T> implements ValueExprContract {
+
+    constructor(readonly value: T) {
         super();
     }
 

@@ -1,13 +1,14 @@
 import { ArgumentError, StateError } from "@/error/common";
 import type { AbstractCmpExpr, AbstractExpr } from "./expr";
 import type { BetweenPred, ConstantPred, CmpOp, CmpPred, InCollectionPred, InSubQueryPred, NullityPred } from "./pred";
-import type { CoalesceCmpExpr, CoalesceDtExpr, CoalesceExpr, CoalesceNumExpr, CoalesceStrExpr } from "./coalesce_expr";
+import type { CoalesceCmpExpr, CoalesceDtExpr, CoalesceEsExpr, CoalesceExpr, CoalesceNumExpr, CoalesceStrExpr } from "./coalesce_expr";
 import type { AbstractNumExpr } from "./num_expr";
 import type { AbstractStrExpr } from "./str_expr";
 import type { AbstractDtExpr } from "./dt_expr";
 import { ExpressionOrder } from "@/dsl";
 import { ShadowAnchor } from "../shadow_anchor";
 import { QueryContract } from "./query";
+import { AbstractEsExpr } from "./es_expr";
 
 let _internalFactory: InternalFactory | undefined = undefined;
 
@@ -83,6 +84,11 @@ export interface InternalFactory {
         defaultExprs: ReadonlyArray<AbstractStrExpr>
     ): CoalesceStrExpr;
 
+    createCoalesceEsExpr<T extends string>(
+        expr: AbstractEsExpr<T>,
+        defaultExprs: ReadonlyArray<AbstractEsExpr<T>>
+    ): CoalesceEsExpr<T>;
+
     createCoalesceDtExpr(
         expr: AbstractDtExpr,
         defaultExprs: ReadonlyArray<AbstractDtExpr>
@@ -94,7 +100,15 @@ export interface InternalFactory {
 
     createLiteral(value: number): AbstractNumExpr<number>;
 
-    createLiteral(value: string, asNumber: boolean): AbstractNumExpr<string>;
+    createLiteral<
+        T extends string,
+        TAs extends "AS_NUMBER" | "AS_ENUM_SET"
+    >(
+        value: T, 
+        as: TAs
+    ): TAs extends "AS_NUMBER" 
+        ? AbstractNumExpr<string>
+        : AbstractEsExpr<T>;
 
     createLiteral(value: string): AbstractStrExpr;
 

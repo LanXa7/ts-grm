@@ -77,7 +77,7 @@ export class ScalarProvider<
     TValueType extends StandardSchemaV1, 
     TSqlType extends ScalarType<any>
 > {
-    private constructor(
+    protected constructor(
         readonly valueType: TValueType,
         readonly sqlType: TSqlType,
         readonly toValue: (
@@ -193,83 +193,115 @@ function enumProvider(
     });
 }
 
-function enumSetProvider(
-    ...args: ReadonlyArray<any>
-): ScalarProvider<
-    StandardSchemaV1<unknown, any>, 
+export class EnumSetProvider<
+    TEnum extends string
+> extends ScalarProvider<
+    StandardSchemaV1<unknown, ReadonlyArray<TEnum>>, 
     ScalarType<number>
 > {
-    let keys: ReadonlyArray<string>;
-    const valueMap = new Map<string, number>();
-    if (typeof args[0] === "string") {
-        keys = args;
-        if (args.length < 2) {
-            throw new ArgumentError("There must be at least two enum values");
-        }
-        if (args.length > 32) {
-            throw new ArgumentError("There must be at most 32 enum values");
-        }
-        for (let i = 1; i < args.length; i++) {
-            if (typeof args[i] !== "string") {
-                throw new ArgumentError(`The enumValues[${i}] must be string`);
+
+    readonly __phantomEnumSetProvider?: "EnumSetProvider" | undefined;
+
+    private constructor(
+        keys: ReadonlyArray<TEnum>,
+        valueMap: ReadonlyMap<string, number>
+    ) {
+        super(
+            standardEnumSet(keys), 
+            ScalarType.I32,
+            v => {
+                const arr: Array<TEnum> = [];
+                for (let i = 0; i < keys.length; i++) {
+                    if (((v & (1 << valueMap.get(keys[i]!)!))) !== 0) {
+                        arr.push(keys[i]!);
+                    }
+                }
+                return arr;
+            },
+            v => {
+                let flags = 0;
+                for (const item of v) {
+                    const value = valueMap.get(item);
+                    if (value != null) {
+                        flags |= 1 << value;
+                    }
+                }
+                return flags;
             }
-        }
-        const set = new Set<string>();
-        for (let i = 0; i < args.length; i++) {
-            if (set.has(args[i])) {
-                throw new ArgumentError(`The value of enum map is not unique, duplicated value: "${args[i]}"`);
-            }
-            set.add(args[i]);
-            valueMap.set(args[i], i);
-        }
-    } else {
-        const enumOptions = args[0] as { readonly [key: string]: number };
-        keys = Object.keys(enumOptions);
-        if (keys.length < 2) {
-            throw new ArgumentError("There must be at least two enum values");
-        }
-        const values = new Set<number>();
-        for (const key in enumOptions) {
-            if (typeof key !== "string") {
-                throw new ArgumentError("The key of enum map key must be string");
-            }
-            const value = enumOptions[key];
-            if (typeof value !== "number") {
-                throw new ArgumentError("The value of enum map key must be number");
-            }
-            if (values.has(value)) {
-                throw new ArgumentError(`The value of enum map is not unique, duplicated value: "${value}"`);
-            }
-            if (value < 0 || value >= 32) {
-                throw new ArgumentError(`The value of enum map is must be between 0 and 31, illegal value: "${value}"`);
-            }
-            values.add(value);
-            valueMap.set(key, value);
-        }
+        );
     }
-    return ScalarProvider.of({
-        valueType: standardEnumSet(keys),
-        sqlType: ScalarType.I32,
-        toValue: v => {
-            const arr: Array<string> = [];
-            for (let i = 0; i < keys.length; i++) {
-                if (((v & (1 << valueMap.get(keys[i]!)!))) !== 0) {
-                    arr.push(keys[i]!);
+
+    static enumSetOf<
+        TValues extends ReadonlyArray<string>
+    >(
+        ...args: TValues
+    ): EnumSetProvider<TValues[number]>;
+
+    static enumSetOf<
+        TMap extends {readonly [key: string]: number}
+    >(
+        map: TMap
+    ): EnumSetProvider<keyof TMap & string>;
+
+    static enumSetOf(    
+        ...args: ReadonlyArray<any>
+    ): EnumSetProvider<any> {
+        let keys: ReadonlyArray<string>;
+        const valueMap = new Map<string, number>();
+        if (typeof args[0] === "string") {
+            keys = args;
+            if (args.length < 2) {
+                throw new ArgumentError("There must be at least two enum values");
+            }
+            if (args.length > 32) {
+                throw new ArgumentError("There must be at most 32 enum values");
+            }
+            for (let i = 1; i < args.length; i++) {
+                if (typeof args[i] !== "string") {
+                    throw new ArgumentError(`The enumValues[${i}] must be string`);
                 }
             }
-            return arr;
-        },
-        toSql: v => {
-            let flags = 0;
-            for (const item of v) {
-                const value = valueMap.get(item);
-                if (value != null) {
-                    flags |= 1 << value;
+            const set = new Set<string>();
+            for (let i = 0; i < args.length; i++) {
+                if (set.has(args[i])) {
+                    throw new ArgumentError(`The value of enum map is not unique, duplicated value: "${args[i]}"`);
                 }
+                set.add(args[i]);
+                valueMap.set(args[i], i);
             }
-            return flags;
+        } else {
+            const enumOptions = args[0] as { readonly [key: string]: number };
+            keys = Object.keys(enumOptions);
+            if (keys.length < 2) {
+                throw new ArgumentError("There must be at least two enum values");
+            }
+            const values = new Set<number>();
+            for (const key in enumOptions) {
+                if (typeof key !== "string") {
+                    throw new ArgumentError("The key of enum map key must be string");
+                }
+                const value = enumOptions[key];
+                if (typeof value !== "number") {
+                    throw new ArgumentError("The value of enum map key must be number");
+                }
+                if (values.has(value)) {
+                    throw new ArgumentError(`The value of enum map is not unique, duplicated value: "${value}"`);
+                }
+                if (value < 0 || value >= 32) {
+                    throw new ArgumentError(`The value of enum map is must be between 0 and 31, illegal value: "${value}"`);
+                }
+                values.add(value);
+                valueMap.set(key, value);
+            }
         }
-    });
+        return new EnumSetProvider(keys, valueMap);
+    }
+}
+
+function enumSetProvider(
+    ...args: ReadonlyArray<any>
+): EnumSetProvider<any> {
+    return EnumSetProvider.enumSetOf(...args);
 }
 
 function jsonProvider<
@@ -356,19 +388,13 @@ export const scalars = {
         TValues extends ReadonlyArray<string>
     >(
         ...args: TValues
-    ): ScalarProvider<
-        StandardSchemaV1<unknown, ReadonlyArray<TValues[number]>>, 
-        ScalarType<number>
-    >;
+    ): EnumSetProvider<TValues[number]>;
 
     enumSetProvider<
         TMap extends {readonly [key: string]: number}
     >(
         map: TMap
-    ): ScalarProvider<
-        StandardSchemaV1<unknown, ReadonlyArray<keyof TMap>>, 
-        ScalarType<number>
-    >;
+    ): EnumSetProvider<keyof TMap & string>;
 
     jsonProvider<
         TValueType extends StandardSchemaV1

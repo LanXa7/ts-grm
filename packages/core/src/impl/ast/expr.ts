@@ -1,7 +1,7 @@
 import { ExpressionOrder, ExpressionSubQuery } from "@/dsl";
 import { ArgumentError } from "@/error/common";
 import type { AbstractPred, CmpPred, NullityPred } from "./pred";
-import type { CoalesceCmpExpr, CoalesceExpr } from "./coalesce_expr";
+import type { CoalesceExpr } from "./coalesce_expr";
 import { getInternalFactory, validateInValues } from "./internal_factory";
 import { AbstractSelection } from "./selection";
 import { Node } from "./node";
@@ -363,17 +363,17 @@ export abstract class AbstractCmpExpr<T> extends AbstractExpr<T> {
 
     override coalesce(
         values: ReadonlyArray<T | AbstractCmpExpr<T>>
-    ): CoalesceCmpExpr<T> {
+    ): CoalesceExpr<T> {
         const factory = getInternalFactory();
         const arr = values.map(value => {
             if (value == null) {
                 // throw new ArgumentError("coalesce does not accept null/undefined value");
             }
-            if (value instanceof AbstractCmpExpr) {
+            if (value instanceof AbstractExpr) {
                 return value;
             }
             return factory.createLiteral(value) as AbstractCmpExpr<T>;
         });
-        return factory.createCoalesceCmpExpr(this, arr);
+        return factory.createCoalesceExpr(this, arr);
     }
 }

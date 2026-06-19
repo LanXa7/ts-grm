@@ -2,6 +2,7 @@ export { AbstractSelection } from "./selection";
 export { AbstractExpr, AbstractCmpExpr } from "./expr";
 export { AbstractNumExpr } from "./num_expr";
 export { AbstractStrExpr } from "./str_expr";
+export { AbstractEsExpr } from "./es_expr";
 export { AbstractDtExpr } from "./dt_expr";
 export { AbstractPred } from "./pred";
 export type { Node } from "./node";
@@ -70,11 +71,12 @@ export { setQueryFactory } from "./query_factory";
 import { getInternalFactory, InternalFactory, setInternalFactory } from "@/impl/ast/internal_factory";
 import { BetweenPred, CmpOp, CmpPred, ConstantPred, InCollectionPred, InSubQueryPred, NullityPred } from "@/impl/ast/pred";
 import { AbstractExpr, QueryContract } from "@/impl/ast";
-import { CoalesceCmpExpr, CoalesceDtExpr, CoalesceExpr, CoalesceNumExpr, CoalesceStrExpr } from "@/impl/ast/coalesce_expr";
+import { CoalesceCmpExpr, CoalesceDtExpr, CoalesceExpr, CoalesceNumExpr, CoalesceStrExpr, CoalesceEsExpr } from "@/impl/ast/coalesce_expr";
 import { AbstractCmpExpr } from "@/impl/ast/expr";
 import { AbstractNumExpr } from "@/impl/ast/num_expr";
 import { AbstractStrExpr } from "@/impl/ast/str_expr";
 import { AbstractDtExpr } from "@/impl/ast/dt_expr";
+import { AbstractEsExpr } from "@/impl/ast/es_expr";
 import { createLiteral } from "@/impl/ast/literal";
 import { ExpressionOrder } from "@/dsl";
 import { ShadowCmpExpr, ShadowDtExpr, ShadowExpr, ShadowNumExpr, ShadowStrExpr } from "./shadow_expr";
@@ -170,6 +172,13 @@ class InternalFactoryImpl implements InternalFactory {
         return new CoalesceStrExpr(expr, defaultExprs);
     }
 
+    createCoalesceEsExpr<T extends string>(
+        expr: AbstractEsExpr<T>,
+        defaultExprs: ReadonlyArray<AbstractEsExpr<T>>
+    ): CoalesceEsExpr<T> {
+        return new CoalesceEsExpr(expr, defaultExprs);
+    }
+
     createCoalesceDtExpr(
         expr: AbstractDtExpr,
         defaultExprs: ReadonlyArray<AbstractDtExpr>
@@ -198,7 +207,14 @@ class InternalFactoryImpl implements InternalFactory {
 
     createLiteral(value: number): AbstractNumExpr<number>;
 
-    createLiteral(value: string, asNumber: boolean): AbstractNumExpr<string>;
+    createLiteral<
+        T extends string, TAs extends "AS_NUMBER" | "AS_ENUM_SET"
+    >(
+        value: T, 
+        as: TAs
+    ): TAs extends "AS_NUMBER" 
+        ? AbstractNumExpr<string>
+        : AbstractEsExpr<T>;
 
     createLiteral(value: string): AbstractStrExpr;
 
@@ -206,8 +222,8 @@ class InternalFactoryImpl implements InternalFactory {
 
     createLiteral<T>(value: T): AbstractExpr<T>;
 
-    createLiteral(value: any, asNumber?: boolean | undefined): AbstractExpr<any> {
-        return createLiteral(value, asNumber);
+    createLiteral(value: any, as?: "AS_NUMBER" | "AS_ENUM_SET"): AbstractExpr<any> {
+        return createLiteral(value, as);
     }
 }
 

@@ -11,19 +11,21 @@ import { ConstantExpr } from "@/impl/ast/constant";
 
 export type Expression<
     T, 
-    TAsNumber extends AsNumberBound<T> = ""
+    TAs extends AsBound<T> = ""
 > = 
     NonNull<T> extends string
-        ? TAsNumber extends "AS_NUMBER"
+        ? TAs extends "AS_NUMBER"
             ? NumExpression<T & Nullable<string>>
-            : StrExpression<T & Nullable<string>>
+        : TAs extends "AS_ENUM_SET"
+            ? EnumSetExpression<T & Nullable<string>>
+        : StrExpression<T & Nullable<string>>
     : NonNull<T> extends Date
         ? DateExpression<T & Nullable<Date>>
     : NonNull<T> extends number
         ? NumExpression<T & Nullable<number>>
     : AnyExpression<T>;
 
-export type AsNumberBound<T> = T extends string ? "AS_NUMBER" | "" : "";
+export type AsBound<T> = T extends string ? "AS_NUMBER" | "AS_ENUM_SET" | "" : "";
 
 export type Predicate = AnyExpression<boolean>;
 
@@ -31,12 +33,12 @@ type NonNull<T> = Exclude<T, null | undefined>;
 
 type Nullable<T> = T | null | undefined;
 
-type AnyExpression<T, TAsNumber extends AsNumberBound<T> = ""> = {
+type AnyExpression<T, TAs extends AsBound<T> = ""> = {
     
     __type(): {
         selectionLike: true;
         expressionLike: true;
-        expression: [T, TAsNumber] | true;
+        expression: [T, TAs] | true;
     };
 
     asc(nulls?: OrderNullsType): ExpressionOrder;
@@ -44,31 +46,31 @@ type AnyExpression<T, TAsNumber extends AsNumberBound<T> = ""> = {
     desc(nulls?: OrderNullsType): ExpressionOrder;
 
     eq(
-        value: RHSType<T, TAsNumber>
+        value: RHSType<T, TAs>
     ): AnyExpression<boolean>;
     
     ne(
-        value: RHSType<T, TAsNumber>
+        value: RHSType<T, TAs>
     ): AnyExpression<boolean>;
 
-    in<Values extends NonNullRHSType<T, TAsNumber>[]>(
+    in<Values extends NonNullRHSType<T, TAs>[]>(
         ...values: HasSubqueryInArray<Values> extends true 
             ? [SubqueryError]
             : Values
     ): AnyExpression<boolean>;
 
     inSubQuery(
-        subQuery: ExpressionSubQuery<Expression<NonNull<T>, TAsNumber>>
+        subQuery: ExpressionSubQuery<Expression<NonNull<T>, TAs>>
     ): AnyExpression<boolean>;
 
-    notIn<Values extends NonNullRHSType<T, TAsNumber>[]>(
+    notIn<Values extends NonNullRHSType<T, TAs>[]>(
         ...values: HasSubqueryInArray<Values> extends true 
             ? [SubqueryError]
             : Values
     ): AnyExpression<boolean>;
 
     notInSubQuery(
-        subQuery: ExpressionSubQuery<Expression<NonNull<T>, TAsNumber>>
+        subQuery: ExpressionSubQuery<Expression<NonNull<T>, TAs>>
     ): AnyExpression<boolean>;
     
     eqIf(
@@ -95,17 +97,17 @@ type AnyExpression<T, TAsNumber extends AsNumberBound<T> = ""> = {
 
             coalesce<TArgs extends CoalesceArgs<T>>(
                 ...exprs: TArgs
-            ): Expression<CoalesceDataType<T, TArgs>, TAsNumber & AsNumberBound<CoalesceDataType<T, TArgs>>>;
+            ): Expression<CoalesceDataType<T, TArgs>, TAs & AsBound<CoalesceDataType<T, TArgs>>>;
 
-            asNonNull(): Expression<NonNull<T>, TAsNumber>;
+            asNonNull(): Expression<NonNull<T>, TAs>;
         }
         : object
 );
 
-type RHSType<T, TAsNumber extends AsNumberBound<T>> =
-    NonNull<T> | AnyExpression<NonNull<T>, TAsNumber> | AnyExpression<Nullable<T>, TAsNumber> 
+type RHSType<T, TAs extends AsBound<T>> =
+    NonNull<T> | AnyExpression<NonNull<T>, TAs> | AnyExpression<Nullable<T>, TAs> 
         | (
-            TAsNumber extends "AS_NUMBER"
+            TAs extends "AS_NUMBER"
                 ? number 
                     | AnyExpression<NonNull<number>, any> 
                     | AnyExpression<Nullable<number>, any>
@@ -118,10 +120,10 @@ type RHSType<T, TAsNumber extends AsNumberBound<T>> =
                 : never
         );
 
-type NonNullRHSType<T, TAsNumber extends AsNumberBound<T>> =
-    NonNull<T> | AnyExpression<NonNull<T>, TAsNumber> 
+type NonNullRHSType<T, TAs extends AsBound<T>> =
+    NonNull<T> | AnyExpression<NonNull<T>, TAs> 
         | (
-            TAsNumber extends "AS_NUMBER"
+            TAs extends "AS_NUMBER"
                 ? number | AnyExpression<NonNull<number>, any>
                 : never
         )
@@ -154,8 +156,8 @@ type CoalesceDataType<T, TArgs extends any[]> =
 
 type CmpExpression<
     T, 
-    TAsNumber extends AsNumberBound<T> = ""
-> = AnyExpression<T, TAsNumber> & {
+    TAs extends AsBound<T> = ""
+> = AnyExpression<T, TAs> & {
     
     __type(): { 
         selectionLike: true;
@@ -165,24 +167,24 @@ type CmpExpression<
     }
     
     lt(
-        value: RHSType<T, TAsNumber>
+        value: RHSType<T, TAs>
     ): AnyExpression<boolean>;
     
     lte(
-        value: RHSType<T, TAsNumber>
+        value: RHSType<T, TAs>
     ): AnyExpression<boolean>;
     
     gt(
-        value: RHSType<T, TAsNumber>
+        value: RHSType<T, TAs>
     ): AnyExpression<boolean>;
     
     gte(
-        value: RHSType<T, TAsNumber>
+        value: RHSType<T, TAs>
     ): AnyExpression<boolean>;
 
     between(
-        min: RHSType<T, TAsNumber>,
-        max: RHSType<T, TAsNumber>
+        min: RHSType<T, TAs>,
+        max: RHSType<T, TAs>
     ): AnyExpression<boolean>;
     
     ltIf(
@@ -345,6 +347,15 @@ type StrExpression<T extends Nullable<string>> = CmpExpression<T> & {
         length?: number | NumExpression<number>
     ): StrExpression<T>;
 }
+
+type EnumSetExpression<T extends Nullable<string>> = AnyExpression<T> & {
+    
+    none(...values: AtLeastOne<T>): Predicate;
+
+    some(...values: AtLeastOne<T>): Predicate;
+
+    all(...values: AtLeastOne<T>): Predicate;
+};
 
 type DateExpression<T extends Nullable<Date>> = CmpExpression<T> & {
     

@@ -17,7 +17,7 @@ import { ArgumentError } from "@/error/common";
 import { AtLeastTwo, IsNull } from "@/dsl/utils";
 import { Calculator, ParameterizedTargetCalculator, ParameterizedValueCalculator, SqlFormula, TargetCalculator, TsFormula, ValueCalculator } from "./computed";
 import { StandardSchemaV1 } from "@standard-schema/spec"; 
-import { scalars, ScalarProvider, ScalarType } from "./scalar";
+import { scalars, ScalarProvider, ScalarType, EnumSetProvider } from "./scalar";
 
 export const prop = {
 
@@ -57,11 +57,7 @@ export const prop = {
         return new ScalarProp({...EMPTY_PROP_DEFINITION_DATA, scalarType: ScalarType.DATE});
     },
 
-    scalar<TValueType extends StandardSchemaV1>(
-        provider: ScalarProvider<TValueType, any>
-    ): ScalarProp<StandardSchemaV1.InferOutput<TValueType>> {
-        return new ScalarProp({...EMPTY_PROP_DEFINITION_DATA, scalarType: provider.sqlType, scalarProvider: provider});
-    },
+    scalar: scalarPropCreator(),
 
     enum: enumCreator(),
 
@@ -178,6 +174,23 @@ export class I64Prop<
 
     asString(): I64Prop<string, TNullity> {
         return new I64Prop({...this.__data});
+    }
+}
+
+export class EnumSetProp<
+    TEnum extends string
+> extends ScalarProp<TEnum, "NONNULL"> {
+
+    override __type(): {
+        readonly prop: "NONNULL" | true;
+        readonly scalarProp: "NONNULL" | true;
+        readonly enumSetProp: "NONNULL" | true;
+    } {
+        return { 
+            prop: true, 
+            scalarProp: true,
+            enumSetProp: true
+        };
     }
 }
 
@@ -1052,6 +1065,29 @@ export class ParameterizedCalculatedCollectionProp<
     }
 }
 
+type ScalarPropCreator = {
+    
+    <TValueType extends StandardSchemaV1>(
+        provider: ScalarProvider<TValueType, any>
+    ): ScalarProp<StandardSchemaV1.InferOutput<TValueType>>;
+
+    <TEnum extends string>(
+        provider: EnumSetProvider<TEnum>
+    ): EnumSetProp<TEnum>;
+}
+
+function scalarPropCreator(): ScalarPropCreator {
+    function impl(
+        provider: ScalarProvider<any, any>
+    ): ScalarProp<any> {
+        if (provider instanceof EnumSetProvider) {
+            return new EnumSetProp({...EMPTY_PROP_DEFINITION_DATA, scalarType: provider.sqlType, scalarProvider: provider as any});
+        }
+        return new ScalarProp({...EMPTY_PROP_DEFINITION_DATA, scalarType: provider.sqlType, scalarProvider: provider});
+    };
+    return impl as any;
+}
+
 type EnumCreator = {
 
     <TValues extends AtLeastTwo<string>>(
@@ -1091,12 +1127,12 @@ type EnumSetCreator = {
 }
 
 function enumSetCreator(): EnumSetCreator {
-    function impl(...args: ReadonlyArray<any>): ScalarProp<ScalarProp<any>> {
+    function impl(...args: ReadonlyArray<any>): EnumSetProp<any> {
         const scalarProvider = scalars.enumSetProvider(...args);
-        return new ScalarProp({
+        return new EnumSetProp({
             ...EMPTY_PROP_DEFINITION_DATA, 
             scalarType: scalarProvider.sqlType,
-            scalarProvider
+            scalarProvider: scalarProvider as any
         });
     }
     return impl as any;

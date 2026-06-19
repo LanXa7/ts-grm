@@ -1,12 +1,14 @@
 import { EntityProp } from "../entity_prop";
 import { AbstractNumExpr } from "./num_expr";
 import { AbstractStrExpr } from "./str_expr";
+import { AbstractEsExpr } from "./es_expr";
 import { AbstractDtExpr } from "./dt_expr";
 import { ArgumentError } from "@/error/common";
 import { AbstractEntityTable } from "../entity_table";
 import { Visitor } from "./visitor";
 import { AssociationProp } from "../association_entity";
 import { AbstractAssociationTable } from "../association_table";
+import { EnumSetProvider } from "@/schema/scalar";
 
 export interface PropExprContract {
     readonly table: AbstractEntityTable | AbstractAssociationTable;
@@ -45,6 +47,9 @@ export function createTableProp(
         case "F64":
             return new PropNumExpr(directTable, prop, isAssociation);
         case "STR":
+            if (prop instanceof EntityProp && prop.scalarProvider instanceof EnumSetProvider) {
+                return new PropEsExpr(directTable, prop, isAssociation);
+            }
             return new PropStrExpr(directTable, prop, isAssociation);
         case "DATE":
             return new PropDtExpr(directTable, prop, isAssociation);
@@ -77,6 +82,25 @@ class PropNumExpr<T extends string | number> extends AbstractNumExpr<T> implemen
 }
 
 class PropStrExpr extends AbstractStrExpr implements PropExprContract {
+
+    constructor(
+        readonly table: AbstractEntityTable | AbstractAssociationTable,
+        readonly prop: EntityProp | AssociationProp,
+        readonly isAssociation: boolean
+    ) {
+        super();
+    }
+
+    override get isPropExpr(): true {
+        return true;
+    }
+
+    accept(visitor: Visitor): void {
+        visitor.visitPropExpr(this);
+    }
+}
+
+class PropEsExpr<T extends string> extends AbstractEsExpr<T> implements PropExprContract {
 
     constructor(
         readonly table: AbstractEntityTable | AbstractAssociationTable,
