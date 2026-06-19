@@ -1,6 +1,6 @@
 import { ast, err } from "@ts-grm/core";
 import { Driver } from "./deriver";
-import { NodeRender, NodeRenderContext } from "./node_render";
+import { NodeRender, NodeRenderContext, SingleColumnInCollectionPred } from "./node_render";
 import { Precedence } from "@/sql/precedence";
 import { Scope } from "@/sql/fragment";
 import { ColumnDef } from "@/impl/schema_def";
@@ -64,15 +64,15 @@ export class SqliteDriver implements Driver {
 
 const nodeRender = new class implements NodeRender {
 
-    renderInCollectionPred(
-        expr: ast.InCollectionPred<any>, 
+    renderSingleColumnInCollectionPred(
+        pred: SingleColumnInCollectionPred,
         ctx: NodeRenderContext
     ): void {
         using _ = ctx.withPrecedence(Precedence.COMPARISON);
-        ctx.render(expr.expr);
-        ctx.text(expr.neg ? " not in": " in");
+        ctx.render(pred.expr);
+        ctx.text(pred.neg ? " not in": " in");
         using __ = ctx.withComposite(new Scope("VALUES", false));
-        for (const value of expr.values) {
+        for (const value of pred.values) {
             ctx.separator();
             ctx.render(value);
         }

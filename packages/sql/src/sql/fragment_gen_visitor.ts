@@ -86,8 +86,14 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
                 return that._precedenceStack.with(precedence);
             }
         
-            render(node: ast.Node): void {
-                node.accept(that);
+            render(node: ast.Node | Value | string): void {
+                if (typeof node === "string") {
+                    that._compositeStack.current.add(node);
+                } else if (node instanceof Value) {
+                    that._compositeStack.current.add(node);
+                } else {
+                    node.accept(that);
+                }
             }
         }
         this._tableFragmentCreator = new TableFragmentCreator(
@@ -257,6 +263,18 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
     }
 
     visitTupleInCollectionPred(pred: ast.TupleInCollectionPred): void {
+
+        const span = pred.tuple.exprs.length;
+        const providers: Array<ScalarProvider<any, any> | undefined> = [];
+        for (let i = 0; i < span; i++) {
+            const expr = pred.tuple.exprs[i]!;
+            if (expr.isPropExpr) {
+                const provider = scalarProviderOf(expr);
+                if (provider) {
+                    providers[i] = provider;
+                }
+            }
+        }
         
         using _ = this._precedenceStack.with(Precedence.COMPARISON);
 
@@ -267,7 +285,7 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
         using ___ = this._compositeStack.with(new Scope("VALUES"));
                 for (const tuple of pred.tuples) {
             this._compositeStack.current.separator();
-            tuple.accept(this);
+            this._visitTuple(tuple, providers);
         }
     }
 
@@ -313,7 +331,25 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
     }
 
     visitInCollectionPred(pred: ast.InCollectionPred<any>): void {
-        this._nodeRender.renderInCollectionPred(pred, this._nodeRenderContext);
+        if (pred.expr.isPropExpr) {
+            const provider = scalarProviderOf(pred.expr);
+            if (provider != null) {
+                const values: Array<ast.AbstractExpr<any> | Value | string> = [];
+                for (const value of pred.values) {
+                    if (value.isValueExpr) {
+                        values.push(valueOf(value, provider));
+                    } else {
+                        values.push(value);
+                    }
+                }
+                this._nodeRender.renderSingleColumnInCollectionPred(
+                    {neg: pred.neg, expr: pred.expr, values}, 
+                    this._nodeRenderContext
+                );
+                return;
+            }
+        }
+        this._nodeRender.renderSingleColumnInCollectionPred(pred, this._nodeRenderContext);
     }
 
     visitInSubQueryPred(pred: ast.InSubQueryPred): void {

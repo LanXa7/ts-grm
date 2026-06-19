@@ -1,10 +1,10 @@
-import { Composite } from "@/sql/fragment";
+import { Composite, Value } from "@/sql/fragment";
 import { ast } from "@ts-grm/core";
 
 export interface NodeRender {
 
-    renderInCollectionPred(
-        expr: ast.InCollectionPred<any>,
+    renderSingleColumnInCollectionPred(
+        pred: SingleColumnInCollectionPred,
         ctx: NodeRenderContext
     ): void;
 
@@ -74,5 +74,14 @@ export interface NodeRenderContext {
 
     withPrecedence(precedence: number): Disposable;
 
-    render(node: ast.Node): void;
+    render(node: ast.Node | Value | string): void;
 }
+
+export type SingleColumnInCollectionPred = {
+
+    readonly neg: boolean;
+
+    readonly expr: ast.AbstractExpr<any>;
+
+    readonly values: ReadonlyArray<ast.AbstractExpr<any> | Value | string>;
+};
