@@ -1,3 +1,4 @@
+import { ScalarProvider } from "@/schema/scalar";
 import { AbstractDtExpr } from "./dt_expr";
 import { AbstractEsExpr } from "./es_expr";
 import { AbstractCmpExpr, AbstractExpr } from "./expr";
@@ -19,6 +20,10 @@ export class CoalesceExpr<T> extends AbstractExpr<T> implements CoalesceExprCont
         super();
     }
 
+    override get scalarProvider(): ScalarProvider<any, any> | undefined {
+        return this.expr.scalarProvider;
+    }
+
     accept(visitor: Visitor): void {
         visitor.visitCoalesceExpr(this);
     }
@@ -31,6 +36,10 @@ export class CoalesceCmpExpr<T> extends AbstractCmpExpr<T> implements CoalesceEx
         readonly defaultExprs: ReadonlyArray<AbstractCmpExpr<T>>
     ) {
         super();
+    }
+
+    override get scalarProvider(): ScalarProvider<any, any> | undefined {
+        return this.expr.scalarProvider;
     }
 
     accept(visitor: Visitor): void {
@@ -47,6 +56,10 @@ export class CoalesceNumExpr<T extends number | string> extends AbstractNumExpr<
         super();
     }
 
+    override get scalarProvider(): ScalarProvider<any, any> | undefined {
+        return this.expr.scalarProvider;
+    }
+
     accept(visitor: Visitor): void {
         visitor.visitCoalesceExpr(this);
     }
@@ -59,6 +72,10 @@ export class CoalesceStrExpr extends AbstractStrExpr implements CoalesceExprCont
         readonly defaultExprs: ReadonlyArray<AbstractStrExpr>
     ) {
         super();
+    }
+
+    override get scalarProvider(): ScalarProvider<any, any> | undefined {
+        return this.expr.scalarProvider;
     }
 
     accept(visitor: Visitor): void {
@@ -75,6 +92,10 @@ export class CoalesceEsExpr<T extends string> extends AbstractEsExpr<T> implemen
         super();
     }
 
+    override get scalarProvider(): ScalarProvider<any, any> | undefined {
+        return this.expr.scalarProvider;
+    }
+
     accept(visitor: Visitor): void {
         visitor.visitCoalesceExpr(this);
     }
@@ -87,6 +108,10 @@ export class CoalesceDtExpr extends AbstractDtExpr implements CoalesceExprContra
         readonly defaultExprs: ReadonlyArray<AbstractDtExpr>
     ) {
         super();
+    }
+
+    override get scalarProvider(): ScalarProvider<any, any> | undefined {
+        return this.expr.scalarProvider;
     }
 
     accept(visitor: Visitor): void {

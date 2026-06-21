@@ -8,7 +8,7 @@ import { AbstractEntityTable } from "../entity_table";
 import { Visitor } from "./visitor";
 import { AssociationProp } from "../association_entity";
 import { AbstractAssociationTable } from "../association_table";
-import { EnumSetProvider } from "@/schema/scalar";
+import { EnumSetProvider, ScalarProvider } from "@/schema/scalar";
 
 export interface PropExprContract {
     readonly table: AbstractEntityTable | AbstractAssociationTable;
@@ -64,16 +64,23 @@ export function createTableProp(
 
 class PropNumExpr<T extends string | number> extends AbstractNumExpr<T> implements PropExprContract {
 
+    private readonly _provider: ScalarProvider<any, any> | undefined;
+
     constructor(
         readonly table: AbstractEntityTable | AbstractAssociationTable,
         readonly prop: EntityProp | AssociationProp,
         readonly isAssociation: boolean
     ) {
         super();
+        if (prop instanceof EntityProp) {
+            this._provider = prop.scalarProvider;
+        } else {
+            this._provider = undefined;
+        }
     }
 
-    override get isPropExpr(): true {
-        return true;
+    override get scalarProvider(): ScalarProvider<any, any> | undefined {
+        return this._provider;
     }
 
     accept(visitor: Visitor): void {
@@ -83,16 +90,23 @@ class PropNumExpr<T extends string | number> extends AbstractNumExpr<T> implemen
 
 class PropStrExpr extends AbstractStrExpr implements PropExprContract {
 
+    private readonly _provider: ScalarProvider<any, any> | undefined;
+
     constructor(
         readonly table: AbstractEntityTable | AbstractAssociationTable,
         readonly prop: EntityProp | AssociationProp,
         readonly isAssociation: boolean
     ) {
         super();
+        if (prop instanceof EntityProp) {
+            this._provider = prop.scalarProvider;
+        } else {
+            this._provider = undefined;
+        }
     }
 
-    override get isPropExpr(): true {
-        return true;
+    override get scalarProvider(): ScalarProvider<any, any> | undefined {
+        return this._provider;
     }
 
     accept(visitor: Visitor): void {
@@ -102,16 +116,23 @@ class PropStrExpr extends AbstractStrExpr implements PropExprContract {
 
 class PropEsExpr<T extends string> extends AbstractEsExpr<T> implements PropExprContract {
 
+    private readonly _provider: ScalarProvider<any, any> | undefined;
+
     constructor(
         readonly table: AbstractEntityTable | AbstractAssociationTable,
         readonly prop: EntityProp | AssociationProp,
         readonly isAssociation: boolean
     ) {
         super();
+        if (prop instanceof EntityProp) {
+            this._provider = prop.scalarProvider;
+        } else {
+            this._provider = undefined;
+        }
     }
 
-    override get isPropExpr(): true {
-        return true;
+    override get scalarProvider(): ScalarProvider<any, any> | undefined {
+        return this._provider;
     }
 
     accept(visitor: Visitor): void {
@@ -121,16 +142,23 @@ class PropEsExpr<T extends string> extends AbstractEsExpr<T> implements PropExpr
 
 class PropDtExpr extends AbstractDtExpr implements PropExprContract {
     
+    private readonly _provider: ScalarProvider<any, any> | undefined;
+
     constructor(
         readonly table: AbstractEntityTable | AbstractAssociationTable,
         readonly prop: EntityProp | AssociationProp,
         readonly isAssociation: boolean
     ) {
         super();
+        if (prop instanceof EntityProp) {
+            this._provider = prop.scalarProvider;
+        } else {
+            this._provider = undefined;
+        }
     }
 
-    override get isPropExpr(): true {
-        return true;
+    override get scalarProvider(): ScalarProvider<any, any> | undefined {
+        return this._provider;
     }
 
     accept(visitor: Visitor): void {

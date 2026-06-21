@@ -250,11 +250,9 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
         const span = pred.leftTuple.exprs.length;
         const providers: Array<ScalarProvider<any, any> | undefined> = [];
         for (let i = 0; i < span; i++) {
-            if (pred.leftTuple.exprs[i]!.isPropExpr && pred.rightTuple.exprs[i]!.isValueExpr) {
-                providers[i] = scalarProviderOf(pred.leftTuple.exprs[i]!);
-            } else if (pred.leftTuple.exprs[i]!.isValueExpr && pred.rightTuple.exprs[i]!.isPropExpr) {
-                providers[i] = scalarProviderOf(pred.rightTuple.exprs[i]!);
-            }
+            providers[i] = 
+                pred.leftTuple.exprs[i]!.scalarProvider 
+                ?? pred.rightTuple.exprs[i]!.scalarProvider;
         }
         using _ = this._precedenceStack.with(Precedence.COMPARISON);
         this._visitTuple(pred.leftTuple, providers);
@@ -268,11 +266,9 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
         const providers: Array<ScalarProvider<any, any> | undefined> = [];
         for (let i = 0; i < span; i++) {
             const expr = pred.tuple.exprs[i]!;
-            if (expr.isPropExpr) {
-                const provider = scalarProviderOf(expr);
-                if (provider) {
-                    providers[i] = provider;
-                }
+            const provider = expr.scalarProvider;
+            if (provider) {
+                providers[i] = provider;
             }
         }
         
@@ -307,8 +303,8 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
 
     visitCmpPred(pred: ast.CmpPred): void {
         using _ = this._precedenceStack.with(Precedence.COMPARISON);
-        if (pred.leftExpr.isPropExpr && pred.rightExpr.isValueExpr) {
-            const provider = scalarProviderOf(pred.leftExpr);
+        if (pred.leftExpr.scalarProvider != null && pred.rightExpr.isValueExpr) {
+            const provider = pred.leftExpr.scalarProvider;
             if (provider != null) {
                 pred.leftExpr.accept(this);
                 this._compositeStack.current.add(" ").add(pred.op).add(" ");
@@ -316,8 +312,8 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
                 return;
             }
         }
-        if (pred.leftExpr.isValueExpr && pred.rightExpr.isPropExpr) {
-            const provider = scalarProviderOf(pred.rightExpr);
+        if (pred.leftExpr.isValueExpr && pred.rightExpr.scalarProvider != null) {
+            const provider = pred.rightExpr.scalarProvider;
             if (provider != null) {
                 this._compositeStack.current.add(valueOf(pred.leftExpr, provider));
                 this._compositeStack.current.add(" ").add(pred.op).add(" ");
@@ -331,23 +327,21 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
     }
 
     visitInCollectionPred(pred: ast.InCollectionPred<any>): void {
-        if (pred.expr.isPropExpr) {
-            const provider = scalarProviderOf(pred.expr);
-            if (provider != null) {
-                const values: Array<ast.AbstractExpr<any> | Value | string> = [];
-                for (const value of pred.values) {
-                    if (value.isValueExpr) {
-                        values.push(valueOf(value, provider));
-                    } else {
-                        values.push(value);
-                    }
+        const provider = pred.expr.scalarProvider;
+        if (provider != null) {
+            const values: Array<ast.AbstractExpr<any> | Value | string> = [];
+            for (const value of pred.values) {
+                if (value.isValueExpr) {
+                    values.push(valueOf(value, provider));
+                } else {
+                    values.push(value);
                 }
-                this._nodeRender.renderSingleColumnInCollectionPred(
-                    {neg: pred.neg, expr: pred.expr, values}, 
-                    this._nodeRenderContext
-                );
-                return;
             }
+            this._nodeRender.renderSingleColumnInCollectionPred(
+                {neg: pred.neg, expr: pred.expr, values}, 
+                this._nodeRenderContext
+            );
+            return;
         }
         this._nodeRender.renderSingleColumnInCollectionPred(pred, this._nodeRenderContext);
     }
@@ -720,19 +714,6 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
             this._fillTableFragments(table.children);
         }
     }
-}
-
-function scalarProviderOf(
-    expr: ast.AbstractExpr<any>
-): ScalarProvider<any, any> | undefined {
-    if (!expr.isPropExpr) {
-        return undefined;
-    }
-    const prop = (expr as any as ast.PropExprContract).prop;
-    if (!(prop instanceof metadata.EntityProp)) {
-        return undefined;
-    }
-    return prop.scalarProvider;
 }
 
 function valueOf(

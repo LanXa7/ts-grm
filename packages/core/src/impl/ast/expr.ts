@@ -6,6 +6,7 @@ import { getInternalFactory, validateInValues } from "./internal_factory";
 import { AbstractSelection } from "./selection";
 import { Node } from "./node";
 import { Visitor } from "./visitor";
+import { ScalarProvider } from "@/schema/scalar";
 
 export abstract class AbstractExpr<T> extends AbstractSelection implements Node {
 
@@ -201,15 +202,15 @@ export abstract class AbstractExpr<T> extends AbstractSelection implements Node 
         return this;
     }
 
-    get isPropExpr(): boolean {
-        return false;
-    }
-
     get isValueExpr(): boolean {
         return false;
     }
 
     abstract accept(visitor: Visitor): void;
+
+    get scalarProvider(): ScalarProvider<any, any> | undefined {
+        return undefined;
+    }
 }
 
 export abstract class AbstractCmpExpr<T> extends AbstractExpr<T> {

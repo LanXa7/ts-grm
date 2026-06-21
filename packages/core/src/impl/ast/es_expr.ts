@@ -19,4 +19,6 @@ export abstract class AbstractEsExpr<T extends string> extends AbstractExpr<T> {
         });
         return getInternalFactory().createCoalesceEsExpr(this, arr);
     }
+
+    
 }
