@@ -38,18 +38,19 @@ export function createTableProp(
         ? (table as AbstractEntityTable).__to(prop.declaringEntity)
         : table;
     switch (prop.scalarType.kind) {
+        case "I32":
+            if (prop instanceof EntityProp && prop.scalarProvider instanceof EnumSetProvider) {
+                return new PropEsExpr(directTable, prop, isAssociation);
+            }
+            return new PropNumExpr(directTable, prop, isAssociation);
         case "I8":
         case "I16":
-        case "I32":
         case "I64":
         case "NUM":
         case "F32":
         case "F64":
             return new PropNumExpr(directTable, prop, isAssociation);
         case "STR":
-            if (prop instanceof EntityProp && prop.scalarProvider instanceof EnumSetProvider) {
-                return new PropEsExpr(directTable, prop, isAssociation);
-            }
             return new PropStrExpr(directTable, prop, isAssociation);
         case "DATE":
             return new PropDtExpr(directTable, prop, isAssociation);

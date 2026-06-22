@@ -5,7 +5,7 @@ import type { DtDiffExpr, DtPlusExpr } from "./dt_expr";
 import { AbstractExpr } from "./expr";
 import { NativeExprContract } from "./native_expr";
 import type { BinaryNumExpr, UnaryMinusExpr } from "./num_expr";
-import type { BetweenPred, CmpPred, CompoundPred, ConstantPred, InCollectionPred, InSubQueryPred, LikePred, NullityPred } from "./pred";
+import type { BetweenPred, CmpPred, CompoundPred, ConstantPred, EsOpPred, InCollectionPred, InSubQueryPred, LikePred, NullityPred } from "./pred";
 import type { PropExprContract } from "./prop_expr";
 import { AtomQueryContract, MergedQueryContract } from "./query";
 import { ShadowExprContract } from "./shadow_expr";
@@ -47,6 +47,8 @@ export interface Visitor {
     visitCompoundPred(pred: CompoundPred): void;
 
     visitExistsPred(pred: ExistsPred): void;
+
+    visitEsOpPred(pred: EsOpPred): void;
 
     visitFetchedView(view: FetchedViewContract): void;
 
@@ -186,6 +188,10 @@ export abstract class AbstractVisitor implements Visitor {
 
     visitExistsPred(pred: ExistsPred): void {
         pred.subQuery.accept(this);
+    }
+
+    visitEsOpPred(pred: EsOpPred): void {
+        pred.expr.accept(this);
     }
 
     visitFetchedView(_: FetchedViewContract): void {

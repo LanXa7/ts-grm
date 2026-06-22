@@ -188,7 +188,8 @@ describe("InheritanceSqlTest", () => {
                 tb_1_.NAME,
                 tb_1_.VERSION,
                 tb_1_.CITY,
-                tb_1_.STREET
+                tb_1_.STREET,
+                tb_1_.TAGS
             from BOOK_STORE tb_1_
             where 
                     tb_1_.CITY = ?

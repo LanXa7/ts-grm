@@ -14,7 +14,7 @@ import {
 import { CascadeType, JoinTable, JoinColumns, JoinEntity } from "./join";
 import { FlattenMembers } from "@/utils";
 import { ArgumentError } from "@/error/common";
-import { AtLeastTwo, IsNull } from "@/dsl/utils";
+import { IsNull } from "@/dsl/utils";
 import { Calculator, ParameterizedTargetCalculator, ParameterizedValueCalculator, SqlFormula, TargetCalculator, TsFormula, ValueCalculator } from "./computed";
 import { StandardSchemaV1 } from "@standard-schema/spec"; 
 import { scalars, ScalarProvider, ScalarType, EnumSetProvider } from "./scalar";
@@ -1067,13 +1067,13 @@ export class ParameterizedCalculatedCollectionProp<
 
 type ScalarPropCreator = {
     
-    <TValueType extends StandardSchemaV1>(
-        provider: ScalarProvider<TValueType, any>
-    ): ScalarProp<StandardSchemaV1.InferOutput<TValueType>>;
-
     <TEnum extends string>(
         provider: EnumSetProvider<TEnum>
     ): EnumSetProp<TEnum>;
+    
+    <TValueType extends StandardSchemaV1>(
+        provider: ScalarProvider<TValueType, any>
+    ): ScalarProp<StandardSchemaV1.InferOutput<TValueType>>;
 }
 
 function scalarPropCreator(): ScalarPropCreator {
@@ -1090,7 +1090,7 @@ function scalarPropCreator(): ScalarPropCreator {
 
 type EnumCreator = {
 
-    <TValues extends AtLeastTwo<string>>(
+    <const TValues extends ReadonlyArray<string>>(
         ...values: TValues
     ): ScalarProp<TValues[number]>;
 
@@ -1117,13 +1117,13 @@ function enumCreator(): EnumCreator {
 
 type EnumSetCreator = {
 
-    <TValues extends AtLeastTwo<string>>(
+    <const TValues extends ReadonlyArray<string>>(
         ...values: TValues
-    ): ScalarProp<ReadonlyArray<TValues[number]>>;
+    ): EnumSetProp<TValues[number] & string>;
 
     <TMap extends { readonly [key: string]: string; }>(
         map: TMap
-    ): ScalarProp<ReadonlyArray<keyof TMap>>;
+    ): EnumSetProp<keyof TMap & string>;
 }
 
 function enumSetCreator(): EnumSetCreator {

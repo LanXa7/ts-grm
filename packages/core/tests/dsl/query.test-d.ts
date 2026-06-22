@@ -231,7 +231,7 @@ describe("QueryTest", () => {
             })
         )
         expectTypeOf<typeof sq>().toEqualTypeOf<
-            TupleSubQuery<[
+            TupleSubQuery<readonly [
                 Expression<string>, 
                 Expression<number>
             ]>

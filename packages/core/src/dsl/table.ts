@@ -8,6 +8,7 @@ import {
     ScalarProp, 
     CombinedNullity,
     AssociatedProp,
+    EnumSetProp,
 } from "@/schema/prop";
 import { Expression, MakeExpression, MakeType, Predicate } from "./expression";
 import { FilterNever } from "@/utils";
@@ -94,6 +95,11 @@ type DslMembers<
                 ? Expression<
                     MakeType<R, CombinedNullity<TNullity, Nullity>>,
                     R extends string ? "AS_NUMBER" : ""
+                >
+            : TMembers[K] extends EnumSetProp<infer R>
+                ? Expression<
+                    MakeType<R, TNullity>,
+                    R extends string ? "AS_ENUM_SET" : ""
                 >
             : TMembers[K] extends ScalarProp<infer R, infer Nullity>
                 ? Expression<MakeType<R, CombinedNullity<TNullity, Nullity>>>

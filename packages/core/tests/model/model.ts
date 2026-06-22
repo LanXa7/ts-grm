@@ -74,8 +74,9 @@ export const BOOK_STORE = model("BookStore", "id", class {
 export const PHYSICAL_BOOK_STORE = model.extends(BOOK_STORE)(
     "PhysicalBookStore", 
     class {
-        city = prop.str(50);
-        street = prop.str(50);
+        city = prop.str(50)
+        street = prop.str(50)
+        tags = prop.enumSet("READING_ROOM", "AIR_CONDITION", "BEVERAGE_SALES")
     },
     ctx => ctx.table({
         name: TB_INHERIT,

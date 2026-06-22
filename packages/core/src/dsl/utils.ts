@@ -18,8 +18,8 @@ export class ExpressionOrder {
     }
 };
 
-export type AtLeastOne<T> = [T, ...T[]];
-export type AtLeastTwo<T> = [T, T, ...[]];
+export type AtLeastOne<T> = readonly [T, ...T[]];
+export type AtLeastTwo<T> = readonly [T, T, ...[]];
 
 export type IsNull<T> = 
     null extends T

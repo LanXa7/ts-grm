@@ -665,7 +665,7 @@ export abstract class AbstractEntityTable implements AbstractTable {
         return parent[prop.name]();
     }
 
-    static expandTuple(ast: any, prop: EntityProp): ExprTuple<ExpressionLike[]> {
+    static expandTuple(ast: any, prop: EntityProp): ExprTuple<ReadonlyArray<ExpressionLike>> {
         const arr = AbstractEntityTable.expandExprArr(ast, prop);
         return toTuple(arr as any);
     }

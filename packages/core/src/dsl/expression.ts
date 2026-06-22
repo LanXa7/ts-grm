@@ -350,11 +350,13 @@ type StrExpression<T extends Nullable<string>> = CmpExpression<T> & {
 
 type EnumSetExpression<T extends Nullable<string>> = AnyExpression<T> & {
     
-    none(...values: AtLeastOne<T>): Predicate;
+    containsAny(...values: AtLeastOne<T>): Predicate;
 
-    some(...values: AtLeastOne<T>): Predicate;
+    notContainsAny(...values: AtLeastOne<T>): Predicate;
 
-    all(...values: AtLeastOne<T>): Predicate;
+    containsAll(...values: AtLeastOne<T>): Predicate;
+
+    notContainsAll(...values: AtLeastOne<T>): Predicate;
 };
 
 type DateExpression<T extends Nullable<Date>> = CmpExpression<T> & {

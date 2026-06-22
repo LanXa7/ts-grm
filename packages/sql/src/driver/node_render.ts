@@ -9,7 +9,12 @@ export interface NodeRender {
     ): void;
 
     renderLikePred(
-        expr: ast.LikePred,
+        pred: ast.LikePred,
+        ctx: NodeRenderContext
+    ): void;
+
+    renderEsOpPred(
+        pred: ast.EsOpPred,
         ctx: NodeRenderContext
     ): void;
 

@@ -28,8 +28,8 @@ export function useSqliteClientWithData(sqlRecord: SqlRecord): SqlClient {
 const INITIAL_SQL = `
 insert into BOOK_STORE(ID, TYPE, NAME, VERSION, URL) values
     (1, 'OnlineBookStore', 'O''REILLY', 1, 'https://www.oreilly.com');
-insert into BOOK_STORE(ID, TYPE, NAME, VERSION, CITY, STREET) values
-    (2, 'PhysicalBookStore', 'MANNING', 1, 'Shelter Island', '20 Baldwin Road');
+insert into BOOK_STORE(ID, TYPE, NAME, VERSION, CITY, STREET, TAGS) values
+    (2, 'PhysicalBookStore', 'MANNING', 1, 'Shelter Island', '20 Baldwin Road', 3);
 
 insert into BOOK(ID, TYPE, NAME, EDITION, PRICE, STORE_ID) values
     (1, 'ElectronicBook', 'Learning GraphQL', 1, 33.99, 1),

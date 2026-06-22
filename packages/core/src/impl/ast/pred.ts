@@ -2,6 +2,7 @@ import { Expression } from "@/dsl";
 import { AbstractExpr } from "./expr";
 import { Visitor } from "./visitor";
 import { QueryContract } from "./query";
+import { AbstractEsExpr } from "./es_expr";
 
 export abstract class AbstractPred extends AbstractExpr<boolean> {
 
@@ -194,7 +195,7 @@ export class CompoundPred extends AbstractPred {
         super();
     }
 
-    negative(): AbstractPred {
+    override negative(): AbstractPred {
         const newOp = this.op === "AND" ? "OR" : "AND";
         const newPreds = this.preds.map(pred => pred.negative());
         return new CompoundPred(newOp, newPreds);
@@ -234,3 +235,33 @@ export class CompoundPred extends AbstractPred {
 }
 
 export type CompoundOp = "AND" | "OR";
+
+export class EsOpPred extends AbstractPred {
+
+    constructor(
+        readonly op: EsOp,
+        readonly expr: AbstractEsExpr<any>,
+        readonly values: ReadonlyArray<string>
+    ) {
+        super();
+    }
+
+    override negative(): AbstractPred {
+        switch (this.op) {
+            case "CONTAINS_ANY":
+                return new EsOpPred("NOT_CONTAINS_ANY", this.expr, this.values);
+            case "NOT_CONTAINS_ANY":
+                return new EsOpPred("CONTAINS_ANY", this.expr, this.values);
+            case "CONTAINS_ALL":
+                return new EsOpPred("NOT_CONTAINS_ALL", this.expr, this.values);
+            case "NOT_CONTAINS_ALL":
+                return new EsOpPred("CONTAINS_ALL", this.expr, this.values);
+        }
+    }
+
+    accept(visitor: Visitor): void {
+        visitor.visitEsOpPred(this);
+    }
+}
+
+export type EsOp = "CONTAINS_ANY" | "NOT_CONTAINS_ANY" | "CONTAINS_ALL" | "NOT_CONTAINS_ALL";

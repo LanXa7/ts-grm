@@ -380,7 +380,8 @@ describe("InheritanceBaseQuerySqlTest", () => {
                 tb_1_.c2,
                 tb_1_.c3,
                 tb_1_.c4,
-                tb_1_.c5
+                tb_1_.c5,
+                tb_1_.c6
             from (
                 select 
                     tb_2_.ID c1,
@@ -388,13 +389,14 @@ describe("InheritanceBaseQuerySqlTest", () => {
                     tb_2_.VERSION c3,
                     tb_2_.CITY c4,
                     tb_2_.STREET c5,
-                    row_number() over(partition by tb_2_.NAME order by tb_2_.VERSION desc) c6
+                    tb_2_.TAGS c6,
+                    row_number() over(partition by tb_2_.NAME order by tb_2_.VERSION desc) c7
                 from BOOK_STORE tb_2_
             ) tb_1_
             where 
                     tb_1_.c2 like ?
                 or
-                    tb_1_.c6 = ?
+                    tb_1_.c7 = ?
         `);
     });
 

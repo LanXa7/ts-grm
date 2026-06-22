@@ -11,7 +11,7 @@ export function tuple<
     return new ExprTupleImpl(expressions as any);
 }
 
-export interface ExprTuple<TExpressions extends ExpressionLike[]> {
+export interface ExprTuple<TExpressions extends ReadonlyArray<ExpressionLike>> {
 
     __type(): { exprTuple: TExpressions | true }
 
@@ -28,7 +28,7 @@ export interface ExprTuple<TExpressions extends ExpressionLike[]> {
     notInSubQuery(subQuery: TupleSubQuery<TExpressions>): Predicate;
 }
 
-export type ExprTupleMatchable<TExpressions extends ExpressionLike[]> =
+export type ExprTupleMatchable<TExpressions extends ReadonlyArray<ExpressionLike>> =
     ExprTuple<TExpressions> 
     | {
         readonly [K in keyof TExpressions]: 

@@ -17,7 +17,10 @@ export type {
     InSubQueryPred,
     LikePred, 
     NullityPred,
-    BetweenPred
+    BetweenPred,
+    EsOpPred,
+    CompoundOp,
+    EsOp,
 } from "./pred";
 export type { IsPred } from "./is_pred";
 export type { ValueExprContract } from "./literal";

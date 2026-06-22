@@ -393,6 +393,10 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
         pred.subQuery.accept(this);
     }
 
+    visitEsOpPred(pred: ast.EsOpPred): void {
+        this._nodeRender.renderEsOpPred(pred, this._nodeRenderContext);
+    }
+
     visitFetchedView(fetchedView: ast.FetchedViewContract): void {
         const table = fetchedView.table;
         for (const field of fetchedView.view.mapper.fields) {

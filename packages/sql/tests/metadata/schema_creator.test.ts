@@ -50,6 +50,12 @@ describe.sequential("SchemaCreatorTest", () => {
                         "when": ["PhysicalBookStore"]
                     },
                     {
+                        "name": "TAGS",
+                        "nullable": true,
+                        "type": "I32",
+                        "when": ["PhysicalBookStore"],
+                    },
+                    {
                         "name": "URL",
                         "type": "STR",
                         "nullable": true,
@@ -856,6 +862,10 @@ describe.sequential("SchemaCreatorTest", () => {
                 -- When the "TYPE" is "PhysicalBookStore"
                 -- The implicit nullity in the derived table is non-null
                 STREET text null, 
+
+                -- When the "TYPE" is "PhysicalBookStore"
+                -- The implicit nullity in the derived table is non-null
+                TAGS integer null, 
 
                 -- When the "TYPE" is "OnlineBookStore"
                 -- The implicit nullity in the derived table is non-null

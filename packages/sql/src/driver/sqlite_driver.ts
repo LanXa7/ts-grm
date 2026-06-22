@@ -2,7 +2,7 @@ import { ast, err } from "@ts-grm/core";
 import { Driver } from "./deriver";
 import { NodeRender, NodeRenderContext, SingleColumnInCollectionPred } from "./node_render";
 import { Precedence } from "@/sql/precedence";
-import { Scope } from "@/sql/fragment";
+import { Scope, Value } from "@/sql/fragment";
 import { ColumnDef } from "@/impl/schema_def";
 import { TransactionManager } from "@/transaction/transaction_manger";
 import { SqliteTransactionManager } from "@/transaction/sqlite_transaction_manager";
@@ -89,6 +89,37 @@ const nodeRender = new class implements NodeRender {
             ctx.text(pred.neg ? " not like " : " like ");
         }
         ctx.render(pred.pattern);
+    }
+
+    renderEsOpPred(
+        pred: ast.EsOpPred,
+        ctx: NodeRenderContext
+    ): void {
+        const provider = pred.expr.scalarProvider!;
+        const flags = provider.toSql(pred.values) as any;
+        const value = new Value(flags, pred.values);
+        using _ = ctx.withPrecedence(Precedence.COMPARISON);
+        ctx.text("(");
+        ctx.render(pred.expr);
+        ctx.text(" & ");
+        ctx.render(value);
+        ctx.text(")");
+        switch (pred.op) {
+            case "CONTAINS_ANY":
+                ctx.text(" <> 0");
+                break;
+            case "NOT_CONTAINS_ANY":
+                ctx.text(" = 0");
+                break;
+            case "CONTAINS_ALL":
+                ctx.text(" = ");
+                ctx.render(value);
+                break;
+            case "NOT_CONTAINS_ALL":
+                ctx.text(" <> ");
+                ctx.render(value);
+                break;
+        }
     }
 
     renderReverseExpr(_expr: ast.ReverseExpr, _ctx: NodeRenderContext): void {

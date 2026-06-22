@@ -1,8 +1,9 @@
 import { describe, it, expect } from "vitest";
 import { useSqliteClientWithData } from "../data_utils";
 import { newSqlRecord } from "../utils";
-import { AUTHOR } from "../model/model";
+import { AUTHOR, PHYSICAL_BOOK_STORE } from "../model/model";
 import { dsl, dto } from "@ts-grm/core";
+import { SIMPLE_PHYSICAL_BOOK_STORE_VIEW } from "./utils";
 
 describe.sequential("ScalarProviderTest", () => {
 
@@ -220,5 +221,73 @@ describe.sequential("ScalarProviderTest", () => {
                 "gender": "MALE"
             }
         ]);
+    });
+
+    it("enumSetContainsAny", async () => {
+        const rows = await sqlClient.createQuery(PHYSICAL_BOOK_STORE, (q, store) => {
+            q.where(store.tags.containsAny("READING_ROOM", "BEVERAGE_SALES"));
+            return q.select(
+                store.fetch(SIMPLE_PHYSICAL_BOOK_STORE_VIEW)
+            );
+        }).fetchList();
+        sqlRecord.assert(
+            {
+                sql: `
+                    select 
+                        tb_1_.ID,
+                        tb_1_.NAME,
+                        tb_1_.VERSION,
+                        tb_1_.CITY,
+                        tb_1_.STREET,
+                        tb_1_.TAGS
+                    from BOOK_STORE tb_1_
+                    where 
+                        (tb_1_.TAGS & ?) <> 0
+                `,
+                args: [5],
+                purpose: 'query'
+            }
+        );
+        expect(rows).toEqual([
+            {
+                "id": 2,
+                "name": "MANNING",
+                "version": 1,
+                "city": "Shelter Island",
+                "street": "20 Baldwin Road",
+                "tags": [
+                    "READING_ROOM",
+                    "AIR_CONDITION"
+                ]
+            }
+        ]);
+    });
+
+    it("enumSetContainsAll", async () => {
+        const rows = await sqlClient.createQuery(PHYSICAL_BOOK_STORE, (q, store) => {
+            q.where(store.tags.containsAll("READING_ROOM", "BEVERAGE_SALES"));
+            return q.select(
+                store.fetch(SIMPLE_PHYSICAL_BOOK_STORE_VIEW)
+            );
+        }).fetchList();
+        sqlRecord.assert(
+            {
+                sql: `
+                    select 
+                        tb_1_.ID,
+                        tb_1_.NAME,
+                        tb_1_.VERSION,
+                        tb_1_.CITY,
+                        tb_1_.STREET,
+                        tb_1_.TAGS
+                    from BOOK_STORE tb_1_
+                    where 
+                        (tb_1_.TAGS & ?) = ?
+                `,
+                args: [5, 5],
+                purpose: 'query'
+            }
+        );
+        expect(rows).toEqual([]);
     });
 });
