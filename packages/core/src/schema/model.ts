@@ -66,7 +66,7 @@ function modelImpl(): ModelCreator {
     return create as any as ModelCreator;
 }
 
-type ModelCreator = {
+export type ModelCreator = {
     
     <
         TName extends string, 
@@ -86,7 +86,7 @@ type ModelCreator = {
     ): InheritanceModelCreator<TSuperModel>;
 };
 
-type InheritanceModelCreator<
+export type InheritanceModelCreator<
     TSuperModel extends AnyModel
 > = {
     
@@ -106,7 +106,7 @@ type InheritanceModelCreator<
     >;
 };
 
-type OtherString<T extends string, X extends string> =
+export type OtherString<T extends string, X extends string> =
     T extends X
         ? never
         : T;
@@ -134,7 +134,7 @@ export interface ModelContext<TCtor extends Ctor, TSuperModel extends AnyModel |
     unique(...paths : UniqueKeys<CtorMembers<TCtor>>[]): this;
 }
 
-type SuperIdKey<TSuperModel extends AnyModel> =
+export type SuperIdKey<TSuperModel extends AnyModel> =
     TSuperModel extends Model<any, infer IdKey, any, any, any>
         ? IdKey
         : never;
@@ -176,7 +176,7 @@ export type AllModelMembers<TModel extends AnyModel> =
         ? TAllMembers
         : never;
 
-type MakeAllModelMembers<TCtor extends Ctor, TSuperModel extends AnyModel | undefined> =
+export type MakeAllModelMembers<TCtor extends Ctor, TSuperModel extends AnyModel | undefined> =
     TSuperModel extends undefined 
         ? CtorMembers<TCtor>
         : TSuperModel extends Model<any, any, any, infer TAllMembers, any>
@@ -240,7 +240,7 @@ export type MiddleEntityJoinTargetKeys<
         > & string :
         never;
 
-type ExpectedKeysImpl<
+export type ExpectedKeysImpl<
     TModelMembers, 
     TExpectedProp extends AssociatedProp<any, any, "OWNING", any, any, any>
 > = 
@@ -302,7 +302,7 @@ export const DV_MODEL_NAME = Symbol("<modelName>");
 export type UniqueKeys<TMembers extends object> =
     UniqueKeysImpl<FlattenMembers<TMembers>>;
 
-type UniqueKeysImpl<TFlattenCtorMembers> = 
+export type UniqueKeysImpl<TFlattenCtorMembers> = 
     TFlattenCtorMembers extends object
         ? { 
             [K in keyof TFlattenCtorMembers]: 
@@ -319,7 +319,7 @@ type UniqueKeysImpl<TFlattenCtorMembers> =
 export type OrderedKeys<TModel extends AnyModel> =
     OrderedKeysImpl<FlattenMembers<AllModelMembers<TModel>>>;
 
-type OrderedKeysImpl<TFlattenCtorMembers extends object> = 
+export type OrderedKeysImpl<TFlattenCtorMembers extends object> = 
     { 
         [K in keyof TFlattenCtorMembers]: 
             TFlattenCtorMembers[K] extends ScalarProp<any, any>

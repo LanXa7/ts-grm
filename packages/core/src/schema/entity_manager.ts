@@ -177,7 +177,7 @@ class EntityManagerExclusivity {
     }
 }
 
-type LoadingContext = {
+export type LoadingContext = {
 
     readonly baseDir: string;
 

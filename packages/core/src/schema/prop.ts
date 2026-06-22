@@ -98,10 +98,8 @@ export class Prop<T, TNullity extends NullityType> {
 
     readonly __phantom?: T;
 
-    __type(): {
+    declare readonly __type?: {
         readonly prop: TNullity | true;
-    } {
-        return { prop: true };
     };
 
     protected constructor(readonly __data: PropData) {}
@@ -111,15 +109,10 @@ export class ScalarProp<
     T, TNullity extends NullityType = "NONNULL"
 > extends Prop<T, TNullity> {
 
-    override __type(): {
+    declare readonly __type?: {
         readonly prop: TNullity | true;
         readonly scalarProp: TNullity | true;
-    } {
-        return { 
-            prop: true, 
-            scalarProp: true
-        };
-    }
+    };
 
     constructor(data: PropData) {
         super(data);
@@ -134,17 +127,11 @@ export class StrProp<
     TNullity extends NullityType = "NONNULL"
 > extends ScalarProp<string, TNullity> {
 
-    override __type(): {
+    declare readonly __type?: {
         readonly prop: TNullity | true;
         readonly scalarProp: TNullity | true;
         readonly strProp: TNullity | true;
-    } {
-        return { 
-            prop: true, 
-            scalarProp: true,
-            strProp: true
-        };
-    }
+    };
 
     override nullable(): StrProp<"NULLABLE"> {
         return new StrProp({...this.__data, nullity: "NULLABLE"});
@@ -156,17 +143,11 @@ export class I64Prop<
     TNullity extends NullityType = "NONNULL"
 > extends ScalarProp<T, TNullity> {
 
-    override __type(): {
+    declare readonly __type?: {
         readonly prop: TNullity | true;
         readonly scalarProp: TNullity | true;
         readonly i64Prop: TNullity | true;
-    } {
-        return { 
-            prop: true, 
-            scalarProp: true,
-            i64Prop: true
-        };
-    }
+    };
 
     override nullable(): I64Prop<T, "NULLABLE"> {
         return new I64Prop({...this.__data, nullity: "NULLABLE"});
@@ -181,17 +162,11 @@ export class EnumSetProp<
     TEnum extends string
 > extends ScalarProp<TEnum, "NONNULL"> {
 
-    override __type(): {
+    declare readonly __type?: {
         readonly prop: "NONNULL" | true;
         readonly scalarProp: "NONNULL" | true;
         readonly enumSetProp: "NONNULL" | true;
-    } {
-        return { 
-            prop: true, 
-            scalarProp: true,
-            enumSetProp: true
-        };
-    }
+    };
 }
 
 export class EmbeddedProp<
@@ -200,15 +175,10 @@ export class EmbeddedProp<
     TFlattenProps extends Record<string, any>
 > extends Prop<TProps, TNullity> {
 
-    override __type(): {
+    declare readonly __type?: {
         readonly prop: TNullity | true;
         readonly embeddedProp: [TNullity, TFlattenProps] | true;
-    } {
-        return { 
-            prop: true, 
-            embeddedProp: true 
-        };
-    }
+    };
 
     constructor(data: PropData) {
         super(data)
@@ -236,15 +206,10 @@ export abstract class AssociatedProp<
     TTargetOptionalModelKey extends string
 > extends Prop<TModel, TNullity> {
 
-    override __type(): {
+    declare readonly __type?: {
         readonly prop: TNullity | true;
         readonly associatedProp: [TNullity, TDirection, TMiddleTable, TBackOptionalModelKey, TTargetOptionalModelKey] | true;
-    } {
-        return { 
-            prop: true, 
-            associatedProp: true
-        };
-    }
+    };
 
     constructor(data: PropData) {
         super(data);
@@ -264,7 +229,7 @@ export interface ReferenceProp<
     TTargetOptionalModelKey extends string
 > extends AssociatedProp<TModel, TNullity, TDirection, TMiddleTable, TBackOptionalModelKey, TTargetOptionalModelKey> {
 
-    __type(): {
+    readonly __type?: {
         readonly prop: TNullity | true;
         readonly associatedProp: [TNullity, TDirection, TMiddleTable, TBackOptionalModelKey, TTargetOptionalModelKey] | true;
         readonly referenceProp: [TNullity, TDirection, TMiddleTable, TBackOptionalModelKey, TTargetOptionalModelKey] | true;
@@ -284,7 +249,7 @@ export interface CollectionProp<
   
     readonly __phantom?: TModel;
 
-    __type(): {
+    readonly __type?: {
         readonly collectionProp: true;
     };
 }
@@ -299,19 +264,12 @@ export class OneToOneProp<
 > extends AssociatedProp<TModel, TNullity, TDirection, TMiddleTable, TBackOptionalModelKey, TTargetOptionalModelKey> 
 implements ReferenceProp<TModel, TNullity, TDirection, TMiddleTable, TBackOptionalModelKey, TTargetOptionalModelKey> {
 
-    override __type(): {
+    declare readonly __type?: {
         readonly prop: TNullity | true;
         readonly associatedProp: [TNullity, TDirection, TMiddleTable, TBackOptionalModelKey, TTargetOptionalModelKey] | true;
         readonly referenceProp: [TNullity, TDirection, TMiddleTable, TBackOptionalModelKey, TTargetOptionalModelKey] | true;
         readonly oneToOneProp: [TNullity, TDirection, TMiddleTable, TBackOptionalModelKey, TTargetOptionalModelKey] | true;
-    } {
-        return { 
-            prop: true, 
-            associatedProp: true,
-            referenceProp: true,
-            oneToOneProp: true
-        };
-    }
+    };
 
     constructor(data: PropData) {
         super(data);
@@ -470,19 +428,12 @@ export class ManyToOneProp<
 > extends AssociatedProp<TModel, TNullity, TDirection, TMiddleTable, TBackOptionalModelKey, TTargetOptionalModelKey> 
 implements ReferenceProp<TModel, TNullity, TDirection, TMiddleTable, TBackOptionalModelKey, TTargetOptionalModelKey> {
 
-    override __type(): {
+    declare readonly __type?: {
         readonly prop: TNullity | true;
         readonly associatedProp: [TNullity, TDirection, TMiddleTable, TBackOptionalModelKey, TTargetOptionalModelKey] | true;
         readonly referenceProp: [TNullity, TDirection, TMiddleTable, TBackOptionalModelKey, TTargetOptionalModelKey] | true;
         readonly manyToOneProp: [TNullity, TDirection, TMiddleTable, TBackOptionalModelKey, TTargetOptionalModelKey] | true;
-    } {
-        return { 
-            prop: true, 
-            associatedProp: true,
-            referenceProp: true,
-            manyToOneProp: true
-        };
-    }
+    };
 
     constructor(data: PropData) {
         super(data);
@@ -628,19 +579,12 @@ export class OneToManyProp<
 > extends AssociatedProp<TModel, TNullity, TDirection, TMiddleTable, TBackOptionalModelKey, TTargetOptionalModelKey> 
 implements CollectionProp<TModel> {
 
-    override __type(): {
+    declare readonly __type?: {
         readonly prop: TNullity | true;
         readonly associatedProp: [TNullity, TDirection, TMiddleTable, TBackOptionalModelKey, TTargetOptionalModelKey] | true;
         readonly collectionProp: true;
         readonly oneToManyProp: [TNullity, TDirection, TMiddleTable, TBackOptionalModelKey, TTargetOptionalModelKey] | true;
-    } {
-        return { 
-            prop: true, 
-            associatedProp: true,
-            collectionProp: true,
-            oneToManyProp: true
-        };
-    }
+    };
 
     constructor(data: PropData) {
         super(data);
@@ -760,19 +704,12 @@ export class ManyToManyProp<
 > extends AssociatedProp<TModel, TNullity, TDirection, TMiddleTable, TBackOptionalModelKey, TTargetOptionalModelKey> 
 implements CollectionProp<TModel> {
 
-    override __type(): {
+    declare readonly __type?: {
         readonly prop: TNullity | true;
         readonly associatedProp: [TNullity, TDirection, TMiddleTable, TBackOptionalModelKey, TTargetOptionalModelKey] | true;
         readonly collectionProp: true;
         readonly manyToManyProp: [TNullity, TDirection, TMiddleTable, TBackOptionalModelKey, TTargetOptionalModelKey] | true;
-    } {
-        return { 
-            prop: true, 
-            associatedProp: true,
-            collectionProp: true,
-            manyToManyProp: true
-        };
-    }
+    };
 
     constructor(data: PropData) {
         super(data);
@@ -890,7 +827,7 @@ export abstract class FormulaProp<
     TNullity extends NullityType
 > extends Prop<T, TNullity> {
 
-    abstract __type(): {
+    declare readonly __type?: {
         readonly prop: TNullity | true;
         readonly formulaProp: [T, TNullity] | true;
     };
@@ -905,17 +842,11 @@ export class TsFormulaProp<
     TNullity extends NullityType
 > extends FormulaProp<T, TNullity> {
  
-    override __type(): {
+    declare readonly __type?: {
         readonly prop: TNullity | true;
         readonly formulaProp: [T, TNullity] | true;
         readonly tsFormulaProp: TNullity | true;
-    } {
-        return { 
-            prop: true, 
-            formulaProp: true,
-            tsFormulaProp: true
-        };
-    }
+    };
 
     constructor(data: PropData) {
         super(data);
@@ -927,17 +858,11 @@ export class SqlFormulaProp<
     TNullity extends NullityType
 > extends FormulaProp<T, TNullity> {
  
-    override __type(): {
+    declare readonly __type?: {
         readonly prop: TNullity | true;
         readonly formulaProp: [T, TNullity] | true;
         readonly sqlFormulaProp: TNullity | true;
-    } {
-        return { 
-            prop: true, 
-            formulaProp: true,
-            sqlFormulaProp: true
-        };
-    }
+    };
 
     constructor(data: PropData) {
         super(data);
@@ -949,15 +874,10 @@ export class CalculatedValueProp<
     TNullity extends NullityType
 > extends Prop<TValue, TNullity> {
 
-    override __type(): {
+    declare readonly __type?: {
         readonly prop: TNullity | true;
         readonly calculatedValueProp: [TValue, TNullity] | true;
-    } {
-        return { 
-            prop: true, 
-            calculatedValueProp: true
-        };
-    }
+    };
 
     constructor(data: PropData) {
         super(data);
@@ -970,15 +890,10 @@ export class ParameterizedCalculatedValueProp<
     TNullity extends NullityType
 > extends Prop<TValue, TNullity> {
 
-    override __type(): {
+    declare readonly __type?: {
         readonly prop: TNullity | true;
         readonly parameterizedCalculatedValueProp: [TParameter, TValue, TNullity] | true;
-    } {
-        return { 
-            prop: true, 
-            parameterizedCalculatedValueProp: true
-        };
-    }
+    };
 
     constructor(data: PropData) {
         super(data);
@@ -990,15 +905,10 @@ export class CalculatedReferenceProp<
     TNullity extends NullityType
 > extends Prop<TModel, TNullity> {
 
-    override __type(): {
+    declare readonly __type?: {
         readonly prop: TNullity | true;
         readonly calculatedReferenceProp: [TModel, TNullity] | true;
-    } {
-        return { 
-            prop: true, 
-            calculatedReferenceProp: true
-        };
-    }
+    };
 
     constructor(data: PropData) {
         super(data);
@@ -1011,15 +921,10 @@ export class ParameterizedCalculatedReferenceProp<
     TNullity extends NullityType
 > extends Prop<TModel, TNullity> {
 
-    override __type(): {
+    declare readonly __type?: {
         readonly prop: TNullity | true;
         readonly parameterizedCalculatedReferenceProp: [TParameter, TModel, TNullity] | true;
-    } {
-        return { 
-            prop: true, 
-            parameterizedCalculatedReferenceProp: true
-        };
-    }
+    };
 
     constructor(data: PropData) {
         super(data);
@@ -1030,15 +935,10 @@ export class CalculatedCollectionProp<
     TModel extends AnyModel
 > extends Prop<TModel, "NONNULL"> {
 
-    override __type(): {
+    declare readonly __type?: {
         readonly prop: "NONNULL" | true;
         readonly calculatedCollectionProp: [TModel, "NONNULL"] | true;
-    } {
-        return { 
-            prop: true, 
-            calculatedCollectionProp: true
-        };
-    }
+    };
 
     constructor(data: PropData) {
         super(data);
@@ -1050,15 +950,10 @@ export class ParameterizedCalculatedCollectionProp<
     TModel extends AnyModel
 > extends Prop<TModel, "NONNULL"> {
 
-    override __type(): {
+    declare readonly __type?: {
         readonly prop: "NONNULL" | true;
         readonly parameterizedCalculatedCollectionProp: [TParameter, TModel, "NONNULL"] | true;
-    } {
-        return { 
-            prop: true, 
-            parameterizedCalculatedCollectionProp: true
-        };
-    }
+    };
 
     constructor(data: PropData) {
         super(data);

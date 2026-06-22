@@ -231,9 +231,9 @@ export type As<
     TLastName extends ""
         ? object
         : {
-            $as<TNewName extends string>(
+            $as: <TNewName extends string>(
                 name: TNewName
-            ) : ViewBuilder<
+            ) => ViewBuilder<
                 TModel,
                 TMembers, 
                 TViewNullType,
@@ -259,9 +259,9 @@ export type ReferenceActions<
 > =
     TLastProp extends ReferenceProp<infer TTargetModel, any, any, any, any, any>
         ? {
-            $where(
+            $where: (
                 fn: (table: EntityTable<TTargetModel>) => Predicate | null | undefined
-            ): ViewBuilder<
+            ) => ViewBuilder<
                 TModel, 
                 TMembers, 
                 TViewNullType,
@@ -271,9 +271,9 @@ export type ReferenceActions<
                 TLastName
             >;
 
-            $fetch(
+            $fetch: (
                 fetchType: ReferenceFetchType
-            ): ViewBuilder<
+            ) => ViewBuilder<
                 TModel, 
                 TMembers, 
                 TViewNullType,
@@ -296,9 +296,9 @@ export type CollectionActions<
 > =
     TLastProp extends CollectionProp<infer TItemModel>
         ? {
-            $where(
+            $where: (
                 fn: (table: EntityTable<TItemModel>) => Predicate | null | undefined
-            ): ViewBuilder<
+            ) => ViewBuilder<
                 TModel, 
                 TMembers, 
                 TViewNullType,
@@ -308,9 +308,9 @@ export type CollectionActions<
                 TLastName
             >;
 
-            $orderBy(
+            $orderBy: (
                 ...orders: ReadonlyArray<ModelOrder<TItemModel>>
-            ): ViewBuilder<
+            ) => ViewBuilder<
                 TModel, 
                 TMembers, 
                 TViewNullType,
@@ -320,9 +320,9 @@ export type CollectionActions<
                 TLastName
             >;
 
-            $limit(
+            $limit: (
                 limit: number | undefined
-            ): ViewBuilder<
+            ) => ViewBuilder<
                 TModel, 
                 TMembers, 
                 TViewNullType,
@@ -353,7 +353,7 @@ export type FlatReference<
     FlatReferenceKeys<TMembers> extends never
         ? object
         : {
-            flat<TName extends FlatReferenceKeys<TMembers> & string, X, TPrefix extends string = TName>(
+            flat: <TName extends FlatReferenceKeys<TMembers> & string, X, TPrefix extends string = TName>(
                 options: TName | { 
                     prop: TName, 
                     prefix?: TPrefix,
@@ -378,7 +378,7 @@ export type FlatReference<
                     any, 
                     any
                 >
-            ): ViewBuilder<
+            ) => ViewBuilder<
                 TModel,
                 TMembers, 
                 TViewNullType,
@@ -589,13 +589,13 @@ export type ReferenceKeyMembers<
 };
 
 export type AllScalars<
-        TModel extends AnyModel, 
-        TMembers, 
-        TViewNullType extends ViewNullType,
-        TCurrent,
-        TRecursiveKindMap extends RecursiveKindMap
-    > = {
-    allScalars(): ViewBuilder<
+    TModel extends AnyModel, 
+    TMembers, 
+    TViewNullType extends ViewNullType,
+    TCurrent,
+    TRecursiveKindMap extends RecursiveKindMap
+> = {
+    allScalars: () => ViewBuilder<
         TModel,
         TMembers,
         TViewNullType,
@@ -657,12 +657,12 @@ export type Fold<
     TCurrent,
     TRecursiveKindMap extends RecursiveKindMap
 > = {
-    fold<TName extends string, X>(
+    fold: <TName extends string, X>(
         name: TName,
         fn: (
             builder: ViewBuilder<TModel, TMembers, TViewNullType, {}, {}, any, "">
         ) => ViewBuilder<TModel, TMembers, TViewNullType, X, any, any, any>
-    ): ViewBuilder<
+    ) => ViewBuilder<
         TModel, 
         TMembers, 
         TViewNullType,
@@ -789,7 +789,7 @@ export type Recursive<
     RecursiveKeys<TModel, TMembers> extends never
         ? object
         : {
-            recursive<
+            recursive: <
                 TPropName extends RecursiveKeys<TModel, TMembers>,
                 TAlias extends string = TPropName,
                 TDepth extends number = -1
@@ -812,7 +812,7 @@ export type Recursive<
                             filter?: (table: Table<TModel>) => Predicate | null | undefined
                         }
                 )
-            ): ViewBuilder<
+            ) => ViewBuilder<
                 TModel,
                 TMembers,
                 TViewNullType,
@@ -936,9 +936,9 @@ export type Remove<
     TCurrent,
     TRecursiveKindMap extends RecursiveKindMap
 > = {
-    remove<TNames extends AtLeastOne<keyof TCurrent>>(
+    remove: <TNames extends AtLeastOne<keyof TCurrent>>(
         ...names: TNames
-    ): ViewBuilder<
+    ) => ViewBuilder<
         TModel,
         TMembers,
         TViewNullType,

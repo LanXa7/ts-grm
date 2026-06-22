@@ -10,7 +10,7 @@ export type NativeValueType =
     | ReadonlyArray<ExpressionLike> 
     | ReadonlyArray<ExpressionOrder>;
 
-type NativeNumCreator = {
+export type NativeNumCreator = {
     (
         strings: TemplateStringsArray, 
         ...values: ReadonlyArray<NativeValueType>

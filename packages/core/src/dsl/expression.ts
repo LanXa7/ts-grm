@@ -29,11 +29,11 @@ export type AsBound<T> = T extends string ? "AS_NUMBER" | "AS_ENUM_SET" | "" : "
 
 export type Predicate = AnyExpression<boolean>;
 
-type NonNull<T> = Exclude<T, null | undefined>;
+export type NonNull<T> = Exclude<T, null | undefined>;
 
-type Nullable<T> = T | null | undefined;
+export type Nullable<T> = T | null | undefined;
 
-type AnyExpression<T, TAs extends AsBound<T> = ""> = {
+export type AnyExpression<T, TAs extends AsBound<T> = ""> = {
     
     __type(): {
         selectionLike: true;
@@ -104,7 +104,7 @@ type AnyExpression<T, TAs extends AsBound<T> = ""> = {
         : object
 );
 
-type RHSType<T, TAs extends AsBound<T>> =
+export type RHSType<T, TAs extends AsBound<T>> =
     NonNull<T> | AnyExpression<NonNull<T>, TAs> | AnyExpression<Nullable<T>, TAs> 
         | (
             TAs extends "AS_NUMBER"
@@ -120,7 +120,7 @@ type RHSType<T, TAs extends AsBound<T>> =
                 : never
         );
 
-type NonNullRHSType<T, TAs extends AsBound<T>> =
+export type NonNullRHSType<T, TAs extends AsBound<T>> =
     NonNull<T> | AnyExpression<NonNull<T>, TAs> 
         | (
             TAs extends "AS_NUMBER"
@@ -133,13 +133,13 @@ type NonNullRHSType<T, TAs extends AsBound<T>> =
                 : never
         );
 
-type CoalesceArgs<T> =
+export type CoalesceArgs<T> =
     [
         ...AnyExpression<Nullable<T>>[],
         ...([] | [NonNull<T>] | [AnyExpression<NonNull<T>>])
     ];
 
-type CoalesceDataType<T, TArgs extends any[]> =
+export type CoalesceDataType<T, TArgs extends any[]> =
     TArgs extends [...any[], infer TLast]
         ? TLast extends Expression<infer R>
             ? (
@@ -154,7 +154,7 @@ type CoalesceDataType<T, TArgs extends any[]> =
             )
         : T;
 
-type CmpExpression<
+export type CmpExpression<
     T, 
     TAs extends AsBound<T> = ""
 > = AnyExpression<T, TAs> & {
@@ -209,7 +209,7 @@ type CmpExpression<
     ): AnyExpression<boolean> | undefined;
 }
 
-type MergeNullableType<
+export type MergeNullableType<
     T1 extends Nullable<string | number>, 
     T2 extends Nullable<string | number>
 > =
@@ -217,7 +217,7 @@ type MergeNullableType<
         ? Exclude<T1 | T2, number> 
         : T1 | T2;
 
-type NumExpression<
+export type NumExpression<
     T extends Nullable<string | number>
 > = CmpExpression<T, NonNull<T> extends string ? "AS_NUMBER" : ""> & {
 
@@ -254,7 +254,7 @@ type NumExpression<
 
 export type LikeMode = "CONTAINS" | "STARTS_WITH" | "ENDS_WITH" | "EXACT";
 
-type StrExpression<T extends Nullable<string>> = CmpExpression<T> & {
+export type StrExpression<T extends Nullable<string>> = CmpExpression<T> & {
 
     __type(): { 
         selectionLike: true;
@@ -348,7 +348,7 @@ type StrExpression<T extends Nullable<string>> = CmpExpression<T> & {
     ): StrExpression<T>;
 }
 
-type EnumSetExpression<T extends Nullable<string>> = AnyExpression<T> & {
+export type EnumSetExpression<T extends Nullable<string>> = AnyExpression<T> & {
     
     containsAny(...values: AtLeastOne<T>): Predicate;
 
@@ -359,7 +359,7 @@ type EnumSetExpression<T extends Nullable<string>> = AnyExpression<T> & {
     notContainsAll(...values: AtLeastOne<T>): Predicate;
 };
 
-type DateExpression<T extends Nullable<Date>> = CmpExpression<T> & {
+export type DateExpression<T extends Nullable<Date>> = CmpExpression<T> & {
     
     plus(
         value: number | Expression<number>, 
@@ -454,12 +454,12 @@ export function concat(
     throw new ConcatExpr(arr);
 }
 
-type SubqueryError = 
+export type SubqueryError = 
     CompilationError<`Cannot directly use subqueries in 'IN' expressions.
 Either use the 'inSubQuery()' function for collection operations;
 or use 'asValue()' to convert the subquery into a single value before using it.`>;
 
-type HasSubqueryInArray<Arr extends any[]> = 
+export type HasSubqueryInArray<Arr extends any[]> = 
     Arr extends [infer First, ...infer Rest]
         ? First extends { __type(): { expressionSubQuery: any }; }
             ? true 
