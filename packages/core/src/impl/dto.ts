@@ -1,4 +1,4 @@
-import { ReferenceFetchType } from "@/schema/dto";
+import { ReferenceFetchType } from "@/schema/output_dto";
 import { EntityProp } from "./entity_prop";
 import { EntityPropOrder } from "./entity_prop_order";
 import { Entity } from "./entity";

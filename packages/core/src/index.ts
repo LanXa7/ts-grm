@@ -9,6 +9,7 @@ export { ExpressionOrder } from "./dsl";
 export { TB_INHERIT, DV_ABSTRACT, DV_MODEL_NAME } from "./schema/model";
 export * as metadata from "./impl";
 export * as ast from "./impl/ast";
+export type * as internal_types from "./internal_types";
 export type { OrderNullsType, ModelOrder } from "./schema/order";
 export type { 
     Model, 
@@ -27,35 +28,6 @@ export type {
     MiddleEntityJoinThisKeys,
     MiddleEntityJoinTargetKeys
 } from "./schema/model";
-export type { 
-    PropData,
-    AssociatedProp, 
-    AssociationType, 
-    EmbeddedProp, 
-    ManyToManyProp, 
-    ConfigurableManyToManyProp,
-    ManyToOneProp, 
-    ConfigurableManyToOneProp,
-    OneToOneProp, 
-    ConfigurableOneToOneProp,
-    OneToManyProp,
-    ConfigurableOneToManyProp,
-    ScalarProp,
-    TsFormulaProp,
-    SqlFormulaProp,
-    CalculatedValueProp,
-    ParameterizedCalculatedValueProp,
-    CalculatedReferenceProp,
-    ParameterizedCalculatedReferenceProp,
-    CalculatedCollectionProp,
-    ParameterizedCalculatedCollectionProp,
-    O2OCreator,
-    O2MCreator,
-    M2OCreator,
-    M2MCreator,
-    FormulaCreator,
-    CalculatedCreator
-} from "./schema/prop";
 export type { 
     TsFormulaFn,
     SqlFormulaFn,

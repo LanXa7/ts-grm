@@ -1,7 +1,8 @@
 import { EntityTable, Expression, SqlClient } from "@/dsl";
 import { AllModelMembers, AnyModel, CalculatorSourceKeys, ModelIdKey } from "./model";
-import { SimpleDataTypeOf, View } from "./dto";
+import { View } from "./dto";
 import { StandardSchemaV1 } from "@standard-schema/spec";
+import { SimpleDataTypeOf } from "./output_dto";
 
 export class TsFormula<TValue> {
 

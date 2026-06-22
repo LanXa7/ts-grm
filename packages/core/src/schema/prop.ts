@@ -1065,7 +1065,7 @@ export class ParameterizedCalculatedCollectionProp<
     }
 }
 
-type ScalarPropCreator = {
+export type ScalarPropCreator = {
     
     <TEnum extends string>(
         provider: EnumSetProvider<TEnum>
@@ -1088,7 +1088,7 @@ function scalarPropCreator(): ScalarPropCreator {
     return impl as any;
 }
 
-type EnumCreator = {
+export type EnumCreator = {
 
     <const TValues extends ReadonlyArray<string>>(
         ...values: TValues
@@ -1115,7 +1115,7 @@ function enumCreator(): EnumCreator {
     return impl as any;
 }
 
-type EnumSetCreator = {
+export type EnumSetCreator = {
 
     <const TValues extends ReadonlyArray<string>>(
         ...values: TValues
@@ -1264,7 +1264,7 @@ export type NullityOf<TProp> =
         ? R
         : never;
 
-type ModelRef<TModel extends AnyModel> =
+export type ModelRef<TModel extends AnyModel> =
     TModel | (() => TModel);
 
 function joinTableDataOf(

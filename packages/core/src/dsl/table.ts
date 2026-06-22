@@ -83,7 +83,7 @@ export type EntityTableMembers<
     }
 >;
 
-type DslMembers<
+export type DslMembers<
     TModel extends AnyModel, 
     TMembers extends object, 
     TNullity extends NullityType, 
@@ -112,10 +112,10 @@ type DslMembers<
             : TMembers[K] extends CollectionProp<infer TargetModel>
                 ? CollectionJoinAction<TModel, TargetModel, AllModelMembers<TargetModel>, TJoinPolicy>
             : never
-        } & ReferenceKeyMembers<TModel, TMembers, TNullity>
+        } & DslReferenceKeyMembers<TModel, TMembers, TNullity>
     >;
 
-type ReferenceKeyMembers<TModel extends AnyModel, TMembers, TNullity extends NullityType> = {
+export type DslReferenceKeyMembers<TModel extends AnyModel, TMembers, TNullity extends NullityType> = {
     [
         K in keyof TMembers as
             TMembers[K] extends ReferenceProp<infer _, any, "OWNING", false, any, infer TKey>
@@ -137,7 +137,7 @@ type ReferenceKeyMembers<TModel extends AnyModel, TMembers, TNullity extends Nul
 
 export type JoinType = "INNER" | "LEFT";
 
-type ReferenceJoinAction<
+export type ReferenceJoinAction<
     TParentModel extends AnyModel, 
     TModel extends AnyModel, 
     TMembers extends object, 
@@ -176,7 +176,7 @@ type ReferenceJoinAction<
     >;
 };
 
-type CollectionJoinAction<
+export type CollectionJoinAction<
     TParentModel extends AnyModel, 
     TModel extends AnyModel, 
     TMembers extends object, 
@@ -227,12 +227,12 @@ type CollectionJoinAction<
     >;
 };
 
-type TableRiskWrapper<T extends TableLike, TJoinPolicy extends JoinPolicyType> = 
+export type TableRiskWrapper<T extends TableLike, TJoinPolicy extends JoinPolicyType> = 
     TJoinPolicy extends "ARBITRARY"
         ? T
         : { $acceptMulti(): T; };
 
-type WeakJoinAction<
+export type WeakJoinAction<
     TModel extends ModelLike,
     TJoinPolicy extends JoinPolicyType
 > = 
@@ -299,10 +299,10 @@ type WeakJoinAction<
             >;
         };
 
-type AssociationAction<TModel extends AnyModel, TJoinPolicy extends JoinPolicyType> = 
+export type AssociationAction<TModel extends AnyModel, TJoinPolicy extends JoinPolicyType> = 
     AssociationActionImpl<TModel, AssociationKeys<TModel>, TJoinPolicy>;
 
-type AssociationActionImpl<
+export type AssociationActionImpl<
     TModel extends AnyModel, 
     TAssociationKeys extends AssociationKeys<TModel>,
     TJoinPolicy extends JoinPolicyType
@@ -370,7 +370,7 @@ type AssociationActionImpl<
     >;
 };
 
-type AssociatedAction<TModelMembers> =
+export type AssociatedAction<TModelMembers> =
     AssociatedKeys<TModelMembers> extends never
         ? {}
         : {
@@ -395,7 +395,7 @@ type AssociatedAction<TModelMembers> =
             ): Predicate | undefined;
         };
 
-type AssociatedKeys<TModelMembers> =
+export type AssociatedKeys<TModelMembers> =
     TModelMembers extends object 
         ? { 
             [K in keyof TModelMembers]: 
@@ -405,7 +405,7 @@ type AssociatedKeys<TModelMembers> =
         }[keyof TModelMembers] :
         never;
 
-type AssociatedFilter<TProp> =
+export type AssociatedFilter<TProp> =
     TProp extends AssociatedProp<infer TargetModel, any, any, any, any, any>
         ? (
             table: EntityTableMembers<
@@ -417,7 +417,7 @@ type AssociatedFilter<TProp> =
         ) => Predicate | undefined
         : never;
 
-type CollectionAction<TModelMembers> =
+export type CollectionAction<TModelMembers> =
     CollectionKeys<TModelMembers> extends never
         ? {}
         : {
@@ -432,7 +432,7 @@ type CollectionAction<TModelMembers> =
             ): Expression<number>;
         };
 
-type CollectionKeys<TModelMembers> =
+export type CollectionKeys<TModelMembers> =
     TModelMembers extends object 
         ? { 
             [K in keyof TModelMembers]: 
@@ -480,7 +480,7 @@ export type NullableBaseQuerySelectMapOf<
         : NullableEntityTableOf<TMap[K]>;
 };
 
-type MakeTableWithJoinPolicy<TEntityTable, TJoinPolicy extends JoinPolicyType = "REFERENCE"> =
+export type MakeTableWithJoinPolicy<TEntityTable, TJoinPolicy extends JoinPolicyType = "REFERENCE"> =
     TEntityTable extends EntityTable<infer M extends AnyModel, any>
         ? EntityTable<M, TJoinPolicy>
         : never;
@@ -490,6 +490,6 @@ export type NullableEntityTableOf<TEntityTable> =
         ? EntityTableMembers<Model, AllModelMembers<Model>, "NULLABLE", JoinPolicy>
         : never;
 
-type PrettifyDsl<T> = {
+export type PrettifyDsl<T> = {
     readonly [K in keyof T]: T[K];
 };

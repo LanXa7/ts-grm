@@ -5,7 +5,7 @@ import { dtoField } from "./dto_builder";
 import { createDtoRowReader, DtoRowReader } from "./row_reader";
 import { makeErr } from "@/error/util";
 import { AbstractEntityTable, EntityProp } from ".";
-import { ReferenceFetchType } from "@/schema/dto";
+import { ReferenceFetchType } from "@/schema/output_dto";
 import { EntityPropOrder } from "./entity_prop_order";
 import { Predicate } from "@/dsl";
 
