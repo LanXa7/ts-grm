@@ -30,7 +30,6 @@ lerna-debug.log*
 .yarn/unplugged
 .yarn/build-state.yml
 .yarn/install-state.gz
-.yarnrc.yml
 
 .vscode/*
 !.vscode/extensions.json
