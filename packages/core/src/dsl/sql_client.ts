@@ -6,6 +6,7 @@ import { Table } from "./table";
 import { Criteria } from "./criteria";
 import { AnyModel } from "@/schema/model";
 import { AnyAssociationModel } from "./association";
+import { FetchPageOptions, FetchRangeOptions, Page } from "./page";
 
 export interface SqlClient {
 
@@ -30,6 +31,18 @@ export interface SqlClient {
         view: V,
         criteria: Criteria<ModelOf<V>>
     ): Promise<Array<TypeOf<V>>>;
+
+    findRange<V extends View<any, any>>(
+        view: V,
+        criteria: Criteria<ModelOf<V>>,
+        options: FetchRangeOptions
+    ): Promise<Array<TypeOf<V>>>;
+
+    findPage<V extends View<any, any>>(
+        view: V,
+        criteria: Criteria<ModelOf<V>>,
+        options: FetchPageOptions
+    ): Promise<Page<TypeOf<V>>>;
 
     createQuery<
         const TModels extends AtLeastOne<AnyModel | BaseModel<any> | AnyAssociationModel>,

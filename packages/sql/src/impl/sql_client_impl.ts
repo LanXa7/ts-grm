@@ -31,7 +31,10 @@ import type {
     Isolation,
     Propagation,
     TransactionOptions,
-    Schema
+    Schema,
+    FetchRangeOptions,
+    FetchPageOptions,
+    Page
 } from "@ts-grm/core";
 import { suppressUnused, ast, dsl, err } from "@ts-grm/core";
 import { MutableRootQueryImpl } from "./mutable_root_query_impl";
@@ -104,6 +107,28 @@ export class SqlClientImpl implements SqlClientImplementor {
     ): Promise<Array<TypeOf<V>>> {
         suppressUnused(view);
         suppressUnused(criteria);
+        throw new Error();
+    }
+
+    findRange<V extends View<any, any>>(
+        view: V,
+        criteria: Criteria<ModelOf<V>>,
+        options: FetchRangeOptions
+    ): Promise<Array<TypeOf<V>>> {
+        suppressUnused(view);
+        suppressUnused(criteria);
+        suppressUnused(options);
+        throw new Error();
+    }
+
+    findPage<V extends View<any, any>>(
+        view: V,
+        criteria: Criteria<ModelOf<V>>,
+        options: FetchPageOptions
+    ): Promise<Page<TypeOf<V>>> {
+        suppressUnused(view);
+        suppressUnused(criteria);
+        suppressUnused(options);
         throw new Error();
     }
 

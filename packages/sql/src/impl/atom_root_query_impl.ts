@@ -1,4 +1,4 @@
-import { ast, ExpressionOrder, metadata, AtomRootQuery, RootQueryProjection, RowTypeOf, suppressUnused, err, FetchOptions } from "@ts-grm/core";
+import { ast, ExpressionOrder, metadata, AtomRootQuery, RootQueryProjection, RowTypeOf, suppressUnused, err, FetchOptions, FetchRangeOptions, FetchPageOptions, Page } from "@ts-grm/core";
 import { MutableRootQueryImpl } from "./mutable_root_query_impl";
 import { AbstractRootQueryProjection } from "./query_projection";
 import { executeQuery } from "./query_executor";
@@ -56,6 +56,24 @@ implements AtomRootQuery<TProjection>, ast.AtomQueryContract {
     ): Promise<Array<RowTypeOf<TProjection, TNullAsUndefined>>> {
         suppressUnused(options);
         return await executeQuery(this) as Array<RowTypeOf<TProjection, TNullAsUndefined>>;
+    }
+
+    async fetchRange<
+        TNullAsUndefined extends boolean = false
+    >(
+        options: FetchRangeOptions & FetchOptions<TNullAsUndefined>
+    ): Promise<Array<RowTypeOf<TProjection, TNullAsUndefined>>> {
+        suppressUnused(options);
+        throw new Error();
+    }
+
+    async fetchPage<
+        TNullAsUndefined extends boolean = false
+    >(
+        options: FetchPageOptions & FetchOptions<TNullAsUndefined>
+    ): Promise<Page<RowTypeOf<TProjection, TNullAsUndefined>>> {
+        suppressUnused(options);
+        throw new Error();
     }
 
     async fetchRequired<TNullAsUndefined extends boolean = false>(

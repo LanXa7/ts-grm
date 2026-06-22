@@ -1,4 +1,4 @@
-import { ast, BaseQuery, BaseQueryMapOf, FetchOptions, RootQuery, RootQueryProjection, RowTypeOf, suppressUnused } from "@ts-grm/core";
+import { ast, BaseQuery, BaseQueryMapOf, FetchOptions, FetchPageOptions, FetchRangeOptions, Page, RootQuery, RootQueryProjection, RowTypeOf, suppressUnused } from "@ts-grm/core";
 import { AbstractBaseQueryImpl } from "./abstract_base_query_impl";
 import { AbstractDtSubQueryImpl, AbstractExprSubQueryImpl, AbstractNumSubQueryImpl, AbstractStrSubQueryImpl, AbstractTupleSubQueryImpl } from "./abstract_sub_query_impl";
 import { SqlClientImplementor } from "@/sql_client";
@@ -19,6 +19,24 @@ export class MergedRootQueryImpl<
     fetchList<TNullAsUndefined extends boolean = false>(
         options?: FetchOptions<TNullAsUndefined>
     ): Promise<Array<RowTypeOf<TProjection, TNullAsUndefined>>> {
+        suppressUnused(options);
+        throw new Error();
+    }
+
+    async fetchRange<
+        TNullAsUndefined extends boolean = false
+    >(
+        options: FetchRangeOptions & FetchOptions<TNullAsUndefined>
+    ): Promise<Array<RowTypeOf<TProjection, TNullAsUndefined>>> {
+        suppressUnused(options);
+        throw new Error();
+    }
+
+    async fetchPage<
+        TNullAsUndefined extends boolean = false
+    >(
+        options: FetchPageOptions & FetchOptions<TNullAsUndefined>
+    ): Promise<Page<RowTypeOf<TProjection, TNullAsUndefined>>> {
         suppressUnused(options);
         throw new Error();
     }

@@ -1,6 +1,7 @@
 import { AnyModel } from "@/schema/model";
 import { Expression, ExpressionLike, Predicate } from "./expression";
 import { ExpressionOrder } from "./utils";
+import { FetchPageOptions, FetchRangeOptions, Page } from "./page";
 
 export interface MutableRootQuery {
 
@@ -54,6 +55,18 @@ export interface RootQuery<TProjection extends RootQueryProjection<any>> {
     >(
         options?: FetchOptions<TNullAsUndefined>
     ): Promise<Array<RowTypeOf<TProjection, TNullAsUndefined>>>;
+
+    fetchRange<
+        TNullAsUndefined extends boolean = false
+    >(
+        options: FetchRangeOptions & FetchOptions<TNullAsUndefined>
+    ): Promise<Array<RowTypeOf<TProjection, TNullAsUndefined>>>;
+
+    fetchPage<
+        TNullAsUndefined extends boolean = false
+    >(
+        options: FetchPageOptions & FetchOptions<TNullAsUndefined>
+    ): Promise<Page<RowTypeOf<TProjection, TNullAsUndefined>>>;
 
     fetchRequired<TNullAsUndefined extends boolean = false>(
         options?: FetchOptions<TNullAsUndefined>
