@@ -4,16 +4,17 @@ import { RealTable } from "./real_table";
 
 export function addTypeMatch(
     table: RealTable,
+    currentEntity: metadata.Entity | undefined,
     castToEntity: metadata.Entity,
     createColumn: (realTable: RealTable, columnName: string) => Column,
     negative: boolean,
     composite: Composite
 ): void {
-    const values = (castToEntity ?? table.symbol.__entity!).discriminatorValues;
+    const values = castToEntity.discriminatorValues;
     if (values.length == 0) {
         composite.add(negative ? "1 = 1" : "1 = 0");
     } else {
-        const tableSettings = table.symbol.__entity!.tableSettings;
+        const tableSettings = (currentEntity ?? table.symbol.__entity!).tableSettings;
         composite.add(
             createColumn(
                 table, 

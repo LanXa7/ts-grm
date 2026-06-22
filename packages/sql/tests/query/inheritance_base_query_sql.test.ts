@@ -392,6 +392,8 @@ describe("InheritanceBaseQuerySqlTest", () => {
                     tb_2_.TAGS c6,
                     row_number() over(partition by tb_2_.NAME order by tb_2_.VERSION desc) c7
                 from BOOK_STORE tb_2_
+                where 
+                    tb_2_.TYPE = 'PhysicalBookStore'
             ) tb_1_
             where 
                     tb_1_.c2 like ?

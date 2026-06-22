@@ -242,7 +242,9 @@ describe.sequential("ScalarProviderTest", () => {
                         tb_1_.TAGS
                     from BOOK_STORE tb_1_
                     where 
-                        (tb_1_.TAGS & ?) <> 0
+                            (tb_1_.TAGS & ?) <> 0
+                        and
+                            tb_1_.TYPE = 'PhysicalBookStore'
                 `,
                 args: [5],
                 purpose: 'query'
@@ -282,7 +284,9 @@ describe.sequential("ScalarProviderTest", () => {
                         tb_1_.TAGS
                     from BOOK_STORE tb_1_
                     where 
-                        (tb_1_.TAGS & ?) = ?
+                            (tb_1_.TAGS & ?) = ?
+                        and
+                            tb_1_.TYPE = 'PhysicalBookStore'
                 `,
                 args: [5, 5],
                 purpose: 'query'

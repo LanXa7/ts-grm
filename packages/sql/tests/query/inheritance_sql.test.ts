@@ -195,6 +195,8 @@ describe("InheritanceSqlTest", () => {
                     tb_1_.CITY = ?
                 and
                     lower(tb_1_.NAME) like ?
+                and
+                    tb_1_.TYPE = 'PhysicalBookStore'
         `);
     });
 

@@ -690,6 +690,17 @@ export abstract class AbstractEntityTable implements AbstractTable {
         }
         return arr;
     }
+
+    get __typePredicate(): Predicate | undefined {
+        const entity = this.__entity;
+        if (entity.superEntity == null) {
+            return undefined;
+        }
+        if (!entity.tableSettings.sharedTable) {
+            return undefined;
+        }
+        return new IsPred(this, entity, false, entity.tableEntity) as Predicate;
+    }
 }
 
 export type JoinOperation = {

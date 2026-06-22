@@ -166,6 +166,10 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
                         }
                     }
                 }
+                wherePred = dsl.and(
+                    wherePred as Predicate | undefined, 
+                    (table as metadata.AbstractEntityTable).__typePredicate
+                ) as ast.AbstractPred;
             }
         }
         if (wherePred != null) {
@@ -447,6 +451,7 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
         const realTable = this._toRealTable(pred.table);
         addTypeMatch(
             realTable, 
+            pred.currentEntity,
             pred.derivedEntity, 
             (realTable, columnName) => this._createColumn(realTable, columnName), 
             pred.neg, 

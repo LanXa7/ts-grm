@@ -134,7 +134,7 @@ export class TableFragmentCreator {
         composite.add(" on ");
         const conditionScope = new Scope("AND");
         if (table.symbol.__entity!.ancestors.has(table.parent!.symbol.__entity!)) {
-            addTypeMatch(table.parent!, table.symbol.__entity!, this._createColumn, false, conditionScope);
+            addTypeMatch(table.parent!, undefined, table.symbol.__entity!, this._createColumn, false, conditionScope);
         }
         const parentStorage = table.parent!.symbol.__entity!.idProp.toStorage(this._strategy)!;
         const storage = table.symbol.__entity!.idProp.toStorage(this._strategy)!;

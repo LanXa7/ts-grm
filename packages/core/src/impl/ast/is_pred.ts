@@ -8,7 +8,8 @@ export class IsPred extends AbstractPred {
     constructor(
         readonly table: AbstractEntityTable,
         readonly derivedEntity: Entity,
-        readonly neg: boolean
+        readonly neg: boolean,
+        readonly currentEntity?: Entity | undefined
     ) {
         super();
     }
@@ -21,7 +22,8 @@ export class IsPred extends AbstractPred {
         return new IsPred(
             this.table,
             this.derivedEntity,
-            !this.neg
+            !this.neg,
+            this.currentEntity
         );
     }
 }
