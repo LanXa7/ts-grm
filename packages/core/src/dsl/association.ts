@@ -1,9 +1,10 @@
 import { Entity, EntityProp } from "@/impl";
 import { AllModelMembers, AnyModel, RequiredModelKey } from "@/schema/model";
-import { AssociatedProp, CombinedNullity, EmbeddedProp, NullityType, ReferenceProp } from "@/schema/prop";
+import { CombinedNullity } from "@/schema/prop";
 import { EntityTableMembers, FilterType, JoinPolicyType } from "./table";
 import { MakeExpression } from "./expression";
 import { AssociationModelImpl } from "@/impl/association_model_impl";
+import { AssociatedPropContract, EmbeddedPropContract, NullityType, ReferencePropContract } from "@/schema/prop_contract";
 
 export interface AssociationModel<
     TSourceModel extends AnyModel,
@@ -40,7 +41,7 @@ type AssociationKeysImpl<TModelMembers> =
     TModelMembers extends object 
         ? { 
             [K in keyof TModelMembers]: 
-                TModelMembers[K] extends AssociatedProp<any, any, any, true, any, any>
+                TModelMembers[K] extends AssociatedPropContract<any, any, any, true, any, any>
                     ? K
                     : never
         }[keyof TModelMembers] :
@@ -62,7 +63,7 @@ export type MakeAssociationModel<
     TModel extends AnyModel,
     TAssociationKey extends AssociationKeys<TModel>
 > = 
-    AllModelMembers<TModel>[TAssociationKey] extends AssociatedProp<
+    AllModelMembers<TModel>[TAssociationKey] extends AssociatedPropContract<
         infer TargetModel, 
         any, 
         any, 
@@ -75,7 +76,7 @@ export type MakeAssociationModel<
             RequiredModelKey<TModel, SourceKey>,
             TargetModel,
             RequiredModelKey<TargetModel, TargetKey>,
-            AllModelMembers<TModel>[TAssociationKey] extends ReferenceProp<any, any, any, any, any, any>
+            AllModelMembers<TModel>[TAssociationKey] extends ReferencePropContract<any, any, any, any, any, any>
                 ? "ARBITRARY"
                 : "REFERENCE"
         >
@@ -86,7 +87,7 @@ export type MakeAssociationTableMembers<
     TAssociationKey extends AssociationKeys<TModel>,
     TNullity extends NullityType
 > = 
-    AllModelMembers<TModel>[TAssociationKey] extends AssociatedProp<
+    AllModelMembers<TModel>[TAssociationKey] extends AssociatedPropContract<
         infer TargetModel, 
         any, 
         any, 
@@ -100,7 +101,7 @@ export type MakeAssociationTableMembers<
             TargetModel,
             RequiredModelKey<TargetModel, TargetKey>,
             TNullity,
-            AllModelMembers<TModel>[TAssociationKey] extends ReferenceProp<any, any, any, any, any, any>
+            AllModelMembers<TModel>[TAssociationKey] extends ReferencePropContract<any, any, any, any, any, any>
                 ? "ARBITRARY"
                 : "REFERENCE"
         >
@@ -175,7 +176,7 @@ type AssociationKeyType<
     TKey extends keyof TMembers, 
     TNullity extends NullityType
 > = 
-    TMembers[TKey] extends EmbeddedProp<infer Props, infer Nullity, any>
+    TMembers[TKey] extends EmbeddedPropContract<infer Props, infer Nullity, any>
         ? () => {
             readonly [K in keyof Props]: AssociationKeyType<
                 Props,

@@ -1,7 +1,8 @@
-import { AssociatedProp, AssociationType, EmbeddedProp, ManyToManyProp, ManyToOneProp, OneToOneProp, ScalarProp } from "@/schema/prop";
+import { ManyToManyProp, ManyToOneProp, OneToOneProp, ScalarProp } from "@/schema/prop";
 import { FlattenMembers } from "@/utils";
 import { ModelContextImpl, ModelImpl } from "@/impl/model_impl";
 import { DatabaseIdentifier } from "./database_identifier";
+import { AssociatedPropContract, AssociationType, EmbeddedPropContract, ScalarPropContract } from "./prop_contract";
 
 export const model: ModelCreator = modelImpl();
 
@@ -242,7 +243,7 @@ export type MiddleEntityJoinTargetKeys<
 
 export type ExpectedKeysImpl<
     TModelMembers, 
-    TExpectedProp extends AssociatedProp<any, any, "OWNING", any, any, any>
+    TExpectedProp extends AssociatedPropContract<any, any, "OWNING", any, any, any>
 > = 
     TModelMembers extends object 
         ? { 
@@ -259,9 +260,9 @@ export type CalculatorSourceKeys<
     TModelMembers extends object 
     ? { 
         [K in keyof TModelMembers]: 
-            TModelMembers[K] extends ScalarProp<any, any>
+            TModelMembers[K] extends ScalarPropContract<any, any>
                 ? K
-            : TModelMembers[K] extends EmbeddedProp<any, any, any>
+            : TModelMembers[K] extends EmbeddedPropContract<any, any, any>
                 ? K
             : never
     }[keyof TModelMembers] :
@@ -287,7 +288,7 @@ export type IdRemappedTable<TSuperModel extends AnyModel | never> =
     TSuperModel extends AnyModel
         ? {
             readonly value?: DatabaseIdentifier<string>;
-            readonly idMapping?: AllModelMembers<TSuperModel>[ModelIdKey<TSuperModel>] extends EmbeddedProp<any, any, infer R>
+            readonly idMapping?: AllModelMembers<TSuperModel>[ModelIdKey<TSuperModel>] extends EmbeddedPropContract<any, any, infer R>
                 ? { readonly [K in keyof R]: DatabaseIdentifier<string> }
                 : DatabaseIdentifier<string>
         }
@@ -322,7 +323,7 @@ export type OrderedKeys<TModel extends AnyModel> =
 export type OrderedKeysImpl<TFlattenCtorMembers extends object> = 
     { 
         [K in keyof TFlattenCtorMembers]: 
-            TFlattenCtorMembers[K] extends ScalarProp<any, any>
+            TFlattenCtorMembers[K] extends ScalarPropContract<any, any>
                 ? K
                 : never
     }[keyof TFlattenCtorMembers];

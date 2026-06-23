@@ -18,6 +18,7 @@ import { IsNull } from "@/dsl/utils";
 import { Calculator, ParameterizedTargetCalculator, ParameterizedValueCalculator, SqlFormula, TargetCalculator, TsFormula, ValueCalculator } from "./computed";
 import { StandardSchemaV1 } from "@standard-schema/spec"; 
 import { scalars, ScalarProvider, ScalarType, EnumSetProvider } from "./scalar";
+import { AssociatedPropContract, AssociationType, CalculatedCollectionPropContract, CalculatedReferencePropContract, CalculatedValuePropContract, CollectionPropContract, DirectionType, EmbeddedMember, EmbeddedPropContract, EnumSetPropContract, FormulaPropContract, I64PropContract, NullityType, ParameterizedCalculatedCollectionPropContract, ParameterizedCalculatedReferencePropContract, ParameterizedCalculatedValuePropContract, PropContract, ReferencePropContract, ScalarPropContract, SqlFormulaPropContract, StrPropContract, TsFormulaPropContract } from "./prop_contract";
 
 export const prop = {
 
@@ -94,25 +95,23 @@ export const prop = {
     calculated: calculatedCreator()
 } as const;
 
-export class Prop<T, TNullity extends NullityType> {
+export class Prop<T, TNullity extends NullityType> 
+implements PropContract<T, TNullity> {
 
-    readonly __phantom?: T;
+    readonly __prop = true;
 
-    declare readonly __type?: {
-        readonly prop: TNullity | true;
-    };
+    declare readonly __dataType?: T;
+
+    declare readonly __nullity?: TNullity;
 
     protected constructor(readonly __data: PropData) {}
 }
 
 export class ScalarProp<
     T, TNullity extends NullityType = "NONNULL"
-> extends Prop<T, TNullity> {
+> extends Prop<T, TNullity> implements ScalarPropContract<T, TNullity> {
 
-    declare readonly __type?: {
-        readonly prop: TNullity | true;
-        readonly scalarProp: TNullity | true;
-    };
+    readonly __scalarProp = true;
 
     constructor(data: PropData) {
         super(data);
@@ -125,13 +124,9 @@ export class ScalarProp<
 
 export class StrProp<
     TNullity extends NullityType = "NONNULL"
-> extends ScalarProp<string, TNullity> {
+> extends ScalarProp<string, TNullity> implements StrPropContract<string, TNullity> {
 
-    declare readonly __type?: {
-        readonly prop: TNullity | true;
-        readonly scalarProp: TNullity | true;
-        readonly strProp: TNullity | true;
-    };
+    readonly __strProp = true;
 
     override nullable(): StrProp<"NULLABLE"> {
         return new StrProp({...this.__data, nullity: "NULLABLE"});
@@ -141,13 +136,9 @@ export class StrProp<
 export class I64Prop<
     T extends string | number, 
     TNullity extends NullityType = "NONNULL"
-> extends ScalarProp<T, TNullity> {
+> extends ScalarProp<T, TNullity> implements I64PropContract<T, TNullity> {
 
-    declare readonly __type?: {
-        readonly prop: TNullity | true;
-        readonly scalarProp: TNullity | true;
-        readonly i64Prop: TNullity | true;
-    };
+    readonly __i64Prop = true;
 
     override nullable(): I64Prop<T, "NULLABLE"> {
         return new I64Prop({...this.__data, nullity: "NULLABLE"});
@@ -160,25 +151,20 @@ export class I64Prop<
 
 export class EnumSetProp<
     TEnum extends string
-> extends ScalarProp<TEnum, "NONNULL"> {
+> extends ScalarProp<TEnum, "NONNULL"> implements EnumSetPropContract<TEnum> {
 
-    declare readonly __type?: {
-        readonly prop: "NONNULL" | true;
-        readonly scalarProp: "NONNULL" | true;
-        readonly enumSetProp: "NONNULL" | true;
-    };
+    readonly __enumSetProp = true;
 }
 
 export class EmbeddedProp<
     TProps extends Record<string, EmbeddedMember>,
     TNullity extends NullityType,
     TFlattenProps extends Record<string, any>
-> extends Prop<TProps, TNullity> {
+> extends Prop<TProps, TNullity> implements EmbeddedPropContract<TProps, TNullity, TFlattenProps> {
 
-    declare readonly __type?: {
-        readonly prop: TNullity | true;
-        readonly embeddedProp: [TNullity, TFlattenProps] | true;
-    };
+    readonly __embeddedProp = true;
+
+    declare readonly __flattenProps?: TFlattenProps;
 
     constructor(data: PropData) {
         super(data)
@@ -193,7 +179,7 @@ export type FollowPrefix<TKey extends string, TParentKey extends string> =
     `${TParentKey}.${TKey}`;
 
 export type FollowNullity<TProp, TParentNullity extends NullityType> =
-    TProp extends ScalarProp<infer T, infer Nullity>
+    TProp extends ScalarPropContract<infer T, infer Nullity>
         ? ScalarProp<T, CombinedNullity<TParentNullity, Nullity>>
         : never;
 
@@ -204,12 +190,25 @@ export abstract class AssociatedProp<
     TMiddleTable extends boolean,
     TBackOptionalModelKey extends string,
     TTargetOptionalModelKey extends string
-> extends Prop<TModel, TNullity> {
+> extends Prop<TModel, TNullity> 
+implements AssociatedPropContract<
+    TModel, 
+    TNullity, 
+    TDirection, 
+    TMiddleTable, 
+    TBackOptionalModelKey, 
+    TTargetOptionalModelKey
+> {
 
-    declare readonly __type?: {
-        readonly prop: TNullity | true;
-        readonly associatedProp: [TNullity, TDirection, TMiddleTable, TBackOptionalModelKey, TTargetOptionalModelKey] | true;
-    };
+    readonly __associatedProp = true;
+
+    declare readonly __direction?: TDirection;
+
+    declare readonly __middleTable?: TMiddleTable;
+
+    declare readonly __backOptionalModelKey?: TBackOptionalModelKey;
+
+    declare readonly __targetOptionalModelKey?: TTargetOptionalModelKey;
 
     constructor(data: PropData) {
         super(data);
@@ -220,40 +219,6 @@ export abstract class AssociatedProp<
     }
 }
 
-export interface ReferenceProp<
-    TModel extends AnyModel, 
-    TNullity extends NullityType,
-    TDirection extends DirectionType,
-    TMiddleTable extends boolean,
-    TBackOptionalModelKey extends string,
-    TTargetOptionalModelKey extends string
-> extends AssociatedProp<TModel, TNullity, TDirection, TMiddleTable, TBackOptionalModelKey, TTargetOptionalModelKey> {
-
-    readonly __type?: {
-        readonly prop: TNullity | true;
-        readonly associatedProp: [TNullity, TDirection, TMiddleTable, TBackOptionalModelKey, TTargetOptionalModelKey] | true;
-        readonly referenceProp: [TNullity, TDirection, TMiddleTable, TBackOptionalModelKey, TTargetOptionalModelKey] | true;
-    };
-}
-
-export type ForeignKeyProp<T> = 
-  T extends ReferenceProp<infer TModel, any, "OWNING", false, any, infer TTargetOptionalModelKey>
-    ? TTargetOptionalModelKey extends Exclude<OptionalModelKey<TModel>, "">
-      ? T
-      : never
-    : never;
-
-export interface CollectionProp<
-    TModel extends AnyModel
-> {
-  
-    readonly __phantom?: TModel;
-
-    readonly __type?: {
-        readonly collectionProp: true;
-    };
-}
-
 export class OneToOneProp<
     TModel extends AnyModel,
     TNullity extends NullityType,
@@ -262,14 +227,11 @@ export class OneToOneProp<
     TBackOptionalModelKey extends string,
     TTargetOptionalModelKey extends string
 > extends AssociatedProp<TModel, TNullity, TDirection, TMiddleTable, TBackOptionalModelKey, TTargetOptionalModelKey> 
-implements ReferenceProp<TModel, TNullity, TDirection, TMiddleTable, TBackOptionalModelKey, TTargetOptionalModelKey> {
+implements ReferencePropContract<TModel, TNullity, TDirection, TMiddleTable, TBackOptionalModelKey, TTargetOptionalModelKey> {
 
-    declare readonly __type?: {
-        readonly prop: TNullity | true;
-        readonly associatedProp: [TNullity, TDirection, TMiddleTable, TBackOptionalModelKey, TTargetOptionalModelKey] | true;
-        readonly referenceProp: [TNullity, TDirection, TMiddleTable, TBackOptionalModelKey, TTargetOptionalModelKey] | true;
-        readonly oneToOneProp: [TNullity, TDirection, TMiddleTable, TBackOptionalModelKey, TTargetOptionalModelKey] | true;
-    };
+    readonly __referenceProp = true;
+
+    readonly __oneToOneProp = true;
 
     constructor(data: PropData) {
         super(data);
@@ -426,14 +388,11 @@ export class ManyToOneProp<
     TBackOptionalModelKey extends string,
     TTargetOptionalModelKey extends string
 > extends AssociatedProp<TModel, TNullity, TDirection, TMiddleTable, TBackOptionalModelKey, TTargetOptionalModelKey> 
-implements ReferenceProp<TModel, TNullity, TDirection, TMiddleTable, TBackOptionalModelKey, TTargetOptionalModelKey> {
+implements ReferencePropContract<TModel, TNullity, TDirection, TMiddleTable, TBackOptionalModelKey, TTargetOptionalModelKey> {
 
-    declare readonly __type?: {
-        readonly prop: TNullity | true;
-        readonly associatedProp: [TNullity, TDirection, TMiddleTable, TBackOptionalModelKey, TTargetOptionalModelKey] | true;
-        readonly referenceProp: [TNullity, TDirection, TMiddleTable, TBackOptionalModelKey, TTargetOptionalModelKey] | true;
-        readonly manyToOneProp: [TNullity, TDirection, TMiddleTable, TBackOptionalModelKey, TTargetOptionalModelKey] | true;
-    };
+    readonly __referenceProp = true;
+
+    readonly __manyToOneProp = true;
 
     constructor(data: PropData) {
         super(data);
@@ -577,14 +536,11 @@ export class OneToManyProp<
     TBackOptionalModelKey extends string,
     TTargetOptionalModelKey extends string
 > extends AssociatedProp<TModel, TNullity, TDirection, TMiddleTable, TBackOptionalModelKey, TTargetOptionalModelKey> 
-implements CollectionProp<TModel> {
+implements CollectionPropContract<TModel, TNullity, TDirection, TMiddleTable, TBackOptionalModelKey, TTargetOptionalModelKey> {
 
-    declare readonly __type?: {
-        readonly prop: TNullity | true;
-        readonly associatedProp: [TNullity, TDirection, TMiddleTable, TBackOptionalModelKey, TTargetOptionalModelKey] | true;
-        readonly collectionProp: true;
-        readonly oneToManyProp: [TNullity, TDirection, TMiddleTable, TBackOptionalModelKey, TTargetOptionalModelKey] | true;
-    };
+    readonly __collectionProp = true;
+
+    readonly __oneToManyProp = true;
 
     constructor(data: PropData) {
         super(data);
@@ -702,14 +658,11 @@ export class ManyToManyProp<
     TBackOptionalModelKey extends string,
     TTargetOptionalModelKey extends string
 > extends AssociatedProp<TModel, TNullity, TDirection, TMiddleTable, TBackOptionalModelKey, TTargetOptionalModelKey> 
-implements CollectionProp<TModel> {
+implements CollectionPropContract<TModel, TNullity, TDirection, TMiddleTable, TBackOptionalModelKey, TTargetOptionalModelKey> {
 
-    declare readonly __type?: {
-        readonly prop: TNullity | true;
-        readonly associatedProp: [TNullity, TDirection, TMiddleTable, TBackOptionalModelKey, TTargetOptionalModelKey] | true;
-        readonly collectionProp: true;
-        readonly manyToManyProp: [TNullity, TDirection, TMiddleTable, TBackOptionalModelKey, TTargetOptionalModelKey] | true;
-    };
+    readonly __collectionProp = true;
+
+    readonly __manyToManyProp = true;
 
     constructor(data: PropData) {
         super(data);
@@ -825,12 +778,10 @@ export class ConfigurableManyToManyProp<
 export abstract class FormulaProp<
     T, 
     TNullity extends NullityType
-> extends Prop<T, TNullity> {
+> extends Prop<T, TNullity> 
+implements FormulaPropContract<T, TNullity> {
 
-    declare readonly __type?: {
-        readonly prop: TNullity | true;
-        readonly formulaProp: [T, TNullity] | true;
-    };
+    readonly __formulaProp = true;
 
     constructor(data: PropData) {
         super(data);
@@ -840,13 +791,10 @@ export abstract class FormulaProp<
 export class TsFormulaProp<
     T, 
     TNullity extends NullityType
-> extends FormulaProp<T, TNullity> {
+> extends FormulaProp<T, TNullity> 
+implements TsFormulaPropContract<T, TNullity> {
  
-    declare readonly __type?: {
-        readonly prop: TNullity | true;
-        readonly formulaProp: [T, TNullity] | true;
-        readonly tsFormulaProp: TNullity | true;
-    };
+    readonly __tsFormulaProp = true;
 
     constructor(data: PropData) {
         super(data);
@@ -856,13 +804,10 @@ export class TsFormulaProp<
 export class SqlFormulaProp<
     T, 
     TNullity extends NullityType
-> extends FormulaProp<T, TNullity> {
+> extends FormulaProp<T, TNullity>
+implements SqlFormulaPropContract<T, TNullity> {
  
-    declare readonly __type?: {
-        readonly prop: TNullity | true;
-        readonly formulaProp: [T, TNullity] | true;
-        readonly sqlFormulaProp: TNullity | true;
-    };
+    readonly __sqlFormulaProp = true;
 
     constructor(data: PropData) {
         super(data);
@@ -872,12 +817,10 @@ export class SqlFormulaProp<
 export class CalculatedValueProp<
     TValue, 
     TNullity extends NullityType
-> extends Prop<TValue, TNullity> {
+> extends Prop<TValue, TNullity>
+implements CalculatedValuePropContract<TValue, TNullity> {
 
-    declare readonly __type?: {
-        readonly prop: TNullity | true;
-        readonly calculatedValueProp: [TValue, TNullity] | true;
-    };
+    readonly __calculatedValueProp = true;
 
     constructor(data: PropData) {
         super(data);
@@ -888,12 +831,12 @@ export class ParameterizedCalculatedValueProp<
     TParameter,
     TValue, 
     TNullity extends NullityType
-> extends Prop<TValue, TNullity> {
+> extends Prop<TValue, TNullity>
+implements ParameterizedCalculatedValuePropContract<TParameter, TValue, TNullity> {
 
-    declare readonly __type?: {
-        readonly prop: TNullity | true;
-        readonly parameterizedCalculatedValueProp: [TParameter, TValue, TNullity] | true;
-    };
+    readonly __parameterizedCalculatedValueProp = true;
+
+    declare readonly __parameter?: TParameter;
 
     constructor(data: PropData) {
         super(data);
@@ -903,12 +846,10 @@ export class ParameterizedCalculatedValueProp<
 export class CalculatedReferenceProp<
     TModel extends AnyModel,
     TNullity extends NullityType
-> extends Prop<TModel, TNullity> {
+> extends Prop<TModel, TNullity>
+implements CalculatedReferencePropContract<TModel, TNullity> {
 
-    declare readonly __type?: {
-        readonly prop: TNullity | true;
-        readonly calculatedReferenceProp: [TModel, TNullity] | true;
-    };
+    readonly __calculatedReferenceProp = true;
 
     constructor(data: PropData) {
         super(data);
@@ -919,12 +860,12 @@ export class ParameterizedCalculatedReferenceProp<
     TParameter,
     TModel extends AnyModel,
     TNullity extends NullityType
-> extends Prop<TModel, TNullity> {
+> extends Prop<TModel, TNullity>
+implements ParameterizedCalculatedReferencePropContract<TParameter, TModel, TNullity> {
 
-    declare readonly __type?: {
-        readonly prop: TNullity | true;
-        readonly parameterizedCalculatedReferenceProp: [TParameter, TModel, TNullity] | true;
-    };
+    readonly __parameterizedCalculatedReferenceProp = true;
+
+    declare readonly __parameter?: TParameter;
 
     constructor(data: PropData) {
         super(data);
@@ -933,12 +874,10 @@ export class ParameterizedCalculatedReferenceProp<
 
 export class CalculatedCollectionProp<
     TModel extends AnyModel
-> extends Prop<TModel, "NONNULL"> {
+> extends Prop<TModel, "NONNULL">
+implements CalculatedCollectionPropContract<TModel> {
 
-    declare readonly __type?: {
-        readonly prop: "NONNULL" | true;
-        readonly calculatedCollectionProp: [TModel, "NONNULL"] | true;
-    };
+    readonly __calculatedCollectionProp = true;
 
     constructor(data: PropData) {
         super(data);
@@ -948,12 +887,12 @@ export class CalculatedCollectionProp<
 export class ParameterizedCalculatedCollectionProp<
     TParameter,
     TModel extends AnyModel
-> extends Prop<TModel, "NONNULL"> {
+> extends Prop<TModel, "NONNULL">
+implements ParameterizedCalculatedCollectionPropContract<TParameter, TModel> {
 
-    declare readonly __type?: {
-        readonly prop: "NONNULL" | true;
-        readonly parameterizedCalculatedCollectionProp: [TParameter, TModel, "NONNULL"] | true;
-    };
+    readonly __parameterizedCalculatedCollectionProp = true;
+
+    declare readonly __parameter?: TParameter;
 
     constructor(data: PropData) {
         super(data);
@@ -1033,10 +972,6 @@ function enumSetCreator(): EnumSetCreator {
     return impl as any;
 }
 
-export type AssociationType = "ONE_TO_ONE" | "ONE_TO_MANY" | "MANY_TO_ONE" | "MANY_TO_MANY";
-
-export type NullityType = "NONNULL" | "NULLABLE" | "INPUT_NONNULL";
-
 export type CombinedNullity<
     TNullity1 extends NullityType, 
     TNullity2 extends NullityType
@@ -1046,19 +981,11 @@ export type CombinedNullity<
         ? "NULLABLE"
     : "NONNULL";
 
-type DirectionType = "OWNING" | "INVERSE";
-
-export type EmbeddedMember = 
-    ScalarProp<any, any> 
-    | ForeignKeyProp<OneToOneProp<any, any, "OWNING", any, any, any>>
-    | ForeignKeyProp<ManyToOneProp<any, any, "OWNING", any, any, any>>
-    | EmbeddedProp<any, any, any>;
-
 export type PropData = {
     readonly nullity: NullityType;
     readonly scalarType: ScalarType<any> | undefined;
     readonly scalarProvider: ScalarProvider<any, any> | undefined;
-    readonly props: Record<string, Prop<any, any>> | undefined;
+    readonly props: Record<string, PropContract<any, any>> | undefined;
     readonly targetModel: ModelRef<AnyModel> | undefined;
     readonly associationType: AssociationType | undefined;
     readonly columnName: string | undefined;
@@ -1135,17 +1062,17 @@ const EMPTY_PROP_DEFINITION_DATA: PropData = {
 }
 
 export type TargetModelOf<TProp> =
-    TProp extends AssociatedProp<infer TargetModel, any, any, any, any, any>
+    TProp extends AssociatedPropContract<infer TargetModel, any, any, any, any, any>
         ? TargetModel
         : never;
 
 export type SourceKeyOf<TProp> =
-    TProp extends AssociatedProp<infer _, any, any, any, infer SourceKey, any>
+    TProp extends AssociatedPropContract<infer _, any, any, any, infer SourceKey, any>
         ? SourceKey
         : never;
 
 export type TargetKeyOf<TProp> =
-    TProp extends AssociatedProp<infer _, any, any, any, any, infer TargetKey>
+    TProp extends AssociatedPropContract<infer _, any, any, any, any, infer TargetKey>
         ? TargetKey
         : never;
         

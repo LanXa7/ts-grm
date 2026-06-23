@@ -1,11 +1,12 @@
 import { AtLeastOne } from "../dsl/utils";
 import { AllModelMembers, AnyModel, DerivedModel, Extends, RequiredModelKey, ModelName, ModelSuperNames, DeclaredModelMembers } from "@/schema/model";
-import { CollectionProp, EmbeddedProp, NullityOf, ReferenceProp, DirectTypeOf, ScalarProp, NullityType, AssociatedProp, Prop, FormulaProp, CalculatedValueProp, ParameterizedCalculatedValueProp, CalculatedReferenceProp, ParameterizedCalculatedReferenceProp, CalculatedCollectionProp, ParameterizedCalculatedCollectionProp } from "@/schema/prop";
 import { UnionToIntersection } from "@/utils";
 import { ModelOrder } from "./order";
 import { EntityTable, Table } from "../dsl/table";
 import { Predicate } from "@/dsl/expression";
 import { ViewNullType } from "./dto";
+import { PropContract, AssociatedPropContract, CalculatedCollectionPropContract, CalculatedReferencePropContract, CalculatedValuePropContract, CollectionPropContract, EmbeddedPropContract, FormulaPropContract, NullityType, ParameterizedCalculatedCollectionPropContract, ParameterizedCalculatedReferencePropContract, ParameterizedCalculatedValuePropContract, ReferencePropContract, ScalarPropContract } from "./prop_contract";
+import { DirectTypeOf, NullityOf } from "./prop";
 
 export type ViewBuilder<
     TModel extends AnyModel,
@@ -17,7 +18,7 @@ export type ViewBuilder<
     TLastName extends string
 > = {
     [K in keyof TMembers]:
-        TMembers[K] extends ScalarProp<infer R, infer Nullity>
+        TMembers[K] extends ScalarPropContract<infer R, infer Nullity>
             ? ViewBuilder<
                 TModel,
                 TMembers, 
@@ -32,7 +33,7 @@ export type ViewBuilder<
                 TMembers[K],
                 K & string
             >
-        : TMembers[K] extends ReferenceProp<infer R, infer Nullity, any, any, any, any>
+        : TMembers[K] extends ReferencePropContract<infer R, infer Nullity, any, any, any, any>
             ? <X = AllScalarsType<AllModelMembers<R>, TViewNullType>>(
                 fn?: (
                     builder: ViewBuilder<R, AllModelMembers<R>, TViewNullType, {}, {}, any, any>
@@ -51,7 +52,7 @@ export type ViewBuilder<
                 TMembers[K],
                 K & string
             >
-        : TMembers[K] extends CollectionProp<infer R>
+        : TMembers[K] extends CollectionPropContract<infer R, any, any, any, any, any>
             ? <X = AllScalarsType<AllModelMembers<R>, TViewNullType>>(
                 fn?: (
                     builder: ViewBuilder<R, AllModelMembers<R>, TViewNullType, {}, {}, any, any>
@@ -70,9 +71,9 @@ export type ViewBuilder<
                 TMembers[K],
                 K & string
             >
-        : TMembers[K] extends EmbeddedProp<infer R, infer Nullity, any>
+        : TMembers[K] extends EmbeddedPropContract<infer R, infer Nullity, any>
             ? EmbeddedMethods<TModel, TMembers, TViewNullType, TCurrent, TRecursiveKindMap, K, R, Nullity>
-        : TMembers[K] extends FormulaProp<infer R, infer Nullity>
+        : TMembers[K] extends FormulaPropContract<infer R, infer Nullity>
             ? ViewBuilder<
                 TModel,
                 TMembers, 
@@ -87,7 +88,7 @@ export type ViewBuilder<
                 TMembers[K],
                 K & string
             >
-        : TMembers[K] extends CalculatedValueProp<infer R, infer Nullity>
+        : TMembers[K] extends CalculatedValuePropContract<infer R, infer Nullity>
             ? ViewBuilder<
                 TModel,
                 TMembers, 
@@ -102,7 +103,7 @@ export type ViewBuilder<
                 TMembers[K],
                 K & string
             >
-        : TMembers[K] extends ParameterizedCalculatedValueProp<
+        : TMembers[K] extends ParameterizedCalculatedValuePropContract<
             infer Parameter, 
             infer R, 
             infer Nullity
@@ -121,7 +122,7 @@ export type ViewBuilder<
                 TMembers[K],
                 K & string
             >
-        : TMembers[K] extends CalculatedReferenceProp<infer R, infer Nullity>
+        : TMembers[K] extends CalculatedReferencePropContract<infer R, infer Nullity>
             ? <X = AllScalarsType<AllModelMembers<R>, TViewNullType>>(
                 fn?: (
                     builder: ViewBuilder<R, AllModelMembers<R>, TViewNullType, {}, {}, any, any>
@@ -140,7 +141,7 @@ export type ViewBuilder<
                 TMembers[K],
                 K & string
             >
-        : TMembers[K] extends ParameterizedCalculatedReferenceProp<
+        : TMembers[K] extends ParameterizedCalculatedReferencePropContract<
             infer Parameter, 
             infer R, 
             infer Nullity
@@ -164,7 +165,7 @@ export type ViewBuilder<
                 TMembers[K],
                 K & string
             >
-        : TMembers[K] extends CalculatedCollectionProp<infer R>
+        : TMembers[K] extends CalculatedCollectionPropContract<infer R>
             ? <X = AllScalarsType<AllModelMembers<R>, TViewNullType>>(
                 fn?: (
                     builder: ViewBuilder<R, AllModelMembers<R>, TViewNullType, {}, {}, any, any>
@@ -183,7 +184,7 @@ export type ViewBuilder<
                 TMembers[K],
                 K & string
             >
-        : TMembers[K] extends ParameterizedCalculatedCollectionProp<
+        : TMembers[K] extends ParameterizedCalculatedCollectionPropContract<
             infer Parameter,
             infer R
         >
@@ -257,7 +258,7 @@ export type ReferenceActions<
     TLastProp, 
     TLastName extends string
 > =
-    TLastProp extends ReferenceProp<infer TTargetModel, any, any, any, any, any>
+    TLastProp extends ReferencePropContract<infer TTargetModel, any, any, any, any, any>
         ? {
             $where: (
                 fn: (table: EntityTable<TTargetModel>) => Predicate | null | undefined
@@ -294,7 +295,7 @@ export type CollectionActions<
     TLastProp, 
     TLastName extends string
 > =
-    TLastProp extends CollectionProp<infer TItemModel>
+    TLastProp extends CollectionPropContract<infer TItemModel, any, any, any, any, any>
         ? {
             $where: (
                 fn: (table: EntityTable<TItemModel>) => Predicate | null | undefined
@@ -473,7 +474,7 @@ export type FlatEmbedded<
 export type FlatReferenceKeys<TMembers> = 
     keyof {
         [K in keyof TMembers
-            as TMembers[K] extends ReferenceProp<any, any, any, any, any, any> 
+            as TMembers[K] extends ReferencePropContract<any, any, any, any, any, any> 
                 ? K
                 : never
         ]: number
@@ -482,19 +483,19 @@ export type FlatReferenceKeys<TMembers> =
 export type FlatEmbeddedKeys<TMembers> = 
     keyof {
         [K in keyof TMembers
-            as TMembers[K] extends EmbeddedProp<any, any, any>
+            as TMembers[K] extends EmbeddedPropContract<any, any, any>
                 ? K
                 : never
         ]: number
     };
 
 export type FlatTargetModel<TModel extends AnyModel, TProp> =
-    TProp extends ReferenceProp<infer TargetModel, any, any, any, any, any>
+    TProp extends ReferencePropContract<infer TargetModel, any, any, any, any, any>
         ? TargetModel
         : TModel;
 
 export type FlatTargetMembers<TProp> =
-    TProp extends ReferenceProp<infer TargetModel, any, any, any, any, any>
+    TProp extends ReferencePropContract<infer TargetModel, any, any, any, any, any>
         ? AllModelMembers<TargetModel>
         : DirectTypeOf<TProp>;
 
@@ -507,7 +508,7 @@ export type ReferenceKeyMembers<
 > = {
     [
         K in keyof TMembers
-        as TMembers[K] extends ReferenceProp<
+        as TMembers[K] extends ReferencePropContract<
             infer _, 
             any, 
             "OWNING", 
@@ -520,7 +521,7 @@ export type ReferenceKeyMembers<
                 : never
             : never
     ]: 
-        TMembers[K] extends ReferenceProp<
+        TMembers[K] extends ReferencePropContract<
             infer TargetModel, 
             infer Nullity,
             any,
@@ -528,7 +529,7 @@ export type ReferenceKeyMembers<
             any,
             infer Key
         >
-            ? AllModelMembers<TargetModel>[RequiredModelKey<TModel, Key>] extends EmbeddedProp<infer R, infer Nullity, any>
+            ? AllModelMembers<TargetModel>[RequiredModelKey<TModel, Key>] extends EmbeddedPropContract<infer R, infer Nullity, any>
                 ? <X = SimpleDataTypeOf<AllModelMembers<TargetModel>[RequiredModelKey<TModel, Key>], TViewNullType>>(
                     fn?: (builder: ViewBuilder<
                         never,
@@ -633,9 +634,9 @@ export type AllScalarsType<TMembers, TViewNullType extends ViewNullType> = {
 )
 
 export type IsPartOfAllScalars<TProp, TNullity extends NullityType> =
-    TProp extends ScalarProp<any, TNullity>
+    TProp extends ScalarPropContract<any, TNullity>
             ? true
-        : TProp extends EmbeddedProp<any, TNullity, any>
+        : TProp extends EmbeddedPropContract<any, TNullity, any>
             ? true
         : false;
 
@@ -796,7 +797,7 @@ export type Recursive<
             >(
                 options: TPropName 
                 | (
-                    TMembers[TPropName] extends CollectionProp<any>
+                    TMembers[TPropName] extends CollectionPropContract<any, any, any, any, any, any>
                         ? {
                             prop: TPropName,
                             alias?: TAlias,
@@ -837,7 +838,7 @@ export type RecursiveKeys<TModel extends AnyModel, TMembers> =
     };
 
 export type IsRecursiveProp<TModel extends AnyModel, TProp> =
-    TProp extends AssociatedProp<infer TargetModel, any, any, any, any, any>
+    TProp extends AssociatedPropContract<infer TargetModel, any, any, any, any, any>
         ? Extends<TModel, TargetModel> extends true
             ? true
             : false
@@ -863,7 +864,7 @@ export type NewRecursiveKindMap<
     TAlias extends string,
     TDepth extends number
 > = TRecursiveKindMap & { 
-    [P in TAlias]: TMembers[TPropName] extends CollectionProp<any>
+    [P in TAlias]: TMembers[TPropName] extends CollectionPropContract<any, any, any, any, any, any>
             ? TDepth extends -1
                 ? "COLLECTION"
                 : "UNDEFINED_COLLECTION"
@@ -1006,15 +1007,15 @@ interface EmbeddedMethods<
 }
 
 export type SimpleDataTypeOf<TProp, TViewNullType extends ViewNullType> =
-    TProp extends ScalarProp<infer R, any>
+    TProp extends ScalarPropContract<infer R, any>
         ? R
-    : TProp extends EmbeddedProp<infer R, any, any>
+    : TProp extends EmbeddedPropContract<infer R, any, any>
         ? EmbeddedDataType<R, TViewNullType>
-    : TProp extends ReferenceProp<infer TargetModel, any, "OWNING", false, any, infer Key>
+    : TProp extends ReferencePropContract<infer TargetModel, any, "OWNING", false, any, infer Key>
         ? {
             [
                 K in keyof Key
-                    as AllModelMembers<TargetModel>[K & string] extends Prop<any, "NONNULL">
+                    as AllModelMembers<TargetModel>[K & string] extends PropContract<any, "NONNULL">
                         ? K 
                         : never
             ]: SimpleDataTypeOf<AllModelMembers<TargetModel>[K], TViewNullType>
@@ -1023,14 +1024,14 @@ export type SimpleDataTypeOf<TProp, TViewNullType extends ViewNullType> =
                 ? {
                     [
                         K in keyof Key
-                            as AllModelMembers<TargetModel>[K & string] extends Prop<any, "NONNULL">
+                            as AllModelMembers<TargetModel>[K & string] extends PropContract<any, "NONNULL">
                                 ? K 
                                 : never
                     ]: SimpleDataTypeOf<AllModelMembers<TargetModel>[K], TViewNullType> | null
                 } : {
                     [
                         K in keyof Key
-                            as AllModelMembers<TargetModel>[K & string] extends Prop<any, "NONNULL">
+                            as AllModelMembers<TargetModel>[K & string] extends PropContract<any, "NONNULL">
                                 ? K 
                                 : never
                     ]?: SimpleDataTypeOf<AllModelMembers<TargetModel>[K], TViewNullType> | undefined
@@ -1042,7 +1043,7 @@ export type EmbeddedDataType<T, TViewNullType extends ViewNullType> =
     {
         [
             K in keyof T
-                as T[K] extends Prop<any, "NONNULL">
+                as T[K] extends PropContract<any, "NONNULL">
                     ? K 
                     : never
         ]: SimpleDataTypeOf<T[K], TViewNullType>
@@ -1051,14 +1052,14 @@ export type EmbeddedDataType<T, TViewNullType extends ViewNullType> =
             ? {
                 [
                     K in keyof T
-                        as T[K] extends Prop<any, "NULLABLE" | "INPUT_NONNULL">
+                        as T[K] extends PropContract<any, "NULLABLE" | "INPUT_NONNULL">
                             ? K 
                             : never
                 ]: SimpleDataTypeOf<T[K], TViewNullType> | null
             } : {
                 [
                     K in keyof T
-                        as T[K] extends Prop<any, "NULLABLE" | "INPUT_NONNULL">
+                        as T[K] extends PropContract<any, "NULLABLE" | "INPUT_NONNULL">
                             ? K 
                             : never
                 ]?: SimpleDataTypeOf<T[K], TViewNullType> | undefined

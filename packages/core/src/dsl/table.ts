@@ -1,21 +1,21 @@
 import { AllModelMembers, AnyModel, DerivedModel, RequiredModelKey } from "@/schema/model";
-import { 
-    CollectionProp, 
-    EmbeddedProp, 
-    I64Prop, 
-    NullityType, 
-    ReferenceProp, 
-    ScalarProp, 
-    CombinedNullity,
-    AssociatedProp,
-    EnumSetProp,
-} from "@/schema/prop";
 import { Expression, MakeExpression, MakeType, Predicate } from "./expression";
 import { FilterNever } from "@/utils";
 import { View } from "@/schema/dto";
 import { FetchedView } from "./root_query";
 import { BaseQuerySelectMapArgs, BaseModel, BaseQueryMapOf } from "./base_query";
 import { AnyAssociationModel, AssociationKeys, AssociationTable, MakeAssociationModel, MakeAssociationTableMembers } from "./association";
+import { 
+    EmbeddedPropContract, 
+    I64PropContract, 
+    ScalarPropContract, 
+    AssociatedPropContract,
+    EnumSetPropContract,
+    CollectionPropContract, 
+    NullityType, 
+    ReferencePropContract 
+} from "@/schema/prop_contract";
+import { CombinedNullity } from "@/internal_types";
 
 export type TableLike = {
 
@@ -91,25 +91,25 @@ export type DslMembers<
 > = 
     FilterNever<{
         [K in keyof TMembers]:
-            TMembers[K] extends I64Prop<infer R, infer Nullity>
+            TMembers[K] extends I64PropContract<infer R, infer Nullity>
                 ? Expression<
                     MakeType<R, CombinedNullity<TNullity, Nullity>>,
                     R extends string ? "AS_NUMBER" : ""
                 >
-            : TMembers[K] extends EnumSetProp<infer R>
+            : TMembers[K] extends EnumSetPropContract<infer R>
                 ? Expression<
                     MakeType<R, TNullity>,
                     R extends string ? "AS_ENUM_SET" : ""
                 >
-            : TMembers[K] extends ScalarProp<infer R, infer Nullity>
+            : TMembers[K] extends ScalarPropContract<infer R, infer Nullity>
                 ? Expression<MakeType<R, CombinedNullity<TNullity, Nullity>>>
-            : TMembers[K] extends EmbeddedProp<infer R, infer Nullity, any>
+            : TMembers[K] extends EmbeddedPropContract<infer R, infer Nullity, any>
                 ? () => DslMembers<TModel, R, CombinedNullity<TNullity, Nullity>, TJoinPolicy>
             : TJoinPolicy extends "NONE"
                 ? never
-            : TMembers[K] extends ReferenceProp<infer TargetModel, any, any, any, any, any>
+            : TMembers[K] extends ReferencePropContract<infer TargetModel, any, any, any, any, any>
                 ? ReferenceJoinAction<TModel, TargetModel, AllModelMembers<TargetModel>, TJoinPolicy>
-            : TMembers[K] extends CollectionProp<infer TargetModel>
+            : TMembers[K] extends CollectionPropContract<infer TargetModel, any, any, any, any, any>
                 ? CollectionJoinAction<TModel, TargetModel, AllModelMembers<TargetModel>, TJoinPolicy>
             : never
         } & DslReferenceKeyMembers<TModel, TMembers, TNullity>
@@ -118,14 +118,14 @@ export type DslMembers<
 export type DslReferenceKeyMembers<TModel extends AnyModel, TMembers, TNullity extends NullityType> = {
     [
         K in keyof TMembers as
-            TMembers[K] extends ReferenceProp<infer _, any, "OWNING", false, any, infer TKey>
+            TMembers[K] extends ReferencePropContract<infer _, any, "OWNING", false, any, infer TKey>
                 ? TKey extends string
                     ? `${K & string}${Capitalize<RequiredModelKey<TModel, TKey>>}`
                     : never
                 : never
-    ]: TMembers[K] extends ReferenceProp<infer TargetModel, infer Nullity, "OWNING", false, any, infer Key>
+    ]: TMembers[K] extends ReferencePropContract<infer TargetModel, infer Nullity, "OWNING", false, any, infer Key>
         ? Key extends string
-            ? AllModelMembers<TargetModel>[RequiredModelKey<TargetModel, Key>] extends EmbeddedProp<infer R, any, any>
+            ? AllModelMembers<TargetModel>[RequiredModelKey<TargetModel, Key>] extends EmbeddedPropContract<infer R, any, any>
                 ? () => DslMembers<TModel, R, CombinedNullity<TNullity, Nullity>, "REFERENCE">
             : MakeExpression<
                 AllModelMembers<TargetModel>[RequiredModelKey<TModel, Key>],
@@ -399,14 +399,14 @@ export type AssociatedKeys<TModelMembers> =
     TModelMembers extends object 
         ? { 
             [K in keyof TModelMembers]: 
-                TModelMembers[K] extends AssociatedProp<any, any, any, any, any, any>
+                TModelMembers[K] extends AssociatedPropContract<any, any, any, any, any, any>
                     ? K
                     : never
         }[keyof TModelMembers] :
         never;
 
 export type AssociatedFilter<TProp> =
-    TProp extends AssociatedProp<infer TargetModel, any, any, any, any, any>
+    TProp extends AssociatedPropContract<infer TargetModel, any, any, any, any, any>
         ? (
             table: EntityTableMembers<
                 TargetModel, 
@@ -436,7 +436,7 @@ export type CollectionKeys<TModelMembers> =
     TModelMembers extends object 
         ? { 
             [K in keyof TModelMembers]: 
-                TModelMembers[K] extends CollectionProp<any>
+                TModelMembers[K] extends CollectionPropContract<any, any, any, any, any, any>
                     ? K
                     : never
         }[keyof TModelMembers] :

@@ -1,5 +1,6 @@
 import { AllModelMembers, AnyModel } from "@/schema/model";
-import { CollectionProp, CombinedNullity, EmbeddedProp, I64Prop, NullityType, Prop, ReferenceProp, ScalarProp } from "@/schema/prop";
+import { CombinedNullity } from "@/schema/prop";
+import { CollectionPropContract, NullityType, ReferencePropContract, EmbeddedPropContract, I64PropContract, PropContract, ScalarPropContract } from "@/schema/prop_contract";
 
 export type Criteria<TModel extends AnyModel> =
     CriteriaMembers<AllModelMembers<TModel>, "NONNULL">;
@@ -15,27 +16,27 @@ type LogicOperators<TMembers, TNullity extends NullityType> = {
 };
 
 type CriteriaMember<TProp, TNullity extends NullityType> =
-    TProp extends Prop<any, infer Nullity>
+    TProp extends PropContract<any, infer Nullity>
         ? Nullity extends "NULLABLE"
             ? { $isNull: boolean } | NonNullCriteriaMember<TProp, TNullity>
             : NonNullCriteriaMember<TProp, TNullity>
         : never;
 
 type NonNullCriteriaMember<TProp, TNullity extends NullityType> =
-    TProp extends ScalarProp<any, any>
+    TProp extends ScalarPropContract<any, any>
         ? ScalarType<TProp>
-    : TProp extends EmbeddedProp<infer R, infer Nullity, any>
+    : TProp extends EmbeddedPropContract<infer R, infer Nullity, any>
         ? { [K in keyof R]?: CriteriaMember<R[K], CombinedNullity<TNullity, Nullity>> } & LogicOperators<R, TNullity>
-    : TProp extends ReferenceProp<any, any, any, any, any, any>
+    : TProp extends ReferencePropContract<any, any, any, any, any, any>
         ? ReferenceType<TProp>
-    : TProp extends CollectionProp<any>
+    : TProp extends CollectionPropContract<any, any, any, any, any, any>
         ? CollectionType<TProp>
     : never;
 
 type ScalarType<TProp> =
-    TProp extends I64Prop<any, any>
+    TProp extends I64PropContract<any, any>
         ? string | CmpJson<string>
-    : TProp extends ScalarProp<infer R, any>
+    : TProp extends ScalarPropContract<infer R, any>
         ? R extends string
             ? string | StrJson
         : R extends Date
@@ -48,7 +49,7 @@ type ScalarType<TProp> =
 type ReferenceType<TProp> = 
     { $action?: "SOME" | "NONE"; }
     & (
-        TProp extends ReferenceProp<infer TargetModel, any, any, any, any, any>
+        TProp extends ReferencePropContract<infer TargetModel, any, any, any, any, any>
             ? CriteriaMembers<AllModelMembers<TargetModel>, "NONNULL">
             : never
     );
@@ -62,7 +63,7 @@ type CollectionType<TProp> =
     | { $size: number | CmpJson<number> } & ElementMembers<TProp>;
 
 type ElementMembers<TProp> =
-    TProp extends CollectionProp<infer TargetModel>
+    TProp extends CollectionPropContract<infer TargetModel, any, any, any, any, any>
         ? CriteriaMembers<AllModelMembers<TargetModel>, "NONNULL">
         : never;
 

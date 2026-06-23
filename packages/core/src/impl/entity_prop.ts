@@ -1,4 +1,5 @@
-import { AssociationType, JoinColumnData, Prop, PropData } from "@/schema/prop";
+import { AssociationType, PropContract } from "@/schema/prop_contract";
+import { JoinColumnData, Prop, PropData } from "@/schema/prop";
 import { Entity } from "./entity";
 import { PropError } from "@/error/metadata_error";
 import { AnyModelImpl, ModelImpl } from "./model_impl";
@@ -742,11 +743,11 @@ export class EntityProp {
     }
 
     private _createProps(
-        props: Record<string, Prop<any, any>>
+        props: Record<string, PropContract<any, any>>
     ): ReadonlyMap<string, EntityProp> {
         const resultMap = new Map<string, EntityProp>();
         for (const key in props) {
-            const prop = props[key];
+            const prop = props[key] as Prop<any, any>;
             if (prop == null) {
                 continue;
             }

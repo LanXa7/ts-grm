@@ -1,4 +1,4 @@
-import { CombinedNullity, I64Prop, NullityType, ScalarProp } from "@/schema/prop";
+import { CombinedNullity } from "@/schema/prop";
 import { CompilationError } from "@/utils"
 import { ExpressionSubQuery } from "./sub_query";
 import { AtLeastOne, ExpressionOrder, IsNull } from "./utils";
@@ -8,6 +8,7 @@ import { getInternalFactory } from "@/impl/ast/internal_factory";
 import { OrderNullsType } from "@/schema/order";
 import { CompoundPred } from "@/impl/ast/pred";
 import { ConstantExpr } from "@/impl/ast/constant";
+import { I64PropContract, NullityType, ScalarPropContract } from "@/schema/prop_contract";
 
 export type Expression<
     T, 
@@ -398,12 +399,12 @@ export type MakeType<T, TNullity extends NullityType> =
         : T | null;
 
 export type MakeExpression<TProp, TNullity extends NullityType> =
-    TProp extends I64Prop<infer R, infer Nullity>
+    TProp extends I64PropContract<infer R, infer Nullity>
         ? Expression<
             MakeType<R, CombinedNullity<Nullity, TNullity>>, 
             R extends string ? "AS_NUMBER" : ""
         >
-    : TProp extends ScalarProp<infer R, infer Nullity>
+    : TProp extends ScalarPropContract<infer R, infer Nullity>
         ? Expression<
             MakeType<R, CombinedNullity<Nullity, TNullity>>
         >
