@@ -7,8 +7,10 @@ import { AbstractSelection, FetchedViewContract, Node, Visitor } from "./ast";
 export class FetchedViewImpl<TModel extends AnyModel, X> extends AbstractSelection implements FetchedView<TModel, X>, FetchedViewContract, Node {
 
     __type(): {
-        selectionLike: true;
-        selectedView: [TModel, X] | true;
+        readonly selectionLike: true;
+        readonly selectedView: true;
+        readonly model?: TModel;
+        readonly x?: X;
     } {
         return {
             selectionLike: true,

@@ -117,15 +117,17 @@ export type RootQueryProjection<T, TKind = "ONE" | "ARRAY" | "MAP"> = {
 export interface SelectionLike {
 
     __type(): {
-        selectionLike: true;
+        readonly selectionLike: true;
     };
 }
 
 export interface FetchedView<TModel extends AnyModel, X> extends SelectionLike {
 
     __type(): {
-        selectionLike: true;
-        selectedView: [TModel, X] | true;
+        readonly selectionLike: true;
+        readonly selectedView: true;
+        readonly model?: TModel;
+        readonly x?: X;
     };
 };
 

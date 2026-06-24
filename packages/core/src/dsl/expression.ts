@@ -26,6 +26,25 @@ export type Expression<
         ? NumExpression<T & Nullable<number>>
     : AnyExpression<T>;
 
+export type AnyExpression<T, TAs extends AsBound<T> = ""> = 
+    AnyExpressionItf<T, TAs> & NullableMethods<T, TAs>;
+
+export type CmpExpression<T, TAs extends AsBound<T> = ""> = 
+    CmpExpressionItf<T, TAs> & NullableMethods<T, TAs>;
+
+export type StrExpression<T extends Nullable<string>> = 
+    StrExpressionItf<T> & NullableMethods<T, "">;
+
+export type NumExpression<T extends Nullable<string | number>> = 
+    NumExpressionItf<T> 
+    & NullableMethods<T, NonNull<T> extends string ? "AS_NUMBER" : "">;
+
+export type EnumSetExpression<T extends Nullable<string>> = 
+    EnumSetExpressionItf<T> & NullableMethods<T, "">;
+
+export type DateExpression<T extends Nullable<Date>> = 
+    DateExpressionItf<T> & NullableMethods<T, "">;
+
 export type AsBound<T> = T extends string ? "AS_NUMBER" | "AS_ENUM_SET" | "" : "";
 
 export type Predicate = AnyExpression<boolean>;
@@ -33,77 +52,6 @@ export type Predicate = AnyExpression<boolean>;
 export type NonNull<T> = Exclude<T, null | undefined>;
 
 export type Nullable<T> = T | null | undefined;
-
-export type AnyExpression<T, TAs extends AsBound<T> = ""> = {
-    
-    __type(): {
-        selectionLike: true;
-        expressionLike: true;
-        expression: [T, TAs] | true;
-    };
-
-    asc(nulls?: OrderNullsType): ExpressionOrder;
-
-    desc(nulls?: OrderNullsType): ExpressionOrder;
-
-    eq(
-        value: RHSType<T, TAs>
-    ): AnyExpression<boolean>;
-    
-    ne(
-        value: RHSType<T, TAs>
-    ): AnyExpression<boolean>;
-
-    in<Values extends NonNullRHSType<T, TAs>[]>(
-        ...values: HasSubqueryInArray<Values> extends true 
-            ? [SubqueryError]
-            : Values
-    ): AnyExpression<boolean>;
-
-    inSubQuery(
-        subQuery: ExpressionSubQuery<Expression<NonNull<T>, TAs>>
-    ): AnyExpression<boolean>;
-
-    notIn<Values extends NonNullRHSType<T, TAs>[]>(
-        ...values: HasSubqueryInArray<Values> extends true 
-            ? [SubqueryError]
-            : Values
-    ): AnyExpression<boolean>;
-
-    notInSubQuery(
-        subQuery: ExpressionSubQuery<Expression<NonNull<T>, TAs>>
-    ): AnyExpression<boolean>;
-    
-    eqIf(
-        value: Nullable<T>
-    ): AnyExpression<boolean> | undefined;
-    
-    neIf(
-        value: Nullable<T>
-    ): AnyExpression<boolean> | undefined;
-
-    inIf(
-        values: NonNull<T>[] | null | undefined
-    ): AnyExpression<boolean> | undefined;
-
-    notInIf(
-        values: NonNull<T>[] | null | undefined
-    ): AnyExpression<boolean> | undefined;
-} & (
-    IsNull<T> extends true
-        ? { 
-            isNull(): AnyExpression<boolean>;
-
-            isNotNull(): AnyExpression<boolean>;
-
-            coalesce<TArgs extends CoalesceArgs<T>>(
-                ...exprs: TArgs
-            ): Expression<CoalesceDataType<T, TArgs>, TAs & AsBound<CoalesceDataType<T, TArgs>>>;
-
-            asNonNull(): Expression<NonNull<T>, TAs>;
-        }
-        : object
-);
 
 export type RHSType<T, TAs extends AsBound<T>> =
     NonNull<T> | AnyExpression<NonNull<T>, TAs> | AnyExpression<Nullable<T>, TAs> 
@@ -155,17 +103,174 @@ export type CoalesceDataType<T, TArgs extends any[]> =
             )
         : T;
 
-export type CmpExpression<
-    T, 
-    TAs extends AsBound<T> = ""
-> = AnyExpression<T, TAs> & {
-    
-    __type(): { 
-        selectionLike: true;
-        expressionLike: true;
-        expression: T | undefined;
-        cmpExpression: T | undefined;
+export type MergeNullableType<
+    T1 extends Nullable<string | number>, 
+    T2 extends Nullable<string | number>
+> =
+    string extends T1 | T2
+        ? Exclude<T1 | T2, number> 
+        : T1 | T2;
+
+export type LikeMode = "CONTAINS" | "STARTS_WITH" | "ENDS_WITH" | "EXACT";
+
+export type TimeUnit = 
+    "NANOSECONDS" 
+    | "MICROSECONDS"
+    | "MILLISECONDS"
+    | "SECONDS"
+    | "MINUTES"
+    | "HOURS"
+    | "DAYS"
+    | "WEEKS"
+    | "MONTHS"
+    | "QUARTERS"
+    | "YEARS"
+    | "DECADES"
+    | "CENTURIES";
+
+export type MakeType<T, TNullity extends NullityType> =
+    TNullity extends "NONNULL"
+        ? T
+        : T | null;
+
+export type MakeExpression<TProp, TNullity extends NullityType> =
+    TProp extends I64PropContract<infer R, infer Nullity>
+        ? Expression<
+            MakeType<R, CombinedNullity<Nullity, TNullity>>, 
+            R extends string ? "AS_NUMBER" : ""
+        >
+    : TProp extends ScalarPropContract<infer R, infer Nullity>
+        ? Expression<
+            MakeType<R, CombinedNullity<Nullity, TNullity>>
+        >
+    : never;
+
+export function and(
+    ...predicates: ReadonlyArray<Nullable<AnyExpression<boolean>>>
+): AnyExpression<boolean> | undefined {
+    return CompoundPred.of("AND", predicates) as AnyExpression<boolean> | undefined;
+}
+
+export function or(
+    ...predicates: ReadonlyArray<Nullable<AnyExpression<boolean>>>
+): AnyExpression<boolean> | undefined {
+    return CompoundPred.of("OR", predicates) as AnyExpression<boolean> | undefined;
+}
+
+export function not(
+    ...predicates: ReadonlyArray<Nullable<AnyExpression<boolean>>>
+): AnyExpression<boolean> | undefined {
+    return CompoundPred.of("AND", predicates)?.negative() as AnyExpression<boolean> | undefined;
+}
+
+export type ExpressionLike = {
+    __type(): {
+        readonly expressionLike: true;
     }
+};
+
+export function constant(
+    value: number
+): Expression<number> {
+    return new ConstantExpr(value) as any as Expression<number>;
+}
+
+export function concat(
+    ...values: AtLeastOne<string | StrExpression<string>>
+): StrExpression<string> {
+    const arr = values.map(value => {
+        if (value == null) {
+            throw new ArgumentError("concat does not accept null/undefined value");
+        }
+        if (typeof value === "string") {
+            return getInternalFactory().createLiteral(value);
+        }
+        return (value as any) as AbstractStrExpr;
+    });
+    throw new ConcatExpr(arr);
+}
+
+export type SubqueryError = 
+    CompilationError<`Cannot directly use subqueries in 'IN' expressions.
+Either use the 'inSubQuery()' function for collection operations;
+or use 'asValue()' to convert the subquery into a single value before using it.`>;
+
+export type HasSubqueryInArray<Arr extends any[]> = 
+    Arr extends [infer First, ...infer Rest]
+        ? First extends { __type(): { expressionSubQuery: any }; }
+            ? true 
+            : HasSubqueryInArray<Rest>
+        : false;
+
+export interface AnyExpressionItf<T, TAs extends AsBound<T>> {
+    
+    __type(): {
+        readonly selectionLike: true;
+        readonly expressionLike: true;
+        readonly expression: true;
+        readonly __t?: T;
+        readonly __as?: TAs;
+    };
+
+    asc(nulls?: OrderNullsType): ExpressionOrder;
+
+    desc(nulls?: OrderNullsType): ExpressionOrder;
+
+    eq(
+        value: RHSType<T, TAs>
+    ): AnyExpression<boolean>;
+    
+    ne(
+        value: RHSType<T, TAs>
+    ): AnyExpression<boolean>;
+
+    in<Values extends NonNullRHSType<T, TAs>[]>(
+        ...values: HasSubqueryInArray<Values> extends true 
+            ? [SubqueryError]
+            : Values
+    ): AnyExpression<boolean>;
+
+    inSubQuery(
+        subQuery: ExpressionSubQuery<Expression<NonNull<T>, TAs>>
+    ): AnyExpression<boolean>;
+
+    notIn<Values extends NonNullRHSType<T, TAs>[]>(
+        ...values: HasSubqueryInArray<Values> extends true 
+            ? [SubqueryError]
+            : Values
+    ): AnyExpression<boolean>;
+
+    notInSubQuery(
+        subQuery: ExpressionSubQuery<Expression<NonNull<T>, TAs>>
+    ): AnyExpression<boolean>;
+    
+    eqIf(
+        value: Nullable<T>
+    ): AnyExpression<boolean> | undefined;
+    
+    neIf(
+        value: Nullable<T>
+    ): AnyExpression<boolean> | undefined;
+
+    inIf(
+        values: NonNull<T>[] | null | undefined
+    ): AnyExpression<boolean> | undefined;
+
+    notInIf(
+        values: NonNull<T>[] | null | undefined
+    ): AnyExpression<boolean> | undefined;
+}
+
+export interface CmpExpressionItf<T, TAs extends AsBound<T>> extends AnyExpressionItf<T, TAs> {
+    
+    __type(): {
+        readonly selectionLike: true;
+        readonly expressionLike: true;
+        readonly expression: true;
+        readonly cmpExpression: true;
+        readonly __t?: T;
+        readonly __as?: TAs;
+    };
     
     lt(
         value: RHSType<T, TAs>
@@ -210,61 +315,17 @@ export type CmpExpression<
     ): AnyExpression<boolean> | undefined;
 }
 
-export type MergeNullableType<
-    T1 extends Nullable<string | number>, 
-    T2 extends Nullable<string | number>
-> =
-    string extends T1 | T2
-        ? Exclude<T1 | T2, number> 
-        : T1 | T2;
+export interface StrExpressionItf<T extends Nullable<string>> extends CmpExpressionItf<T, ""> {
 
-export type NumExpression<
-    T extends Nullable<string | number>
-> = CmpExpression<T, NonNull<T> extends string ? "AS_NUMBER" : ""> & {
-
-    __type(): { 
-        selectionLike: true;
-        expressionLike: true;
-        expression: T | undefined;
-        cmpExpression: T | undefined;
-        numExpression: T | undefined;
-    }
-
-    unaryMinus(): NumExpression<T>;
-
-    plus<X extends Nullable<string | number>>(
-        value: NonNull<X> | NumExpression<X>
-    ): NumExpression<MergeNullableType<T, X>>;
-
-    minus<X extends Nullable<string | number>>(
-        value: NonNull<X> | NumExpression<X>
-    ): NumExpression<MergeNullableType<T, X>>;
-
-    times<X extends Nullable<string | number>>(
-        value: NonNull<X> | NumExpression<X>
-    ): NumExpression<MergeNullableType<T, X>>;
-
-    div<X extends Nullable<string | number>>(
-        value: NonNull<X> | NumExpression<X>
-    ): NumExpression<MergeNullableType<T, X>>;
-
-    rem<X extends Nullable<string | number>>(
-        value: NonNull<X> | NumExpression<X>
-    ): NumExpression<MergeNullableType<T, X>>;
-}
-
-export type LikeMode = "CONTAINS" | "STARTS_WITH" | "ENDS_WITH" | "EXACT";
-
-export type StrExpression<T extends Nullable<string>> = CmpExpression<T> & {
-
-    __type(): { 
-        selectionLike: true;
-        expressionLike: true;
-        expression: T | undefined;
-        cmpExpression: T | undefined;
-        numExpression: T | undefined;
-        strExpression: T | undefined;
-    }
+    __type(): {
+        readonly selectionLike: true;
+        readonly expressionLike: true;
+        readonly expression: true;
+        readonly cmpExpression: true;
+        readonly strExpression: true;
+        readonly __t?: T;
+        readonly __as?: "";
+    };
 
     like(
         value: string, 
@@ -349,7 +410,52 @@ export type StrExpression<T extends Nullable<string>> = CmpExpression<T> & {
     ): StrExpression<T>;
 }
 
-export type EnumSetExpression<T extends Nullable<string>> = AnyExpression<T> & {
+export interface NumExpressionItf<T extends Nullable<string | number>> extends CmpExpressionItf<T, T extends string ? "AS_NUMBER" : ""> {
+
+    __type(): {
+        readonly selectionLike: true;
+        readonly expressionLike: true;
+        readonly expression: true;
+        readonly cmpExpression: true;
+        readonly numExpression: true;
+        readonly __t?: T;
+        readonly __as?: T extends string ? "AS_NUMBER" : "";
+    };
+
+    unaryMinus(): NumExpression<T>;
+
+    plus<X extends Nullable<string | number>>(
+        value: NonNull<X> | NumExpression<X>
+    ): NumExpression<MergeNullableType<T, X>>;
+
+    minus<X extends Nullable<string | number>>(
+        value: NonNull<X> | NumExpression<X>
+    ): NumExpression<MergeNullableType<T, X>>;
+
+    times<X extends Nullable<string | number>>(
+        value: NonNull<X> | NumExpression<X>
+    ): NumExpression<MergeNullableType<T, X>>;
+
+    div<X extends Nullable<string | number>>(
+        value: NonNull<X> | NumExpression<X>
+    ): NumExpression<MergeNullableType<T, X>>;
+
+    rem<X extends Nullable<string | number>>(
+        value: NonNull<X> | NumExpression<X>
+    ): NumExpression<MergeNullableType<T, X>>;
+}
+
+export interface EnumSetExpressionItf<T extends Nullable<string>> extends AnyExpressionItf<T, ""> {
+
+    __type(): {
+        readonly selectionLike: true;
+        readonly expressionLike: true;
+        readonly expression: true;
+        readonly cmpExpression: true;
+        readonly enumSetExpression: true;
+        readonly __t?: T;
+        readonly __as?: "";
+    };
     
     containsAny(...values: AtLeastOne<T>): Predicate;
 
@@ -358,9 +464,19 @@ export type EnumSetExpression<T extends Nullable<string>> = AnyExpression<T> & {
     containsAll(...values: AtLeastOne<T>): Predicate;
 
     notContainsAll(...values: AtLeastOne<T>): Predicate;
-};
+}
 
-export type DateExpression<T extends Nullable<Date>> = CmpExpression<T> & {
+export interface DateExpressionItf<T extends Nullable<Date>> extends CmpExpressionItf<T, ""> {
+
+    __type(): {
+        readonly selectionLike: true;
+        readonly expressionLike: true;
+        readonly expression: true;
+        readonly cmpExpression: true;
+        readonly dateExpression: true;
+        readonly __t?: T;
+        readonly __as?: "";
+    };
     
     plus(
         value: number | Expression<number>, 
@@ -376,93 +492,19 @@ export type DateExpression<T extends Nullable<Date>> = CmpExpression<T> & {
         value: Date | DateExpression<any>, 
         timeUnit: TimeUnit
     ): NumExpression<number>;
-};
-
-export type TimeUnit = 
-    "NANOSECONDS" 
-    | "MICROSECONDS"
-    | "MILLISECONDS"
-    | "SECONDS"
-    | "MINUTES"
-    | "HOURS"
-    | "DAYS"
-    | "WEEKS"
-    | "MONTHS"
-    | "QUARTERS"
-    | "YEARS"
-    | "DECADES"
-    | "CENTURIES";
-
-export type MakeType<T, TNullity extends NullityType> =
-    TNullity extends "NONNULL"
-        ? T
-        : T | null;
-
-export type MakeExpression<TProp, TNullity extends NullityType> =
-    TProp extends I64PropContract<infer R, infer Nullity>
-        ? Expression<
-            MakeType<R, CombinedNullity<Nullity, TNullity>>, 
-            R extends string ? "AS_NUMBER" : ""
-        >
-    : TProp extends ScalarPropContract<infer R, infer Nullity>
-        ? Expression<
-            MakeType<R, CombinedNullity<Nullity, TNullity>>
-        >
-    : never;
-
-export function and(
-    ...predicates: ReadonlyArray<Nullable<AnyExpression<boolean>>>
-): AnyExpression<boolean> | undefined {
-    return CompoundPred.of("AND", predicates) as AnyExpression<boolean> | undefined;
 }
 
-export function or(
-    ...predicates: ReadonlyArray<Nullable<AnyExpression<boolean>>>
-): AnyExpression<boolean> | undefined {
-    return CompoundPred.of("OR", predicates) as AnyExpression<boolean> | undefined;
-}
+export type NullableMethods<T, TAs extends AsBound<T>> =
+    IsNull<T> extends true
+        ? { 
+            isNull(): AnyExpression<boolean>;
 
-export function not(
-    ...predicates: ReadonlyArray<Nullable<AnyExpression<boolean>>>
-): AnyExpression<boolean> | undefined {
-    return CompoundPred.of("AND", predicates)?.negative() as AnyExpression<boolean> | undefined;
-}
+            isNotNull(): AnyExpression<boolean>;
 
-export type ExpressionLike = {
-    __type(): {
-        expressionLike: true;
-    }
-};
+            coalesce<TArgs extends CoalesceArgs<T>>(
+                ...exprs: TArgs
+            ): Expression<CoalesceDataType<T, TArgs>, TAs & AsBound<CoalesceDataType<T, TArgs>>>;
 
-export function constant(
-    value: number
-): Expression<number> {
-    return new ConstantExpr(value) as any as Expression<number>;
-}
-
-export function concat(
-    ...values: AtLeastOne<string | StrExpression<string>>
-): StrExpression<string> {
-    const arr = values.map(value => {
-        if (value == null) {
-            throw new ArgumentError("concat does not accept null/undefined value");
+            asNonNull(): Expression<NonNull<T>, TAs>;
         }
-        if (typeof value === "string") {
-            return getInternalFactory().createLiteral(value);
-        }
-        return (value as any) as AbstractStrExpr;
-    });
-    throw new ConcatExpr(arr);
-}
-
-export type SubqueryError = 
-    CompilationError<`Cannot directly use subqueries in 'IN' expressions.
-Either use the 'inSubQuery()' function for collection operations;
-or use 'asValue()' to convert the subquery into a single value before using it.`>;
-
-export type HasSubqueryInArray<Arr extends any[]> = 
-    Arr extends [infer First, ...infer Rest]
-        ? First extends { __type(): { expressionSubQuery: any }; }
-            ? true 
-            : HasSubqueryInArray<Rest>
-        : false;
+        : object;
