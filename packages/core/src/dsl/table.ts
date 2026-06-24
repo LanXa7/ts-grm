@@ -56,31 +56,7 @@ export type EntityTableMembers<
 > = PrettifyDsl<
     DslMembers<TModel, TMembers, TNullity, TJoinPolicy>
     & WeakJoinAction<TModel, TJoinPolicy> 
-    & AssociationAction<TModel, TJoinPolicy>
-    & AssociatedAction<TMembers>
-    & CollectionAction<TMembers>
-    & { 
-        __type(): {
-            tableLike: true;
-            entityTableLike: true;
-            entityTable: TModel | true;
-        };
-
-        fetch<X>(
-            view: View<TModel, X>
-        ): FetchedView<
-            TModel, 
-            TNullity extends "NULLABLE" ? X | null : X
-        >;
-
-        is<TDerivedModel extends AnyModel>(
-            derivedModel: DerivedModel<TDerivedModel, TModel>
-        ): Predicate;
-
-        as<TDerivedModel extends AnyModel>(
-            derivedModel: DerivedModel<TDerivedModel, TModel>
-        ): EntityTableMembers<TModel, AllModelMembers<TDerivedModel>, "NULLABLE", TJoinPolicy>;
-    }
+    & StaticMembers<TModel, TMembers, TNullity, TJoinPolicy>
 >;
 
 export type DslMembers<
@@ -91,18 +67,18 @@ export type DslMembers<
 > = 
     FilterNever<{
         [K in keyof TMembers]:
-            TMembers[K] extends I64PropContract<infer R, infer Nullity>
-                ? Expression<
-                    MakeType<R, CombinedNullity<TNullity, Nullity>>,
-                    R extends string ? "AS_NUMBER" : ""
-                >
-            : TMembers[K] extends EnumSetPropContract<infer R>
-                ? Expression<
-                    MakeType<R, TNullity>,
-                    R extends string ? "AS_ENUM_SET" : ""
-                >
-            : TMembers[K] extends ScalarPropContract<infer R, infer Nullity>
-                ? Expression<MakeType<R, CombinedNullity<TNullity, Nullity>>>
+            TMembers[K] extends ScalarPropContract<infer R, infer Nullity>
+                ? TMembers[K] extends I64PropContract<infer R, infer Nullity>
+                    ? Expression<
+                        MakeType<R, CombinedNullity<TNullity, Nullity>>,
+                        R extends string ? "AS_NUMBER" : ""
+                    >
+                : TMembers[K] extends EnumSetPropContract<infer R>
+                    ? Expression<
+                        MakeType<R, TNullity>,
+                        R extends string ? "AS_ENUM_SET" : ""
+                    >
+                : Expression<MakeType<R, CombinedNullity<TNullity, Nullity>>>
             : TMembers[K] extends EmbeddedPropContract<infer R, infer Nullity, any>
                 ? () => DslMembers<TModel, R, CombinedNullity<TNullity, Nullity>, TJoinPolicy>
             : TJoinPolicy extends "NONE"
@@ -299,19 +275,40 @@ export type WeakJoinAction<
             >;
         };
 
-export type AssociationAction<TModel extends AnyModel, TJoinPolicy extends JoinPolicyType> = 
-    AssociationActionImpl<TModel, AssociationKeys<TModel>, TJoinPolicy>;
-
-export type AssociationActionImpl<
-    TModel extends AnyModel, 
-    TAssociationKeys extends AssociationKeys<TModel>,
+export interface StaticMembers<
+    TModel extends AnyModel,
+    TMembers extends object,
+    TNullity extends NullityType, 
     TJoinPolicy extends JoinPolicyType
-> = {
+> extends AssociatedAction<TMembers>, AssociationAction<TModel, TJoinPolicy>, CollectionAction<TMembers> { 
+    __type(): {
+        tableLike: true;
+        entityTableLike: true;
+        entityTable: TModel | true;
+    };
+
+    fetch<X>(
+        view: View<TModel, X>
+    ): FetchedView<
+        TModel, 
+        TNullity extends "NULLABLE" ? X | null : X
+    >;
+
+    is<TDerivedModel extends AnyModel>(
+        derivedModel: DerivedModel<TDerivedModel, TModel>
+    ): Predicate;
+
+    as<TDerivedModel extends AnyModel>(
+        derivedModel: DerivedModel<TDerivedModel, TModel>
+    ): EntityTableMembers<TModel, AllModelMembers<TDerivedModel>, "NULLABLE", TJoinPolicy>;
+}
+
+export interface AssociationAction<TModel extends AnyModel, TJoinPolicy extends JoinPolicyType> {
     
     association<
-        TKey extends TAssociationKeys
+        TKey extends AssociationKeys<TModel>
     >(
-        key: TAssociationKeys,
+        key: TKey,
     ): TableRiskWrapper<
         MakeAssociationTableMembers<
             TModel,
@@ -322,10 +319,10 @@ export type AssociationActionImpl<
     >;
 
     association<
-        TKey extends TAssociationKeys,
+        TKey extends AssociationKeys<TModel>,
         TJoinType extends JoinType = "INNER"
     >(
-        key: TAssociationKeys,
+        key: TKey,
         joinType: TJoinType
     ): TableRiskWrapper<
         MakeAssociationTableMembers<
@@ -337,7 +334,7 @@ export type AssociationActionImpl<
     >;
 
     association<
-        TKey extends TAssociationKeys
+        TKey extends AssociationKeys<TModel>
     >(
         key: TKey,
         filter: FilterType<TModel, MakeAssociationModel<TModel, TKey>>
@@ -351,10 +348,10 @@ export type AssociationActionImpl<
     >;
 
     association<
-        TKey extends TAssociationKeys,
+        TKey extends AssociationKeys<TModel>,
         TJoinType extends JoinType = "INNER"
     >(
-        key: TAssociationKeys,
+        key: TKey,
         options: {
             readonly joinType?: TJoinType;
             readonly filter?: FilterType<TModel, MakeAssociationModel<TModel, TKey>>,
@@ -370,30 +367,27 @@ export type AssociationActionImpl<
     >;
 };
 
-export type AssociatedAction<TModelMembers> =
-    AssociatedKeys<TModelMembers> extends never
-        ? {}
-        : {
-            none<TKey extends AssociatedKeys<TModelMembers>>(
-                key: TKey,
-                fn?: AssociatedFilter<TModelMembers[TKey]>
-            ): Predicate;
+export interface AssociatedAction<TModelMembers> {
+    none<TKey extends AssociatedKeys<TModelMembers>>(
+        key: TKey,
+        fn?: AssociatedFilter<TModelMembers[TKey]>
+    ): Predicate;
 
-            some<TKey extends AssociatedKeys<TModelMembers>>(
-                key: TKey,
-                fn?: AssociatedFilter<TModelMembers[TKey]>
-            ): Predicate;
+    some<TKey extends AssociatedKeys<TModelMembers>>(
+        key: TKey,
+        fn?: AssociatedFilter<TModelMembers[TKey]>
+    ): Predicate;
 
-            noneIf<TKey extends AssociatedKeys<TModelMembers>>(
-                key: TKey,
-                fn: AssociatedFilter<TModelMembers[TKey]>
-            ): Predicate | undefined;
+    noneIf<TKey extends AssociatedKeys<TModelMembers>>(
+        key: TKey,
+        fn: AssociatedFilter<TModelMembers[TKey]>
+    ): Predicate | undefined;
 
-            someIf<TKey extends AssociatedKeys<TModelMembers>>(
-                key: TKey,
-                fn: AssociatedFilter<TModelMembers[TKey]>
-            ): Predicate | undefined;
-        };
+    someIf<TKey extends AssociatedKeys<TModelMembers>>(
+        key: TKey,
+        fn: AssociatedFilter<TModelMembers[TKey]>
+    ): Predicate | undefined;
+};
 
 export type AssociatedKeys<TModelMembers> =
     TModelMembers extends object 
@@ -417,20 +411,17 @@ export type AssociatedFilter<TProp> =
         ) => Predicate | undefined
         : never;
 
-export type CollectionAction<TModelMembers> =
-    CollectionKeys<TModelMembers> extends never
-        ? {}
-        : {
-            every<TKey extends CollectionKeys<TModelMembers>>(
-                key: TKey,
-                fn: AssociatedFilter<TModelMembers[TKey]>
-            ): Predicate | undefined;
+export interface CollectionAction<TModelMembers> {
+    every<TKey extends CollectionKeys<TModelMembers>>(
+        key: TKey,
+        fn: AssociatedFilter<TModelMembers[TKey]>
+    ): Predicate | undefined;
 
-            size<TKey extends CollectionKeys<TModelMembers>>(
-                key: TKey,
-                fn?: AssociatedFilter<TModelMembers[TKey]>
-            ): Expression<number>;
-        };
+    size<TKey extends CollectionKeys<TModelMembers>>(
+        key: TKey,
+        fn?: AssociatedFilter<TModelMembers[TKey]>
+    ): Expression<number>;
+}
 
 export type CollectionKeys<TModelMembers> =
     TModelMembers extends object 
