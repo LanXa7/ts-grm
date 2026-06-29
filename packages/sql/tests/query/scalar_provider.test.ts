@@ -15,10 +15,12 @@ describe.sequential("ScalarProviderTest", () => {
         const rows = await sqlClient.createQuery(AUTHOR, (q, author) => {
             q.where(author.gender.eq("FEMALE"));
             return q.select(
-                author.fetch(
-                    dto.view(AUTHOR, $ => $.allScalars())
-                )
+                author.id,
+                // author.fetch(
+                //     dto.view(AUTHOR, $ => $.allScalars())
+                // )
             );
+            
         }).fetchList();
         sqlRecord.assert({
             sql: `

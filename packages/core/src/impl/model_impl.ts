@@ -2,6 +2,10 @@ import { ArgumentError, StateError } from "@/error/common";
 import { Entity } from "@/impl/entity";
 import { AnyModel, Ctor, CtorMembers, Model, ModelContext, TableOptions, UniqueKeys } from "@/schema/model";
 import { ModelContract } from "./model_contract";
+// import { ExplicitViewArgs } from "@/schema/view";
+// import { ExplicitActionKeys, RestrictKeys } from "@/schema/view/common";
+// import { suppressUnused } from "@/utils";
+// import { PolymorphismEntry } from "@/schema/view/polymorphism";
 
 export class ModelImpl<
     TName extends string, 
@@ -49,6 +53,20 @@ export class ModelImpl<
             derivedModels.add(this);
         }
     }
+
+    // when<
+    //     TSelf extends AnyModel,
+    //     TDerivedModel extends AnyModel,
+    //     const TViewArgs extends ExplicitViewArgs<TDerivedModel, DeclaredModelMembers<TDerivedModel>>
+    // >(
+    //     this: TSelf,
+    //     derivedModel: DerivedModel<TDerivedModel, any>,
+    //     args: RestrictKeys<TViewArgs, keyof DeclaredModelMembers<TDerivedModel> | ExplicitActionKeys>
+    // ): PolymorphismEntry<TDerivedModel, TSelf, TViewArgs & {$explicit: true}> {
+    //     suppressUnused(derivedModel);
+    //     suppressUnused(args);
+    //     throw new Error();
+    // }
 
     toEntity(): Entity {
         return this.toUnresolvedEntity().resolve(2);

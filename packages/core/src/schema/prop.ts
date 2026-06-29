@@ -530,13 +530,12 @@ export class ConfigurableManyToOneProp<
 
 export class OneToManyProp<
     TModel extends AnyModel,
-    TNullity extends NullityType,
     TDirection extends DirectionType,
     TMiddleTable extends boolean,
     TBackOptionalModelKey extends string,
     TTargetOptionalModelKey extends string
-> extends AssociatedProp<TModel, TNullity, TDirection, TMiddleTable, TBackOptionalModelKey, TTargetOptionalModelKey> 
-implements CollectionPropContract<TModel, TNullity, TDirection, TMiddleTable, TBackOptionalModelKey, TTargetOptionalModelKey> {
+> extends AssociatedProp<TModel, "NONNULL", TDirection, TMiddleTable, TBackOptionalModelKey, TTargetOptionalModelKey> 
+implements CollectionPropContract<TModel, TDirection, TMiddleTable, TBackOptionalModelKey, TTargetOptionalModelKey> {
 
     readonly __collectionProp = true;
 
@@ -550,7 +549,6 @@ implements CollectionPropContract<TModel, TNullity, TDirection, TMiddleTable, TB
         ...orders: ModelOrder<TModel>[]
     ): OneToManyProp<
         TModel, 
-        TNullity, 
         TDirection, 
         TMiddleTable,
         TBackOptionalModelKey, 
@@ -580,12 +578,11 @@ implements CollectionPropContract<TModel, TNullity, TDirection, TMiddleTable, TB
 
 export class ConfigurableOneToManyProp<
     TModel extends AnyModel,
-    TNullity extends NullityType,
     TDirection extends DirectionType,
     TMiddleTable extends boolean,
     TBackOptionalModelKey extends string,
     TTargetOptionalModelKey extends string
-> extends OneToManyProp<TModel, TNullity, TDirection, TMiddleTable, TBackOptionalModelKey, TTargetOptionalModelKey> {
+> extends OneToManyProp<TModel, TDirection, TMiddleTable, TBackOptionalModelKey, TTargetOptionalModelKey> {
 
     constructor(data: PropData) {
         super(data);
@@ -605,7 +602,6 @@ export class ConfigurableOneToManyProp<
         >
     ): OneToManyProp<
         TargetModelOf<AllModelMembers<TMiddleModel>[TJoinTargetProp]>,
-        TNullity,
         "OWNING",
         true,
         TargetKeyOf<AllModelMembers<TMiddleModel>[TJoinSourceProp]>,
@@ -625,7 +621,6 @@ export class ConfigurableOneToManyProp<
         mappedBy: TMappedBy
     ): OneToManyProp<
         TModel, 
-        TNullity, 
         "INVERSE", 
         false,
         TargetKeyOf<AllModelMembers<TModel>[TMappedBy]>, 
@@ -638,7 +633,6 @@ export class ConfigurableOneToManyProp<
         ...orders: ModelOrder<TModel>[]
     ): OneToManyProp<
         TModel, 
-        TNullity, 
         TDirection, 
         TMiddleTable,
         TBackOptionalModelKey, 
@@ -652,13 +646,12 @@ export class ConfigurableOneToManyProp<
 
 export class ManyToManyProp<
     TModel extends AnyModel,
-    TNullity extends NullityType,
     TDirection extends DirectionType,
     TMiddleTable extends boolean,
     TBackOptionalModelKey extends string,
     TTargetOptionalModelKey extends string
-> extends AssociatedProp<TModel, TNullity, TDirection, TMiddleTable, TBackOptionalModelKey, TTargetOptionalModelKey> 
-implements CollectionPropContract<TModel, TNullity, TDirection, TMiddleTable, TBackOptionalModelKey, TTargetOptionalModelKey> {
+> extends AssociatedProp<TModel, "NONNULL", TDirection, TMiddleTable, TBackOptionalModelKey, TTargetOptionalModelKey> 
+implements CollectionPropContract<TModel, TDirection, TMiddleTable, TBackOptionalModelKey, TTargetOptionalModelKey> {
 
     readonly __collectionProp = true;
 
@@ -672,7 +665,6 @@ implements CollectionPropContract<TModel, TNullity, TDirection, TMiddleTable, TB
         ...orders: ModelOrder<TModel>[]
     ): ManyToManyProp<
         TModel, 
-        TNullity, 
         TDirection, 
         TMiddleTable,
         TBackOptionalModelKey, 
@@ -686,12 +678,11 @@ implements CollectionPropContract<TModel, TNullity, TDirection, TMiddleTable, TB
 
 export class ConfigurableManyToManyProp<
     TModel extends AnyModel,
-    TNullity extends NullityType,
     TDirection extends DirectionType,
     TMiddleTable extends boolean,
     TBackOptionalModelKey extends string,
     TTargetOptionalModelKey extends string
-> extends ManyToManyProp<TModel, TNullity, TDirection, TMiddleTable, TBackOptionalModelKey, TTargetOptionalModelKey> {
+> extends ManyToManyProp<TModel, TDirection, TMiddleTable, TBackOptionalModelKey, TTargetOptionalModelKey> {
 
     constructor(data: PropData) {
         super(data);
@@ -701,7 +692,6 @@ export class ConfigurableManyToManyProp<
         mappedBy: TMappedBy
     ): ManyToManyProp<
         TModel, 
-        TNullity, 
         "INVERSE",
         true,
         TargetKeyOf<AllModelMembers<TModel>[TMappedBy]>, 
@@ -717,7 +707,6 @@ export class ConfigurableManyToManyProp<
         options: JoinTable<TModel, TBackReferenceProp, RequiredModelKey<TModel, TTargetReferencedProp>>
     ): ManyToManyProp<
         TModel, 
-        TNullity, 
         "OWNING", 
         true,
         TBackReferenceProp, 
@@ -743,7 +732,6 @@ export class ConfigurableManyToManyProp<
         >
     ): ManyToManyProp<
         TargetModelOf<AllModelMembers<TMiddleModel>[TJoinTargetProp]>,
-        TNullity,
         "OWNING",
         true,
         TargetKeyOf<AllModelMembers<TMiddleModel>[TJoinSourceProp]>,
@@ -763,7 +751,6 @@ export class ConfigurableManyToManyProp<
         ...orders: ModelOrder<TModel>[]
     ): ConfigurableManyToManyProp<
         TModel, 
-        TNullity, 
         TDirection, 
         TMiddleTable,
         TBackOptionalModelKey, 
@@ -1259,7 +1246,6 @@ export type O2MCreator = {
         targetModel: TModel
     ): ConfigurableOneToManyProp<
         TModel, 
-        "NONNULL", 
         "OWNING", 
         false, 
         "", 
@@ -1275,7 +1261,6 @@ export type O2MCreator = {
         options: SelfMappedByOptions<TSelf, TSourceKeyProp, TTargetKeyProp>
     ): OneToManyProp<
         TSelf,
-        "NONNULL",
         "INVERSE",
         false,
         TSourceKeyProp,
@@ -1289,7 +1274,6 @@ export type M2MCreator = {
         targetModel: TModel
     ): ConfigurableManyToManyProp<
         TModel,
-        "NONNULL",
         "OWNING",
         true,
         "",
@@ -1305,7 +1289,6 @@ export type M2MCreator = {
         options:SelfMappedByOptions<TSelf, TSourceKeyProp, TTargetKeyProp>
     ): ManyToManyProp<
         TSelf,
-        "NONNULL",
         "INVERSE",
         false,
         TSourceKeyProp,
@@ -1320,7 +1303,6 @@ export type M2MCreator = {
         options?: SelfJoinTableOptions<TSourceKeyProp, TTargetKeyProp>
     ): ManyToManyProp<
         TSelf,
-        "NONNULL",
         "OWNING",
         false,
         TSourceKeyProp,
@@ -1483,7 +1465,6 @@ function o2oCreator(): O2OCreator {
     ): OneToManyProp<
         TSelf,
         any,
-        any,
         false,
         TSourceKeyProp,
         TTargetKeyProp
@@ -1566,7 +1547,6 @@ function o2mCreator(): O2MCreator {
         targetModel: ModelRef<TModel>
     ): ConfigurableOneToManyProp<
         TModel, 
-        "NONNULL", 
         "OWNING", 
         false, 
         "", 
@@ -1587,7 +1567,6 @@ function o2mCreator(): O2MCreator {
         options: SelfMappedByOptions<TSelf, TSourceKeyProp, TTargetKeyProp>
     ): OneToManyProp<
         TSelf,
-        "NONNULL",
         "INVERSE",
         false,
         TSourceKeyProp,
@@ -1612,7 +1591,6 @@ function m2mCreator(): M2MCreator {
         targetModel: ModelRef<TModel>
     ): ConfigurableManyToManyProp<
         TModel,
-        "NONNULL",
         "OWNING",
         true,
         "",
@@ -1635,7 +1613,6 @@ function m2mCreator(): M2MCreator {
             | SelfMappedByOptions<TSelf, TSourceKeyProp, TTargetKeyProp>
     ): ManyToManyProp<
         TSelf,
-        "NONNULL",
         any,
         false,
         TSourceKeyProp,

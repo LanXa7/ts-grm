@@ -94,12 +94,11 @@ export interface ReferencePropContract<
 
 export interface CollectionPropContract<
     TModel extends AnyModel, 
-    TNullity extends NullityType,
     TDirection extends DirectionType,
     TMiddleTable extends boolean,
     TBackOptionalModelKey extends string,
     TTargetOptionalModelKey extends string
-> extends AssociatedPropContract<TModel, TNullity, TDirection, TMiddleTable, TBackOptionalModelKey, TTargetOptionalModelKey> {
+> extends AssociatedPropContract<TModel, "NONNULL", TDirection, TMiddleTable, TBackOptionalModelKey, TTargetOptionalModelKey> {
 
     readonly __collectionProp: true;
 }
@@ -130,24 +129,22 @@ export interface ManyToOnePropContract<
 
 export interface OneToManyPropContract<
     TModel extends AnyModel,
-    TNullity extends NullityType,
     TDirection extends DirectionType,
     TMiddleTable extends boolean,
     TBackOptionalModelKey extends string,
     TTargetOptionalModelKey extends string
-> extends CollectionPropContract<TModel, TNullity, TDirection, TMiddleTable, TBackOptionalModelKey, TTargetOptionalModelKey> {
+> extends CollectionPropContract<TModel, TDirection, TMiddleTable, TBackOptionalModelKey, TTargetOptionalModelKey> {
 
     readonly __oneToManyProp: true;
 }
 
 export interface ManyToManyPropContract<
     TModel extends AnyModel,
-    TNullity extends NullityType,
     TDirection extends DirectionType,
     TMiddleTable extends boolean,
     TBackOptionalModelKey extends string,
     TTargetOptionalModelKey extends string
-> extends CollectionPropContract<TModel, TNullity, TDirection, TMiddleTable, TBackOptionalModelKey, TTargetOptionalModelKey> {
+> extends CollectionPropContract<TModel, TDirection, TMiddleTable, TBackOptionalModelKey, TTargetOptionalModelKey> {
 
     readonly __manyToManyProp: true;
 }

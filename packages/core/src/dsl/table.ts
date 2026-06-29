@@ -85,7 +85,7 @@ export type DslMembers<
                 ? never
             : TMembers[K] extends ReferencePropContract<infer TargetModel, any, any, any, any, any>
                 ? ReferenceJoinAction<TModel, TargetModel, AllModelMembers<TargetModel>, TJoinPolicy>
-            : TMembers[K] extends CollectionPropContract<infer TargetModel, any, any, any, any, any>
+            : TMembers[K] extends CollectionPropContract<infer TargetModel, any, any, any, any>
                 ? CollectionJoinAction<TModel, TargetModel, AllModelMembers<TargetModel>, TJoinPolicy>
             : never
         } & DslReferenceKeyMembers<TModel, TMembers, TNullity>
@@ -427,24 +427,25 @@ export type CollectionKeys<TModelMembers> =
     TModelMembers extends object 
         ? { 
             [K in keyof TModelMembers]: 
-                TModelMembers[K] extends CollectionPropContract<any, any, any, any, any, any>
+                TModelMembers[K] extends CollectionPropContract<any, any, any, any, any>
                     ? K
                     : never
         }[keyof TModelMembers] :
         never;
 
-export type FilterType<
+export interface FilterType<
     TParentModel extends ModelLike, 
     TModel extends ModelLike
-> =
-    (ctx: FilterContextType<TParentModel, TModel>) => Predicate | undefined;
+> {
+    (ctx: FilterContextType<TParentModel, TModel>): Predicate | undefined;
+}
 
-export type FilterContextType<
+export interface FilterContextType<
     TParentModel extends ModelLike, 
     TModel extends ModelLike
-> = {
+> {
     readonly source: Table<TParentModel>;
-    readonly target: Table<TModel>
+    readonly target: Table<TModel>;
 };
 
 export type BaseTable<

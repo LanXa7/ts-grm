@@ -3,6 +3,9 @@ import { FlattenMembers } from "@/utils";
 import { ModelContextImpl, ModelImpl } from "@/impl/model_impl";
 import { DatabaseIdentifier } from "./database_identifier";
 import { AssociatedPropContract, AssociationType, EmbeddedPropContract, ScalarPropContract } from "./prop_contract";
+// import { PolymorphismEntry } from "./view/polymorphism";
+// import { ExplicitViewArgs } from "./view";
+// import { ExplicitActionKeys, RestrictKeys } from "./view/common";
 
 export const model: ModelCreator = modelImpl();
 
@@ -122,6 +125,16 @@ export interface Model<
     __type(): {
         model: [TName, TIdKey, TCtor, TAllMembers, TSuperNames] | true
     }
+
+    // when<
+    //     TSelf extends AnyModel,
+    //     TDerivedModel extends AnyModel,
+    //     const TViewArgs extends ExplicitViewArgs<TDerivedModel, DeclaredModelMembers<TDerivedModel>>
+    // >(
+    //     this: TSelf,
+    //     derivedModel: DerivedModel<TDerivedModel, this>,
+    //     args: RestrictKeys<TViewArgs, keyof DeclaredModelMembers<TDerivedModel> | ExplicitActionKeys>
+    // ): PolymorphismEntry<TDerivedModel, TSelf, TViewArgs & {$explicit: true}>;
 }
 
 export type AnyModel = Model<any, any, any, any, any>;
@@ -207,7 +220,7 @@ export type ManyToManyMappedByKeys<TModel extends AnyModel> =
     TModel extends Model<any, any, infer TCtor, any, any>
         ? ExpectedKeysImpl<
             CtorMembers<TCtor>, 
-            ManyToManyProp<any, any, "OWNING", any, any, any>
+            ManyToManyProp<any, "OWNING", any, any, any>
         > & string :
         never;
 

@@ -29,7 +29,7 @@ type NonNullCriteriaMember<TProp, TNullity extends NullityType> =
         ? { [K in keyof R]?: CriteriaMember<R[K], CombinedNullity<TNullity, Nullity>> } & LogicOperators<R, TNullity>
     : TProp extends ReferencePropContract<any, any, any, any, any, any>
         ? ReferenceType<TProp>
-    : TProp extends CollectionPropContract<any, any, any, any, any, any>
+    : TProp extends CollectionPropContract<any, any, any, any, any>
         ? CollectionType<TProp>
     : never;
 
@@ -63,7 +63,7 @@ type CollectionType<TProp> =
     | { $size: number | CmpJson<number> } & ElementMembers<TProp>;
 
 type ElementMembers<TProp> =
-    TProp extends CollectionPropContract<infer TargetModel, any, any, any, any, any>
+    TProp extends CollectionPropContract<infer TargetModel, any, any, any, any>
         ? CriteriaMembers<AllModelMembers<TargetModel>, "NONNULL">
         : never;
 

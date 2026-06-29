@@ -52,7 +52,7 @@ export type ViewBuilder<
                 TMembers[K],
                 K & string
             >
-        : TMembers[K] extends CollectionPropContract<infer R, any, any, any, any, any>
+        : TMembers[K] extends CollectionPropContract<infer R, any, any, any, any>
             ? <X = AllScalarsType<AllModelMembers<R>, TViewNullType>>(
                 fn?: (
                     builder: ViewBuilder<R, AllModelMembers<R>, TViewNullType, {}, {}, any, any>
@@ -295,7 +295,7 @@ export type CollectionActions<
     TLastProp, 
     TLastName extends string
 > =
-    TLastProp extends CollectionPropContract<infer TItemModel, any, any, any, any, any>
+    TLastProp extends CollectionPropContract<infer TItemModel, any, any, any, any>
         ? {
             $where: (
                 fn: (table: EntityTable<TItemModel>) => Predicate | null | undefined
@@ -797,7 +797,7 @@ export type Recursive<
             >(
                 options: TPropName 
                 | (
-                    TMembers[TPropName] extends CollectionPropContract<any, any, any, any, any, any>
+                    TMembers[TPropName] extends CollectionPropContract<any, any, any, any, any>
                         ? {
                             prop: TPropName,
                             alias?: TAlias,
@@ -864,7 +864,7 @@ export type NewRecursiveKindMap<
     TAlias extends string,
     TDepth extends number
 > = TRecursiveKindMap & { 
-    [P in TAlias]: TMembers[TPropName] extends CollectionPropContract<any, any, any, any, any, any>
+    [P in TAlias]: TMembers[TPropName] extends CollectionPropContract<any, any, any, any, any>
             ? TDepth extends -1
                 ? "COLLECTION"
                 : "UNDEFINED_COLLECTION"

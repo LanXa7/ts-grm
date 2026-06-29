@@ -6,7 +6,7 @@ export type Prettify<T> =
         ? Prettify<U>[]
     : T extends object
         ? { 
-            [K in keyof T]: Prettify<T[K]> 
+            -readonly [K in keyof T]: Prettify<T[K]> 
         }
     : T;
 
