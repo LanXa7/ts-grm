@@ -8,6 +8,7 @@ import { ActionKeys, RestrictKeys, TypeWithNullity } from "./common";
 import { EmbeddedPropArgs, MakeEmbeddedDataType } from "./embedded";
 import { MakeReferenceDataType, ReferencePropArgs } from "./reference";
 import { ScalarPropArgs } from "./scalar";
+import { ApplyPolymorphism, PolymorphismArgs } from "./polymorphism";
 //import { ApplyPolymorphism, PolymorphismArgs } from "./polymorphism";
 
 export type ViewArgs<TModel extends AnyModel> = 
@@ -23,9 +24,9 @@ export type ExplicitViewArgs<TModel extends AnyModel, TMembers> =
     & ViewDynmicArgs<TModel, TMembers>;
 
 export interface ExplicitViewStaticArgs<
-    _TModel extends AnyModel
+    TModel extends AnyModel
 > {
-    //readonly $polymorphism?: PolymorphismArgs<TModel>;
+    readonly $polymorphism?: PolymorphismArgs<TModel>;
 }
 
 export type ViewDynmicArgs<TModel extends AnyModel, TMembers> = {
@@ -52,14 +53,13 @@ export type ViewType<TModel extends AnyModel, TViewArgs, TViewNullType extends V
     ViewTypeImpl<TModel, TViewArgs, AllModelMembers<TModel>, TViewNullType>
     
 export type ViewTypeImpl<TModel extends AnyModel, TViewArgs, TMembers, TViewNullType extends ViewNullType> = 
-    // ApplyPolymorphism<
-    //     CoreViewTypeImpl<TModel, TViewArgs, TMembers, TViewNullType>,
-    //     TViewArgs,
-    //     TModel,
-    //     TViewNullType
-    // >;
-    CoreViewTypeImpl<TModel, TViewArgs, TMembers, TViewNullType>;
-
+    ApplyPolymorphism<
+        CoreViewTypeImpl<TModel, TViewArgs, TMembers, TViewNullType>,
+        TViewArgs,
+        TModel,
+        TViewNullType
+    >;
+    
 type CoreViewTypeImpl<TModel extends AnyModel, TViewArgs, TMembers, TViewNullType extends ViewNullType> =
     AllScalarsViewTypeRef<TViewArgs, TMembers, TViewNullType>
     & DynamicViewType<TModel, TViewArgs, TMembers, TViewNullType>;
