@@ -17,7 +17,6 @@ interface ReferencePropArgsImpl<
     TModel extends AnyModel
 > {
     readonly alias?: string;
-    readonly flat?: true | { readonly prefix?: string; };
     readonly fetchType?: ReferenceFetchType;
     readonly where?: (table: EntityTable<TModel>) => Predicate | undefined,
     readonly with?: With<ViewArgs<TModel>>;

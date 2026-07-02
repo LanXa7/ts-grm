@@ -1064,12 +1064,12 @@ export type TargetKeyOf<TProp> =
         : never;
         
 export type DirectTypeOf<TProp> =
-    TProp extends Prop<infer R, any>
+    TProp extends PropContract<infer R, any>
         ? R
         : never;
 
 export type NullityOf<TProp> =
-    TProp extends Prop<any, infer R>
+    TProp extends PropContract<any, infer R>
         ? R
         : never;
 

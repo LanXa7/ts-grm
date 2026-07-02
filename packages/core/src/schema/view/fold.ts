@@ -9,25 +9,22 @@ export type FoldArgs<
     readonly [key: string]: ViewArgsImpl<TModel, TMembers>;
 };
 
-export type ApplyFold<T, TViewArgs, TModel extends AnyModel, TMembers, TViewNullType extends ViewNullType> = 
+export type MakeFoldType<TViewArgs, TModel extends AnyModel, TMembers, TViewNullType extends ViewNullType> = 
     TViewArgs extends { $fold: infer FoldArgs }
-        ? MakeFoldType<
-            T,
+        ? MakeFoldItemType<
             FoldArgs,
             TModel,
             TMembers,
             TViewNullType
         >
-        : T;
+        : object;
 
-type MakeFoldType<
-    T,
+type MakeFoldItemType<
     TFoldArgs, 
     TModel extends AnyModel, 
     TMembers, 
     TViewNullType extends ViewNullType
-> = 
-    T & {
+> = {
         [K in keyof TFoldArgs]: 
             ViewTypeImpl<TModel, TFoldArgs[K], TMembers, TViewNullType>
     };

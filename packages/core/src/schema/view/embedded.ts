@@ -1,4 +1,3 @@
-import { AllScalarsType } from "@/internal_types";
 import { ViewNullType } from "../dto";
 import { AnyModel } from "../model";
 import { ViewArgsImpl, ViewTypeImpl } from "../view";
@@ -11,7 +10,6 @@ export type EmbeddedPropArgs<TModel extends AnyModel, TMembers> =
 
 interface EmbeddedPropArgsImpl<TModel extends AnyModel, TMembers> { 
     readonly alias?: string;
-    readonly flat?: true | { readonly prefix?: string; };
     readonly with?: With<ViewArgsImpl<TModel, TMembers>>;
 };
 
@@ -25,4 +23,4 @@ export type MakeEmbeddedDataType<
         ? ViewTypeImpl<TModel, NestedArgs, TMembers, TViewNullType>
     : TEmbeddedArgs extends { with: With<infer NestedArgs> }
         ? ViewTypeImpl<TModel, NestedArgs, TMembers, TViewNullType>
-    : AllScalarsType<TMembers, TViewNullType>;
+    : ViewTypeImpl<TModel, TMembers, TMembers, TViewNullType>;

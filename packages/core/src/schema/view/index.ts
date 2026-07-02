@@ -3,13 +3,14 @@ import { View, ViewNullType } from "../dto";
 import { AllModelMembers, AnyModel } from "../model";
 import { CollectionPropContract, EmbeddedPropContract, ReferencePropContract, ScalarPropContract } from "../prop_contract";
 import { AllScalarsArgs, AllScalarsViewTypeRef } from "./all_scalars";
-import { CollectionPropArgs, MakeCollectionDataType } from "./collection";
-import { ActionKeys, RestrictKeys, TypeWithNullity } from "./common";
-import { EmbeddedPropArgs, MakeEmbeddedDataType } from "./embedded";
-import { MakeReferenceDataType, ReferencePropArgs } from "./reference";
+import { CollectionPropArgs } from "./collection";
+import { ActionKeys, PropType, RestrictKeys } from "./common";
+import { EmbeddedPropArgs } from "./embedded";
+import { ReferencePropArgs } from "./reference";
 import { ScalarPropArgs } from "./scalar";
 import { ApplyPolymorphism, PolymorphismArgs } from "./polymorphism";
-import { ApplyFold, FoldArgs } from "./fold";
+import { FoldArgs, MakeFoldType } from "./fold";
+import { FlatArgs, MakeFlatType } from "./flat";
 
 export type ViewArgs<TModel extends AnyModel> = 
     ViewArgsImpl<TModel, AllModelMembers<TModel>>;
@@ -28,6 +29,7 @@ export interface ExplicitViewStaticArgs<
     TMembers
 > {
     readonly $polymorphism?: PolymorphismArgs<TModel>;
+    readonly $flat?: FlatArgs<TModel, TMembers>;
     readonly $fold?: FoldArgs<TModel, TMembers>;
 }
 
@@ -55,13 +57,17 @@ export type ViewType<TModel extends AnyModel, TViewArgs, TViewNullType extends V
     ViewTypeImpl<TModel, TViewArgs, AllModelMembers<TModel>, TViewNullType>
     
 export type ViewTypeImpl<TModel extends AnyModel, TViewArgs, TMembers, TViewNullType extends ViewNullType> = 
-    ApplyFold<
-        ApplyPolymorphism<
-            CoreViewTypeImpl<TModel, TViewArgs, TMembers, TViewNullType>,
-            TViewArgs,
-            TModel,
-            TViewNullType
-        >,
+    ApplyPolymorphism<
+        CoreViewTypeImpl<TModel, TViewArgs, TMembers, TViewNullType>,
+        TViewArgs,
+        TModel,
+        TViewNullType
+    > & MakeFoldType<
+        TViewArgs,
+        TModel,
+        TMembers,
+        TViewNullType
+    > & MakeFlatType<
         TViewArgs,
         TModel,
         TMembers,
@@ -77,30 +83,13 @@ type DynamicViewType<TModel extends AnyModel, TViewArgs, TMembers, TViewNullType
         K in keyof TViewArgs as
             K extends ActionKeys
                 ? never
+                : TViewArgs[K] extends { flat: any }
+                    ? never
                 : TViewArgs[K] extends { alias: infer Alias extends string }
                     ? Alias
                     : K
     ]: PropType<TModel, K & keyof TMembers, TViewArgs[K], TMembers, TViewNullType>;
 };
-
-type PropType<TModel extends AnyModel, TKey extends keyof TMembers, TArgs, TMembers, TViewNullType extends ViewNullType> =
-    TMembers[TKey] extends ScalarPropContract<infer R, infer Nullity>
-        ? TypeWithNullity<R, Nullity, TViewNullType>
-    : TMembers[TKey] extends EmbeddedPropContract<infer Props, infer Nullity, any>
-        ? TypeWithNullity<
-            MakeEmbeddedDataType<TArgs, TModel, Props, TViewNullType>,
-            Nullity,
-            TViewNullType
-        >
-    : TMembers[TKey] extends ReferencePropContract<infer TargetModel, infer Nullity, any, any, any, any>
-        ? TypeWithNullity<
-            MakeReferenceDataType<TArgs, TargetModel, TViewNullType>,
-            TArgs extends { where: any} ? "NULLABLE" : Nullity,
-            TViewNullType
-        >
-    : TMembers[TKey] extends CollectionPropContract<infer TargetModel, any, any, any, any>
-        ? MakeCollectionDataType<TArgs, TargetModel, TViewNullType>
-    : string;
 
 export function createView<
     TModel extends AnyModel,
