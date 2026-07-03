@@ -2,7 +2,6 @@ import { createView } from "@/schema/view";
 import { describe, expectTypeOf, it } from "vitest";
 import { BOOK, ORDER_ITEM } from "../../model/model";
 import { TypeOf } from "@/index";
-import { $ } from "@/schema/view/common";
 
 describe("ReferenceTest", () => {
 
@@ -28,12 +27,12 @@ describe("ReferenceTest", () => {
     it("withoutFilter", () => {
         const view = createView(ORDER_ITEM, {
             id: true,
-            order: $({
+            order: ctx => ctx({
                 id: { 
                     alias: "oid",
-                    with: $({
+                    with: ctx => ctx({
                         x: true,
-                        y: $({
+                        y: ctx => ctx({
                             b: true
                         })
                     })
@@ -60,12 +59,12 @@ describe("ReferenceTest", () => {
             id: true,
             order: {
                 where: table => table.id().x.lt(100),
-                with: $({
+                with: ctx => ctx({
                     id: { 
                         alias: "oid",
-                        with: $({
+                        with: ctx => ctx({
                             x: true,
-                            y: $({
+                            y: ctx => ctx({
                                 b: true
                             })
                         })

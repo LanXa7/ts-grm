@@ -2,7 +2,6 @@ import { createView } from "@/schema/view";
 import { describe, expectTypeOf, it } from "vitest";
 import { BOOK, BOOK_STORE } from "../../model/model";
 import { TypeOf } from "@/index";
-import { $ } from "@/schema/view/common";
 
 describe("CollectionTest", () => {
 
@@ -25,7 +24,7 @@ describe("CollectionTest", () => {
     it("with", () => {
         const view = createView(BOOK, {
             id: true,
-            authors: $({
+            authors: ctx => ctx({
                 id: true,
                 gender: true
             })

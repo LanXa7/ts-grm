@@ -98,4 +98,54 @@ describe("PolymorephismTest", () => {
             }
         >();
     });
+
+    it("associatedDeepAndWide", () => {
+        const view = createView(BOOK_STORE, {
+            $allScalars: true,
+            books: ctx => ctx({
+                name: true,
+                edition: true,
+                $polymorphism:
+                    ctx => ctx
+                        .when(PAPER_BOOK, {
+                            size: true
+                        })
+                        .when(ELECTRONIC_BOOK, {
+                            address: true,
+                            $polymorphism: ctx => ctx.when(PDF_ELECTRONIC_BOOK, {
+                                pdfVersion: true
+                            })
+                        })
+            })
+        });
+        expectTypeOf<TypeOf<typeof view>>().toEqualTypeOf<{
+            id: string;
+            name: string;
+            version: number;
+            books: ({
+                __typename: "Book";
+                edition: number;
+                name: string;
+            } | {
+                __typename: "PaperBook";
+                edition: number;
+                name: string;
+                size: {
+                    height: number;
+                    width: number;
+                };
+            } | {
+                __typename: "ElectronicBook";
+                address: string;
+                edition: number;
+                name: string;
+            } | {
+                __typename: "PdfElectronicBook";
+                address: string;
+                edition: number;
+                name: string;
+                pdfVersion: string | null;
+            })[];
+        }>();
+    })
 });

@@ -1,6 +1,6 @@
 import { UnionToIntersection } from "@/utils";
 import { ViewNullType } from "../dto";
-import { AnyModel } from "../model";
+import { AllModelMembers, AnyModel } from "../model";
 import { ActionKeys, TypeWithNullity, With } from "./common";
 import { EmbeddedPropContract, NullityType, ReferencePropContract } from "../prop_contract";
 import { ViewArgs, ViewArgsImpl } from ".";
@@ -30,19 +30,19 @@ export type FlatPropArgs<TModel extends AnyModel, TProp> =
 
 type FlatEmbeddedPropArgs<TModel extends AnyModel, TMembers> =
     true 
-    | With<ViewArgsImpl<TModel, TMembers>>
+    | With<TModel, TMembers, ViewArgsImpl<TModel, TMembers>>
     | FlatEmbeddedPropArgsImpl<TModel, TMembers>;
 
 interface FlatEmbeddedPropArgsImpl<TModel extends AnyModel, TMembers> { 
     readonly prefix?: string;
-    readonly with?: With<ViewArgsImpl<TModel, TMembers>>;
+    readonly with?: With<TModel, TMembers, ViewArgsImpl<TModel, TMembers>>;
 };
 
 type FlatReferencePropArgs<
     TModel extends AnyModel,
 > = 
     true 
-    | With<ViewArgs<TModel>> 
+    | With<TModel, AllModelMembers<TModel>, ViewArgs<TModel>> 
     | FlatReferencePropArgsImpl<TModel>;
 
 interface FlatReferencePropArgsImpl<
@@ -51,7 +51,7 @@ interface FlatReferencePropArgsImpl<
     readonly alias?: string;
     readonly fetchType?: ReferenceFetchType;
     readonly where?: (table: EntityTable<TModel>) => Predicate | undefined,
-    readonly with?: With<ViewArgs<TModel>>;
+    readonly with?: With<TModel, AllModelMembers<TModel>, ViewArgs<TModel>>;
 }
 
 export type MakeFlatType<

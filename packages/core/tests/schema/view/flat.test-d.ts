@@ -1,7 +1,6 @@
 import { createView } from "@/schema/view";
 import { describe, expectTypeOf, it } from "vitest";
 import { AUTHOR, BOOK } from "../../model/model";
-import { $ } from "@/schema/view/common";
 import { TypeOf } from "@/index";
 
 describe("FlatTest", () => {
@@ -11,7 +10,7 @@ describe("FlatTest", () => {
             id: true,
             name: true,
             $flat: {
-                store: $({
+                store: ctx => ctx({
                     version: true,
                     name: true
                 })

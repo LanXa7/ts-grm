@@ -1,4 +1,3 @@
-import { suppressUnused } from "@/index";
 import { ViewArgsImpl } from ".";
 import { ViewNullType } from "../dto";
 import { AnyModel } from "../model";
@@ -18,18 +17,19 @@ export type TypeWithNullity<
             ? T | null
             : T | undefined;
 
-export interface With<TArgs extends ViewArgsImpl<AnyModel, any>> {
+export type With<
+    TModel extends AnyModel, 
+    TMembers,
+    TArgs extends ViewArgsImpl<TModel, TMembers>
+> = (ctx: WithContext<TModel, TMembers>) => TArgs
 
-    readonly __with: true;
-
-    readonly __fnPtr: () => TArgs;
-}
-
-export function $<const TArgs extends ViewArgsImpl<AnyModel, any>>(
-    args: TArgs
-): With<TArgs> {
-    suppressUnused(args);
-    throw new Error("Implement later"); 
+export interface WithContext<
+    TModel extends AnyModel, 
+    TMembers,
+> {
+    <const TArgs extends ViewArgsImpl<TModel, TMembers>>(
+        args: RestrictKeys<TArgs, keyof TMembers | ActionKeys>
+    ): TArgs;
 }
 
 export type ActionKeys = ExplicitActionKeys | "$explicit";

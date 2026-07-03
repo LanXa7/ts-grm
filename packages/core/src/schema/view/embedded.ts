@@ -5,12 +5,12 @@ import { With } from "./common";
 
 export type EmbeddedPropArgs<TModel extends AnyModel, TMembers> =
     true 
-    | With<ViewArgsImpl<TModel, TMembers>>
+    | With<TModel, TMembers, ViewArgsImpl<TModel, TMembers>>
     | EmbeddedPropArgsImpl<TModel, TMembers>;
 
 interface EmbeddedPropArgsImpl<TModel extends AnyModel, TMembers> { 
     readonly alias?: string;
-    readonly with?: With<ViewArgsImpl<TModel, TMembers>>;
+    readonly with?: With<TModel, TMembers, ViewArgsImpl<TModel, TMembers>>;
 };
 
 export type MakeEmbeddedDataType<
@@ -19,8 +19,8 @@ export type MakeEmbeddedDataType<
     TMembers, 
     TViewNullType extends ViewNullType
 > =
-    TEmbeddedArgs extends With<infer NestedArgs>
+    TEmbeddedArgs extends With<TModel, TMembers, infer NestedArgs>
         ? ViewTypeImpl<TModel, NestedArgs, TMembers, TViewNullType>
-    : TEmbeddedArgs extends { with: With<infer NestedArgs> }
+    : TEmbeddedArgs extends { with: With<TModel, TMembers, infer NestedArgs> }
         ? ViewTypeImpl<TModel, NestedArgs, TMembers, TViewNullType>
     : ViewTypeImpl<TModel, TMembers, TMembers, TViewNullType>;

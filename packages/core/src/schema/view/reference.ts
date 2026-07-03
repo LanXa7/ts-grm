@@ -10,7 +10,7 @@ export type ReferencePropArgs<
     TModel extends AnyModel,
 > = 
     true 
-    | With<ViewArgs<TModel>> 
+    | With<TModel, AllModelMembers<TModel>, ViewArgs<TModel>> 
     | ReferencePropArgsImpl<TModel>;
 
 interface ReferencePropArgsImpl<
@@ -19,7 +19,7 @@ interface ReferencePropArgsImpl<
     readonly alias?: string;
     readonly fetchType?: ReferenceFetchType;
     readonly where?: (table: EntityTable<TModel>) => Predicate | undefined,
-    readonly with?: With<ViewArgs<TModel>>;
+    readonly with?: With<TModel, AllModelMembers<TModel>, ViewArgs<TModel>>;
 }
 
 export type MakeReferenceDataType<
@@ -27,9 +27,9 @@ export type MakeReferenceDataType<
     TModel extends AnyModel,
     TViewNullType extends ViewNullType
 > =
-    TReferenceArgs extends With<infer NestedArgs>
+    TReferenceArgs extends With<TModel, AllModelMembers<TModel>, infer NestedArgs>
         ? ReferenceDataTypeImpl<NestedArgs, TModel, TViewNullType>
-    : TReferenceArgs extends { with: With<infer NestedArgs> }
+    : TReferenceArgs extends { with: With<TModel, AllModelMembers<TModel>, infer NestedArgs> }
         ? ReferenceDataTypeImpl<NestedArgs, TModel, TViewNullType>
     : ReferenceDataTypeImpl<true, TModel, TViewNullType>;
 

@@ -3,7 +3,6 @@ import { describe, it } from "node:test";
 import { AUTHOR } from "../../model/model";
 import { expectTypeOf } from "vitest";
 import { TypeOf } from "@/index";
-import { $ } from "@/schema/view/common";
 
 describe("EmbeddedTest", () => {
 
@@ -24,7 +23,7 @@ describe("EmbeddedTest", () => {
     it("nested", () => {
         const view = createView(AUTHOR, {
             id: true,
-            name: $({
+            name: ctx => ctx({
                 firstName: true
             })
         });
@@ -41,7 +40,7 @@ describe("EmbeddedTest", () => {
             id: true,
             name: {
                 alias: "full",
-                with: $({
+                with: ctx => ctx({
                     firstName: { alias: "first" },
                     lastName: { alias: "last" }
                 })
