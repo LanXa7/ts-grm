@@ -1,7 +1,19 @@
 import { Prettify, suppressUnused } from "@/utils";
 import { View, ViewNullType } from "../dto";
 import { AllModelMembers, AnyModel } from "../model";
-import { CollectionPropContract, EmbeddedPropContract, ReferencePropContract, ScalarPropContract } from "../prop_contract";
+import { 
+    ScalarPropContract,
+    EmbeddedPropContract, 
+    ReferencePropContract,
+    CollectionPropContract,
+    FormulaPropContract, 
+    CalculatedValuePropContract, 
+    ParameterizedCalculatedValuePropContract,  
+    CalculatedReferencePropContract, 
+    ParameterizedCalculatedReferencePropContract, 
+    CalculatedCollectionPropContract, 
+    ParameterizedCalculatedCollectionPropContract
+} from "../prop_contract";
 import { AllScalarsArgs, AllScalarsViewTypeRef } from "./all_scalars";
 import { CollectionPropArgs } from "./collection";
 import { ActionKeys, PropType, RestrictKeys } from "./common";
@@ -12,6 +24,7 @@ import { ApplyPolymorphism, PolymorphismArgs } from "./polymorphism";
 import { FoldArgs, MakeFoldType } from "./fold";
 import { FlatArgs, MakeFlatType } from "./flat";
 import { ApplyRecursive, RecursiveArgs } from "./recursive";
+import { CalcuatedAssociationArgs, MakeParameterizedCalculatedAssociations, ParameterizedCalcuatedAssociationArgs, ParameterizedCalculatedValueArgs } from "./calculator";
 
 export type ViewArgs<TModel extends AnyModel> = 
     ViewArgsImpl<TModel, AllModelMembers<TModel>>;
@@ -53,6 +66,20 @@ export type PropArgs<TModel extends AnyModel, TProp> =
         ? ReferencePropArgs<TargetModel>
     : TProp extends CollectionPropContract<infer TargetModel, any, any, any, any>
         ? CollectionPropArgs<TargetModel>
+    : TProp extends FormulaPropContract<any, any>
+        ? ScalarPropArgs
+    : TProp extends CalculatedValuePropContract<any, any>
+        ? ScalarPropArgs
+    : TProp extends ParameterizedCalculatedValuePropContract<infer Parameter, any, any>
+        ? ParameterizedCalculatedValueArgs<Parameter>
+    : TProp extends CalculatedReferencePropContract<infer TargetModel, any>
+        ? CalcuatedAssociationArgs<TargetModel>
+    : TProp extends ParameterizedCalculatedReferencePropContract<infer Parameter, infer TargetModel, any>
+        ? ParameterizedCalcuatedAssociationArgs<Parameter, TargetModel>
+    : TProp extends CalculatedCollectionPropContract<infer TargetModel>
+        ? CalcuatedAssociationArgs<TargetModel>
+    : TProp extends ParameterizedCalculatedCollectionPropContract<infer Parameter, infer TargetModel>
+        ? ParameterizedCalcuatedAssociationArgs<Parameter, TargetModel>
     : never;
 
 export type ViewType<TModel extends AnyModel, TViewArgs, TViewNullType extends ViewNullType> =
@@ -92,11 +119,13 @@ type DynamicViewType<TModel extends AnyModel, TViewArgs, TMembers, TViewNullType
                 ? never
                 : TViewArgs[K] extends { flat: any }
                     ? never
+                : TViewArgs[K] extends any[]
+                    ? never
                 : TViewArgs[K] extends { alias: infer Alias extends string }
                     ? Alias
                     : K
     ]: PropType<TModel, K & keyof TMembers, TViewArgs[K], TMembers, TViewNullType>;
-};
+} & MakeParameterizedCalculatedAssociations<TViewArgs, TMembers, TViewNullType>;
 
 export function createView<
     TModel extends AnyModel,

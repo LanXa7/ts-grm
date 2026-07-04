@@ -1,7 +1,20 @@
 import { ViewArgsImpl } from ".";
 import { ViewNullType } from "../dto";
 import { AnyModel } from "../model";
-import { NullityType, ScalarPropContract, EmbeddedPropContract, ReferencePropContract, CollectionPropContract } from "../prop_contract";
+import { 
+    NullityType, 
+    ScalarPropContract, 
+    EmbeddedPropContract, 
+    ReferencePropContract, 
+    CollectionPropContract, 
+    FormulaPropContract,
+    CalculatedValuePropContract, 
+    ParameterizedCalculatedValuePropContract,  
+    CalculatedReferencePropContract, 
+    ParameterizedCalculatedReferencePropContract, 
+    CalculatedCollectionPropContract, 
+    ParameterizedCalculatedCollectionPropContract
+} from "../prop_contract";
 import { MakeEmbeddedDataType } from "./embedded";
 import { MakeReferenceDataType } from "./reference";
 import { MakeCollectionDataType } from "./collection";
@@ -62,5 +75,27 @@ export type PropType<
             TViewNullType
         >
     : TMembers[TKey] extends CollectionPropContract<infer TargetModel, any, any, any, any>
+        ? MakeCollectionDataType<TArgs, TargetModel, TViewNullType>
+    : TMembers[TKey] extends FormulaPropContract<infer R, infer Nullity>
+        ? TypeWithNullity<R, Nullity, TViewNullType>
+    : TMembers[TKey] extends CalculatedValuePropContract<infer R, infer Nullity>
+        ? TypeWithNullity<R, Nullity, TViewNullType>
+    : TMembers[TKey] extends ParameterizedCalculatedValuePropContract<any, infer R, infer Nullity>
+        ? TypeWithNullity<R, Nullity, TViewNullType>
+    : TMembers[TKey] extends CalculatedReferencePropContract<infer TargetModel, infer Nullity>
+        ? TypeWithNullity<
+            MakeReferenceDataType<TArgs, TargetModel, TViewNullType>,
+            Nullity,
+            TViewNullType
+        >
+    : TMembers[TKey] extends ParameterizedCalculatedReferencePropContract<any, infer TargetModel, infer Nullity>
+        ? TypeWithNullity<
+            MakeReferenceDataType<TArgs, TargetModel, TViewNullType>,
+            Nullity,
+            TViewNullType
+        >
+    : TMembers[TKey] extends CalculatedCollectionPropContract<infer TargetModel>
+        ? MakeCollectionDataType<TArgs, TargetModel, TViewNullType>
+    : TMembers[TKey] extends ParameterizedCalculatedCollectionPropContract<any, infer TargetModel>
         ? MakeCollectionDataType<TArgs, TargetModel, TViewNullType>
     : never;
