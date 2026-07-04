@@ -23,7 +23,7 @@ export type CalcuatedAssociationArgs<TModel extends AnyModel> =
 
 export type ParameterizedCalcuatedAssociationArgs<TParameter, TModel extends AnyModel> =
     AliasOptionalArgs<TParameter, TModel> 
-    | ReadonlyArray<AliasRequirdArgs<TParameter, TModel>>;
+    | ReadonlyArray<AliasRequiredArgs<TParameter, TModel>>;
 
 interface AliasOptionalArgs<TParameter, TModel extends AnyModel> {
     readonly alias?: string;
@@ -31,7 +31,7 @@ interface AliasOptionalArgs<TParameter, TModel extends AnyModel> {
     readonly with?: With<TModel, AllModelMembers<TModel>, ViewArgs<TModel>>;
 }
 
-interface AliasRequirdArgs<TParameter, TModel extends AnyModel> {
+interface AliasRequiredArgs<TParameter, TModel extends AnyModel> {
     readonly alias: string;
     readonly parameter: TParameter;
     readonly with?: With<TModel, AllModelMembers<TModel>, ViewArgs<TModel>>;
