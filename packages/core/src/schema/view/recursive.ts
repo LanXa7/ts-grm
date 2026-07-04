@@ -1,5 +1,16 @@
+import { EntityTable, Predicate } from "@/dsl";
 import { AnyModel, IsDerivedModelOf, ModelName } from "../model";
-import { AssociatedPropContract } from "../prop_contract";
+import { AssociatedPropContract, CollectionPropContract, ReferencePropContract } from "../prop_contract";
+import { ModelOrder } from "../order";
+import { ViewNullType } from "../dto";
+import { TypeWithNullity } from "./common";
+
+export type RecursiveArgs<TModel extends AnyModel, TMembers> =
+    {
+        [
+            K in RecursiveKeys<TModel, TMembers>
+        ]?: RecursivePropArgs<TMembers[K & keyof TMembers]>;
+    };
 
 export type RecursiveKeys<TModel extends AnyModel, TMembers> = 
     keyof {
@@ -24,3 +35,99 @@ type Extends<
     ModelName<TModel1> extends ModelName<TModel2>
         ? true
         : IsDerivedModelOf<TModel1, TModel2>;
+
+type RecursivePropArgs<TProp> = 
+    TProp extends ReferencePropContract<infer TargetModel, any, any, any, any, any>
+        ? RecursiveReferencePropArgs<TargetModel>
+    : TProp extends CollectionPropContract<infer TargetModel, any, any, any, any>
+        ? RecursiveCollectionPropArgs<TargetModel>
+    : never;
+
+type RecursiveReferencePropArgs<TModel extends AnyModel> = 
+    true | {
+        readonly alias?: string;
+        readonly depth?: number;
+        readonly filter?: (table: EntityTable<TModel>) => Predicate | null;
+    };
+
+type RecursiveCollectionPropArgs<TModel extends AnyModel> = 
+    true | {
+        readonly alias?: string;
+        readonly depth?: number;
+        readonly filter?: (table: EntityTable<TModel>) => Predicate | null;
+        readonly orders?: ReadonlyArray<ModelOrder<TModel>>;
+        readonly limit?: number;
+    };
+
+export type ApplyRecursive<
+    T, 
+    TViewArgs,
+    TMembers,
+    TViewNullType extends ViewNullType
+> = 
+    TViewArgs extends { $recursive: infer RecursiveArgs }
+        ? T & {
+            [K in keyof RecursiveArgs
+                as RecursiveArgs[K] extends { alias: infer Alias extends string }
+                    ? Alias
+                    : K
+            ]: 
+                TMembers[K & keyof TMembers] extends ReferencePropContract<any, any, any, any, any, any>
+                    ? ApplyRecursiveReference<
+                        T, 
+                        K & string, 
+                        RecursiveArgs[K],
+                        TViewNullType
+                    >
+                    : ApplyRecursiveCollection<
+                        T, 
+                        K & string, 
+                        RecursiveArgs[K],
+                        TViewNullType
+                    >
+        }
+        : T;
+
+type ApplyRecursiveReference<
+    T,
+    TName extends string,
+    TRecursivePropArgs,
+    TViewNullType extends ViewNullType
+> = 
+    TypeWithNullity<
+        T & {
+            [
+                K in TName 
+                as 
+                    TRecursivePropArgs extends { alias: infer Alias extends string }
+                        ? Alias
+                        : TName
+            ]: ApplyRecursiveReference<T, TName, TRecursivePropArgs, TViewNullType>
+        },
+        "NULLABLE",
+        TViewNullType
+    >;
+
+type ApplyRecursiveCollection<
+    T,
+    TName extends string,
+    TRecursivePropArgs,
+    TViewNullType extends ViewNullType
+> = 
+    TypeWithNullity<
+        Array<
+            T & {
+                [
+                    K in TName 
+                    as 
+                        TRecursivePropArgs extends { alias: infer Alias extends string }
+                            ? Alias
+                            : TName
+                ]: ApplyRecursiveCollection<T, TName, TRecursivePropArgs, TViewNullType>
+            }
+        >,
+        TRecursivePropArgs extends { depth: number }
+            ? "NULLABLE"
+            : "NONNULL",
+        TViewNullType
+    >;

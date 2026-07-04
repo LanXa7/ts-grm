@@ -11,6 +11,7 @@ import { ScalarPropArgs } from "./scalar";
 import { ApplyPolymorphism, PolymorphismArgs } from "./polymorphism";
 import { FoldArgs, MakeFoldType } from "./fold";
 import { FlatArgs, MakeFlatType } from "./flat";
+import { ApplyRecursive, RecursiveArgs } from "./recursive";
 
 export type ViewArgs<TModel extends AnyModel> = 
     ViewArgsImpl<TModel, AllModelMembers<TModel>>;
@@ -31,6 +32,7 @@ export interface ExplicitViewStaticArgs<
     readonly $polymorphism?: PolymorphismArgs<TModel>;
     readonly $flat?: FlatArgs<TModel, TMembers>;
     readonly $fold?: FoldArgs<TModel, TMembers>;
+    readonly $recursive?: RecursiveArgs<TModel, TMembers>;
 }
 
 export type ViewDynmicArgs<TModel extends AnyModel, TMembers> = {
@@ -57,19 +59,24 @@ export type ViewType<TModel extends AnyModel, TViewArgs, TViewNullType extends V
     ViewTypeImpl<TModel, TViewArgs, AllModelMembers<TModel>, TViewNullType>
     
 export type ViewTypeImpl<TModel extends AnyModel, TViewArgs, TMembers, TViewNullType extends ViewNullType> = 
-    ApplyPolymorphism<
-        CoreViewTypeImpl<TModel, TViewArgs, TMembers, TViewNullType>,
+    ApplyRecursive<
+        ApplyPolymorphism<
+            CoreViewTypeImpl<TModel, TViewArgs, TMembers, TViewNullType>,
+            TViewArgs,
+            TModel,
+            TViewNullType
+        > & MakeFoldType<
+            TViewArgs,
+            TModel,
+            TMembers,
+            TViewNullType
+        > & MakeFlatType<
+            TViewArgs,
+            TModel,
+            TMembers,
+            TViewNullType
+        >,
         TViewArgs,
-        TModel,
-        TViewNullType
-    > & MakeFoldType<
-        TViewArgs,
-        TModel,
-        TMembers,
-        TViewNullType
-    > & MakeFlatType<
-        TViewArgs,
-        TModel,
         TMembers,
         TViewNullType
     >;
