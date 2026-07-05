@@ -1,12 +1,30 @@
 import { UnionToIntersection } from "@/utils";
 import { ViewNullType } from "../dto";
 import { AllModelMembers, AnyModel } from "../model";
-import { ActionKeys, TypeWithNullity, With } from "./common";
+import { ActionKeys, RestrictKeys, TypeWithNullity, With } from "./common";
 import { EmbeddedPropContract, NullityType, ReferencePropContract } from "../prop_contract";
 import { ViewArgs, ViewArgsImpl } from ".";
 import { EntityTable, NullityOf, Predicate, ReferenceFetchType } from "@/internal_types";
 import { MakeEmbeddedDataType } from "./embedded";
 import { MakeReferenceDataType } from "./reference";
+
+export interface Flat<
+    TModel extends AnyModel, 
+    TMembers,
+    TArgs extends FlatArgs<TModel, TMembers>
+> {
+
+    (ctx: FlatContext<TModel, TMembers>): TArgs;
+}
+
+interface FlatContext<
+    TModel extends AnyModel, 
+    TMembers,
+> {
+    <const TArgs extends FlatArgs<TModel, TMembers>>(
+        args: RestrictKeys<TArgs, keyof FlatArgs<TModel, TMembers>>
+    ): TArgs;
+}
 
 export type FlatArgs<TModel extends AnyModel, TMembers> = {
     readonly [
@@ -56,7 +74,7 @@ interface FlatReferencePropArgsImpl<
 
 export type MakeFlatType<
     TViewArgs, TModel extends AnyModel, TMembers, TViewNullType extends ViewNullType> =
-    TViewArgs extends { readonly $flat: infer FlatArgs }
+    TViewArgs extends { readonly $flat: Flat<TModel, TMembers, infer FlatArgs> }
         ? UnionToIntersection<
             Values<
                 MakeFlatItemType<FlatArgs, TModel, TMembers, TViewNullType>

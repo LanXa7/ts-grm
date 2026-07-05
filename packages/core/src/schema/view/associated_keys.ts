@@ -1,7 +1,23 @@
 import { ViewNullType } from "../dto";
-import { AllModelMembers, AnyModel, RequiredModelKey } from "../model";
+import { AllModelMembers, RequiredModelKey } from "../model";
 import { CollectionPropContract, ReferencePropContract } from "../prop_contract";
-import { ActionKeys, PropType, TypeWithNullity } from "./common";
+import { ActionKeys, PropType, RestrictKeys, TypeWithNullity } from "./common";
+
+export interface AssociatedKeys<
+    TMembers, 
+    TArgs extends AssociatedKeysArgs<TMembers>
+> {
+    (
+        ctx: AssociatedKeysContext<TMembers>
+    ): TArgs;
+}
+
+interface AssociatedKeysContext<TMembers> {
+
+    <const TArgs extends AssociatedKeysArgs<TMembers>>(
+        args: RestrictKeys<TArgs, keyof AssociatedKeysArgs<TMembers>>
+    ): TArgs;
+}
 
 export type AssociatedKeysArgs<TMembers> =
     {
@@ -22,7 +38,7 @@ export type AssociatedKeysArgs<TMembers> =
     };
 
 export type AssociatedKeyTypeRef<TViewArgs, TMembers, TViewNullType extends ViewNullType> = 
-    TViewArgs extends { $associatedKeys: infer AssociatedKeysArgs }
+    TViewArgs extends { $associatedKeys: AssociatedKeys<TMembers, infer AssociatedKeysArgs> }
         ? { 
             [
                 K in keyof AssociatedKeysArgs as

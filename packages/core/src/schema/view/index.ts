@@ -22,11 +22,11 @@ import { ReferencePropArgs } from "./reference";
 import { ScalarPropArgs } from "./scalar";
 import { ApplyPolymorphism, PolymorphismArgs } from "./polymorphism";
 import { FoldArgs, MakeFoldType } from "./fold";
-import { FlatArgs, MakeFlatType } from "./flat";
+import { Flat, FlatArgs, MakeFlatType } from "./flat";
 import { ApplyRecursive, RecursiveArgs } from "./recursive";
 import { CalcuatedAssociationArgs, MakeParameterizedCalculatedAssociations, ParameterizedCalcuatedAssociationArgs, ParameterizedCalculatedValueArgs } from "./calculator";
 import { RefereenceKeyPropType, ReferenceKeys, ReferenceKeysArgs } from "./reference_key";
-import { AssociatedKeyTypeRef, AssociatedKeysArgs } from "./associated_keys";
+import { AssociatedKeyTypeRef, AssociatedKeysArgs, AssociatedKeys } from "./associated_keys";
 
 export type ViewArgs<TModel extends AnyModel> = 
     ViewArgsImpl<TModel, AllModelMembers<TModel>>;
@@ -45,9 +45,9 @@ export interface ExplicitViewStaticArgs<
     TMembers
 > {
     readonly $polymorphism?: PolymorphismArgs<TModel>;
-    readonly $flat?: FlatArgs<TModel, TMembers>;
+    readonly $flat?: Flat<TModel, TMembers, FlatArgs<TModel, TMembers>>;
     readonly $fold?: FoldArgs<TModel, TMembers>;
-    readonly $associatedKeys?: AssociatedKeysArgs<TMembers>;
+    readonly $associatedKeys?: AssociatedKeys<TMembers, AssociatedKeysArgs<TMembers>>;
     readonly $recursive?: RecursiveArgs<TModel, TMembers>;
 }
 

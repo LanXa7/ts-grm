@@ -9,12 +9,12 @@ describe("FlatTest", () => {
         const view = createView(BOOK, {
             id: true,
             name: true,
-            $flat: {
+            $flat: ctx => ctx({
                 store: ctx => ctx({
                     version: true,
                     name: true
                 })
-            }
+            })
         });
         expectTypeOf<TypeOf<typeof view>>().toEqualTypeOf<{
             id: number;
@@ -27,11 +27,11 @@ describe("FlatTest", () => {
     it("withEmptyPrefix", () => {
         const view = createView(AUTHOR, {
             id: true,
-            $flat: {
+            $flat: ctx => ctx({
                 name: {
                     prefix: ""
                 }
-            }
+            })
         });
         expectTypeOf<TypeOf<typeof view>>().toEqualTypeOf<{
             id: number;
@@ -43,11 +43,11 @@ describe("FlatTest", () => {
     it("withEmptyPrefix", () => {
         const view = createView(AUTHOR, {
             id: true,
-            $flat: {
+            $flat: ctx => ctx({
                 name: {
                     prefix: "the"
                 }
-            }
+            })
         });
         expectTypeOf<TypeOf<typeof view>>().toEqualTypeOf<{
             id: number;

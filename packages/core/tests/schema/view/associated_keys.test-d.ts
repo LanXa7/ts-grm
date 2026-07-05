@@ -8,10 +8,10 @@ describe("AssociatedKeysTest", () => {
     it("scalarKey", () => {
         const view = createView(BOOK, {
             id: true,
-            $associatedKeys: {
+            $associatedKeys: ctx => ctx({
                 store: true,
                 authors: { alias: "authorIds" }
-            }
+            })
         });
         expectTypeOf<TypeOf<typeof view>>().toEqualTypeOf<{
             id: number;
@@ -23,10 +23,10 @@ describe("AssociatedKeysTest", () => {
     it("embeddedKeys", () => {
         const view = createView(ORDER, {
             id: true,
-            $associatedKeys: {
+            $associatedKeys: ctx => ctx({
                 tags: { alias: "tagIds" },
                 comments: { alias: "commentIds" }
-            }
+            })
         });
         expectTypeOf<TypeOf<typeof view>>().toEqualTypeOf<{
             id: {
