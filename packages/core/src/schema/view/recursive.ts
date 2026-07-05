@@ -3,7 +3,22 @@ import { AnyModel, IsDerivedModelOf, ModelName } from "../model";
 import { AssociatedPropContract, CollectionPropContract, ReferencePropContract } from "../prop_contract";
 import { ModelOrder } from "../order";
 import { ViewNullType } from "../dto";
-import { TypeWithNullity } from "./common";
+import { RestrictKeys, TypeWithNullity } from "./common";
+
+export interface Recursive<
+    TModel extends AnyModel, 
+    TMembers,
+    TArgs extends RecursiveArgs<TModel, TMembers>
+> {
+    (ctx: RecursiveContext<TModel, TMembers>): TArgs;
+}
+
+interface RecursiveContext<TModel extends AnyModel, TMembers> {
+
+    <const TArgs extends RecursiveArgs<TModel, TMembers>>(
+        args: RestrictKeys<TArgs, keyof RecursiveArgs<TModel, TMembers>>
+    ): TArgs;
+}
 
 export type RecursiveArgs<TModel extends AnyModel, TMembers> =
     {
@@ -65,7 +80,7 @@ export type ApplyRecursive<
     TMembers,
     TViewNullType extends ViewNullType
 > = 
-    TViewArgs extends { $recursive: infer RecursiveArgs }
+    TViewArgs extends { $recursive: Recursive<infer _, TMembers, infer RecursiveArgs> }
         ? T & {
             [K in keyof RecursiveArgs
                 as RecursiveArgs[K] extends { alias: infer Alias extends string }

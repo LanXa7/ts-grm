@@ -23,7 +23,7 @@ import { ScalarPropArgs } from "./scalar";
 import { ApplyPolymorphism, PolymorphismArgs } from "./polymorphism";
 import { FoldArgs, MakeFoldType } from "./fold";
 import { Flat, FlatArgs, MakeFlatType } from "./flat";
-import { ApplyRecursive, RecursiveArgs } from "./recursive";
+import { ApplyRecursive, Recursive, RecursiveArgs } from "./recursive";
 import { CalcuatedAssociationArgs, MakeParameterizedCalculatedAssociations, ParameterizedCalcuatedAssociationArgs, ParameterizedCalculatedValueArgs } from "./calculator";
 import { RefereenceKeyPropType, ReferenceKeys, ReferenceKeysArgs } from "./reference_key";
 import { AssociatedKeyTypeRef, AssociatedKeysArgs, AssociatedKeys } from "./associated_keys";
@@ -48,7 +48,7 @@ export interface ExplicitViewStaticArgs<
     readonly $flat?: Flat<TModel, TMembers, FlatArgs<TModel, TMembers>>;
     readonly $fold?: FoldArgs<TModel, TMembers>;
     readonly $associatedKeys?: AssociatedKeys<TMembers, AssociatedKeysArgs<TMembers>>;
-    readonly $recursive?: RecursiveArgs<TModel, TMembers>;
+    readonly $recursive?: Recursive<TModel, TMembers, RecursiveArgs<TModel, TMembers>>;
 }
 
 export type ViewDynmicArgs<TModel extends AnyModel, TMembers> = {

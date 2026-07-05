@@ -10,10 +10,10 @@ describe("RecursiveTest", () => {
         const view = createView(TREE_NODE, {
             id: true,
             name: true,
-            $recursive: {
+            $recursive: ctx => ctx({
                 parentNode: true,
                 childNodes: true
-            }
+            })
         });
         type ViewType = TypeOf<typeof view>;
         expectTypeOf<keyof ViewType>().toEqualTypeOf<
@@ -37,10 +37,10 @@ describe("RecursiveTest", () => {
         const view = createView(TREE_NODE, {
             id: true,
             name: true,
-            $recursive: {
+            $recursive: ctx => ctx({
                 parentNode: { alias: "upObj"},
                 childNodes: { alias: "downObjs" }
-            }
+            })
         });
         type ViewType = TypeOf<typeof view>;
         expectTypeOf<keyof ViewType>().toEqualTypeOf<
@@ -64,10 +64,10 @@ describe("RecursiveTest", () => {
         const view = createView(TREE_NODE, {
             id: true,
             name: true,
-            $recursive: {
+            $recursive: ctx => ctx({
                 parentNode: { alias: "upObj"},
                 childNodes: { alias: "downObjs", depth: 3 }
-            }
+            })
         });
         type ViewType = TypeOf<typeof view>;
         expectTypeOf<keyof ViewType>().toEqualTypeOf<
