@@ -26,6 +26,7 @@ import { FlatArgs, MakeFlatType } from "./flat";
 import { ApplyRecursive, RecursiveArgs } from "./recursive";
 import { CalcuatedAssociationArgs, MakeParameterizedCalculatedAssociations, ParameterizedCalcuatedAssociationArgs, ParameterizedCalculatedValueArgs } from "./calculator";
 import { RefereenceKeyPropType, ReferenceKeys, ReferenceKeysArgs } from "./reference_key";
+import { AssociatedKeyTypeRef, AssociatedKeysArgs } from "./associated_keys";
 
 export type ViewArgs<TModel extends AnyModel> = 
     ViewArgsImpl<TModel, AllModelMembers<TModel>>;
@@ -46,6 +47,7 @@ export interface ExplicitViewStaticArgs<
     readonly $polymorphism?: PolymorphismArgs<TModel>;
     readonly $flat?: FlatArgs<TModel, TMembers>;
     readonly $fold?: FoldArgs<TModel, TMembers>;
+    readonly $associatedKeys?: AssociatedKeysArgs<TMembers>;
     readonly $recursive?: RecursiveArgs<TModel, TMembers>;
 }
 
@@ -111,6 +113,7 @@ export type ViewTypeImpl<TModel extends AnyModel, TViewArgs, TMembers, TViewNull
     
 type CoreViewTypeImpl<TModel extends AnyModel, TViewArgs, TMembers, TViewNullType extends ViewNullType> =
     AllScalarsViewTypeRef<TViewArgs, TMembers, TViewNullType>
+    & AssociatedKeyTypeRef<TViewArgs, TMembers, TViewNullType>
     & DynamicViewType<TModel, TViewArgs, TMembers, TViewNullType>;
 
 type DynamicViewType<TModel extends AnyModel, TViewArgs, TMembers, TViewNullType extends ViewNullType> = {

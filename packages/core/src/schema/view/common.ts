@@ -48,7 +48,7 @@ export interface WithContext<
 
 export type ActionKeys = ExplicitActionKeys | "$explicit";
 
-export type ExplicitActionKeys = "$allScalars" | "$flat" | "$fold" | "$polymorphism" | "$recursive";
+export type ExplicitActionKeys = "$allScalars" | "$flat" | "$fold" | "$polymorphism" | "$associatedKeys" | "$recursive";
 
 export type RestrictKeys<T, TKeys extends string | number | symbol> = {
     [K in keyof T]: K extends TKeys ? T[K] : never;
