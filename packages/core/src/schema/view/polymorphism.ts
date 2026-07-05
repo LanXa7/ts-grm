@@ -3,6 +3,7 @@ import { ExplicitViewArgs, ViewTypeImpl } from ".";
 import { ViewNullType } from "../dto";
 import { AnyModel, DeclaredModelMembers, DerivedModel, ModelName, ModelSuperNames } from "../model";
 import { ExplicitActionKeys, RestrictKeys } from "./common";
+import { ReferenceKeys } from "./reference_key";
 
 export type PolymorphismArgs<TModel extends AnyModel> =
     (ctx: PolymorphismContext<TModel, []>) => PolymorphismContext<TModel, any>;
@@ -19,7 +20,7 @@ export interface PolymorphismContext<
         const TArgs extends ExplicitViewArgs<TDerivedModel, DeclaredModelMembers<TDerivedModel>>
     >(
         derivedModel: DerivedModel<TDerivedModel, TModel>,
-        args: RestrictKeys<TArgs, keyof DeclaredModelMembers<TDerivedModel> | ExplicitActionKeys>
+        args: RestrictKeys<TArgs, keyof DeclaredModelMembers<TDerivedModel> | ReferenceKeys<DeclaredModelMembers<TDerivedModel>> | ExplicitActionKeys>
     ): PolymorphismContext<TModel, [...TEntries, PolymorphismEntry<TDerivedModel, TModel, TArgs>]>;
 }
 

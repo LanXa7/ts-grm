@@ -18,6 +18,7 @@ import {
 import { MakeEmbeddedDataType } from "./embedded";
 import { MakeReferenceDataType } from "./reference";
 import { MakeCollectionDataType } from "./collection";
+import { ReferenceKeys } from "./reference_key";
 
 export type TypeWithNullity<
     T, 
@@ -41,7 +42,7 @@ export interface WithContext<
     TMembers,
 > {
     <const TArgs extends ViewArgsImpl<TModel, TMembers>>(
-        args: RestrictKeys<TArgs, keyof TMembers | ActionKeys>
+        args: RestrictKeys<TArgs, keyof TMembers | ReferenceKeys<TMembers> | ActionKeys>
     ): TArgs;
 }
 
@@ -54,9 +55,9 @@ export type RestrictKeys<T, TKeys extends string | number | symbol> = {
 };
 
 export type PropType<
-    TModel extends AnyModel, 
     TKey extends keyof TMembers, 
     TArgs, 
+    TModel extends AnyModel, 
     TMembers, 
     TViewNullType extends ViewNullType
 > =

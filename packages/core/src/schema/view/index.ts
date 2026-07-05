@@ -25,6 +25,7 @@ import { FoldArgs, MakeFoldType } from "./fold";
 import { FlatArgs, MakeFlatType } from "./flat";
 import { ApplyRecursive, RecursiveArgs } from "./recursive";
 import { CalcuatedAssociationArgs, MakeParameterizedCalculatedAssociations, ParameterizedCalcuatedAssociationArgs, ParameterizedCalculatedValueArgs } from "./calculator";
+import { RefereenceKeyPropType, ReferenceKeys, ReferenceKeysArgs } from "./reference_key";
 
 export type ViewArgs<TModel extends AnyModel> = 
     ViewArgsImpl<TModel, AllModelMembers<TModel>>;
@@ -55,7 +56,7 @@ export type ViewDynmicArgs<TModel extends AnyModel, TMembers> = {
                 ? never
             : K
     ]?: PropArgs<TModel, TMembers[K]>;
-};
+} & ReferenceKeysArgs<TMembers>;
 
 export type PropArgs<TModel extends AnyModel, TProp> = 
     TProp extends ScalarPropContract<any, any>
@@ -124,7 +125,9 @@ type DynamicViewType<TModel extends AnyModel, TViewArgs, TMembers, TViewNullType
                 : TViewArgs[K] extends { alias: infer Alias extends string }
                     ? Alias
                     : K
-    ]: PropType<TModel, K & keyof TMembers, TViewArgs[K], TMembers, TViewNullType>;
+    ]: K extends keyof TMembers
+        ? PropType<K & keyof TMembers, TViewArgs[K], TModel, TMembers, TViewNullType>
+        : RefereenceKeyPropType<K, TViewArgs[K], TMembers, TViewNullType>;
 } & MakeParameterizedCalculatedAssociations<TViewArgs, TMembers, TViewNullType>;
 
 export function createView<
@@ -132,7 +135,7 @@ export function createView<
     const TViewArgs extends ViewArgs<TModel>
 >(
     model: TModel,
-    viewArgs: RestrictKeys<TViewArgs, keyof AllModelMembers<TModel> | ActionKeys>
+    viewArgs: RestrictKeys<TViewArgs, keyof AllModelMembers<TModel> | ReferenceKeys<AllModelMembers<TModel>> | ActionKeys>
 ): View<TModel, Prettify<ViewType<TModel, TViewArgs, "NULL">>> {
     suppressUnused(model);
     suppressUnused(viewArgs);
