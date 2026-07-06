@@ -9,8 +9,8 @@ describe("FlatTest", () => {
         const view = createView(BOOK, {
             id: true,
             name: true,
-            $flat: ctx => ctx({
-                store: ctx => ctx({
+            $flat: c => c({
+                store: c => c({
                     version: true,
                     name: true
                 })
@@ -27,7 +27,7 @@ describe("FlatTest", () => {
     it("withEmptyPrefix", () => {
         const view = createView(AUTHOR, {
             id: true,
-            $flat: ctx => ctx({
+            $flat: c => c({
                 name: {
                     prefix: ""
                 }
@@ -43,7 +43,7 @@ describe("FlatTest", () => {
     it("withEmptyPrefix", () => {
         const view = createView(AUTHOR, {
             id: true,
-            $flat: ctx => ctx({
+            $flat: c => c({
                 name: {
                     prefix: "the"
                 }

@@ -10,7 +10,7 @@ describe("RecursiveTest", () => {
         const view = createView(TREE_NODE, {
             id: true,
             name: true,
-            $recursive: ctx => ctx({
+            $recursive: c => c({
                 parentNode: true,
                 childNodes: true
             })
@@ -37,7 +37,7 @@ describe("RecursiveTest", () => {
         const view = createView(TREE_NODE, {
             id: true,
             name: true,
-            $recursive: ctx => ctx({
+            $recursive: c => c({
                 parentNode: { alias: "upObj"},
                 childNodes: { alias: "downObjs" }
             })
@@ -64,7 +64,7 @@ describe("RecursiveTest", () => {
         const view = createView(TREE_NODE, {
             id: true,
             name: true,
-            $recursive: ctx => ctx({
+            $recursive: c => c({
                 parentNode: { alias: "upObj"},
                 childNodes: { alias: "downObjs", depth: 3 }
             })

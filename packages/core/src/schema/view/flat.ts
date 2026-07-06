@@ -48,19 +48,19 @@ export type FlatPropArgs<TModel extends AnyModel, TProp> =
 
 type FlatEmbeddedPropArgs<TModel extends AnyModel, TMembers> =
     true 
-    | With<TModel, TMembers, ViewArgsImpl<TModel, TMembers>>
+    | With<TModel, TMembers, "EMBEDDABLE", ViewArgsImpl<TModel, TMembers, "EMBEDDABLE">>
     | FlatEmbeddedPropArgsImpl<TModel, TMembers>;
 
 interface FlatEmbeddedPropArgsImpl<TModel extends AnyModel, TMembers> { 
     readonly prefix?: string;
-    readonly with?: With<TModel, TMembers, ViewArgsImpl<TModel, TMembers>>;
+    readonly with?: With<TModel, TMembers, "EMBEDDABLE", ViewArgsImpl<TModel, TMembers, "EMBEDDABLE">>;
 };
 
 type FlatReferencePropArgs<
     TModel extends AnyModel,
 > = 
     true 
-    | With<TModel, AllModelMembers<TModel>, ViewArgs<TModel>> 
+    | With<TModel, AllModelMembers<TModel>, "ENTITY", ViewArgs<TModel>> 
     | FlatReferencePropArgsImpl<TModel>;
 
 interface FlatReferencePropArgsImpl<
@@ -69,7 +69,7 @@ interface FlatReferencePropArgsImpl<
     readonly alias?: string;
     readonly fetchType?: ReferenceFetchType;
     readonly where?: (table: EntityTable<TModel>) => Predicate | undefined,
-    readonly with?: With<TModel, AllModelMembers<TModel>, ViewArgs<TModel>>;
+    readonly with?: With<TModel, AllModelMembers<TModel>, "ENTITY", ViewArgs<TModel>>;
 }
 
 export type MakeFlatType<

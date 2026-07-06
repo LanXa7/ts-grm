@@ -1,4 +1,4 @@
-import { ViewArgsImpl } from ".";
+import { ViewArgsImpl, ViewArgsKind } from ".";
 import { ViewNullType } from "../dto";
 import { AnyModel } from "../model";
 import { 
@@ -34,14 +34,16 @@ export type TypeWithNullity<
 export type With<
     TModel extends AnyModel, 
     TMembers,
-    TArgs extends ViewArgsImpl<TModel, TMembers>
-> = (ctx: WithContext<TModel, TMembers>) => TArgs
+    TViewArgsKind extends ViewArgsKind,
+    TArgs extends ViewArgsImpl<TModel, TMembers, TViewArgsKind>
+> = (ctx: WithContext<TModel, TMembers, TViewArgsKind>) => TArgs
 
 export interface WithContext<
     TModel extends AnyModel, 
     TMembers,
+    TViewArgsKind extends ViewArgsKind
 > {
-    <const TArgs extends ViewArgsImpl<TModel, TMembers>>(
+    <const TArgs extends ViewArgsImpl<TModel, TMembers, TViewArgsKind>>(
         args: RestrictKeys<TArgs, keyof TMembers | ReferenceKeys<TMembers> | ActionKeys>
     ): TArgs;
 }

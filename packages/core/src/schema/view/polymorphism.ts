@@ -1,5 +1,5 @@
 import { UnionToIntersection } from "@/utils";
-import { ExplicitViewArgs, ViewTypeImpl } from ".";
+import { ViewArgsImpl, ViewTypeImpl } from ".";
 import { ViewNullType } from "../dto";
 import { AnyModel, DeclaredModelMembers, DerivedModel, ModelName, ModelSuperNames } from "../model";
 import { ExplicitActionKeys, RestrictKeys } from "./common";
@@ -17,7 +17,7 @@ export interface PolymorphismContext<
 
     when<
         TDerivedModel extends AnyModel,
-        const TArgs extends ExplicitViewArgs<TDerivedModel, DeclaredModelMembers<TDerivedModel>>
+        const TArgs extends ViewArgsImpl<TDerivedModel, DeclaredModelMembers<TDerivedModel>, "DERIVED_ENTITY">
     >(
         derivedModel: DerivedModel<TDerivedModel, TModel>,
         args: RestrictKeys<TArgs, keyof DeclaredModelMembers<TDerivedModel> | ReferenceKeys<DeclaredModelMembers<TDerivedModel>> | ExplicitActionKeys>
@@ -27,7 +27,7 @@ export interface PolymorphismContext<
 export interface PolymorphismEntry<
     TDerivedModel extends AnyModel, 
     TModel extends AnyModel,
-    TArgs extends ExplicitViewArgs<TDerivedModel, DeclaredModelMembers<TDerivedModel>>
+    TArgs extends ViewArgsImpl<TDerivedModel, DeclaredModelMembers<TDerivedModel>, "DERIVED_ENTITY">
 > {
     readonly derivedModel: TDerivedModel;
     readonly model: TModel;

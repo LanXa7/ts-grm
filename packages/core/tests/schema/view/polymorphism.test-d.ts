@@ -10,7 +10,7 @@ describe("PolymorephismTest", () => {
     it("simple", () => {
         const view = createView(BOOK_STORE, {
             id: true,
-            $polymorphism: ctx => ctx.when(PHYSICAL_BOOK_STORE, {
+            $polymorphism: c => c.when(PHYSICAL_BOOK_STORE, {
                 city: true
             })
         });
@@ -28,9 +28,9 @@ describe("PolymorephismTest", () => {
         const view = createView(BOOK, {
             name: true,
             edition: true,
-            $polymorphism: ctx => ctx.when(ELECTRONIC_BOOK, {
+            $polymorphism: c => c.when(ELECTRONIC_BOOK, {
                 address: true,
-                $polymorphism: ctx => ctx.when(PDF_ELECTRONIC_BOOK, {
+                $polymorphism: c => c.when(PDF_ELECTRONIC_BOOK, {
                     pdfVersion: true
                 })
             })
@@ -60,13 +60,13 @@ describe("PolymorephismTest", () => {
             name: true,
             edition: true,
             $polymorphism:
-                ctx => ctx
+                c => c
                     .when(PAPER_BOOK, {
                         size: true
                     })
                     .when(ELECTRONIC_BOOK, {
                         address: true,
-                        $polymorphism: ctx => ctx.when(PDF_ELECTRONIC_BOOK, {
+                        $polymorphism: c => c.when(PDF_ELECTRONIC_BOOK, {
                             pdfVersion: true
                         })
                     })
@@ -102,17 +102,17 @@ describe("PolymorephismTest", () => {
     it("associatedDeepAndWide", () => {
         const view = createView(BOOK_STORE, {
             $allScalars: true,
-            books: ctx => ctx({
+            books: c => c({
                 name: true,
                 edition: true,
                 $polymorphism:
-                    ctx => ctx
+                    c => c
                         .when(PAPER_BOOK, {
                             size: true
                         })
                         .when(ELECTRONIC_BOOK, {
                             address: true,
-                            $polymorphism: ctx => ctx.when(PDF_ELECTRONIC_BOOK, {
+                            $polymorphism: c => c.when(PDF_ELECTRONIC_BOOK, {
                                 pdfVersion: true
                             })
                         })

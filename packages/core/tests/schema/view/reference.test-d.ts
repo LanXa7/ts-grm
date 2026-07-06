@@ -27,12 +27,12 @@ describe("ReferenceTest", () => {
     it("withoutFilter", () => {
         const view = createView(ORDER_ITEM, {
             id: true,
-            order: ctx => ctx({
+            order: c => c({
                 id: { 
                     alias: "oid",
-                    with: ctx => ctx({
+                    with: c => c({
                         x: true,
-                        y: ctx => ctx({
+                        y: c => c({
                             b: true
                         })
                     })
@@ -59,14 +59,14 @@ describe("ReferenceTest", () => {
             id: true,
             order: {
                 where: table => table.id().x.lt(100),
-                with: ctx => ctx({
+                with: c => c({
                     id: { 
                         alias: "oid",
-                        with: ctx => ctx({
+                        with: c => c({
                             x: true,
-                            y: ctx => ctx({
+                            y: c => c({
                                 b: true
-                            })
+                            }),
                         })
                     },
                     name: { alias: "oname"}

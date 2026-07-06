@@ -6,7 +6,7 @@ export type FoldArgs<
     TModel extends AnyModel,
     TMembers
 > = {
-    readonly [key: string]: ViewArgsImpl<TModel, TMembers>;
+    readonly [key: string]: ViewArgsImpl<TModel, TMembers, any>;
 };
 
 export type MakeFoldType<TViewArgs, TModel extends AnyModel, TMembers, TViewNullType extends ViewNullType> = 

@@ -8,7 +8,7 @@ describe("AssociatedKeysTest", () => {
     it("scalarKey", () => {
         const view = createView(BOOK, {
             id: true,
-            $associatedKeys: ctx => ctx({
+            $associatedKeys: c => c({
                 store: true,
                 authors: { alias: "authorIds" }
             })
@@ -23,7 +23,7 @@ describe("AssociatedKeysTest", () => {
     it("embeddedKeys", () => {
         const view = createView(ORDER, {
             id: true,
-            $associatedKeys: ctx => ctx({
+            $associatedKeys: c => c({
                 tags: { alias: "tagIds" },
                 comments: { alias: "commentIds" }
             })

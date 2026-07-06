@@ -15,10 +15,10 @@ export type ParameterizedCalculatedValueArgs<TParameter> =
 
 export type CalcuatedAssociationArgs<TModel extends AnyModel> =
     true
-    | With<TModel, AllModelMembers<TModel>, ViewArgs<TModel>> 
+    | With<TModel, AllModelMembers<TModel>, "ENTITY", ViewArgs<TModel>> 
     | {
         readonly alias?: string;
-        readonly with?: With<TModel, AllModelMembers<TModel>, ViewArgs<TModel>>;
+        readonly with?: With<TModel, AllModelMembers<TModel>, "ENTITY", ViewArgs<TModel>>;
     };
 
 export type ParameterizedCalcuatedAssociationArgs<TParameter, TModel extends AnyModel> =
@@ -28,13 +28,13 @@ export type ParameterizedCalcuatedAssociationArgs<TParameter, TModel extends Any
 interface AliasOptionalArgs<TParameter, TModel extends AnyModel> {
     readonly alias?: string;
     readonly parameter: TParameter;
-    readonly with?: With<TModel, AllModelMembers<TModel>, ViewArgs<TModel>>;
+    readonly with?: With<TModel, AllModelMembers<TModel>, "ENTITY", ViewArgs<TModel>>;
 }
 
 interface AliasRequiredArgs<TParameter, TModel extends AnyModel> {
     readonly alias: string;
     readonly parameter: TParameter;
-    readonly with?: With<TModel, AllModelMembers<TModel>, ViewArgs<TModel>>;
+    readonly with?: With<TModel, AllModelMembers<TModel>, "ENTITY", ViewArgs<TModel>>;
 }
 
 export type MakeParameterizedCalculatedAssociations<

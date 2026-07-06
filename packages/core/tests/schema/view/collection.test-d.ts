@@ -24,7 +24,7 @@ describe("CollectionTest", () => {
     it("with", () => {
         const view = createView(BOOK, {
             id: true,
-            authors: ctx => ctx({
+            authors: c => c({
                 id: true,
                 gender: true
             })

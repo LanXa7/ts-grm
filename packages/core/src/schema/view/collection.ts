@@ -10,7 +10,7 @@ export type CollectionPropArgs<
     TModel extends AnyModel
 > =
     true 
-    | With<TModel, AllModelMembers<TModel>, ViewArgs<TModel>>
+    | With<TModel, AllModelMembers<TModel>, "ENTITY", ViewArgs<TModel>>
     | CollectionPropArgsImpl<TModel>;
 
 interface CollectionPropArgsImpl<
@@ -20,7 +20,7 @@ interface CollectionPropArgsImpl<
     readonly where?: (table: EntityTable<TModel>) => Predicate;
     readonly orderBy?: ReadonlyArray<ModelOrder<TModel>>;
     readonly limit?: number;
-    readonly with?: With<TModel, AllModelMembers<TModel>, ViewArgs<TModel>>;
+    readonly with?: With<TModel, AllModelMembers<TModel>, "ENTITY", ViewArgs<TModel>>;
 }
 
 export type MakeCollectionDataType<
@@ -28,9 +28,9 @@ export type MakeCollectionDataType<
     TModel extends AnyModel,
     TViewNullType extends ViewNullType
 > =
-    TCollectionArgs extends With<TModel, AllModelMembers<TModel>, infer NestedArgs>
+    TCollectionArgs extends With<TModel, AllModelMembers<TModel>, "ENTITY", infer NestedArgs>
         ? CollectionDataTypeImpl<NestedArgs, TModel, TViewNullType>
-    : TCollectionArgs extends { with: With<TModel, AllModelMembers<TModel>, infer NestedArgs> }
+    : TCollectionArgs extends { with: With<TModel, AllModelMembers<TModel>, "ENTITY", infer NestedArgs> }
         ? CollectionDataTypeImpl<NestedArgs, TModel, TViewNullType>
     : CollectionDataTypeImpl<true, TModel, TViewNullType>;
 

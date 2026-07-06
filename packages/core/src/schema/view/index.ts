@@ -29,24 +29,36 @@ import { RefereenceKeyPropType, ReferenceKeys, ReferenceKeysArgs } from "./refer
 import { AssociatedKeyTypeRef, AssociatedKeysArgs, AssociatedKeys } from "./associated_keys";
 
 export type ViewArgs<TModel extends AnyModel> = 
-    ViewArgsImpl<TModel, AllModelMembers<TModel>>;
+    ViewArgsImpl<TModel, AllModelMembers<TModel>, "ENTITY">;
 
-export type ViewArgsImpl<TModel extends AnyModel, TMembers> = 
-    ExplicitViewStaticArgs<TModel, TMembers>
-    & { $allScalars?: AllScalarsArgs<TMembers> }
+export type ViewArgsImpl<TModel extends AnyModel, TMembers, TKind extends ViewArgsKind> = 
+    (
+        TKind extends "EMBEDDABLE"
+            ? BaseViewArgs<TModel, TMembers>
+            : EntityViewArgs<TModel, TMembers>
+    )
+    & (
+        TKind extends "DERIVED_ENTITY"
+            ? object
+            : { $allScalars?: AllScalarsArgs<TMembers> }
+    )
     & ViewDynmicArgs<TModel, TMembers>;
 
-export type ExplicitViewArgs<TModel extends AnyModel, TMembers> = 
-    ExplicitViewStaticArgs<TModel, TMembers>
-    & ViewDynmicArgs<TModel, TMembers>;
+export type ViewArgsKind = "ENTITY" | "EMBEDDABLE" | "DERIVED_ENTITY";
 
-export interface ExplicitViewStaticArgs<
+interface BaseViewArgs<
     TModel extends AnyModel,
     TMembers
 > {
-    readonly $polymorphism?: PolymorphismArgs<TModel>;
     readonly $flat?: Flat<TModel, TMembers, FlatArgs<TModel, TMembers>>;
     readonly $fold?: FoldArgs<TModel, TMembers>;
+}
+
+interface EntityViewArgs<
+    TModel extends AnyModel,
+    TMembers
+> extends BaseViewArgs<TModel, TMembers> {
+    readonly $polymorphism?: PolymorphismArgs<TModel>;
     readonly $associatedKeys?: AssociatedKeys<TMembers, AssociatedKeysArgs<TMembers>>;
     readonly $recursive?: Recursive<TModel, TMembers, RecursiveArgs<TModel, TMembers>>;
 }

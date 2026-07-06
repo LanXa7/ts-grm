@@ -24,7 +24,7 @@ describe("CalculatorTest", () => {
     it("simpleWithBody", () => {
         const view = createView(BOOK_STORE, {
             id: true,
-            newestBooks: ctx => ctx({
+            newestBooks: c => c({
                 name: true,
                 edition: true
             })
@@ -61,7 +61,7 @@ describe("CalculatorTest", () => {
             id: true,
             specifiedBooks: {
                 parameter: { maxPrice: 30 },
-                with: ctx => ctx({
+                with: c => c({
                     name: true,
                     edition: true
                 })
@@ -114,14 +114,14 @@ describe("CalculatorTest", () => {
                 {
                     alias: "cheapBooks",
                     parameter: { maxPrice: 30 },
-                    with: ctx => ctx({
+                    with: c => c({
                         id: true
                     })
                 },
                 {
                     alias: "expensiveBooks",
                     parameter: { minPrice: 60 },
-                    with: ctx => ctx({
+                    with: c => c({
                         name: true,
                         edition: true
                     })

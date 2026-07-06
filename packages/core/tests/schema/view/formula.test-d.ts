@@ -25,7 +25,7 @@ describe("Formula", () => {
                     bookNames: true
                 }
             },
-            books: ctx => ctx({
+            books: c => c({
                 id: true,
                 authorCount: true
             })
@@ -52,7 +52,7 @@ describe("Formula", () => {
                     bookNames: { alias: "bNames" }
                 }
             },
-            books: ctx => ctx({
+            books: c => c({
                 id: true,
                 authorCount: { alias: "aCount" }
             })

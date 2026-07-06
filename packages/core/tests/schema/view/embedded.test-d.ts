@@ -23,7 +23,7 @@ describe("EmbeddedTest", () => {
     it("nested", () => {
         const view = createView(AUTHOR, {
             id: true,
-            name: ctx => ctx({
+            name: c => c({
                 firstName: true
             })
         });
@@ -40,7 +40,7 @@ describe("EmbeddedTest", () => {
             id: true,
             name: {
                 alias: "full",
-                with: ctx => ctx({
+                with: c => c({
                     firstName: { alias: "first" },
                     lastName: { alias: "last" }
                 })
