@@ -1,4 +1,4 @@
-import { Prettify, suppressUnused } from "@/utils";
+import { Prettify } from "@/utils";
 import { View, ViewNullType } from "../dto";
 import { AllModelMembers, AnyModel } from "../model";
 import { 
@@ -21,12 +21,15 @@ import { EmbeddedPropArgs } from "./embedded";
 import { ReferencePropArgs } from "./reference";
 import { ScalarPropArgs } from "./scalar";
 import { ApplyPolymorphism, PolymorphismArgs } from "./polymorphism";
-import { FoldArgs, MakeFoldType } from "./fold";
+import { Fold, MakeFoldType } from "./fold";
 import { Flat, FlatArgs, MakeFlatType } from "./flat";
 import { ApplyRecursive, Recursive, RecursiveArgs } from "./recursive";
 import { CalcuatedAssociationArgs, MakeParameterizedCalculatedAssociations, ParameterizedCalcuatedAssociationArgs, ParameterizedCalculatedValueArgs } from "./calculator";
 import { RefereenceKeyPropType, ReferenceKeys, ReferenceKeysArgs } from "./reference_key";
 import { AssociatedKeyTypeRef, AssociatedKeysArgs, AssociatedKeys } from "./associated_keys";
+import { DtoCreator } from "@/impl/dto_creator";
+import { Entity } from "@/impl";
+import { dtoMapper } from "@/impl/dto_mapper";
 
 export type ViewArgs<TModel extends AnyModel> = 
     ViewArgsImpl<TModel, AllModelMembers<TModel>, "ENTITY">;
@@ -34,8 +37,8 @@ export type ViewArgs<TModel extends AnyModel> =
 export type ViewArgsImpl<TModel extends AnyModel, TMembers, TKind extends ViewArgsKind> = 
     (
         TKind extends "EMBEDDABLE"
-            ? BaseViewArgs<TModel, TMembers>
-            : EntityViewArgs<TModel, TMembers>
+            ? BaseViewArgs<TModel, TMembers, TKind>
+            : EntityViewArgs<TModel, TMembers, TKind>
     )
     & (
         TKind extends "DERIVED_ENTITY"
@@ -48,16 +51,18 @@ export type ViewArgsKind = "ENTITY" | "EMBEDDABLE" | "DERIVED_ENTITY";
 
 interface BaseViewArgs<
     TModel extends AnyModel,
-    TMembers
+    TMembers,
+    TKind extends ViewArgsKind
 > {
     readonly $flat?: Flat<TModel, TMembers, FlatArgs<TModel, TMembers>>;
-    readonly $fold?: FoldArgs<TModel, TMembers>;
+    readonly $fold?: Fold<TModel, TMembers, TKind, ViewArgsImpl<TModel, TMembers, TKind>>;
 }
 
 interface EntityViewArgs<
     TModel extends AnyModel,
-    TMembers
-> extends BaseViewArgs<TModel, TMembers> {
+    TMembers,
+    TKind extends ViewArgsKind
+> extends BaseViewArgs<TModel, TMembers, TKind> {
     readonly $polymorphism?: PolymorphismArgs<TModel>;
     readonly $associatedKeys?: AssociatedKeys<TMembers, AssociatedKeysArgs<TMembers>>;
     readonly $recursive?: Recursive<TModel, TMembers, RecursiveArgs<TModel, TMembers>>;
@@ -152,7 +157,8 @@ export function createView<
     model: TModel,
     viewArgs: RestrictKeys<TViewArgs, keyof AllModelMembers<TModel> | ReferenceKeys<AllModelMembers<TModel>> | ActionKeys>
 ): View<TModel, Prettify<ViewType<TModel, TViewArgs, "NULL">>> {
-    suppressUnused(model);
-    suppressUnused(viewArgs);
-    throw new Error();
+    const dtoCreator = DtoCreator.of(Entity.of(model), undefined);
+    const dto = dtoCreator.create(viewArgs as any);
+    console.log(JSON.stringify(dto));
+    return new View(dtoMapper(dto, false));
 }

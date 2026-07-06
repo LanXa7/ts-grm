@@ -19,7 +19,7 @@ export type RemoveableKeys<TMembers> =
                 ? K
             : never
         ]: never
-    };
+    } & string;
 
 export type AllScalarsViewTypeRef<TViewArgs, TMembers, TViewNullType extends ViewNullType> =
     TViewArgs extends { $explicit: any }

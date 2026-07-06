@@ -8,13 +8,13 @@ describe("FoldTest", () => {
     it("simple", () => {
         const view = createView(BOOK, {
             $fold: {
-                scalars: {
+                scalars: c => c({
                     $allScalars: true
-                },
-                associations: {
+                }),
+                associations: c => c({
                     store: true,
                     authors: true
-                }
+                })
             }
         });
         expectTypeOf<TypeOf<typeof view>>().toEqualTypeOf<{

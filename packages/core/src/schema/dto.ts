@@ -17,7 +17,9 @@ function viewCreator(): ViewCreator {
     ): View<TModel, Prettify<X>> => {
         const builder = createTypedDtoBuilder(Entity.of(model));
         fn(builder as any as ViewBuilder<TModel, AllModelMembers<TModel>, "NULL", {}, {}, any, any>);
-        return new View(dtoMapper(builder.__unwrap().build(), false));
+        const dto = builder.__unwrap().build();
+        console.log(JSON.stringify(dto));
+        return new View(dtoMapper(dto, false));
     }
 
     view.nullAsUndefined = <TModel extends AnyModel, X>(

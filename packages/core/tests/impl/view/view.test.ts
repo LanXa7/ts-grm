@@ -3,14 +3,16 @@ import { dto } from "@/schema/dto";
 import { BOOK, BOOK_STORE } from "../../model/model";
 import { expectCode } from "../../utils";
 import { mapperJson, makeReader, shapeJson } from "./utils";
+import { createView } from "@/schema/view";
 
 describe("ViewTest", () => {
 
     it("allScalars", () => {
-        const view = dto.view(BOOK, $ => $
-            .allScalars()
-            .remove("price")
-        );
+        const view = createView(BOOK, {
+            $allScalars: {
+                exclude: "price"
+            }
+        });
         expect(mapperJson(view.mapper)).toEqual({
             "entity": "Book",
             "fields": [
@@ -62,12 +64,16 @@ describe("ViewTest", () => {
     });
 
     it("wideAssociations", () => {
-        const view = dto.view(BOOK, $ => $
-            .allScalars()
-            .remove("id", "price")
-            .store($ => $.allScalars())
-            .authors($ => $.id.name())
-        );
+        const view = createView(BOOK, {
+            $allScalars: {
+                exclude: ["id", "price"]
+            },
+            store: true,
+            authors: c => c({
+                id: true,
+                name: true
+            })
+        });
         expect(mapperJson(view.mapper)).toEqual({
             "entity": "Book",
             "fields": [
@@ -319,18 +325,18 @@ describe("ViewTest", () => {
     });
 
     it("deepAssociations", () => {
-        const view = dto.view(BOOK_STORE, $ => $
-            .id
-            .name
-            .books($ => $
-                .id
-                .name
-                .authors($ => $
-                    .id
-                    .name()
-                )
-            )
-        );
+        const view = createView(BOOK_STORE, {
+            id: true,
+            name: true,
+            books: c => c({
+                id: true,
+                name: true,
+                authors: c => c({
+                    id: true,
+                    name: true
+                })
+            })
+        });
 
         expect(mapperJson(view.mapper)).toEqual({
             "entity": "BookStore",
@@ -569,15 +575,15 @@ describe("ViewTest", () => {
     });
 
     it("implicitDeepAssociations", () => {
-        const view = dto.view(BOOK_STORE, $ => $
-            .name
-            .books($ => $
-                .name
-                .authors($ => $
-                    .name()
-                )
-            )
-        );
+        const view = createView(BOOK_STORE, {
+            name: true,
+            books: c => c({
+                name: true,
+                authors: c => c({
+                    name: true
+                })
+            })
+        });
         expect(mapperJson(view.mapper)).toEqual({
             "entity": "BookStore",
             "fields": [
@@ -835,6 +841,9 @@ describe("ViewTest", () => {
                 )
             )
         );
+        // const view2 = createView(BOOK, {
+        //     id: { alias: "bookId" }
+        // });
         expect(mapperJson(view.mapper)).toEqual({
             "entity": "Book",
             "fields": [

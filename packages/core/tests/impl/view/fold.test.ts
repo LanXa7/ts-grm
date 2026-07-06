@@ -3,14 +3,20 @@ import { dto } from "@/schema/dto";
 import { BOOK} from "../../model/model";
 import { expectCode } from "../../utils";
 import { mapperJson, makeReader, shapeJson } from "./utils";
+import { createView } from "@/schema/view";
 
 describe("FoldTest", () => {
 
     it("foldScalars", () => {
-        const view = dto.view(BOOK, $ => $
-            .id
-            .fold("key", $ => $.name.edition)
-        );
+        const view = createView(BOOK, {
+            id: true,
+            $fold: {
+                key: c => c({
+                    name: true,
+                    edition: true
+                })
+            }
+        });
         expect(mapperJson(view.mapper)).toEqual({
             "entity": "Book",
             "fields": [
@@ -80,14 +86,16 @@ describe("FoldTest", () => {
     });
 
     it("foldAssociations", () => {
-        const view = dto.view(BOOK, $ => $
-            .id
-            .fold("associations", $ => $
-                .authors($ => $
-                    .allScalars()
-                )
-            )
-        );
+        const view = createView(BOOK, {
+            id: true,
+            $fold: {
+                associations: c => c({
+                    authors: c => c({
+                        $allScalars: true
+                    })
+                })
+            }
+        });
         expect(mapperJson(view.mapper)).toEqual({
             "entity": "Book",
             "fields": [

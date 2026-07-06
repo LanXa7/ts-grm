@@ -21,9 +21,9 @@ describe("Formula", () => {
         const view = createView(BOOK_STORE, {
             $allScalars: true,
             $fold: {
-                formulas: {
+                formulas: c => c({
                     bookNames: true
-                }
+                })
             },
             books: c => c({
                 id: true,
@@ -48,9 +48,9 @@ describe("Formula", () => {
         const view = createView(BOOK_STORE, {
             $allScalars: true,
             $fold: {
-                formulas: {
+                formulas: c => c({
                     bookNames: { alias: "bNames" }
-                }
+                })
             },
             books: c => c({
                 id: true,
