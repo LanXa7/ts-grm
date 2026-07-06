@@ -3,18 +3,21 @@ import { dto } from "@/schema/dto";
 import { BOOK, AUTHOR, TREE_NODE } from "../../model/model";
 import { expectCode } from "../../utils";
 import { mapperJson, makeReader, shapeJson } from "./utils";
+import { createView } from "@/schema/view";
 
 describe("FlatTest", () => {
 
     it("flatAssociation", () => {
 
-        const view = dto.view(BOOK, $ => $
-            .allScalars()
-            .flat("store", $ => $
-                .id
-                .name
-            )
-        );
+        const view = createView(BOOK, {
+            $allScalars: true,
+            $flat: c => c({
+                store: c => c({
+                    id: true,
+                    name: true
+                })
+            })
+        });
 
         expect(mapperJson(view.mapper)).toEqual({
             "entity": "Book",
@@ -180,13 +183,14 @@ describe("FlatTest", () => {
     });
 
     it("flatEmbedded", () => {
-        const view = dto.view(AUTHOR, $ => $
-            .id
-            .flat({
-                prop: "name",
-                prefix: "flatten"
+        const view = createView(AUTHOR, {
+            id: true,
+            $flat: c => c({
+                name: {
+                    prefix: "flatten"
+                }
             })
-        );
+        });
         expect(mapperJson(view.mapper)).toEqual({
             "entity": "Author",
             "fields": [

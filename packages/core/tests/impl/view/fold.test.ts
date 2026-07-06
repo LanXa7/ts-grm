@@ -263,24 +263,34 @@ describe("FoldTest", () => {
     });
 
     it("mixedWithFlat", () => {
-        const view = dto.view(BOOK, $ => $
-            .fold("key", $ => $
-                .name
-                .edition
-            )
-            .fold("associations", $ => $
-                .flat("store", $ => $
-                    .id
-                    .fold("key", $ => $
-                        .name
-                        .version
-                    )
-                )
-                .authors($ => $
-                    .flat({prop: "name", prefix: ""})
-                )
-            )
-        );
+        const view = createView(BOOK, {
+            $fold: {
+                key: $ => $({
+                    name: true,
+                    edition: true
+                }),
+                associations: $ => $({
+                    $flat: $ => $({
+                        store: $ => $({
+                            id: true,
+                            $fold: {
+                                key: $ => $({
+                                    name: true,
+                                    version: true
+                                })
+                            },
+                        })
+                    }),
+                    authors: $ => $({
+                        $flat: $ => $({
+                            name: {
+                                prefix: ""
+                            }
+                        })
+                    })
+                })
+            }
+        });
         expect(mapperJson(view.mapper)).toEqual({
             "entity": "Book",
             "fields": [

@@ -66,7 +66,7 @@ type FlatReferencePropArgs<
 interface FlatReferencePropArgsImpl<
     TModel extends AnyModel
 > {
-    readonly alias?: string;
+    readonly prefix?: string;
     readonly fetchType?: ReferenceFetchType;
     readonly where?: (table: EntityTable<TModel>) => Predicate | undefined,
     readonly with?: With<TModel, AllModelMembers<TModel>, "ENTITY", ViewArgs<TModel>>;

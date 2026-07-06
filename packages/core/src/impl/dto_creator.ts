@@ -3,12 +3,13 @@ import { Dto, DtoField } from "./dto";
 import { Entity } from "./entity";
 import { AllScalarsArgs } from "@/schema/view/all_scalars";
 import { Flat } from "@/schema/view/flat";
-import { ArgumentError } from "@/error/common";
+import { ArgumentError, StateError } from "@/error/common";
 import { EntityProp } from "./entity_prop";
 import { makeErr } from "@/error/util";
 import { With } from "@/schema/view/common";
 import { Fold } from "@/schema/view/fold";
-import { suppressUnused } from "@/utils";
+import { capitalize } from "./util";
+import { all } from "@/dsl/sub_query";
 
 export class DtoCreator {
 
@@ -114,7 +115,50 @@ export class DtoCreator {
     private _addFlatFields(
         flat: Flat<any, any, any>
     ) {
-        suppressUnused(flat);
+        if (this._downcastTo != null) {
+            throw new StateError(`"$flat" cannot be used in "$polymorphism"`);
+        }
+        const flatArgs = flat(argsContext);
+        for (const key in flatArgs) {
+            const prop = this._prop(key);
+            const args = flatArgs[key];
+            const childDto = this._createDto(
+                DtoCreator.of(prop.associationType != null ? prop.targetEntity! : prop, undefined),
+                args
+            );
+            console.log(`childDto`, JSON.stringify(childDto))
+            const prefix = args.prefix ?? prop.name;
+            const flattenFields = 
+                childDto.fields.map(field => {
+                    return {
+                        ...field,
+                        path: flattenPath(prop.props != null, prefix, field.path)
+                    };
+                });
+            if (prop.props != null) {
+                this._fields.push(...flattenFields);
+                return;
+            }
+            const flattenDto = {
+                ...childDto,
+                fields: flattenFields
+            };
+            const field: DtoField = {
+                path: undefined,
+                downcastTo: undefined,
+                prop: prop,
+                bridgeProp: undefined,
+                dto: flattenDto,
+                fetchType: args.fetchType,
+                predicateFn: args.where,
+                orders: prop.orders,
+                limit: undefined,
+                recursiveDepth: undefined,
+                nullable: prop.nullable,
+                parameter: undefined
+            };
+            this._fields.push(field);
+        }
     }
 
     private _addFoldFields(
@@ -127,30 +171,33 @@ export class DtoCreator {
         }
     }
 
-    private _addField(
-        key: string,
-        args: any
-    ) {
+    private _prop(key: string) {
         if (this._source instanceof EntityProp) {
             const prop = this._source.props!.get(key)?.asEntityProp;
             if (prop == null) {
-                throw new ArgumentError(`Cannot fetch non-existing property "${key}" of the embeded property "${this._source.toString()}"`);
+                throw new ArgumentError(`No property "${key}" of the embeded property "${this._source.toString()}"`);
             }
-            this._fields.push(this._createField(prop, args));
-            return;
+            return prop;
         }
 
         const entity = this._source as Entity;
         const prop = entity.allPropMap.get(key)?.asEntityProp;
         if (prop == null) {
-            throw new ArgumentError(`Cannot fetch non-existing property "${key}" of the entity "${entity.name}"`);
+            throw new ArgumentError(`No property "${key}" of the entity "${entity.name}"`);
         }
-        this._fields.push(this._createField(prop, args));
+        return prop;
+    }
+
+    private _addField(
+        key: string,
+        args: any
+    ) {
+        this._fields.push(this._createField(this._prop(key), args));
     }
 
     private _createField(
         prop: EntityProp, 
-        args: any
+        args: any,
     ): DtoField {
         if (prop.targetEntity != null) {
             return {
@@ -160,7 +207,7 @@ export class DtoCreator {
                 bridgeProp: undefined,
                 dto: this._createDto(DtoCreator.of(prop.targetEntity!, undefined), args),
                 fetchType: args.fetchType,
-                predicateFn: undefined,
+                predicateFn: args.where,
                 orders: prop.orders,
                 limit: args.limit,
                 recursiveDepth: undefined,
@@ -192,7 +239,7 @@ export class DtoCreator {
             dto: undefined,
             fetchType: undefined,
             predicateFn: undefined,
-            orders: prop.orders,
+            orders: [],
             limit: undefined,
             recursiveDepth: undefined,
             nullable: prop.nullable,
@@ -200,15 +247,19 @@ export class DtoCreator {
         };
     }
 
-    private _path(prop: EntityProp, args: any): string | ReadonlyArray<string> {
-        let arr = [args.alias ?? prop.name];
+    private _path(
+        prop: EntityProp, 
+        args: any
+    ): string | ReadonlyArray<string> {
+        let name = args.alias ?? prop.name;
+        let arr = [name];
         if (this._source instanceof EntityProp) {
             const subPath = this._source.subPath;
             if (subPath !== "") {
                 arr = [...subPath.split("."), ...arr];
             }
         }
-        if (this._contextPaths.length != 0) {
+        if (this._contextPaths.length !== 0) {
             arr = [...this._contextPaths, ...arr];
         }
         return arr.length === 1 ? arr[0]! : arr;
@@ -235,4 +286,24 @@ export class DtoCreator {
 
 function argsContext(args: any): any {
     return args;
+}
+
+function flattenPath(
+    isEmbedded: boolean,
+    prefix: string,
+    path: string | ReadonlyArray<string> | undefined
+): ReadonlyArray<string> | undefined {
+    if (path == null) {
+        return undefined;
+    }
+    const arr = typeof path === "string"
+        ? [path]
+        : [...path];
+    if (prefix !== "") {
+        arr[0] = `${prefix}${capitalize(arr[0]!)}`;
+    }
+    if (isEmbedded) {
+        return arr;
+    }
+    return ["..", ...arr];
 }
