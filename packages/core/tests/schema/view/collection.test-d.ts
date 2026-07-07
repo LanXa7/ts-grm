@@ -1,15 +1,15 @@
-import { createView } from "@/schema/view";
 import { describe, expectTypeOf, it } from "vitest";
 import { BOOK, BOOK_STORE } from "../../model/model";
 import { TypeOf } from "@/index";
+import { newView } from "@/schema/dto/index";
 
 describe("CollectionTest", () => {
 
     it("simple", () => {
-        const view = createView(BOOK_STORE, {
-            id: true,
-            books: true
-        });
+        const view = newView(BOOK_STORE, c => [
+            c.id,
+            c.books
+        ]);
         expectTypeOf<TypeOf<typeof view>>().toEqualTypeOf<{
             id: string;
             books: {
@@ -22,13 +22,13 @@ describe("CollectionTest", () => {
     });
 
     it("with", () => {
-        const view = createView(BOOK, {
-            id: true,
-            authors: c => c({
-                id: true,
-                gender: true
-            })
-        });
+        const view = newView(BOOK, c => [
+            c.id,
+            c.authors.with(c => [
+                c.id,
+                c.gender
+            ])
+        ]);
         expectTypeOf<TypeOf<typeof view>>().toEqualTypeOf<{
             id: number;
             authors: {

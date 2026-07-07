@@ -1,16 +1,16 @@
-import { createView } from "@/schema/view";
 import { describe, it } from "node:test";
 import { AUTHOR } from "../../model/model";
 import { expectTypeOf } from "vitest";
 import { TypeOf } from "@/index";
+import { newView } from "@/schema/dto/index";
 
 describe("EmbeddedTest", () => {
 
     it("simple", () => {
-        const view = createView(AUTHOR, {
-            id: true,
-            name: true
-        });
+        const view = newView(AUTHOR, c => [
+            c.id,
+            c.name
+        ]);
         expectTypeOf<TypeOf<typeof view>>().toEqualTypeOf<{
             id: number;
             name: {
@@ -21,12 +21,12 @@ describe("EmbeddedTest", () => {
     });
 
     it("nested", () => {
-        const view = createView(AUTHOR, {
-            id: true,
-            name: c => c({
-                firstName: true
-            })
-        });
+        const view = newView(AUTHOR, c => [
+            c.id,
+            c.name.with(c => [
+                c.firstName
+            ])
+        ]);
         expectTypeOf<TypeOf<typeof view>>().toEqualTypeOf<{
             id: number;
             name: {
@@ -36,16 +36,13 @@ describe("EmbeddedTest", () => {
     });
 
     it("aliases", () => {
-        const view = createView(AUTHOR, {
-            id: true,
-            name: {
-                alias: "full",
-                with: c => c({
-                    firstName: { alias: "first" },
-                    lastName: { alias: "last" }
-                })
-            }
-        });
+        const view = newView(AUTHOR, c => [
+            c.id,
+            c.name.as("full").with(c => [
+                c.firstName.as("first"),
+                c.lastName.as("last")
+            ])
+        ]);
         expectTypeOf<TypeOf<typeof view>>().toEqualTypeOf<{
             id: number;
             full: {

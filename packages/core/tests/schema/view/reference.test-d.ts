@@ -1,17 +1,17 @@
-import { createView } from "@/schema/view";
 import { describe, expectTypeOf, it } from "vitest";
 import { BOOK, ORDER_ITEM } from "../../model/model";
 import { TypeOf } from "@/index";
+import { newView } from "@/schema/dto/index";
 
 describe("ReferenceTest", () => {
 
     it("simple", () => {
-        const view = createView(BOOK, {
-            id: true,
-            name: true,
-            edition: true,
-            store: true
-        });
+        const view = newView(BOOK, c => [
+            c.id,
+            c.name,
+            c.edition,
+            c.store
+        ]);
         expectTypeOf<TypeOf<typeof view>>().toEqualTypeOf<{
             id: number;
             edition: number;
@@ -25,21 +25,19 @@ describe("ReferenceTest", () => {
     });
 
     it("withoutFilter", () => {
-        const view = createView(ORDER_ITEM, {
-            id: true,
-            order: c => c({
-                id: { 
-                    alias: "oid",
-                    with: c => c({
-                        x: true,
-                        y: c => c({
-                            b: true
-                        })
-                    })
-                 },
-                name: { alias: "oname"}
-            })
-        });
+        const view = newView(ORDER_ITEM, c => [
+            c.id,
+            c.order.with(c => [
+                c.id.as("oid")
+                .with(c => [
+                    c.x,
+                    c.y.with(c => [
+                        c.b
+                    ])
+                ]),
+                c.name.as("oname")
+            ])
+        ]);
         expectTypeOf<TypeOf<typeof view>>().toEqualTypeOf<{
             id: number;
             order: {
@@ -55,24 +53,19 @@ describe("ReferenceTest", () => {
     });
 
     it("withFilter", () => {
-        const view = createView(ORDER_ITEM, {
-            id: true,
-            order: {
-                where: table => table.id().x.lt(100),
-                with: c => c({
-                    id: { 
-                        alias: "oid",
-                        with: c => c({
-                            x: true,
-                            y: c => c({
-                                b: true
-                            }),
-                        })
-                    },
-                    name: { alias: "oname"}
-                }),
-            }
-        });
+        const view = newView(ORDER_ITEM, c => [
+            c.id,
+            c.order.where(table => table.id().x.lt(100)).with(c => [
+                c.id.as("oid")
+                .with(c => [
+                    c.x,
+                    c.y.with(c => [
+                        c.b
+                    ])
+                ]),
+                c.name.as("oname")
+            ])
+        ]);
         expectTypeOf<TypeOf<typeof view>>().toEqualTypeOf<{
             id: number;
             order: {

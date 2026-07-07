@@ -1,14 +1,15 @@
-import { createView } from "@/schema/view";
 import { describe, it } from "node:test";
 import { AUTHOR } from "../../model/model";
 import { expectTypeOf } from "vitest";
-import { AllModelMembers, TypeOf } from "@/index";
-import { RemoveableKeys } from "@/schema/view/all_scalars";
+import { newView } from "@/schema/dto/index";
+import { TypeOf } from "@/index";
 
 describe("AllScalarsTest", () => {
 
     it("simple", () => {
-        const view = createView(AUTHOR, { $allScalars: true });
+        const view = newView(AUTHOR, c => [
+            c.$allScalars
+        ]);
         expectTypeOf<TypeOf<typeof view>>().toEqualTypeOf<{
             id: number;
             name: {
@@ -20,13 +21,9 @@ describe("AllScalarsTest", () => {
     });
 
     it("exclude", () => {
-        expectTypeOf<RemoveableKeys<AllModelMembers<typeof AUTHOR>>>()
-            .toEqualTypeOf<"id" | "name" | "gender">();
-        const view = createView(AUTHOR, { 
-            $allScalars: {
-                exclude: "gender"
-            }
-        });
+        const view = newView(AUTHOR, c => [
+            c.$allScalars({exclude: "gender"})
+        ])
         expectTypeOf<TypeOf<typeof view>>().toEqualTypeOf<{
             id: number;
             name: {
@@ -37,13 +34,9 @@ describe("AllScalarsTest", () => {
     });
 
     it("excludeArr", () => {
-        expectTypeOf<RemoveableKeys<AllModelMembers<typeof AUTHOR>>>()
-            .toEqualTypeOf<"id" | "name" | "gender">();
-        const view = createView(AUTHOR, { 
-            $allScalars: {
-                exclude: ["gender", "id"]
-            }
-        });
+        const view = newView(AUTHOR, c => [
+            c.$allScalars({exclude: ["id", "gender"]})
+        ])
         expectTypeOf<TypeOf<typeof view>>().toEqualTypeOf<{
             name: {
                 firstName: string;
