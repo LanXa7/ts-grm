@@ -1,5 +1,6 @@
 import { AnyModel } from "../model";
-import { ContextKind, DtoBody, DtoMapping, DtoType, DtoKind } from "./common";
+import { ContextKind, DtoBody, DtoType, DtoKind } from "./common";
+import { SelfMappings } from "./utils";
 
 export interface FoldContext<
     TModel extends AnyModel,
@@ -16,10 +17,6 @@ export interface FoldContext<
         body: DtoBody<TModel, TDtoKind, TContextKind, TMembers, TMappings>
     ): FoldMapping<TModel, TDtoKind, TName, TMappings>;
 }
-
-type SelfMappings<
-    TModel extends AnyModel, 
-> = ReadonlyArray<DtoMapping<TModel>>;
 
 export interface FoldMapping<
     TModel extends AnyModel,

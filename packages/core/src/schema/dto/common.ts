@@ -10,6 +10,7 @@ import { ReferenceDtoType, ReferenceMapping } from "./reference";
 import { ReferenceKeyContext, ReferenceKeyMapping } from "./reference_key";
 import { ScalarDtoType, ScalarMapping } from "./scalar";
 import { DirectContext } from "./direct";
+import { ApplyInstanceOfMappings, InstanceOfContext, InstanceOfMappping } from "./instance_of";
 
 export type DtoContext<
     TModel extends AnyModel,
@@ -20,6 +21,7 @@ export type DtoContext<
     DirectContext<TModel, TDtoKind, TMembers>
     & FoldContext<TModel, TDtoKind, TContextKind, TMembers>
     & FlatContext<TModel, TDtoKind, TMembers>
+    & InstanceOfContext<TModel, TDtoKind>
     & (
         TContextKind extends "EMBEDDABLE"
             ? object
@@ -59,6 +61,7 @@ export type DtoMapping<
     AllScalarsMapping<TModel, any, any, any> 
     | FoldMapping<TModel, any, any, any>
     | FlatMapping<TModel, any, any, any, any, any>
+    | InstanceOfMappping<TModel, any, any, any>
     | ScalarMapping<TModel, any, any, any>
     | EmbeddedMapping<TModel, any, any, any, any>
     | ReferenceKeyMapping<TModel, any, any>
@@ -69,9 +72,12 @@ export type DtoMapping<
 export type DtoType<
     TMappings extends ReadonlyArray<DtoMapping<any>>
 > = 
-    UnionToIntersection<{
-        [K in keyof TMappings]: DtoMappingType<TMappings[K]>
-    }[number]>;
+    ApplyInstanceOfMappings<
+        UnionToIntersection<{
+            [K in keyof TMappings]: DtoMappingType<TMappings[K]>
+        }[number]>,
+        TMappings
+    >;
     
 type DtoMappingType<
     TMapping extends DtoMapping<any>

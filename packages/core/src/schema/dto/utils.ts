@@ -63,3 +63,7 @@ export type NullityOf<TMember> =
     TMember extends PropContract<any, infer Nullity>
         ? Nullity
         : "NONNULL";
+
+export type SelfMappings<
+    TModel extends AnyModel, 
+> = ReadonlyArray<DtoMapping<TModel>>;
