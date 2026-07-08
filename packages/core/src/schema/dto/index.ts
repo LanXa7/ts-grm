@@ -13,7 +13,7 @@ export function newView<
     fn: DtoBody<TModel, AllModelMembers<TModel>, "ENTITY", TMappings>
 ): View<
     TModel, 
-    Prettify<DtoType<TMappings, "NULL">>
+    Prettify<DtoType<TMappings, "NULL_VIEW">>
 > {
     suppressUnused(model);
     suppressUnused(fn);

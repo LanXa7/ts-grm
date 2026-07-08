@@ -47,7 +47,7 @@ export type DtoContext<
 
 export type ContextKind = "ENTITY" | "EMBEDDABLE" | "DERIVED_ENTITY";
 
-export type NullityMode = "NULL" | "UNDEFINED" | "INPUT_MIXED";
+export type DtoKind = "NULL_VIEW" | "UNDEFINED_VIEW" | "INPUT";
 
 export interface DtoBody<
     TModel extends AnyModel,
@@ -76,28 +76,28 @@ export type DtoMapping<
 
 export type DtoType<
     TMappings extends ReadonlyArray<DtoMapping<any>>, 
-    TNullityMode extends NullityMode
+    TDtoKind extends DtoKind
 > = 
     UnionToIntersection<{
-        [K in keyof TMappings]: DtoMappingType<TMappings[K], TNullityMode>
+        [K in keyof TMappings]: DtoMappingType<TMappings[K], TDtoKind>
     }[number]>;
     
 type DtoMappingType<
     TMapping extends DtoMapping<any>, 
-    TNullityMode extends NullityMode
+    TDtoKind extends DtoKind
 > =
     TMapping["__mappingType"] extends "SCALAR"
-        ? ScalarDtoType<TMapping, TNullityMode>
+        ? ScalarDtoType<TMapping, TDtoKind>
     : TMapping["__mappingType"] extends "ALL_SCALARS"
-        ? AllScalarsDtoType<TMapping, TNullityMode>
+        ? AllScalarsDtoType<TMapping, TDtoKind>
     : TMapping["__mappingType"] extends "EMBEDDED"
-        ? EmbeddedDtoType<TMapping, TNullityMode>
+        ? EmbeddedDtoType<TMapping, TDtoKind>
     : TMapping["__mappingType"] extends "REFERENCE"
-        ? ReferenceDtoType<TMapping, TNullityMode>
+        ? ReferenceDtoType<TMapping, TDtoKind>
     : TMapping["__mappingType"] extends "COLLECTION"
-        ? CollectionDtoType<TMapping, TNullityMode>
+        ? CollectionDtoType<TMapping, TDtoKind>
     : TMapping["__mappingType"] extends "FOLD"
-        ? FoldDotType<TMapping, TNullityMode>
+        ? FoldDotType<TMapping, TDtoKind>
     : TMapping["__mappingType"] extends "FLAT"
-        ? FlatDtoType<TMapping, TNullityMode>
+        ? FlatDtoType<TMapping, TDtoKind>
     : never;

@@ -1,7 +1,7 @@
 import { EntityTable, Predicate } from "@/dsl";
 import { AnyModel } from "../model";
 import { EmbeddedPropContract, NullityType, ReferencePropContract } from "../prop_contract";
-import { DtoBody, DtoType, NullityMode } from "./common";
+import { DtoBody, DtoType, DtoKind } from "./common";
 import { DefaultTargetMappings, NullityOf, TargetMappings, TargetMembersOf, TargetModelOf, WithNullity } from "./utils";
 import { ReferenceFetchType } from "./reference_fetch_type";
 
@@ -115,14 +115,14 @@ export interface ReferenceFlatMapping<
 
 export type FlatDtoType<
     TMapping, 
-    TNullityMode extends NullityMode
+    TDtoKind extends DtoKind
 > =
     TMapping extends FlatMapping<any, infer Key, any, infer Mappings, infer Nullity>
         ? Flat<
-            DtoType<Mappings, TNullityMode>,
+            DtoType<Mappings, TDtoKind>,
             Key,
             Nullity,
-            TNullityMode
+            TDtoKind
         >
         : never;
 
@@ -130,15 +130,15 @@ type Flat<
     T, 
     TPrefix extends string, 
     TNullity extends NullityType, 
-    TNullityMode extends NullityMode
+    TDtoKind extends DtoKind
 > = 
     TPrefix extends ""
         ? {
-            [K in keyof T]: WithNullity<T[K], TNullity, TNullityMode>
+            [K in keyof T]: WithNullity<T[K], TNullity, TDtoKind>
         }
         : {
             [
                 K in keyof T as
                     `${TPrefix}${Capitalize<K & string>}`
-            ]: WithNullity<T[K], TNullity, TNullityMode>
+            ]: WithNullity<T[K], TNullity, TDtoKind>
         };

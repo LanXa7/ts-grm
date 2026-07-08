@@ -1,6 +1,6 @@
 import { AnyModel } from "../model";
 import { EmbeddedPropContract } from "../prop_contract";
-import { DtoBody, DtoType, NullityMode } from "./common";
+import { DtoBody, DtoType, DtoKind } from "./common";
 import { DefaultTargetMappings, TargetMappings, TargetMembersOf, TargetModelOf } from "./utils";
 
 export type EmbeddedContext<
@@ -33,10 +33,10 @@ export interface EmbeddedMapping<
     ): EmbeddedMapping<TModel, TKey, TMember, TMappings>;
 }
 
-export type EmbeddedDtoType<TMapping, TNullityMode extends NullityMode> =
+export type EmbeddedDtoType<TMapping, TDtoKind extends DtoKind> =
     TMapping extends EmbeddedMapping<any, infer Key, any, infer Mappings>
         ? {
             [K in Key]: 
-                DtoType<Mappings, TNullityMode>
+                DtoType<Mappings, TDtoKind>
         }
         : object;

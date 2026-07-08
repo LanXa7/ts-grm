@@ -1,5 +1,5 @@
 import { AnyModel } from "../model";
-import { ContextKind, DtoBody, DtoMapping, DtoType, NullityMode } from "./common";
+import { ContextKind, DtoBody, DtoMapping, DtoType, DtoKind } from "./common";
 
 export interface FoldContext<
     TModel extends AnyModel,
@@ -32,7 +32,7 @@ export interface FoldMapping<
     readonly __mappings?: TMappings;
 }
 
-export type FoldDotType<TMapping, TNullityMode extends NullityMode> =
+export type FoldDotType<TMapping, TDtoKind extends DtoKind> =
     TMapping extends FoldMapping<any, infer Name, infer Mappings>
-        ? { [K in Name]: DtoType<Mappings, TNullityMode> }
+        ? { [K in Name]: DtoType<Mappings, TDtoKind> }
         : never;

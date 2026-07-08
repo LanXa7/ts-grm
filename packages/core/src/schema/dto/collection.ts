@@ -1,7 +1,7 @@
 import { AtLeastOne, EntityTable, Predicate } from "@/dsl";
 import { AnyModel } from "../model";
 import { CollectionPropContract } from "../prop_contract";
-import { DtoBody, DtoType, NullityMode } from "./common";
+import { DtoBody, DtoType, DtoKind } from "./common";
 import { ModelOrder } from "../order";
 import { DefaultTargetMappings, TargetMappings, TargetMembersOf, TargetModelOf } from "./utils";
 
@@ -52,12 +52,12 @@ export interface CollectionMapping<
 
 export type CollectionDtoType<
     TMapping, 
-    TNullityMode extends NullityMode
+    TDtoKind extends DtoKind
 > =
     TMapping extends CollectionMapping<any, infer Key, any, infer Mappings>
         ? {
             [K in Key]: Array<
-                DtoType<Mappings, TNullityMode>
+                DtoType<Mappings, TDtoKind>
             >
         }
         : never

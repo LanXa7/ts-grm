@@ -1,6 +1,6 @@
 import { AnyModel } from "../model";
 import { EmbeddedPropContract, ScalarPropContract } from "../prop_contract";
-import { NullityMode } from "./common";
+import { DtoKind } from "./common";
 import { WithNullity } from "./utils";
 
 export type AllScalarsContext<
@@ -56,26 +56,26 @@ export type DefaultKeys<TMembers> =
 
 export type AllScalarsDtoType<
     TMapping, 
-    TNullityMode extends NullityMode
+    TDtoKind extends DtoKind
 > =
     TMapping extends AllScalarsMapping<any, infer Members, infer Keys>
-        ? { [K in Keys]: MemberType<Members[K], TNullityMode> }
+        ? { [K in Keys]: MemberType<Members[K], TDtoKind> }
         : never;
 
 type MemberType<
     TMember, 
-    TNullityMode extends NullityMode
+    TDtoKind extends DtoKind
 > =
     TMember extends ScalarPropContract<infer R, infer Nullity>
-        ? WithNullity<R, Nullity, TNullityMode>
+        ? WithNullity<R, Nullity, TDtoKind>
     : TMember extends EmbeddedPropContract<infer NestedProps, any, any>
-        ? DefaultEmbeddedType<NestedProps, TNullityMode>
+        ? DefaultEmbeddedType<NestedProps, TDtoKind>
     : never;
     
 type DefaultEmbeddedType<
     TProps,
-    TNullityMode extends NullityMode
+    TDtoKind extends DtoKind
 > = {
-    [K in keyof TProps]: MemberType<TProps[K], TNullityMode>;
+    [K in keyof TProps]: MemberType<TProps[K], TDtoKind>;
 };
     

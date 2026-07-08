@@ -1,7 +1,7 @@
 import { AllModelMembers, AnyModel } from "../model";
 import { AssociatedPropContract, EmbeddedPropContract, NullityType, PropContract } from "../prop_contract";
 import { AllScalarsMapping, DefaultKeys } from "./all_scalars";
-import { DtoMapping, NullityMode } from "./common";
+import { DtoMapping, DtoKind } from "./common";
 
 export type TargetModelOf<
     TModel extends AnyModel, 
@@ -43,17 +43,17 @@ export type DefaultTargetMappings<
     AllScalarsMapping<TargetModelOf<TModel, TMember>, TargetMembersOf<TMember>, DefaultKeys<TargetMembersOf<TMember>>> 
 ];
 
-export type WithNullity<T, TNullity extends NullityType, TNullityMode extends NullityMode> =
+export type WithNullity<T, TNullity extends NullityType, TDtoKind extends DtoKind> =
     TNullity extends "NULLABLE"
-        ? TNullityMode extends "NULL"
+        ? TDtoKind extends "NULL_VIEW"
             ? T | null
-        : TNullity extends "UNDFINED"
+        : TNullity extends "UNDFINED_VIEW"
             ? T | undefined
         : T | null | undefined
     : TNullity extends "INPUT_NONNULL"
-        ? TNullityMode extends "NULL"
+        ? TDtoKind extends "NULL_VIEW"
             ? T | null
-        : TNullity extends "UNDFINED"
+        : TNullity extends "UNDFINED_VIEW"
             ? T | undefined
         : T
     : T;

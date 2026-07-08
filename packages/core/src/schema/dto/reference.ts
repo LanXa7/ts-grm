@@ -1,7 +1,7 @@
 import { EntityTable, Predicate } from "@/dsl";
 import { AnyModel } from "../model";
 import { NullityType, ReferencePropContract } from "../prop_contract";
-import { DtoBody, DtoType, NullityMode} from "./common";
+import { DtoBody, DtoType, DtoKind} from "./common";
 import { DefaultTargetMappings, NullityOf, TargetMappings, TargetMembersOf, TargetModelOf, WithNullity } from "./utils";
 import { ReferenceFetchType } from "./reference_fetch_type";
 
@@ -52,15 +52,15 @@ export interface ReferenceMapping<
 
 export type ReferenceDtoType<
     TMapping, 
-    TNullityMode extends NullityMode
+    TDtoKind extends DtoKind
 > =
-    TMapping extends ReferenceMapping<any, infer Key, infer Member, infer Mappings, infer Nullity>
+    TMapping extends ReferenceMapping<any, infer Key, any, infer Mappings, infer Nullity>
         ? { 
             [K in Key]: 
                 WithNullity<
-                    DtoType<Mappings, TNullityMode>,
+                    DtoType<Mappings, TDtoKind>,
                     Nullity,
-                    TNullityMode
+                    TDtoKind
                 >
         }
         : never;

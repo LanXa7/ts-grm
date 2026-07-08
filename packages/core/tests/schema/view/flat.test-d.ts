@@ -1,4 +1,3 @@
-import { createView } from "@/schema/view";
 import { describe, expectTypeOf, it } from "vitest";
 import { AUTHOR, BOOK } from "../../model/model";
 import { TypeOf } from "@/index";

@@ -1,6 +1,6 @@
 import { AnyModel } from "../model";
 import { ScalarPropContract } from "../prop_contract";
-import { NullityMode } from "./common";
+import { DtoKind } from "./common";
 import { WithNullity } from "./utils";
 
 export type ScalarContext<
@@ -41,14 +41,14 @@ export interface ScalarMapping1<
     ): ScalarMapping<TModel, TAlias, TMember>
 }
 
-export type ScalarDtoType<TMapping, TNullityMode extends NullityMode> =
+export type ScalarDtoType<TMapping, TDtoKind extends DtoKind> =
     TMapping extends ScalarMapping<any, infer Key, infer Member>
         ? {
-            [K in Key]: DataTypeOf<Member, TNullityMode>;
+            [K in Key]: DataTypeOf<Member, TDtoKind>;
         }
         : never;
 
-type DataTypeOf<TMember, TNullityMode extends NullityMode> =
+type DataTypeOf<TMember, TDtoKind extends DtoKind> =
     TMember extends ScalarPropContract<infer R, infer Nullity>
-        ? WithNullity<R, Nullity, TNullityMode>
+        ? WithNullity<R, Nullity, TDtoKind>
         : never;
