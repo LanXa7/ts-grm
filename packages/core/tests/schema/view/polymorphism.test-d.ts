@@ -1,4 +1,3 @@
-import { createView } from "@/schema/view";
 import { describe, expectTypeOf, it } from "vitest";
 import { BOOK, BOOK_STORE, ELECTRONIC_BOOK, PAPER_BOOK, PDF_ELECTRONIC_BOOK, PHYSICAL_BOOK_STORE } from "../../model/model";
 import { TypeOf } from "@/index";
@@ -99,24 +98,22 @@ describe("PolymorephismTest", () => {
     });
 
     it("associatedDeepAndWide", () => {
-        const view = createView(BOOK_STORE, {
-            $allScalars: true,
-            books: c => c({
-                name: true,
-                edition: true,
-                $polymorphism:
-                    c => c
-                        .when(PAPER_BOOK, {
-                            size: true
-                        })
-                        .when(ELECTRONIC_BOOK, {
-                            address: true,
-                            $polymorphism: c => c.when(PDF_ELECTRONIC_BOOK, {
-                                pdfVersion: true
-                            })
-                        })
-            })
-        });
+        const view = newView(BOOK_STORE, c => [
+            c.$allScalars,
+            c.books.with(c => [
+                c.name,
+                c.edition,
+                c.$instanceOf(PAPER_BOOK, c => [
+                    c.size
+                ]),
+                c.$instanceOf(ELECTRONIC_BOOK, c => [
+                    c.address,
+                    c.$instanceOf(PDF_ELECTRONIC_BOOK, c => [
+                        c.pdfVersion
+                    ])
+                ])
+            ])
+        ]);
         expectTypeOf<TypeOf<typeof view>>().toEqualTypeOf<{
             id: string;
             name: string;
