@@ -7,6 +7,7 @@ import { ReferenceFetchType } from "./reference_fetch_type";
 
 export interface FlatContext<
     TModel extends AnyModel,
+    TDtoKind extends DtoKind,
     TMembers
 > {
     $flat<
@@ -16,16 +17,18 @@ export interface FlatContext<
     ): TMembers[TKey] extends ReferencePropContract<any, any, any, any, any, any>
         ? ReferenceFlatMapping<
             TModel,
+            TDtoKind,
             TKey & string,
             TMembers[TKey],
-            DefaultTargetMappings<TModel, TMembers[TKey]>,
+            DefaultTargetMappings<TModel, TDtoKind, TMembers[TKey]>,
             NullityOf<TMembers[TKey]>
         >
         : EmbeddedFlatMapping<
             TModel,
+            TDtoKind,
             TKey & string,
             TMembers[TKey],
-            DefaultTargetMappings<TModel, TMembers[TKey]>,
+            DefaultTargetMappings<TModel, TDtoKind, TMembers[TKey]>,
             NullityOf<TMembers[TKey]>
         >;
 }
@@ -44,6 +47,7 @@ type FlatableKeys<TMembers> =
 
 export type FlatMapping<
     TModel extends AnyModel,
+    TDtoKind extends DtoKind,
     TKey extends string,
     TMember,
     TMappings extends TargetMappings<TModel, TMember>,
@@ -51,6 +55,7 @@ export type FlatMapping<
 > = 
     EmbeddedFlatMapping<
         TModel,
+        TDtoKind,
         TKey,
         TMember,
         TMappings,
@@ -58,6 +63,7 @@ export type FlatMapping<
     > 
     | ReferenceFlatMapping<
         TModel,
+        TDtoKind,
         TKey,
         TMember,
         TMappings,
@@ -67,6 +73,7 @@ export type FlatMapping<
 
 export interface EmbeddedFlatMapping<
     TModel extends AnyModel,
+    TDtoKind extends DtoKind,
     TKey extends string,
     TMember,
     TMappings extends TargetMappings<TModel, TMember>,
@@ -78,15 +85,16 @@ export interface EmbeddedFlatMapping<
     
     prefix<TPrefix extends string>(
         alias: TPrefix
-    ): EmbeddedFlatMapping<TModel, TPrefix, TMember, TMappings, TNullity>;
+    ): EmbeddedFlatMapping<TModel, TDtoKind, TPrefix, TMember, TMappings, TNullity>;
 
     with<const TMappings extends TargetMappings<TModel, TMember>>(
-        body: DtoBody<TargetModelOf<TModel, TMember>, TargetMembersOf<TMember>, "EMBEDDABLE", TMappings>
-    ): EmbeddedFlatMapping<TModel, TKey, TMember, TMappings, TNullity>;
+        body: DtoBody<TargetModelOf<TModel, TMember>, TDtoKind, "EMBEDDABLE", TargetMembersOf<TMember>, TMappings>
+    ): EmbeddedFlatMapping<TModel, TDtoKind, TKey, TMember, TMappings, TNullity>;
 }
 
 export interface ReferenceFlatMapping<
     TModel extends AnyModel,
+    TDtoKind extends DtoKind,
     TKey extends string,
     TMember,
     TMappings extends TargetMappings<TModel, TMember>,
@@ -98,31 +106,28 @@ export interface ReferenceFlatMapping<
 
     prefix<TPrefix extends string>(
         alias: TPrefix
-    ): ReferenceFlatMapping<TModel, TPrefix, TMember, TMappings, TNullity>;
+    ): ReferenceFlatMapping<TModel, TDtoKind, TPrefix, TMember, TMappings, TNullity>;
 
     with<const TMappings extends TargetMappings<TModel, TMember>>(
-        body: DtoBody<TargetModelOf<TModel, TMember>, TargetMembersOf<TMember>, "ENTITY", TMappings>
-    ): ReferenceFlatMapping<TModel, TKey, TMember, TMappings, TNullity>;
+        body: DtoBody<TargetModelOf<TModel, TMember>, TDtoKind, "ENTITY", TargetMembersOf<TMember>, TMappings>
+    ): ReferenceFlatMapping<TModel, TDtoKind, TKey, TMember, TMappings, TNullity>;
 
     where(
         filter: (table: EntityTable<TargetModelOf<TModel, TMember>>) => Predicate | undefined
-    ): ReferenceFlatMapping<TModel, TKey, TMember, TMappings, "NULLABLE">;
+    ): ReferenceFlatMapping<TModel, TDtoKind, TKey, TMember, TMappings, "NULLABLE">;
 
     fetch(
         fetchType: ReferenceFetchType
-    ): ReferenceFlatMapping<TModel, TKey, TMember, TMappings, TNullity>;
+    ): ReferenceFlatMapping<TModel, TDtoKind, TKey, TMember, TMappings, TNullity>;
 }
 
-export type FlatDtoType<
-    TMapping, 
-    TDtoKind extends DtoKind
-> =
-    TMapping extends FlatMapping<any, infer Key, any, infer Mappings, infer Nullity>
+export type FlatDtoType<TMapping> =
+    TMapping extends FlatMapping<any, infer DtoKind, infer Key, any, infer Mappings, infer Nullity>
         ? Flat<
-            DtoType<Mappings, TDtoKind>,
+            DtoType<Mappings>,
             Key,
             Nullity,
-            TDtoKind
+            DtoKind
         >
         : never;
 

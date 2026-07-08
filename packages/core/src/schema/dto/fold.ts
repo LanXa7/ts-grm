@@ -3,8 +3,9 @@ import { ContextKind, DtoBody, DtoMapping, DtoType, DtoKind } from "./common";
 
 export interface FoldContext<
     TModel extends AnyModel,
-    TMembers,
-    TContextKind extends ContextKind
+    TDtoKind extends DtoKind,
+    TContextKind extends ContextKind,
+    TMembers
 > {
 
     $fold<
@@ -12,8 +13,8 @@ export interface FoldContext<
         const TMappings extends SelfMappings<TModel>
     >(
         name: TName,
-        body: DtoBody<TModel, TMembers, TContextKind, TMappings>
-    ): FoldMapping<TModel, TName, TMappings>;
+        body: DtoBody<TModel, TDtoKind, TContextKind, TMembers, TMappings>
+    ): FoldMapping<TModel, TDtoKind, TName, TMappings>;
 }
 
 type SelfMappings<
@@ -22,17 +23,19 @@ type SelfMappings<
 
 export interface FoldMapping<
     TModel extends AnyModel,
+    TDtoKind extends DtoKind,
     TName extends string,
     TMappings extends SelfMappings<TModel>
 > {
 
     readonly __mappingType: 'FOLD';
     readonly __model?: TModel;
+    readonly __dtoKind?: TDtoKind;
     readonly __name?: TName;
     readonly __mappings?: TMappings;
 }
 
-export type FoldDotType<TMapping, TDtoKind extends DtoKind> =
-    TMapping extends FoldMapping<any, infer Name, infer Mappings>
-        ? { [K in Name]: DtoType<Mappings, TDtoKind> }
+export type FoldDotType<TMapping> =
+    TMapping extends FoldMapping<any, any, infer Name, infer Mappings>
+        ? { [K in Name]: DtoType<Mappings> }
         : never;

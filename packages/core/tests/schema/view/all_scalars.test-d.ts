@@ -22,7 +22,7 @@ describe("AllScalarsTest", () => {
 
     it("exclude", () => {
         const view = newView(AUTHOR, c => [
-            c.$allScalars({exclude: "gender"})
+            c.$allScalars.exclude("gender")
         ])
         expectTypeOf<TypeOf<typeof view>>().toEqualTypeOf<{
             id: number;
@@ -35,7 +35,7 @@ describe("AllScalarsTest", () => {
 
     it("excludeArr", () => {
         const view = newView(AUTHOR, c => [
-            c.$allScalars({exclude: ["id", "gender"]})
+            c.$allScalars.exclude("id", "gender")
         ])
         expectTypeOf<TypeOf<typeof view>>().toEqualTypeOf<{
             name: {

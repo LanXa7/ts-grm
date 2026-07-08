@@ -1,22 +1,10 @@
 import { AnyModel } from "../model";
-import { EmbeddedPropContract } from "../prop_contract";
 import { DtoBody, DtoType, DtoKind } from "./common";
-import { DefaultTargetMappings, TargetMappings, TargetMembersOf, TargetModelOf } from "./utils";
-
-export type EmbeddedContext<
-    TModel extends AnyModel,
-    TMembers,
-> = {
-    [
-        K in keyof TMembers as 
-            TMembers[K] extends EmbeddedPropContract<any, any, any>
-                ? K
-                : never
-    ]: EmbeddedMapping<TModel, K & string, TMembers[K], DefaultTargetMappings<TModel, TMembers[K]>>;
-}
+import { TargetMappings, TargetMembersOf, TargetModelOf } from "./utils";
 
 export interface EmbeddedMapping<
     TModel extends AnyModel,
+    TDtoKind extends DtoKind,
     TKey extends string,
     TMember,
     TMappings extends TargetMappings<TModel, TMember>
@@ -26,17 +14,17 @@ export interface EmbeddedMapping<
 
     as<TAlias extends string>(
         alias: TAlias
-    ): EmbeddedMapping<TModel, TAlias, TMember, TMappings>;
+    ): EmbeddedMapping<TModel, TDtoKind, TAlias, TMember, TMappings>;
 
     with<const TMappings extends TargetMappings<TModel, TMember>>(
-        body: DtoBody<TargetModelOf<TModel, TMember>, TargetMembersOf<TMember>, "EMBEDDABLE", TMappings>
-    ): EmbeddedMapping<TModel, TKey, TMember, TMappings>;
+        body: DtoBody<TargetModelOf<TModel, TMember>, TDtoKind, "EMBEDDABLE", TargetMembersOf<TMember>, TMappings>
+    ): EmbeddedMapping<TModel, TDtoKind, TKey, TMember, TMappings>;
 }
 
-export type EmbeddedDtoType<TMapping, TDtoKind extends DtoKind> =
-    TMapping extends EmbeddedMapping<any, infer Key, any, infer Mappings>
+export type EmbeddedDtoType<TMapping> =
+    TMapping extends EmbeddedMapping<any, any, infer Key, any, infer Mappings>
         ? {
             [K in Key]: 
-                DtoType<Mappings, TDtoKind>
+                DtoType<Mappings>
         }
         : object;

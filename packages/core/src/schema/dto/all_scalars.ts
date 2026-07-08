@@ -1,3 +1,4 @@
+import { AtLeastOne } from "@/dsl";
 import { AnyModel } from "../model";
 import { EmbeddedPropContract, ScalarPropContract } from "../prop_contract";
 import { DtoKind } from "./common";
@@ -5,14 +6,15 @@ import { WithNullity } from "./utils";
 
 export type AllScalarsContext<
     TModel extends AnyModel,
+    TDtoKind extends DtoKind,
     TMembers
 > = {
-
-    $allScalars: ConfigurableAllScalarsMapping<TModel, TMembers>;
+    $allScalars: AllScalarsMapping<TModel, TDtoKind, TMembers, DefaultKeys<TMembers>>;
 }
 
 export interface AllScalarsMapping<
     TModel extends AnyModel,
+    TDtoKind extends DtoKind,
     TMembers, 
     TKeys extends keyof TMembers
 > {
@@ -20,19 +22,12 @@ export interface AllScalarsMapping<
     readonly __model?: TModel;
     readonly __members?: TMembers;
     readonly __excludedKeys?: TKeys;
-}
 
-export interface ConfigurableAllScalarsMapping<
-    TModel extends AnyModel,
-    TMembers
-> extends AllScalarsMapping<TModel, TMembers, DefaultKeys<TMembers>> {
-
-    readonly exclude: DefaultKeys<TMembers> | ReadonlyArray<DefaultKeys<TMembers>> | undefined;
-
-    <const TKeys extends DefaultKeys<TMembers> | ReadonlyArray<DefaultKeys<TMembers>>>(options: {
-        readonly exclude: TKeys
-    }): AllScalarsMapping<
+    exclude<const TKeys extends AtLeastOne<DefaultKeys<TMembers>>>(
+        ...keys: TKeys
+    ): AllScalarsMapping<
         TModel,
+        TDtoKind,
         TMembers,
         Exclude<
             DefaultKeys<TMembers>,
@@ -54,12 +49,9 @@ export type DefaultKeys<TMembers> =
         ]: never
     } & string;
 
-export type AllScalarsDtoType<
-    TMapping, 
-    TDtoKind extends DtoKind
-> =
-    TMapping extends AllScalarsMapping<any, infer Members, infer Keys>
-        ? { [K in Keys]: MemberType<Members[K], TDtoKind> }
+export type AllScalarsDtoType<TMapping> =
+    TMapping extends AllScalarsMapping<any, infer DtoKind, infer Members, infer Keys>
+        ? { [K in Keys]: MemberType<Members[K], DtoKind> }
         : never;
 
 type MemberType<

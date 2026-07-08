@@ -38,22 +38,23 @@ export type TargetMappings<
 
 export type DefaultTargetMappings<
     TModel extends AnyModel, 
+    TDtoKind extends DtoKind,
     TMember
 > = [ 
-    AllScalarsMapping<TargetModelOf<TModel, TMember>, TargetMembersOf<TMember>, DefaultKeys<TargetMembersOf<TMember>>> 
+    AllScalarsMapping<TargetModelOf<TModel, TMember>, TDtoKind, TargetMembersOf<TMember>, DefaultKeys<TargetMembersOf<TMember>>> 
 ];
 
 export type WithNullity<T, TNullity extends NullityType, TDtoKind extends DtoKind> =
     TNullity extends "NULLABLE"
         ? TDtoKind extends "NULL_VIEW"
             ? T | null
-        : TNullity extends "UNDFINED_VIEW"
+        : TDtoKind extends "UNDFINED_VIEW"
             ? T | undefined
         : T | null | undefined
     : TNullity extends "INPUT_NONNULL"
         ? TDtoKind extends "NULL_VIEW"
             ? T | null
-        : TNullity extends "UNDFINED_VIEW"
+        : TDtoKind extends "UNDFINED_VIEW"
             ? T | undefined
         : T
     : T;

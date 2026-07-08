@@ -10,10 +10,10 @@ export function newView<
     >
 >(
     model: TModel,
-    fn: DtoBody<TModel, AllModelMembers<TModel>, "ENTITY", TMappings>
+    fn: DtoBody<TModel, "NULL_VIEW", "ENTITY", AllModelMembers<TModel>, TMappings>
 ): View<
     TModel, 
-    Prettify<DtoType<TMappings, "NULL_VIEW">>
+    Prettify<DtoType<TMappings>>
 > {
     suppressUnused(model);
     suppressUnused(fn);

@@ -3,48 +3,25 @@ import { ScalarPropContract } from "../prop_contract";
 import { DtoKind } from "./common";
 import { WithNullity } from "./utils";
 
-export type ScalarContext<
-    TModel extends AnyModel,
-    TMembers
-> = {
-    [
-        K in keyof TMembers as 
-            TMembers[K] extends ScalarPropContract<any, any>
-                ? K
-                : never
-    ]: ScalarMapping1<TModel, K & string, TMembers[K]>;
-}
-
 export interface ScalarMapping<
     TModel extends AnyModel, 
+    TDtoKind extends DtoKind,
     TKey extends string, 
     TMember
 > {
 
     readonly __mappingType: "SCALAR";
-    readonly __model?: TModel;
     readonly __key?: TKey;
-    readonly __member?: TMember;
-}
-
-export interface ScalarMapping1<
-    TModel extends AnyModel, 
-    TKey extends string, 
-    TMember
-> extends ScalarMapping<
-    TModel,
-    TKey,
-    TMember
-> {
+    
     as<TAlias extends string>(
         alias: TAlias
-    ): ScalarMapping<TModel, TAlias, TMember>
+    ): ScalarMapping<TModel, TDtoKind, TAlias, TMember>
 }
 
-export type ScalarDtoType<TMapping, TDtoKind extends DtoKind> =
-    TMapping extends ScalarMapping<any, infer Key, infer Member>
+export type ScalarDtoType<TMapping> =
+    TMapping extends ScalarMapping<any, infer DtoKind, infer Key, infer Member>
         ? {
-            [K in Key]: DataTypeOf<Member, TDtoKind>;
+            [K in Key]: DataTypeOf<Member, DtoKind>;
         }
         : never;
 
