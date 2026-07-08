@@ -1,18 +1,16 @@
-import { createView } from "@/schema/view";
 import { describe, it, expectTypeOf } from "vitest";
 import { BOOK, ORDER } from "../../model/model";
 import { TypeOf } from "@/index";
+import { newView } from "@/schema/dto/index";
 
 describe("AssociatedKeysTest", () => {
 
     it("scalarKey", () => {
-        const view = createView(BOOK, {
-            id: true,
-            $associatedKeys: c => c({
-                store: true,
-                authors: { alias: "authorIds" }
-            })
-        });
+        const view = newView(BOOK, c => [
+            c.id,
+            c.storeId,
+            c.$associatedKeys("authors", "authorIds")
+        ]);
         expectTypeOf<TypeOf<typeof view>>().toEqualTypeOf<{
             id: number;
             storeId: string | null;
@@ -21,13 +19,11 @@ describe("AssociatedKeysTest", () => {
     });
 
     it("embeddedKeys", () => {
-        const view = createView(ORDER, {
-            id: true,
-            $associatedKeys: c => c({
-                tags: { alias: "tagIds" },
-                comments: { alias: "commentIds" }
-            })
-        });
+        const view = newView(ORDER, c => [
+            c.id,
+            c.$associatedKeys("tags", "tagIds"),
+            c.$associatedKeys("comments", "commentIds")
+        ]);
         expectTypeOf<TypeOf<typeof view>>().toEqualTypeOf<{
             id: {
                 x: number;

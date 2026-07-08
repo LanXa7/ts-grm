@@ -1,13 +1,13 @@
 import { UnionToIntersection } from "@/utils";
 import { AnyModel } from "../model";
 import { AllScalarsContext, AllScalarsDtoType, AllScalarsMapping } from "./all_scalars";
-import { AssociatedKeysContext, AssociatedKeysMapping } from "./associated_keys";
+import { AssociatedKeysContext, AssociatedKeysDtoType, AssociatedKeysMapping } from "./associated_keys";
 import { CollectionDtoType, CollectionMapping } from "./collection";
 import { EmbeddedDtoType, EmbeddedMapping } from "./embedded";
 import { FlatContext, FlatDtoType, FlatMapping } from "./flat";
 import { FoldContext, FoldDotType, FoldMapping } from "./fold";
 import { ReferenceDtoType, ReferenceMapping } from "./reference";
-import { ReferenceKeyContext, ReferenceKeyMapping } from "./reference_key";
+import { ReferenceKeyContext, ReferenceKeyDtoType, ReferenceKeyMapping } from "./reference_key";
 import { ScalarDtoType, ScalarMapping } from "./scalar";
 import { DirectContext } from "./direct";
 import { ApplyInstanceOfMappings, InstanceOfContext, InstanceOfMappping } from "./instance_of";
@@ -25,12 +25,12 @@ export type DtoContext<
     & (
         TContextKind extends "EMBEDDABLE"
             ? object
-            : ReferenceKeyContext<TModel, TMembers>
+            : ReferenceKeyContext<TModel, TDtoKind, TMembers>
     )
     & (
         TContextKind extends "EMBEDDABLE"
             ? object
-            : AssociatedKeysContext<TModel, TMembers>
+            : AssociatedKeysContext<TModel, TDtoKind, TMembers>
     )
     & (
         TContextKind extends "DERIVED_ENTITY"
@@ -64,8 +64,8 @@ export type DtoMapping<
     | InstanceOfMappping<TModel, any, any, any>
     | ScalarMapping<TModel, any, any, any>
     | EmbeddedMapping<TModel, any, any, any, any>
-    | ReferenceKeyMapping<TModel, any, any>
-    | AssociatedKeysMapping<TModel, any, any>
+    | ReferenceKeyMapping<TModel, any, any, any>
+    | AssociatedKeysMapping<TModel, any, any, any>
     | ReferenceMapping<TModel, any, any, any, any, any>
     | CollectionMapping<TModel, any, any, any, any>;
 
@@ -92,6 +92,10 @@ type DtoMappingType<
         ? ReferenceDtoType<TMapping>
     : TMapping["__mappingType"] extends "COLLECTION"
         ? CollectionDtoType<TMapping>
+    : TMapping["__mappingType"] extends "REFERENCE_KEY"
+        ? ReferenceKeyDtoType<TMapping>
+    : TMapping["__mappingType"] extends "ASSOCIATED_KEYS"
+        ? AssociatedKeysDtoType<TMapping>
     : TMapping["__mappingType"] extends "FOLD"
         ? FoldDotType<TMapping>
     : TMapping["__mappingType"] extends "FLAT"

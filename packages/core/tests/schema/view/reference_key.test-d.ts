@@ -1,15 +1,15 @@
-import { createView } from "@/schema/view";
 import { describe, expectTypeOf, it } from "vitest";
 import { BOOK, ORDER_ITEM } from "../../model/model";
 import { TypeOf } from "@/index";
+import { newView } from "@/schema/dto/index";
 
 describe("ReferenceKeyTest", () => {
 
     it("scalarKey", () => {
-        const view = createView(BOOK, {
-            id: true,
-            storeId: true
-        });
+        const view = newView(BOOK, c => [
+            c.id,
+            c.storeId
+        ]);
         expectTypeOf<TypeOf<typeof view>>().toEqualTypeOf<{
             id: number;
             storeId: string | null;
@@ -17,10 +17,10 @@ describe("ReferenceKeyTest", () => {
     });
 
     it("embeddedKey", () => {
-        const view = createView(ORDER_ITEM, {
-            id: true,
-            orderId: { alias: "oid" }
-        });
+        const view = newView(ORDER_ITEM, c => [
+            c.id,
+            c.orderId.as("oid")
+        ]);
         expectTypeOf<TypeOf<typeof view>>().toEqualTypeOf<{
             id: number;
             oid: {

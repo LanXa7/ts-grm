@@ -54,7 +54,7 @@ export type AllScalarsDtoType<TMapping> =
         ? { [K in Keys]: MemberType<Members[K], DtoKind> }
         : never;
 
-type MemberType<
+export type MemberType<
     TMember, 
     TDtoKind extends DtoKind
 > =
