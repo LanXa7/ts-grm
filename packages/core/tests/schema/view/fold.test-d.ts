@@ -1,22 +1,20 @@
-import { createView } from "@/schema/view";
 import { describe, expectTypeOf, it } from "vitest";
 import { BOOK } from "../../model/model";
 import { TypeOf } from "@/index";
+import { newView } from "@/schema/dto/index";
 
 describe("FoldTest", () => {
 
     it("simple", () => {
-        const view = createView(BOOK, {
-            $fold: {
-                scalars: c => c({
-                    $allScalars: true
-                }),
-                associations: c => c({
-                    store: true,
-                    authors: true
-                })
-            }
-        });
+        const view = newView(BOOK, c => [
+            c.$fold("scalars", c => [
+                c.$allScalars
+            ]),
+            c.$fold("associations", c => [
+                c.store,
+                c.authors
+            ])
+        ]);
         expectTypeOf<TypeOf<typeof view>>().toEqualTypeOf<{
             scalars: {
                 id: number;

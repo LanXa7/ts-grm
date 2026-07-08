@@ -3,6 +3,7 @@ import { AnyModel } from "../model";
 import { NullityType, ReferencePropContract } from "../prop_contract";
 import { DtoBody, DtoType, NullityMode} from "./common";
 import { DefaultTargetMappings, NullityOf, TargetMappings, TargetMembersOf, TargetModelOf, WithNullity } from "./utils";
+import { ReferenceFetchType } from "./reference_fetch_type";
 
 export type ReferenceContext<
     TModel extends AnyModel,
@@ -43,6 +44,10 @@ export interface ReferenceMapping<
     where(
         filter: (table: EntityTable<TargetModelOf<TModel, TMember>>) => Predicate | undefined
     ): ReferenceMapping<TModel, TKey, TMember, TMappings, "NULLABLE">;
+
+    fetch(
+        fetchType: ReferenceFetchType
+    ): ReferenceMapping<TModel, TKey, TMember, TMappings, TNullity>;
 }
 
 export type ReferenceDtoType<

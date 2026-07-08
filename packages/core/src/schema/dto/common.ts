@@ -4,8 +4,8 @@ import { AllScalarsContext, AllScalarsDtoType, AllScalarsMapping } from "./all_s
 import { AssociatedKeysContext, AssociatedKeysMapping } from "./associated_keys";
 import { CollectionContext, CollectionDtoType, CollectionMapping } from "./collection";
 import { EmbeddedContext, EmbeddedDtoType, EmbeddedMapping } from "./embedded";
-import { FlatContext, FlatMapping } from "./flat";
-import { FoldContext, FoldMapping } from "./fold";
+import { FlatContext, FlatDtoType, FlatMapping } from "./flat";
+import { FoldContext, FoldDotType, FoldMapping } from "./fold";
 import { ReferenceContext, ReferenceDtoType, ReferenceMapping } from "./reference";
 import { ReferenceKeyContext, ReferenceKeyMapping } from "./reference_key";
 import { ScalarContext, ScalarDtoType, ScalarMapping } from "./scalar";
@@ -96,4 +96,8 @@ type DtoMappingType<
         ? ReferenceDtoType<TMapping, TNullityMode>
     : TMapping["__mappingType"] extends "COLLECTION"
         ? CollectionDtoType<TMapping, TNullityMode>
+    : TMapping["__mappingType"] extends "FOLD"
+        ? FoldDotType<TMapping, TNullityMode>
+    : TMapping["__mappingType"] extends "FLAT"
+        ? FlatDtoType<TMapping, TNullityMode>
     : never;

@@ -28,8 +28,7 @@ describe("ReferenceTest", () => {
         const view = newView(ORDER_ITEM, c => [
             c.id,
             c.order.with(c => [
-                c.id.as("oid")
-                .with(c => [
+                c.id.as("oid").with(c => [
                     c.x,
                     c.y.with(c => [
                         c.b
@@ -55,9 +54,10 @@ describe("ReferenceTest", () => {
     it("withFilter", () => {
         const view = newView(ORDER_ITEM, c => [
             c.id,
-            c.order.where(table => table.id().x.lt(100)).with(c => [
-                c.id.as("oid")
-                .with(c => [
+            c.order.where(
+                table => table.id().x.lt(100)
+            ).with(c => [
+                c.id.as("oid").with(c => [
                     c.x,
                     c.y.with(c => [
                         c.b
