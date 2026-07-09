@@ -1,20 +1,17 @@
-import { createView } from "@/schema/view";
-import { it } from "node:test";
-import { describe, expectTypeOf } from "vitest";
+import { describe, it, expectTypeOf } from "vitest";
 import { TREE_NODE } from "../../model/model";
 import { TypeOf } from "@/index";
+import { newView } from "@/schema/dto/index";
 
 describe("RecursiveTest", () => {
 
     it("simple", () => {
-        const view = createView(TREE_NODE, {
-            id: true,
-            name: true,
-            $recursive: c => c({
-                parentNode: true,
-                childNodes: true
-            })
-        });
+        const view = newView(TREE_NODE, c => [
+            c.id,
+            c.name,
+            c.$recursive("parentNode"),
+            c.$recursive("childNodes")
+        ]);
         type ViewType = TypeOf<typeof view>;
         expectTypeOf<keyof ViewType>().toEqualTypeOf<
             "id" | "name" | "parentNode" | "childNodes"
@@ -34,14 +31,12 @@ describe("RecursiveTest", () => {
     });
 
     it("alias", () => {
-        const view = createView(TREE_NODE, {
-            id: true,
-            name: true,
-            $recursive: c => c({
-                parentNode: { alias: "upObj"},
-                childNodes: { alias: "downObjs" }
-            })
-        });
+        const view = newView(TREE_NODE, c => [
+            c.id,
+            c.name,
+            c.$recursive("parentNode").as("upObj"),
+            c.$recursive("childNodes").as("downObjs")
+        ]);
         type ViewType = TypeOf<typeof view>;
         expectTypeOf<keyof ViewType>().toEqualTypeOf<
             "id" | "name" | "upObj" | "downObjs"
@@ -61,14 +56,12 @@ describe("RecursiveTest", () => {
     });
 
     it("aliasWithDepth", () => {
-        const view = createView(TREE_NODE, {
-            id: true,
-            name: true,
-            $recursive: c => c({
-                parentNode: { alias: "upObj"},
-                childNodes: { alias: "downObjs", depth: 3 }
-            })
-        });
+        const view = newView(TREE_NODE, c => [
+            c.id,
+            c.name,
+            c.$recursive("parentNode").as("upObj"),
+            c.$recursive("childNodes").as("downObjs").depth(3)
+        ]);
         type ViewType = TypeOf<typeof view>;
         expectTypeOf<keyof ViewType>().toEqualTypeOf<
             "id" | "name" | "upObj" | "downObjs"

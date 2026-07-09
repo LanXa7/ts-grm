@@ -11,6 +11,7 @@ import { ReferenceKeyContext, ReferenceKeyDtoType, ReferenceKeyMapping } from ".
 import { ScalarDtoType, ScalarMapping } from "./scalar";
 import { DirectContext } from "./direct";
 import { ApplyInstanceOfMappings, InstanceOfContext, InstanceOfMappping } from "./instance_of";
+import { ApplyRecursiveMappings, RecursiveContext, RecursiveMapping } from "./recursive";
 
 export type DtoContext<
     TModel extends AnyModel,
@@ -22,6 +23,7 @@ export type DtoContext<
     & FoldContext<TModel, TDtoKind, TContextKind, TMembers>
     & FlatContext<TModel, TDtoKind, TMembers>
     & InstanceOfContext<TModel, TDtoKind>
+    & RecursiveContext<TModel, TDtoKind, TMembers>
     & (
         TContextKind extends "EMBEDDABLE"
             ? object
@@ -62,6 +64,7 @@ export type DtoMapping<
     | FoldMapping<TModel, any, any, any>
     | FlatMapping<TModel, any, any, any, any, any>
     | InstanceOfMappping<TModel, any, any, any>
+    | RecursiveMapping<TModel, any, any>
     | ScalarMapping<TModel, any, any, any>
     | EmbeddedMapping<TModel, any, any, any, any>
     | ReferenceKeyMapping<TModel, any, any, any>
@@ -72,10 +75,13 @@ export type DtoMapping<
 export type DtoType<
     TMappings extends ReadonlyArray<DtoMapping<any>>
 > = 
-    ApplyInstanceOfMappings<
-        UnionToIntersection<{
-            [K in keyof TMappings]: DtoMappingType<TMappings[K]>
-        }[number]>,
+    ApplyRecursiveMappings<
+        ApplyInstanceOfMappings<
+            UnionToIntersection<{
+                [K in keyof TMappings]: DtoMappingType<TMappings[K]>
+            }[number]>,
+            TMappings
+        >,
         TMappings
     >;
     
