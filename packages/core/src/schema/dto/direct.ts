@@ -9,7 +9,7 @@ import {
     ScalarLikePropContract, 
     ScalarPropContract 
 } from "../prop_contract";
-import { CalculatedCollectionMapping, CalculatedReferenceMapping, CalculatedValueMapping } from "./calculator";
+import { CalculatedCollectionMapping, CalculatedReferenceMapping } from "./calculator";
 import { CollectionMapping } from "./collection";
 import { DtoKind } from "./common";
 import { EmbeddedMapping } from "./embedded";
@@ -45,7 +45,8 @@ export type DirectContext<
                 TModel, 
                 TDtoKind,
                 K & string, 
-                TMembers[K]
+                ScalarTypeOf<TMembers[K]>,
+                NullityOf<TMembers[K]>
             >
         : TMembers[K] extends EmbeddedPropContract<any, any, any>
             ? EmbeddedMapping<
@@ -72,13 +73,13 @@ export type DirectContext<
                 TMembers[K],
                 DefaultTargetMappings<TModel, TDtoKind, TMembers[K]>
             >
-        : TMembers[K] extends CalculatedValuePropContract<infer R, infer Nullity>
+        : TMembers[K] extends CalculatedValuePropContract<infer Value, infer Nullity>
             ? IfView<
-                CalculatedValueMapping<
+                ScalarLikeMapping<
                     TModel, 
                     TDtoKind,
                     K & string, 
-                    R,
+                    Value, 
                     Nullity
                 >,
                 TDtoKind
@@ -113,6 +114,11 @@ type IsScalarLikeProp<TMember, TDtoKind extends DtoKind> =
     TDtoKind extends "INPUT"
         ? TMember extends ScalarPropContract<any, any> ? true : false
         : TMember extends ScalarLikePropContract<any, any> ? true : false;
+
+type ScalarTypeOf<TMember> =
+    TMember extends ScalarLikePropContract<infer Value, any> 
+        ? Value 
+        : never
 
 type IfView<T, TDtoKind> = 
     TDtoKind extends "INPUT"

@@ -1,6 +1,6 @@
 import { AllModelMembers, AnyModel } from "../model";
 import { AssociatedLikePropContract, EmbeddedPropContract, NullityType, PropContract } from "../prop_contract";
-import { AllScalarsMapping, DefaultKeys } from "./all_scalars";
+import { AllScalarsMapping } from "./all_scalars";
 import { DtoMapping, DtoKind } from "./common";
 
 export type TargetModelOf<
@@ -41,7 +41,7 @@ export type DefaultTargetMappings<
     TDtoKind extends DtoKind,
     TMember
 > = [ 
-    AllScalarsMapping<TargetModelOf<TModel, TMember>, TDtoKind, TargetMembersOf<TMember>, DefaultKeys<TargetMembersOf<TMember>>> 
+    AllScalarsMapping<TargetModelOf<TModel, TMember>, TDtoKind, TargetMembersOf<TMember>, never> 
 ];
 
 export type WithNullity<T, TNullity extends NullityType, TDtoKind extends DtoKind> =

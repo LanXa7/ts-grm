@@ -1,6 +1,12 @@
 import { AnyModel } from "../model";
-import { NullityType, ParameterizedCalculatedCollectionPropContract, ParameterizedCalculatedReferencePropContract, ParameterizedCalculatedValuePropContract } from "../prop_contract";
+import { 
+    NullityType, 
+    ParameterizedCalculatedCollectionPropContract, 
+    ParameterizedCalculatedReferencePropContract, 
+    ParameterizedCalculatedValuePropContract 
+} from "../prop_contract";
 import { DtoBody, DtoKind, DtoType } from "./common";
+import { ScalarLikeMapping } from "./scalar_like";
 import { DefaultTargetMappings, TargetMappings, TargetMembersOf, TargetModelOf, WithNullity } from "./utils";
 
 export type ParameterizedContext<
@@ -28,12 +34,13 @@ interface ParameterizedContextImpl<
     >(
         key: TKey,
         parameter: TParameterMap[TKey]
-    ): TMembers[TKey & keyof TMembers] extends ParameterizedCalculatedValuePropContract<any, infer R, infer Nullity>
-        ? CalculatedValueMapping<
+    ): TMembers[TKey & keyof TMembers] extends ParameterizedCalculatedValuePropContract<any, infer Value, infer Nullity>
+        ? ScalarLikeMapping<
             TModel, 
             TDtoKind, 
             TKey & string, 
-            R, Nullity
+            Value, 
+            Nullity
         >
     : TMembers[TKey & keyof TMembers] extends ParameterizedCalculatedReferencePropContract<any, any, infer Nullity>
         ? CalculatedReferenceMapping<
@@ -74,22 +81,6 @@ type ParameterMap<TMembers> = {
         : never
 };
 
-export interface CalculatedValueMapping<
-    TModel extends AnyModel,
-    TDtoKind extends DtoKind,
-    TKey extends string,
-    TValue,
-    TNullity extends NullityType
-> {
-
-    readonly __mappingType: "CALCULATED_VALUE";
-    readonly __key?: TKey;
-
-    as<TAlias extends string>(
-        alias: TAlias
-    ): CalculatedValueMapping<TModel, TDtoKind, TAlias, TValue, TNullity>;
-}
-
 export interface CalculatedReferenceMapping<
     TModel extends AnyModel,
     TDtoKind extends DtoKind,
@@ -128,17 +119,6 @@ export interface CalculatedCollectionMapping<
         body: DtoBody<TargetModelOf<TModel, TMember>, TDtoKind, "ENTITY", TargetMembersOf<TMember>, TMappings>
     ): CalculatedCollectionMapping<TModel, TDtoKind, TKey, TMember, TMappings>;
 }
-
-export type CalculatedValueDtoType<TMapping> =
-    TMapping extends CalculatedValueMapping<any, infer DtoKind, infer Key, infer Value, infer Nullity>
-        ? { 
-            [K in Key]: WithNullity<
-                Value,
-                Nullity,
-                DtoKind
-            > 
-        }
-        : never;
 
 export type CalculatedReferenceDtoType<TMapping> =
     TMapping extends CalculatedReferenceMapping<any, infer DtoKind, infer Key, any, infer Mappings, infer Nullity>

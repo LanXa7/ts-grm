@@ -9,36 +9,31 @@ export type AllScalarsContext<
     TDtoKind extends DtoKind,
     TMembers
 > = {
-    $allScalars: AllScalarsMapping<TModel, TDtoKind, TMembers, DefaultKeys<TMembers>>;
+    $allScalars: AllScalarsMapping<TModel, TDtoKind, TMembers, never>;
 }
 
 export interface AllScalarsMapping<
     TModel extends AnyModel,
     TDtoKind extends DtoKind,
     TMembers, 
-    TKeys extends keyof TMembers
+    TExcludedKeys extends keyof TMembers
 > {
     readonly __mappingType: 'ALL_SCALARS';
     readonly __model?: TModel;
     readonly __members?: TMembers;
-    readonly __excludedKeys?: TKeys;
+    readonly __excludedKeys?: TExcludedKeys;
 
-    exclude<const TKeys extends AtLeastOne<DefaultKeys<TMembers>>>(
-        ...keys: TKeys
+    exclude<const TExcludedKeys extends AtLeastOne<ScalarKeys<TMembers>>>(
+        ...keys: TExcludedKeys
     ): AllScalarsMapping<
         TModel,
         TDtoKind,
         TMembers,
-        Exclude<
-            DefaultKeys<TMembers>,
-            TKeys extends string
-                ? TKeys
-                : TKeys[number]
-        >
+        TExcludedKeys[number]
     >;
 }
 
-export type DefaultKeys<TMembers> = 
+type ScalarKeys<TMembers> = 
     keyof {
         [K in keyof TMembers as 
             TMembers[K] extends ScalarPropContract<any, any>
@@ -50,8 +45,16 @@ export type DefaultKeys<TMembers> =
     } & string;
 
 export type AllScalarsDtoType<TMapping> =
-    TMapping extends AllScalarsMapping<any, infer DtoKind, infer Members, infer Keys>
-        ? { [K in Keys]: MemberType<Members[K], DtoKind> }
+    TMapping extends AllScalarsMapping<any, infer DtoKind, infer Members, infer ExcludedKeys>
+        ? { 
+            [
+                K in ScalarKeys<Members> as 
+                    K extends ExcludedKeys
+                        ? never
+                        : K
+            ]: 
+            MemberType<Members[K], DtoKind> 
+        }
         : never;
 
 export type MemberType<

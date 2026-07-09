@@ -1,8 +1,9 @@
 import { describe, it } from "node:test";
-import { BOOK, LEARNING_LINK } from "../../model/model";
+import { AUTHOR, BOOK, LEARNING_LINK } from "../../model/model";
 import { expectTypeOf } from "vitest";
 import { TypeOf } from "@/index";
 import { newView } from "@/schema/dto/index";
+import { z } from "zod";
 
 describe("ScalarTest", () => {
 
@@ -40,6 +41,19 @@ describe("ScalarTest", () => {
             bookId: number;
             bookName: string;
             bookEdition: number;
+        }>();
+    });
+
+    it("output", () => {
+        const view = newView(AUTHOR, c => [
+            c.id,
+            c.gender.output(z.enum(["BOY", "GIRL"]), value => {
+                return value === "MALE" ? "BOY" : "GIRL"
+            })
+        ]);
+        expectTypeOf<TypeOf<typeof view>>().toEqualTypeOf<{
+            gender: "BOY" | "GIRL";
+            id: number;
         }>();
     });
 });

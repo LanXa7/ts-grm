@@ -12,7 +12,7 @@ import { ScalarLikeDtoType, ScalarLikeMapping } from "./scalar_like";
 import { DirectContext } from "./direct";
 import { ApplyInstanceOfMappings, InstanceOfContext, InstanceOfMappping } from "./instance_of";
 import { ApplyRecursiveMappings, RecursiveContext, RecursiveMapping } from "./recursive";
-import { CalculatedCollectionDtoType, CalculatedCollectionMapping, CalculatedReferenceDtoType, CalculatedReferenceMapping, CalculatedValueDtoType, CalculatedValueMapping, ParameterizedContext } from "./calculator";
+import { CalculatedCollectionDtoType, CalculatedCollectionMapping, CalculatedReferenceDtoType, CalculatedReferenceMapping, ParameterizedContext } from "./calculator";
 
 export type DtoContext<
     TModel extends AnyModel,
@@ -67,13 +67,12 @@ export type DtoMapping<
     | FlatMapping<TModel, any, any, any, any, any>
     | InstanceOfMappping<TModel, any, any, any>
     | RecursiveMapping<TModel, any, any>
-    | ScalarLikeMapping<TModel, any, any, any>
+    | ScalarLikeMapping<TModel, any, any, any, any>
     | EmbeddedMapping<TModel, any, any, any, any>
     | ReferenceKeyMapping<TModel, any, any, any>
     | AssociatedKeysMapping<TModel, any, any, any>
     | ReferenceMapping<TModel, any, any, any, any, any>
     | CollectionMapping<TModel, any, any, any, any>
-    | CalculatedValueMapping<TModel, any, any, any, any>
     | CalculatedReferenceMapping<TModel, any, any, any, any, any>
     | CalculatedCollectionMapping<TModel, any, any, any, any>;
 
@@ -111,8 +110,6 @@ type DtoMappingType<
         ? FoldDotType<TMapping>
     : TMapping["__mappingType"] extends "FLAT"
         ? FlatDtoType<TMapping>
-    : TMapping["__mappingType"] extends "CALCULATED_VALUE"
-        ? CalculatedValueDtoType<TMapping>
     : TMapping["__mappingType"] extends "CALCULATED_REFERENCE"
         ? CalculatedReferenceDtoType<TMapping>
     : TMapping["__mappingType"] extends "CALCULATED_COLLECTION"
