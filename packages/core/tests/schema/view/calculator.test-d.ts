@@ -1,15 +1,15 @@
-import { createView } from "@/schema/view";
 import { describe, expectTypeOf, it } from "vitest";
 import { BOOK_STORE } from "../../model/model";
 import { TypeOf } from "@/index";
+import { newView } from "@/schema/dto/index";
 
 describe("CalculatorTest", () => {
 
     it("simpleWithoutBody", () => {
-        const view = createView(BOOK_STORE, {
-            id: true,
-            newestBooks: true
-        });
+        const view = newView(BOOK_STORE, c => [
+            c.id,
+            c.newestBooks
+        ]);
         expectTypeOf<TypeOf<typeof view>>().toEqualTypeOf<{
             id: string;
             newestBooks: {
@@ -22,13 +22,13 @@ describe("CalculatorTest", () => {
     });
 
     it("simpleWithBody", () => {
-        const view = createView(BOOK_STORE, {
-            id: true,
-            newestBooks: c => c({
-                name: true,
-                edition: true
-            })
-        });
+        const view = newView(BOOK_STORE, c => [
+            c.id,
+            c.newestBooks.with(c => [
+                c.name,
+                c.edition
+            ])
+        ]);
         expectTypeOf<TypeOf<typeof view>>().toEqualTypeOf<{
             id: string;
             newestBooks: {
@@ -39,12 +39,10 @@ describe("CalculatorTest", () => {
     });
 
     it("singleParameterizedWithoutBody", () => {
-        const view = createView(BOOK_STORE, {
-            id: true,
-            specifiedBooks: {
-                parameter: { maxPrice: 30 }
-            }
-        });
+        const view = newView(BOOK_STORE, c => [
+            c.id,
+            c.$parameterized("specifiedBooks", {maxPrice: 30})
+        ]);
         expectTypeOf<TypeOf<typeof view>>().toEqualTypeOf<{
             id: string;
             specifiedBooks: {
@@ -57,16 +55,13 @@ describe("CalculatorTest", () => {
     });
 
     it("singleParameterizedWithBody", () => {
-        const view = createView(BOOK_STORE, {
-            id: true,
-            specifiedBooks: {
-                parameter: { maxPrice: 30 },
-                with: c => c({
-                    name: true,
-                    edition: true
-                })
-            }
-        });
+        const view = newView(BOOK_STORE, c => [
+            c.id,
+            c.$parameterized("specifiedBooks", {maxPrice: 30}).with(c => [
+                c.name,
+                c.edition
+            ])
+        ]);
         expectTypeOf<TypeOf<typeof view>>().toEqualTypeOf<{
             id: string;
             specifiedBooks: {
@@ -77,19 +72,17 @@ describe("CalculatorTest", () => {
     });
 
     it("multipleParameterizedWithoutBody", () => {
-        const view = createView(BOOK_STORE, {
-            id: true,
-            specifiedBooks: [
-                {
-                    alias: "cheapBooks",
-                    parameter: { maxPrice: 30 }
-                },
-                {
-                    alias: "expensiveBooks",
-                    parameter: { minPrice: 60 }
-                }
-            ]
-        });
+        const view = newView(BOOK_STORE, c => [
+            c.id,
+            c.$parameterized(
+                "specifiedBooks", 
+                { maxPrice: 30 }
+            ).as("cheapBooks"),
+            c.$parameterized(
+                "specifiedBooks",
+                { minPrice: 60 }
+            ).as("expensiveBooks")
+        ]);
         expectTypeOf<TypeOf<typeof view>>().toEqualTypeOf<{
             id: string;
             cheapBooks: {
@@ -108,26 +101,20 @@ describe("CalculatorTest", () => {
     });
 
     it("multipleParameterizedWithBody", () => {
-        const view = createView(BOOK_STORE, {
-            id: true,
-            specifiedBooks: [
-                {
-                    alias: "cheapBooks",
-                    parameter: { maxPrice: 30 },
-                    with: c => c({
-                        id: true
-                    })
-                },
-                {
-                    alias: "expensiveBooks",
-                    parameter: { minPrice: 60 },
-                    with: c => c({
-                        name: true,
-                        edition: true
-                    })
-                }
-            ]
-        });
+        const view = newView(BOOK_STORE, c => [
+            c.id,
+            c.$parameterized(
+                "specifiedBooks", 
+                { maxPrice: 30 }
+            ).as("cheapBooks").with(c => [c.id]),
+            c.$parameterized(
+                "specifiedBooks",
+                { minPrice: 60 }
+            ).as("expensiveBooks").with(c => [
+                c.name,
+                c.edition
+            ])
+        ]);
         expectTypeOf<TypeOf<typeof view>>().toEqualTypeOf<{
             id: string;
             cheapBooks: {

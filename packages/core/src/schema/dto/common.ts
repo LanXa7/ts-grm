@@ -8,10 +8,11 @@ import { FlatContext, FlatDtoType, FlatMapping } from "./flat";
 import { FoldContext, FoldDotType, FoldMapping } from "./fold";
 import { ReferenceDtoType, ReferenceMapping } from "./reference";
 import { ReferenceKeyContext, ReferenceKeyDtoType, ReferenceKeyMapping } from "./reference_key";
-import { ScalarDtoType, ScalarMapping } from "./scalar";
+import { ScalarLikeDtoType, ScalarLikeMapping } from "./scalar_like";
 import { DirectContext } from "./direct";
 import { ApplyInstanceOfMappings, InstanceOfContext, InstanceOfMappping } from "./instance_of";
 import { ApplyRecursiveMappings, RecursiveContext, RecursiveMapping } from "./recursive";
+import { CalculatedCollectionDtoType, CalculatedCollectionMapping, CalculatedReferenceDtoType, CalculatedReferenceMapping, CalculatedValueDtoType, CalculatedValueMapping, ParameterizedContext } from "./calculator";
 
 export type DtoContext<
     TModel extends AnyModel,
@@ -22,6 +23,7 @@ export type DtoContext<
     DirectContext<TModel, TDtoKind, TMembers>
     & FoldContext<TModel, TDtoKind, TContextKind, TMembers>
     & FlatContext<TModel, TDtoKind, TMembers>
+    & ParameterizedContext<TModel, TDtoKind, TMembers>
     & InstanceOfContext<TModel, TDtoKind>
     & RecursiveContext<TModel, TDtoKind, TMembers>
     & (
@@ -65,12 +67,15 @@ export type DtoMapping<
     | FlatMapping<TModel, any, any, any, any, any>
     | InstanceOfMappping<TModel, any, any, any>
     | RecursiveMapping<TModel, any, any>
-    | ScalarMapping<TModel, any, any, any>
+    | ScalarLikeMapping<TModel, any, any, any>
     | EmbeddedMapping<TModel, any, any, any, any>
     | ReferenceKeyMapping<TModel, any, any, any>
     | AssociatedKeysMapping<TModel, any, any, any>
     | ReferenceMapping<TModel, any, any, any, any, any>
-    | CollectionMapping<TModel, any, any, any, any>;
+    | CollectionMapping<TModel, any, any, any, any>
+    | CalculatedValueMapping<TModel, any, any, any, any>
+    | CalculatedReferenceMapping<TModel, any, any, any, any, any>
+    | CalculatedCollectionMapping<TModel, any, any, any, any>;
 
 export type DtoType<
     TMappings extends ReadonlyArray<DtoMapping<any>>
@@ -88,8 +93,8 @@ export type DtoType<
 type DtoMappingType<
     TMapping extends DtoMapping<any>
 > =
-    TMapping["__mappingType"] extends "SCALAR"
-        ? ScalarDtoType<TMapping>
+    TMapping["__mappingType"] extends "SCALAR_LIKE"
+        ? ScalarLikeDtoType<TMapping>
     : TMapping["__mappingType"] extends "ALL_SCALARS"
         ? AllScalarsDtoType<TMapping>
     : TMapping["__mappingType"] extends "EMBEDDED"
@@ -106,4 +111,10 @@ type DtoMappingType<
         ? FoldDotType<TMapping>
     : TMapping["__mappingType"] extends "FLAT"
         ? FlatDtoType<TMapping>
+    : TMapping["__mappingType"] extends "CALCULATED_VALUE"
+        ? CalculatedValueDtoType<TMapping>
+    : TMapping["__mappingType"] extends "CALCULATED_REFERENCE"
+        ? CalculatedReferenceDtoType<TMapping>
+    : TMapping["__mappingType"] extends "CALCULATED_COLLECTION"
+        ? CalculatedCollectionDtoType<TMapping>
     : never;

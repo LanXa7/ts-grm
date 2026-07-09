@@ -1,16 +1,16 @@
-import { createView } from "@/schema/view";
 import { describe, it } from "node:test";
 import { AUTHOR, BOOK_STORE } from "../../model/model";
 import { expectTypeOf } from "vitest";
 import { TypeOf } from "@/index";
+import { newView } from "@/schema/dto/index";
 
 describe("Formula", () => {
 
     it("simple", () => {
-        const view = createView(AUTHOR, {
-            id: true,
-            fullName: true
-        });
+        const view = newView(AUTHOR, c => [
+            c.id,
+            c.fullName
+        ]);
         expectTypeOf<TypeOf<typeof view>>().toEqualTypeOf<{
             fullName: string;
             id: number;
@@ -18,18 +18,16 @@ describe("Formula", () => {
     });
 
     it("deep", () => {
-        const view = createView(BOOK_STORE, {
-            $allScalars: true,
-            $fold: {
-                formulas: c => c({
-                    bookNames: true
-                })
-            },
-            books: c => c({
-                id: true,
-                authorCount: true
-            })
-        });
+        const view = newView(BOOK_STORE, c => [
+            c.$allScalars,
+            c.$fold("formulas", c => [
+                c.bookNames
+            ]),
+            c.books.with(c => [
+                c.id,
+                c.authorCount
+            ])
+        ]);
         expectTypeOf<TypeOf<typeof view>>().toEqualTypeOf<{
             id: string;
             name: string;
@@ -45,18 +43,16 @@ describe("Formula", () => {
     });
 
     it("deepWithAlias", () => {
-        const view = createView(BOOK_STORE, {
-            $allScalars: true,
-            $fold: {
-                formulas: c => c({
-                    bookNames: { alias: "bNames" }
-                })
-            },
-            books: c => c({
-                id: true,
-                authorCount: { alias: "aCount" }
-            })
-        });
+        const view = newView(BOOK_STORE, c => [
+            c.$allScalars,
+            c.$fold("formulas", c => [
+                c.bookNames.as("bNames")
+            ]),
+            c.books.with(c => [
+                c.id,
+                c.authorCount.as("aCount")
+            ])
+        ]);
         expectTypeOf<TypeOf<typeof view>>().toEqualTypeOf<{
             id: string;
             name: string;

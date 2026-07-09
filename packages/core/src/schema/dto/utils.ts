@@ -1,5 +1,5 @@
 import { AllModelMembers, AnyModel } from "../model";
-import { AssociatedPropContract, EmbeddedPropContract, NullityType, PropContract } from "../prop_contract";
+import { AssociatedLikePropContract, EmbeddedPropContract, NullityType, PropContract } from "../prop_contract";
 import { AllScalarsMapping, DefaultKeys } from "./all_scalars";
 import { DtoMapping, DtoKind } from "./common";
 
@@ -9,7 +9,7 @@ export type TargetModelOf<
 > =
     TMember extends EmbeddedPropContract<any, any, any>
         ? TModel
-    : TMember extends AssociatedPropContract<infer TargetModel, any, any, any, any, any>
+    : TMember extends AssociatedLikePropContract<infer TargetModel, any>
         ? TargetModel
     : never;
 
@@ -18,7 +18,7 @@ export type TargetMembersOf<
 > =
     TMember extends EmbeddedPropContract<infer NestedProps, any, any>
         ? NestedProps
-    : TMember extends AssociatedPropContract<infer TargetModel, any, any, any, any, any>
+    : TMember extends AssociatedLikePropContract<infer TargetModel, any>
         ? AllModelMembers<TargetModel>
     : never;
 
@@ -27,7 +27,7 @@ export type TargetContextKindOf<
 > =
     TMember extends EmbeddedPropContract<any, any, any>
         ? "EMBEDDABLE"
-    : TMember extends AssociatedPropContract<any, any, any, any, any, any>
+    : TMember extends AssociatedLikePropContract<any, any>
         ? "ENTITY"
     : never;
 

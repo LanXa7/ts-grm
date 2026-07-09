@@ -29,7 +29,26 @@ export interface PropContract<T, TNullity extends NullityType> {
     readonly __nullity?: TNullity;
 }
 
-export interface ScalarPropContract<T, TNullity extends NullityType> extends PropContract<T, TNullity> {
+export interface ScalarLikePropContract<
+    T, 
+    TNullity extends NullityType
+> extends PropContract<T, TNullity> {
+
+    readonly __scalarLikeProp: true;
+}
+
+export interface AssociatedLikePropContract<
+    TModel extends AnyModel,
+    TNullity extends NullityType
+> extends PropContract<TModel, TNullity> {
+
+    readonly __associatedLikeProp: true;
+}
+
+export interface ScalarPropContract<
+    T, 
+    TNullity extends NullityType
+> extends ScalarLikePropContract<T, TNullity> {
 
     readonly __scalarProp: true;
 }
@@ -44,7 +63,7 @@ export interface I64PropContract<T, TNullity extends NullityType> extends Scalar
     readonly __i64Prop: true;
 }
 
-export interface EnumSetPropContract<T extends string> extends ScalarPropContract<T, "NONNULL"> {
+export interface EnumSetPropContract<T extends string> extends ScalarPropContract<ReadonlyArray<T>, "NONNULL"> {
 
     readonly __enumSetProp: true;
 }
@@ -67,7 +86,7 @@ export interface AssociatedPropContract<
     TMiddleTable extends boolean,
     TBackOptionalModelKey extends string,
     TTargetOptionalModelKey extends string
-> extends PropContract<TModel, TNullity> {
+> extends AssociatedLikePropContract<TModel, TNullity> {
 
     readonly __associatedProp: true;
 
@@ -152,7 +171,7 @@ export interface ManyToManyPropContract<
 export interface FormulaPropContract<
     T, 
     TNullity extends NullityType
-> extends PropContract<T, TNullity> {
+> extends ScalarLikePropContract<T, TNullity> {
 
     readonly __formulaProp: true;
 }
@@ -195,7 +214,7 @@ export interface ParameterizedCalculatedValuePropContract<
 export interface CalculatedReferencePropContract<
     TModel extends AnyModel,
     TNullity extends NullityType
-> extends PropContract<TModel, TNullity> {
+> extends AssociatedLikePropContract<TModel, TNullity> {
 
     readonly __calculatedReferenceProp: true;
 }
@@ -204,7 +223,7 @@ export interface ParameterizedCalculatedReferencePropContract<
     TParameter,
     TModel extends AnyModel,
     TNullity extends NullityType
-> extends PropContract<TModel, TNullity> {
+> extends AssociatedLikePropContract<TModel, TNullity> {
 
     readonly __parameterizedCalculatedReferenceProp: true;
 
@@ -213,7 +232,7 @@ export interface ParameterizedCalculatedReferencePropContract<
 
 export interface CalculatedCollectionPropContract<
     TModel extends AnyModel
-> extends PropContract<TModel, "NONNULL"> {
+> extends AssociatedLikePropContract<TModel, "NONNULL"> {
 
     readonly __calculatedCollectionProp: true;
 }
@@ -221,7 +240,7 @@ export interface CalculatedCollectionPropContract<
 export interface ParameterizedCalculatedCollectionPropContract<
     TParameter,
     TModel extends AnyModel
-> extends PropContract<TModel, "NONNULL"> {
+> extends AssociatedLikePropContract<TModel, "NONNULL"> {
 
     readonly __parameterizedCalculatedCollectionProp: true;
 

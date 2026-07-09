@@ -111,6 +111,8 @@ export class ScalarProp<
     T, TNullity extends NullityType = "NONNULL"
 > extends Prop<T, TNullity> implements ScalarPropContract<T, TNullity> {
 
+    readonly __scalarLikeProp = true;
+
     readonly __scalarProp = true;
 
     constructor(data: PropData) {
@@ -151,7 +153,7 @@ export class I64Prop<
 
 export class EnumSetProp<
     TEnum extends string
-> extends ScalarProp<TEnum, "NONNULL"> implements EnumSetPropContract<TEnum> {
+> extends ScalarProp<ReadonlyArray<TEnum>, "NONNULL"> implements EnumSetPropContract<TEnum> {
 
     readonly __enumSetProp = true;
 }
@@ -200,6 +202,8 @@ implements AssociatedPropContract<
     TTargetOptionalModelKey
 > {
 
+    readonly __associatedLikeProp = true;
+    
     readonly __associatedProp = true;
 
     declare readonly __direction?: TDirection;
@@ -768,6 +772,8 @@ export abstract class FormulaProp<
 > extends Prop<T, TNullity> 
 implements FormulaPropContract<T, TNullity> {
 
+    readonly __scalarLikeProp = true;
+
     readonly __formulaProp = true;
 
     constructor(data: PropData) {
@@ -836,6 +842,8 @@ export class CalculatedReferenceProp<
 > extends Prop<TModel, TNullity>
 implements CalculatedReferencePropContract<TModel, TNullity> {
 
+    readonly __associatedLikeProp = true;
+
     readonly __calculatedReferenceProp = true;
 
     constructor(data: PropData) {
@@ -849,6 +857,8 @@ export class ParameterizedCalculatedReferenceProp<
     TNullity extends NullityType
 > extends Prop<TModel, TNullity>
 implements ParameterizedCalculatedReferencePropContract<TParameter, TModel, TNullity> {
+
+    readonly __associatedLikeProp = true;
 
     readonly __parameterizedCalculatedReferenceProp = true;
 
@@ -864,6 +874,8 @@ export class CalculatedCollectionProp<
 > extends Prop<TModel, "NONNULL">
 implements CalculatedCollectionPropContract<TModel> {
 
+    readonly __associatedLikeProp = true;
+
     readonly __calculatedCollectionProp = true;
 
     constructor(data: PropData) {
@@ -876,6 +888,8 @@ export class ParameterizedCalculatedCollectionProp<
     TModel extends AnyModel
 > extends Prop<TModel, "NONNULL">
 implements ParameterizedCalculatedCollectionPropContract<TParameter, TModel> {
+
+    readonly __associatedLikeProp = true;
 
     readonly __parameterizedCalculatedCollectionProp = true;
 
