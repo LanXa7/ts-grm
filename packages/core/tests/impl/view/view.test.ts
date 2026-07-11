@@ -3,7 +3,6 @@ import { dto } from "@/schema/dto";
 import { BOOK, BOOK_STORE } from "../../model/model";
 import { expectCode } from "../../utils";
 import { mapperJson, makeReader, shapeJson } from "./utils";
-import { createView } from "@/schema/view";
 import { newView } from "@/schema/dto/index";
 
 describe("ViewTest", () => {
@@ -63,16 +62,14 @@ describe("ViewTest", () => {
     });
 
     it("wideAssociations", () => {
-        const view = createView(BOOK, {
-            $allScalars: {
-                exclude: ["id", "price"]
-            },
-            store: true,
-            authors: c => c({
-                id: true,
-                name: true
-            })
-        });
+        const view = newView(BOOK, c => [
+            c.$allScalars.exclude("id", "price"),
+            c.store,
+            c.authors.with(c => [
+                c.id,
+                c.name
+            ])
+        ]);
         expect(mapperJson(view.mapper)).toEqual({
             "entity": "Book",
             "fields": [
@@ -324,19 +321,19 @@ describe("ViewTest", () => {
     });
 
     it("deepAssociations", () => {
-        const view = createView(BOOK_STORE, {
-            id: true,
-            name: true,
-            books: c => c({
-                id: true,
-                name: true,
-                authors: c => c({
-                    id: true,
-                    name: true
-                })
-            })
-        });
-
+        const view = newView(BOOK_STORE, c => [
+            c.id,
+            c.name,
+            c.books.with(c => [
+                c.id,
+                c.name,
+                c.authors.with(c => [
+                    c.id,
+                    c.name
+                ])
+            ])
+        ]);
+        console.log(JSON.stringify(mapperJson(view.mapper)));
         expect(mapperJson(view.mapper)).toEqual({
             "entity": "BookStore",
             "fields": [
@@ -574,15 +571,15 @@ describe("ViewTest", () => {
     });
 
     it("implicitDeepAssociations", () => {
-        const view = createView(BOOK_STORE, {
-            name: true,
-            books: c => c({
-                name: true,
-                authors: c => c({
-                    name: true
-                })
-            })
-        });
+        const view = newView(BOOK_STORE, c => [
+            c.name,
+            c.books.with(c => [
+                c.name,
+                c.authors.with(c => [
+                    c.name
+                ])
+            ])
+        ]);
         expect(mapperJson(view.mapper)).toEqual({
             "entity": "BookStore",
             "fields": [

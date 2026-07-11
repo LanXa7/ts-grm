@@ -3,7 +3,7 @@ import { View } from "../dto";
 import { AllModelMembers, AnyModel } from "../model";
 import { DtoBody, DtoMapping, DtoType } from "./dto_context";
 import { Entity } from "@/impl";
-import { AbstractDtoMapping, createDtoContext } from "@/impl/dto_context";
+import { AbstractDtoMapping, createDto, createDtoContext } from "@/impl/dto_context";
 import { DtoFactory } from "@/impl/dto_factory";
 import { dtoMapper } from "@/impl/dto_mapper";
 
@@ -21,12 +21,7 @@ export function newView<
 > {
     const entity = Entity.of(model);
     const ctx = createDtoContext(entity) as any;
-    const mappings = fn(ctx);
-    const factory = new DtoFactory(entity, undefined);
-    for (const mapping of mappings) {
-        factory.addMapping(mapping as AbstractDtoMapping);
-    }
-    const dto = factory.create();
+    const dto = createDto(ctx, fn);
     return new View(dtoMapper(dto, false));
 }
 

@@ -572,7 +572,7 @@ class MapperField {
 
 function dtoFieldKey(field: DtoField): string {
     let key = field.prop.toString();
-    if (field.orders != null) {
+    if (field.orders != null && field.orders.length !== 0) {
         key += `\x1Fo:${JSON.stringify(field.orders)}`;
     }
     if (field.parameter != null) {
