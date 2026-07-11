@@ -1,7 +1,7 @@
 import { AllModelMembers, AnyModel } from "../model";
 import { AssociatedLikePropContract, EmbeddedPropContract, NullityType, PropContract } from "../prop_contract";
 import { AllScalarsMapping } from "./all_scalars";
-import { DtoMapping, DtoKind } from "./common";
+import { DtoMapping, DtoKind } from "./dto_context";
 
 export type TargetModelOf<
     TModel extends AnyModel, 

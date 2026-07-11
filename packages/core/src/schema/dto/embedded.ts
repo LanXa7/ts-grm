@@ -1,5 +1,5 @@
 import { AnyModel } from "../model";
-import { DtoBody, DtoType, DtoKind } from "./common";
+import { DtoBody, DtoType, DtoKind } from "./dto_context";
 import { TargetMappings, TargetMembersOf, TargetModelOf } from "./utils";
 
 export interface EmbeddedMapping<

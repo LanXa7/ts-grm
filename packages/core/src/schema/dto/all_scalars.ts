@@ -1,7 +1,7 @@
 import { AtLeastOne } from "@/dsl";
 import { AnyModel } from "../model";
 import { EmbeddedPropContract, ScalarPropContract } from "../prop_contract";
-import { DtoKind } from "./common";
+import { DtoKind } from "./dto_context";
 import { WithNullity } from "./utils";
 
 export type AllScalarsContext<

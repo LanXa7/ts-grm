@@ -4,15 +4,14 @@ import { BOOK, BOOK_STORE } from "../../model/model";
 import { expectCode } from "../../utils";
 import { mapperJson, makeReader, shapeJson } from "./utils";
 import { createView } from "@/schema/view";
+import { newView } from "@/schema/dto/index";
 
 describe("ViewTest", () => {
 
     it("allScalars", () => {
-        const view = createView(BOOK, {
-            $allScalars: {
-                exclude: "price"
-            }
-        });
+        const view = newView(BOOK, c => [
+            c.$allScalars.exclude("price")
+        ]);
         expect(mapperJson(view.mapper)).toEqual({
             "entity": "Book",
             "fields": [

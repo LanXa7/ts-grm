@@ -1,7 +1,7 @@
 import { AllModelMembers, AnyModel, RequiredModelKey } from "../model";
 import { CollectionPropContract } from "../prop_contract";
 import { MemberType } from "./all_scalars";
-import { DtoKind } from "./common";
+import { DtoKind } from "./dto_context";
 
 export interface AssociatedKeysContext<
     TModel extends AnyModel,

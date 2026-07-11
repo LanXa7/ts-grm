@@ -11,7 +11,7 @@ import {
 } from "../prop_contract";
 import { CalculatedCollectionMapping, CalculatedReferenceMapping } from "./calculator";
 import { CollectionMapping } from "./collection";
-import { DtoKind } from "./common";
+import { DtoKind } from "./dto_context";
 import { EmbeddedMapping } from "./embedded";
 import { ReferenceMapping } from "./reference";
 import { ScalarLikeMapping } from "./scalar_like";

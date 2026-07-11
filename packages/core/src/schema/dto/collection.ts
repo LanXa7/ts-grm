@@ -1,6 +1,6 @@
 import { AtLeastOne, EntityTable, Predicate } from "@/dsl";
 import { AnyModel } from "../model";
-import { DtoBody, DtoType, DtoKind } from "./common";
+import { DtoBody, DtoType, DtoKind } from "./dto_context";
 import { ModelOrder } from "../order";
 import { TargetMappings, TargetMembersOf, TargetModelOf } from "./utils";
 

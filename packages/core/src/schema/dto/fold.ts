@@ -1,5 +1,5 @@
 import { AnyModel } from "../model";
-import { ContextKind, DtoBody, DtoType, DtoKind } from "./common";
+import { ContextKind, DtoBody, DtoType, DtoKind } from "./dto_context";
 import { SelfMappings } from "./utils";
 
 export interface FoldContext<

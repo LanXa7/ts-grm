@@ -5,7 +5,7 @@ import {
     ParameterizedCalculatedReferencePropContract, 
     ParameterizedCalculatedValuePropContract 
 } from "../prop_contract";
-import { DtoBody, DtoKind, DtoType } from "./common";
+import { DtoBody, DtoKind, DtoType } from "./dto_context";
 import { ScalarLikeMapping } from "./scalar_like";
 import { DefaultTargetMappings, TargetMappings, TargetMembersOf, TargetModelOf, WithNullity } from "./utils";
 

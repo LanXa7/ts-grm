@@ -27,7 +27,7 @@ import { ApplyRecursive, Recursive, RecursiveArgs } from "./recursive";
 import { CalcuatedAssociationArgs, MakeParameterizedCalculatedAssociations, ParameterizedCalcuatedAssociationArgs, ParameterizedCalculatedValueArgs } from "./calculator";
 import { RefereenceKeyPropType, ReferenceKeys, ReferenceKeysArgs } from "./reference_key";
 import { AssociatedKeyTypeRef, AssociatedKeysArgs, AssociatedKeys } from "./associated_keys";
-import { DtoCreator } from "@/impl/dto_creator";
+import { DtoCreator } from "@/impl/old_dto_creator";
 import { Entity } from "@/impl";
 import { dtoMapper } from "@/impl/dto_mapper";
 

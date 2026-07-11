@@ -1,7 +1,11 @@
-import { Prettify, suppressUnused } from "@/utils";
+import { Prettify } from "@/utils";
 import { View } from "../dto";
 import { AllModelMembers, AnyModel } from "../model";
-import { DtoBody, DtoMapping, DtoType } from "./common";
+import { DtoBody, DtoMapping, DtoType } from "./dto_context";
+import { Entity } from "@/impl";
+import { AbstractDtoMapping, createDtoContext } from "@/impl/dto_context";
+import { DtoFactory } from "@/impl/dto_factory";
+import { dtoMapper } from "@/impl/dto_mapper";
 
 export function newView<
     TModel extends AnyModel,
@@ -15,9 +19,15 @@ export function newView<
     TModel, 
     Prettify<DtoType<TMappings>>
 > {
-    suppressUnused(model);
-    suppressUnused(fn);
-    throw new Error();
+    const entity = Entity.of(model);
+    const ctx = createDtoContext(entity) as any;
+    const mappings = fn(ctx);
+    const factory = new DtoFactory(entity, undefined);
+    for (const mapping of mappings) {
+        factory.addMapping(mapping as AbstractDtoMapping);
+    }
+    const dto = factory.create();
+    return new View(dtoMapper(dto, false));
 }
 
 /*

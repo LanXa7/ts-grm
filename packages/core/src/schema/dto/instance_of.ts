@@ -1,6 +1,6 @@
 import { UnionToIntersection } from "@/utils";
 import { AnyModel, DeclaredModelMembers, DerivedModel, ModelName, ModelSuperNames } from "../model";
-import { DtoBody, DtoKind, DtoMapping, DtoType } from "./common";
+import { DtoBody, DtoKind, DtoMapping, DtoType } from "./dto_context";
 import { SelfMappings } from "./utils";
 
 export interface InstanceOfContext<
