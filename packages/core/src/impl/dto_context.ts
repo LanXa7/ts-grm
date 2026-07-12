@@ -11,6 +11,7 @@ import { Dto, DtoField } from "./dto";
 import { EntityPropOrder } from "./entity_prop_order";
 import { capitalize } from "./util";
 import { Path } from "./dto_mapper";
+import { readonly } from "zod";
 
 export interface AbstractDtoMapping {
 
@@ -157,7 +158,7 @@ class FoldMapping implements AbstractDtoMapping {
             this._context,
             downcastTo,
             this._body,
-            foldContext(this._name)
+            { kind: "FOLD", value: this._name }
         )
         return dto.fields;
     }
@@ -226,7 +227,7 @@ class FlatMapping implements AbstractDtoMapping {
             ctx, 
             downcastTo,
             this._body, 
-            flatContext(this._prefix)
+            { kind: "FLAT", value: this._prefix }
         );
         return {
             path: undefined,
@@ -839,11 +840,13 @@ export function createDto(
     ctx: AbstractDtoContext,
     downloadTo: Entity | undefined,
     body: any,
-    mappingCtx?: DtoMappingContext | undefined
+    operation?: MappingOperation | undefined
 ) {
-    const oldCtx = currentDtoMappingContext;
-    const newCtx = mappingCtx as DtoMappingContextImpl | undefined;
-    currentDtoMappingContext = newCtx;
+    const oldCtx = currentMappingContext;
+    const newCtx = operation != null
+        ? new MappingContext(oldCtx, operation)
+        : undefined;
+    currentMappingContext = newCtx;
     try {
         const mappings = body(ctx);
         const factory = new DtoFactory(ctx.entity, downloadTo);
@@ -852,7 +855,7 @@ export function createDto(
         }
         return factory.create(newCtx);
     } finally {
-        currentDtoMappingContext = oldCtx;
+        currentMappingContext = oldCtx;
     }
 }
 
@@ -874,7 +877,7 @@ export class DtoFactory {
         }
     }
 
-    create(ctx?: DtoMappingContextImpl | undefined): Dto {  
+    create(ctx?: MappingContext | undefined): Dto {  
         return {
             entity: this._source instanceof Entity
                 ? this._source
@@ -886,27 +889,16 @@ export class DtoFactory {
     }
 }
 
-interface DtoMappingContext {
-    readonly __dtoMappingContext: true;
-}
+interface MappingOperation { 
+    readonly kind: "FOLD" | "FLAT";
+    readonly value: string;
+};
 
-function foldContext(name: string) {
-    return new DtoMappingContextImpl(currentDtoMappingContext, name);
-}
-
-function flatContext(
-    prefix: string
-): DtoMappingContext {
-    return new DtoMappingContextImpl(currentDtoMappingContext, { prefix });
-}
-
-class DtoMappingContextImpl implements DtoMappingContext {
-
-    readonly __dtoMappingContext = true;
+class MappingContext {
 
     constructor(
-        private readonly _parent: DtoMappingContextImpl | undefined,
-        private readonly _value: string | { readonly prefix: string },
+        private readonly _parent: MappingContext | undefined,
+        private readonly _operation: MappingOperation,
     ) {}
 
     processPath(
@@ -921,10 +913,10 @@ class DtoMappingContextImpl implements DtoMappingContext {
     }
 
     private _process(arr: Array<string>) {
-        if (typeof this._value === "string") {
-            arr.unshift(this._value);
+        if (this._operation.kind === "FOLD") {
+            arr.unshift(this._operation.value);
         } else {
-            const prefix = this._value.prefix;
+            const prefix = this._operation.value;
             if (prefix !== "") {
                 const size = arr.length;
                 for (let i = 0; i < size; i++) {
@@ -940,4 +932,4 @@ class DtoMappingContextImpl implements DtoMappingContext {
     }
 }
 
-let currentDtoMappingContext: DtoMappingContextImpl | undefined = undefined;
+let currentMappingContext: MappingContext | undefined = undefined;
