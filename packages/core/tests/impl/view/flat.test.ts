@@ -4,20 +4,19 @@ import { BOOK, AUTHOR, TREE_NODE } from "../../model/model";
 import { expectCode } from "../../utils";
 import { mapperJson, makeReader, shapeJson } from "./utils";
 import { createView } from "@/schema/view";
+import { newView } from "@/schema/dto/index";
 
 describe("FlatTest", () => {
 
     it("flatAssociation", () => {
 
-        const view = createView(BOOK, {
-            $allScalars: true,
-            $flat: c => c({
-                store: c => c({
-                    id: true,
-                    name: true
-                })
-            })
-        });
+        const view = newView(BOOK, c => [
+            c.$allScalars,
+            c.$flat("store").with(c => [
+                c.id,
+                c.name
+            ])
+        ]);
 
         expect(mapperJson(view.mapper)).toEqual({
             "entity": "Book",
@@ -241,15 +240,15 @@ describe("FlatTest", () => {
     });
 
     it("deepFlat", () => {
-        const view = dto.view(TREE_NODE, $ => $
-            .allScalars()
-            .flat({prop: "parentNode", prefix: "parent"}, $ => $
-                .allScalars()
-                .flat({prop: "parentNode", prefix: "grand"}, $ => $
-                    .allScalars()
-                )
-            )
-        );
+        const view = newView(TREE_NODE, c => [
+            c.$allScalars,
+            c.$flat("parentNode").prefix("parent").with(c => [
+                c.$allScalars,
+                c.$flat("parentNode").prefix("grand").with(c => [
+                    c.$allScalars
+                ])
+            ])
+        ]);
         expect(mapperJson(view.mapper)).toEqual({
             "entity": "TreeNode",
             "fields": [

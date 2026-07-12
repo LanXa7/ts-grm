@@ -2,20 +2,18 @@ import { describe, expect, it } from "vitest";
 import { BOOK} from "../../model/model";
 import { expectCode } from "../../utils";
 import { mapperJson, makeReader, shapeJson } from "./utils";
-import { createView } from "@/schema/view";
+import { newView } from "@/schema/dto/index";
 
 describe("FoldTest", () => {
 
     it("foldScalars", () => {
-        const view = createView(BOOK, {
-            id: true,
-            $fold: {
-                key: c => c({
-                    name: true,
-                    edition: true
-                })
-            }
-        });
+        const view = newView(BOOK, c => [
+            c.id,
+            c.$fold("key", c => [
+                c.name,
+                c.edition
+            ])
+        ]);
         expect(mapperJson(view.mapper)).toEqual({
             "entity": "Book",
             "fields": [
@@ -85,16 +83,14 @@ describe("FoldTest", () => {
     });
 
     it("foldAssociations", () => {
-        const view = createView(BOOK, {
-            id: true,
-            $fold: {
-                associations: c => c({
-                    authors: c => c({
-                        $allScalars: true
-                    })
-                })
-            }
-        });
+        const view = newView(BOOK, c => [
+            c.id,
+            c.$fold("associations", c => [
+                c.authors.with(c => [
+                    c.$allScalars
+                ])
+            ])
+        ]);
         expect(mapperJson(view.mapper)).toEqual({
             "entity": "Book",
             "fields": [
@@ -262,34 +258,24 @@ describe("FoldTest", () => {
     });
 
     it("mixedWithFlat", () => {
-        const view = createView(BOOK, {
-            $fold: {
-                key: $ => $({
-                    name: true,
-                    edition: true
-                }),
-                associations: $ => $({
-                    $flat: $ => $({
-                        store: $ => $({
-                            id: true,
-                            $fold: {
-                                key: $ => $({
-                                    name: true,
-                                    version: true
-                                })
-                            },
-                        })
-                    }),
-                    authors: $ => $({
-                        $flat: $ => $({
-                            name: {
-                                prefix: ""
-                            }
-                        })
-                    })
-                })
-            }
-        });
+        const view = newView(BOOK, c => [
+            c.$fold("key", c => [
+                c.name,
+                c.edition
+            ]),
+            c.$fold("associations", c => [
+                c.$flat("store").with(c => [
+                    c.id,
+                    c.$fold("key", c => [
+                        c.name,
+                        c.version
+                    ])
+                ]),
+                c.authors.with(c => [
+                    c.$flat("name").prefix("")
+                ])
+            ])
+        ]);
         expect(mapperJson(view.mapper)).toEqual({
             "entity": "Book",
             "fields": [

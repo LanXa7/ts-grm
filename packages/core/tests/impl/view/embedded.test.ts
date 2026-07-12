@@ -3,15 +3,14 @@ import { dto } from "@/schema/dto";
 import { ORDER_ITEM } from "../../model/model";
 import { expectCode } from "../../utils";
 import { mapperJson, makeReader, shapeJson } from "./utils";
+import { newView } from "@/schema/dto/index";
 
 describe("EmbeddedTest", () => {
 
     it("implicitEmbeddedReferenceKey", () => {
-        const view = dto.view(ORDER_ITEM, $ => $
-            .order($ => $
-                .name
-            )
-        );
+        const view = newView(ORDER_ITEM, c => [
+            c.order.with(c => [c.name])
+        ]);
         expect(mapperJson(view.mapper)).toEqual({
             "entity": "OrderItem",
             "fields": [
@@ -328,12 +327,10 @@ describe("EmbeddedTest", () => {
     });
 
     it("mixedEmbeddedReferenceKey", () => {
-        const view = dto.view(ORDER_ITEM, $ => $
-            .orderId($ => $.y())
-            .order($ => $
-                .name
-            )
-        );
+        const view = newView(ORDER_ITEM, c => [
+            c.orderId.with(c => [c.y]),
+            c.order.with(c => [c.name])
+        ]);
         expect(mapperJson(view.mapper)).toEqual({
             "entity": "OrderItem",
             "fields": [

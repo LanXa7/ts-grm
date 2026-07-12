@@ -8,99 +8,9 @@ import { CodeWriter } from "./code_writer";
 import { StandardSchemaV1 } from "@standard-schema/spec";
 import { OrderNullsType } from "@/schema/order";
 import { Dto, DtoField } from "./dto";
-import { DtoFactory } from "./dto_factory";
 import { EntityPropOrder } from "./entity_prop_order";
-
-export function createDtoContext(
-    source: Entity
-): AbstractDtoContext {
-    return newDtoContext(source, false);
-}
-
-function newDtoContext(
-    source: Entity |  EntityProp,
-    declaredOnly: boolean
-): AbstractDtoContext {
-    const ctor = dtoContextCtor(source, declaredOnly);
-    return new ctor(source, declaredOnly);
-}
-
-type DtoContextCtor = new(
-    source: Entity | EntityProp,
-    declaredOnly: boolean
-) => AbstractDtoContext;
-
-const dtoContextCtorMap = new Map<string, DtoContextCtor>();
-
-function dtoContextCtor(
-    source: Entity |  EntityProp,
-    declaredOnly: boolean
-): DtoContextCtor {
-    const name = source instanceof Entity
-        ? source.name
-        : source.toString();
-    const key = declaredOnly ? `declaredOnly(${name})` : name;
-    let ctor = dtoContextCtorMap.get(key);
-    if (ctor == null) {
-        ctor = createDtoContextCtor(source, declaredOnly);
-        dtoContextCtorMap.set(key, ctor);
-    }
-    return ctor;
-}
-
-export class AbstractDtoContext {
-
-    private _allScalarsMapping: AllScalarsMapping | undefined = undefined;
-
-    readonly entity: Entity;
-
-    readonly embeddedProp: EntityProp | undefined;
-
-    constructor(
-        source: Entity |  EntityProp,
-        readonly declaredOnly: boolean,
-    ) {
-        if (source instanceof EntityProp) {
-            this.entity = source.declaringEntity;
-            this.embeddedProp = source;
-        } else {
-            this.entity = source;
-            this.embeddedProp = undefined;
-        }
-    }
-
-    get $allScalars(): AllScalarsMapping {
-        let mapping = this._allScalarsMapping;
-        if (mapping == null) {
-            this._allScalarsMapping = mapping = new AllScalarsMapping(this, undefined);
-        }
-        return mapping;
-    }
-
-    $fold(name: string, body: DtoBody): FoldMapping {
-        return new FoldMapping(name, this, body);
-    }
-
-    $flat(key: string): FlatMapping {
-        const prop = this._prop(key);
-        return FlatMapping.of(prop);
-    }
-
-    private _prop(key: string): EntityProp {
-        if (this.embeddedProp != null) {
-            const prop = this.embeddedProp.props!.get(key);
-            if (prop == null) {
-                throw new ArgumentError(`The is not property "${key}" in the embedded property "${this.embeddedProp.toString()}"`);
-            }
-            return prop;
-        }
-        const prop = this.entity.allPropMap.get(key);
-        if (prop == null) {
-            throw new ArgumentError(`The is not property "${key}" in the entity "${this.entity.name}"`);
-        }
-        return prop;
-    }
-}
+import { capitalize } from "./util";
+import { Path } from "./dto_mapper";
 
 export interface AbstractDtoMapping {
 
@@ -235,15 +145,21 @@ class FoldMapping implements AbstractDtoMapping {
     readonly __mappingType = 'FOLD';
 
     constructor(
-        readonly name: string,
-        readonly context: AbstractDtoContext,
-        readonly body: DtoBody
+        private readonly _context: AbstractDtoContext,
+        private readonly _name: string,
+        private readonly _body: DtoBody
     ) {}
 
     toFields(
         downcastTo: Entity | undefined
-    ): DtoField | ReadonlyArray<DtoField> {
-        throw new Error();
+    ): ReadonlyArray<DtoField> {
+        const dto = createDto(
+            this._context,
+            downcastTo,
+            this._body,
+            foldContext(this._name)
+        )
+        return dto.fields;
     }
 }
 
@@ -252,7 +168,7 @@ class FlatMapping implements AbstractDtoMapping {
     readonly __mappingType = 'FLAT';
 
     constructor(
-        readonly prop: EntityProp,
+        readonly _prop: EntityProp,
         private readonly _prefix: string,
         private readonly _context: AbstractDtoContext,
         private readonly _body: DtoBody,
@@ -278,31 +194,54 @@ class FlatMapping implements AbstractDtoMapping {
     }
 
     prefix(prefix: string): FlatMapping {
-        return new FlatMapping(this.prop, prefix, this._context, this._body, this._filter, this._fetchType);
+        return new FlatMapping(this._prop, prefix, this._context, this._body, this._filter, this._fetchType);
     }
 
     with(body: DtoBody): FlatMapping {
-        return new FlatMapping(this.prop, this._prefix, this._context, body, this._filter, this._fetchType);
+        return new FlatMapping(this._prop, this._prefix, this._context, body, this._filter, this._fetchType);
     }
 
     where(filter: Filter): FlatMapping {
-        if (this.prop.targetEntity == null) {
-            throw new StateError(`The flat mapping based on "${this.prop.toString()}" which is not reference does not support "where"`);
+        if (this._prop.targetEntity == null) {
+            throw new StateError(`The flat mapping based on "${this._prop.toString()}" which is not reference does not support "where"`);
         }
-        return new FlatMapping(this.prop, this._prefix, this._context, this._body, filter, this._fetchType);
+        return new FlatMapping(this._prop, this._prefix, this._context, this._body, filter, this._fetchType);
     }
 
     fetch(fetchType: ReferenceFetchType): FlatMapping {
-        if (this.prop.targetEntity == null) {
-            throw new StateError(`The flat mapping based on "${this.prop.toString()}" which is not reference does not support "fetch"`);
+        if (this._prop.targetEntity == null) {
+            throw new StateError(`The flat mapping based on "${this._prop.toString()}" which is not reference does not support "fetch"`);
         }
-        return new FlatMapping(this.prop, this._prefix, this._context, this._body, this._filter, fetchType);
+        return new FlatMapping(this._prop, this._prefix, this._context, this._body, this._filter, fetchType);
     }
 
     toFields(
         downcastTo: Entity | undefined
     ): DtoField | ReadonlyArray<DtoField> {
-        throw new Error();
+        const ctx = newDtoContext(
+            this._prop.props != null ? this._prop : this._prop.targetEntity!, 
+            false
+        );
+        const dto = createDto(
+            ctx, 
+            downcastTo,
+            this._body, 
+            flatContext(this._prefix)
+        );
+        return {
+            path: undefined,
+            downcastTo,
+            prop: this._prop,
+            bridgeProp: undefined,
+            dto,
+            fetchType: this._fetchType,
+            predicateFn: this._filter,
+            orders: undefined,
+            limit: undefined,
+            recursiveDepth: undefined,
+            nullable: this._prop.nullable,
+            parameter: undefined
+        };
     }
 }
 
@@ -396,7 +335,7 @@ class EmbeddedMapping implements AbstractDtoMapping {
         downcastTo: Entity | undefined
     ): DtoField | ReadonlyArray<DtoField> {
         const ctx = newDtoContext(this._prop, false);
-        const dto = createDto(ctx, this._body);
+        const dto = createDto(ctx, downcastTo, this._body);
         return {
             path: this._alias,
             downcastTo,
@@ -470,7 +409,7 @@ class ReferenceMapping implements AbstractDtoMapping {
         downcastTo: Entity | undefined
     ): DtoField {
         const ctx = newDtoContext(this._prop.targetEntity!, false);
-        const dto = createDto(ctx, this._body);
+        const dto = createDto(ctx, downcastTo, this._body);
         return {
             path: this._alias,
             downcastTo,
@@ -584,7 +523,7 @@ class CollectionMapping implements AbstractDtoMapping {
         downcastTo: Entity | undefined
     ): DtoField {
         const ctx = newDtoContext(this._prop.targetEntity!, false);
-        const dto = createDto(ctx, this._body);
+        const dto = createDto(ctx, downcastTo, this._body);
         return {
             path: this._alias,
             downcastTo,
@@ -599,6 +538,140 @@ class CollectionMapping implements AbstractDtoMapping {
             nullable: this._prop.nullable,
             parameter: undefined
         };
+    }
+}
+
+class ReferenceKeyMapping implements AbstractDtoMapping {
+
+    readonly __mappingType = "COLLECTION";
+
+    constructor(
+        private readonly _prop: EntityProp,
+        private readonly _alias: string,
+        private readonly _body: DtoBody
+    ) {}
+
+    as(alias: string): ReferenceKeyMapping {
+        return new ReferenceKeyMapping(this._prop, alias, this._body);
+    }
+
+    with(body: DtoBody): ReferenceKeyMapping {
+        if (this._prop.props == null) {
+            throw new StateError(`Cannot set the body of "${this._prop.toString()}" which is not embedded property`)
+        }
+        return new ReferenceKeyMapping(this._prop, this._alias, body);
+    }
+
+    toFields(
+        downcastTo: Entity | undefined
+    ): DtoField {
+        const ctx = newDtoContext(this._prop, false);
+        const dto = this._body != null ? createDto(ctx, downcastTo, this._body) : undefined;
+        return {
+            path: this._alias,
+            downcastTo,
+            prop: this._prop,
+            bridgeProp: undefined,
+            dto,
+            fetchType: undefined,
+            predicateFn: undefined,
+            orders: undefined,
+            limit: undefined,
+            recursiveDepth: undefined,
+            nullable: this._prop.nullable,
+            parameter: undefined
+        };
+    }
+}
+
+export function createDtoContext(
+    source: Entity
+): AbstractDtoContext {
+    return newDtoContext(source, false);
+}
+
+function newDtoContext(
+    source: Entity |  EntityProp,
+    declaredOnly: boolean
+): AbstractDtoContext {
+    const ctor = dtoContextCtor(source, declaredOnly);
+    return new ctor(source, declaredOnly);
+}
+
+type DtoContextCtor = new(
+    source: Entity | EntityProp,
+    declaredOnly: boolean
+) => AbstractDtoContext;
+
+const dtoContextCtorMap = new Map<string, DtoContextCtor>();
+
+function dtoContextCtor(
+    source: Entity |  EntityProp,
+    declaredOnly: boolean
+): DtoContextCtor {
+    const name = source instanceof Entity
+        ? source.name
+        : source.toString();
+    const key = declaredOnly ? `declaredOnly(${name})` : name;
+    let ctor = dtoContextCtorMap.get(key);
+    if (ctor == null) {
+        ctor = createDtoContextCtor(source, declaredOnly);
+        dtoContextCtorMap.set(key, ctor);
+    }
+    return ctor;
+}
+
+export class AbstractDtoContext {
+
+    private _allScalarsMapping: AllScalarsMapping | undefined = undefined;
+
+    readonly entity: Entity;
+
+    readonly embeddedProp: EntityProp | undefined;
+
+    constructor(
+        source: Entity |  EntityProp,
+        readonly declaredOnly: boolean,
+    ) {
+        if (source instanceof EntityProp) {
+            this.entity = source.declaringEntity;
+            this.embeddedProp = source;
+        } else {
+            this.entity = source;
+            this.embeddedProp = undefined;
+        }
+    }
+
+    get $allScalars(): AllScalarsMapping {
+        let mapping = this._allScalarsMapping;
+        if (mapping == null) {
+            this._allScalarsMapping = mapping = new AllScalarsMapping(this, undefined);
+        }
+        return mapping;
+    }
+
+    $fold(name: string, body: DtoBody): FoldMapping {
+        return new FoldMapping(this, name, body);
+    }
+
+    $flat(key: string): FlatMapping {
+        const prop = this._prop(key);
+        return FlatMapping.of(prop);
+    }
+
+    private _prop(key: string): EntityProp {
+        if (this.embeddedProp != null) {
+            const prop = this.embeddedProp.props!.get(key);
+            if (prop == null) {
+                throw new ArgumentError(`The is not property "${key}" in the embedded property "${this.embeddedProp.toString()}"`);
+            }
+            return prop;
+        }
+        const prop = this.entity.allPropMap.get(key);
+        if (prop == null) {
+            throw new ArgumentError(`The is not property "${key}" in the entity "${this.entity.name}"`);
+        }
+        return prop;
     }
 }
 
@@ -639,6 +712,7 @@ class DtoContextCtorCreator {
             "$embeddedMapping",
             "$referenceMapping",
             "$collectionMapping",
+            "$referenceKeyMapping",
             writer.toString()
         )(
             this._superCtor, 
@@ -646,7 +720,8 @@ class DtoContextCtorCreator {
             ScalarLikeMapping,
             EmbeddedMapping,
             ReferenceMapping,
-            CollectionMapping
+            CollectionMapping,
+            ReferenceKeyMapping
         );
     }
 
@@ -694,7 +769,27 @@ class DtoContextCtorCreator {
     private _writeProp(prop: EntityProp, writer: CodeWriter) {
         writer.code("get ").code(prop.name).code("() ").scope("CURLY_BRACKETS", () => {
             if (prop.referenceProp != null) {
-
+                if (prop.props != null) {
+                    writer 
+                        .code(
+                            `return new $referenceKeyMapping(ThisClass.${
+                                this._propName(prop)
+                            }, "${
+                                prop.name
+                            }", c => [c.$allScalars])`
+                        )
+                        .newLine(";");
+                } else {
+                        writer 
+                        .code(
+                            `return new $referenceKeyMapping(ThisClass.${
+                                this._propName(prop)
+                            }, "${
+                                prop.name
+                            }", undefined)`
+                        )
+                        .newLine(";");
+                }
             } else if (prop.scalarType != null) {
                 writer
                     .code(
@@ -742,12 +837,107 @@ class DtoContextCtorCreator {
 
 export function createDto(
     ctx: AbstractDtoContext,
-    body: any
+    downloadTo: Entity | undefined,
+    body: any,
+    mappingCtx?: DtoMappingContext | undefined
 ) {
-    const mappings = body(ctx);
-    const factory = new DtoFactory(ctx.entity, undefined);
-    for (const mapping of mappings) {
-        factory.addMapping(mapping as AbstractDtoMapping);
+    const oldCtx = currentDtoMappingContext;
+    const newCtx = mappingCtx as DtoMappingContextImpl | undefined;
+    currentDtoMappingContext = newCtx;
+    try {
+        const mappings = body(ctx);
+        const factory = new DtoFactory(ctx.entity, downloadTo);
+        for (const mapping of mappings) {
+            factory.addMapping(mapping as AbstractDtoMapping);
+        }
+        return factory.create(newCtx);
+    } finally {
+        currentDtoMappingContext = oldCtx;
     }
-    return factory.create();
 }
+
+export class DtoFactory {
+
+    private readonly _fields: Array<DtoField> = [];
+
+    constructor(
+        private readonly _source: Entity | EntityProp,
+        private readonly _downcastTo: Entity | undefined
+    ) {}
+
+    addMapping(mapping: AbstractDtoMapping) {
+        const fields = mapping.toFields(this._downcastTo);
+        if (Array.isArray(fields)) {
+            this._fields.push(...fields);
+        } else {
+            this._fields.push(fields as DtoField);
+        }
+    }
+
+    create(ctx?: DtoMappingContextImpl | undefined): Dto {  
+        return {
+            entity: this._source instanceof Entity
+                ? this._source
+                : this._source.rootProp.declaringEntity,
+            fields: ctx != null 
+                ? this._fields.map(f => ({...f, path: ctx.processPath(f.path)}))
+                : this._fields
+        };
+    }
+}
+
+interface DtoMappingContext {
+    readonly __dtoMappingContext: true;
+}
+
+function foldContext(name: string) {
+    return new DtoMappingContextImpl(currentDtoMappingContext, name);
+}
+
+function flatContext(
+    prefix: string
+): DtoMappingContext {
+    return new DtoMappingContextImpl(currentDtoMappingContext, { prefix });
+}
+
+class DtoMappingContextImpl implements DtoMappingContext {
+
+    readonly __dtoMappingContext = true;
+
+    constructor(
+        private readonly _parent: DtoMappingContextImpl | undefined,
+        private readonly _value: string | { readonly prefix: string },
+    ) {}
+
+    processPath(
+        path: Path | undefined
+    ): Path | undefined {
+        if (path == null) {
+            return undefined;
+        }
+        const arr = typeof path === "string" ? [path] : [...path];
+        this._process(arr);
+        return arr.length === 1 ? arr[0]! : arr;
+    }
+
+    private _process(arr: Array<string>) {
+        if (typeof this._value === "string") {
+            arr.unshift(this._value);
+        } else {
+            const prefix = this._value.prefix;
+            if (prefix !== "") {
+                const size = arr.length;
+                for (let i = 0; i < size; i++) {
+                    if (arr[i] !== '..') {
+                        arr[i] = `${prefix}${capitalize(arr[i]!)}`;
+                        break;
+                    }
+                }
+            }
+            arr.unshift("..");
+        }
+        this._parent?._process(arr);
+    }
+}
+
+let currentDtoMappingContext: DtoMappingContextImpl | undefined = undefined;
