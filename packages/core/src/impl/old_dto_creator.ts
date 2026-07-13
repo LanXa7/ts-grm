@@ -125,7 +125,6 @@ export class DtoCreator {
                 DtoCreator.of(prop.associationType != null ? prop.targetEntity! : prop, undefined),
                 args
             );
-            console.log(`childDto`, JSON.stringify(childDto))
             const prefix = args.prefix ?? prop.name;
             const flattenFields = 
                 childDto.fields.map(field => {

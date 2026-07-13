@@ -18,7 +18,6 @@ function viewCreator(): ViewCreator {
         const builder = createTypedDtoBuilder(Entity.of(model));
         fn(builder as any as ViewBuilder<TModel, AllModelMembers<TModel>, "NULL", {}, {}, any, any>);
         const dto = builder.__unwrap().build();
-        console.log(JSON.stringify(dto));
         return new View(dtoMapper(dto, false));
     }
 

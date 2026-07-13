@@ -333,7 +333,6 @@ describe("ViewTest", () => {
                 ])
             ])
         ]);
-        console.log(JSON.stringify(mapperJson(view.mapper)));
         expect(mapperJson(view.mapper)).toEqual({
             "entity": "BookStore",
             "fields": [

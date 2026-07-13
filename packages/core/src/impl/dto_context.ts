@@ -11,7 +11,6 @@ import { Dto, DtoField } from "./dto";
 import { EntityPropOrder } from "./entity_prop_order";
 import { capitalize } from "./util";
 import { Path } from "./dto_mapper";
-import { readonly } from "zod";
 
 export interface AbstractDtoMapping {
 
@@ -157,10 +156,9 @@ class FoldMapping implements AbstractDtoMapping {
         const dto = createDto(
             this._context,
             downcastTo,
-            this._body,
-            { kind: "FOLD", value: this._name }
+            this._body
         )
-        return dto.fields;
+        return transformFields(dto.fields, this._name, undefined);
     }
 }
 
@@ -226,15 +224,33 @@ class FlatMapping implements AbstractDtoMapping {
         const dto = createDto(
             ctx, 
             downcastTo,
-            this._body, 
-            { kind: "FLAT", value: this._prefix }
+            this._body
         );
+        const flatNullable = this._prop.nullable || this._filter != null;
+        if (this._prefix === "" && !flatNullable) {
+            return dto.fields;
+        }
+        const fields = transformFields(
+            dto.fields, 
+            {
+                prefix: this._prefix, 
+                nullable: flatNullable, 
+                reference: this._prop.targetEntity != null
+            },
+            undefined
+        );
+        if (this._prop.props != null) {
+            return fields;
+        }
         return {
             path: undefined,
             downcastTo,
             prop: this._prop,
             bridgeProp: undefined,
-            dto,
+            dto: {
+                ...dto,
+                fields
+            },
             fetchType: this._fetchType,
             predicateFn: this._filter,
             orders: undefined,
@@ -839,24 +855,14 @@ class DtoContextCtorCreator {
 export function createDto(
     ctx: AbstractDtoContext,
     downloadTo: Entity | undefined,
-    body: any,
-    operation?: MappingOperation | undefined
+    body: any
 ) {
-    const oldCtx = currentMappingContext;
-    const newCtx = operation != null
-        ? new MappingContext(oldCtx, operation)
-        : undefined;
-    currentMappingContext = newCtx;
-    try {
-        const mappings = body(ctx);
-        const factory = new DtoFactory(ctx.entity, downloadTo);
-        for (const mapping of mappings) {
-            factory.addMapping(mapping as AbstractDtoMapping);
-        }
-        return factory.create(newCtx);
-    } finally {
-        currentMappingContext = oldCtx;
+    const mappings = body(ctx);
+    const factory = new DtoFactory(ctx.entity, downloadTo);
+    for (const mapping of mappings) {
+        factory.addMapping(mapping as AbstractDtoMapping);
     }
+    return factory.create();
 }
 
 export class DtoFactory {
@@ -877,59 +883,118 @@ export class DtoFactory {
         }
     }
 
-    create(ctx?: MappingContext | undefined): Dto {  
+    create(): Dto {  
         return {
             entity: this._source instanceof Entity
                 ? this._source
                 : this._source.rootProp.declaringEntity,
-            fields: ctx != null 
-                ? this._fields.map(f => ({...f, path: ctx.processPath(f.path)}))
-                : this._fields
+            fields: this._fields
         };
     }
 }
 
-interface MappingOperation { 
-    readonly kind: "FOLD" | "FLAT";
-    readonly value: string;
-};
+type TransformOp = 
+    string | {
+        readonly prefix: string;
+        readonly nullable: boolean;
+        readonly reference: boolean;
+    };
 
-class MappingContext {
-
-    constructor(
-        private readonly _parent: MappingContext | undefined,
-        private readonly _operation: MappingOperation,
-    ) {}
-
-    processPath(
-        path: Path | undefined
-    ): Path | undefined {
-        if (path == null) {
-            return undefined;
-        }
-        const arr = typeof path === "string" ? [path] : [...path];
-        this._process(arr);
-        return arr.length === 1 ? arr[0]! : arr;
-    }
-
-    private _process(arr: Array<string>) {
-        if (this._operation.kind === "FOLD") {
-            arr.unshift(this._operation.value);
-        } else {
-            const prefix = this._operation.value;
-            if (prefix !== "") {
-                const size = arr.length;
-                for (let i = 0; i < size; i++) {
-                    if (arr[i] !== '..') {
-                        arr[i] = `${prefix}${capitalize(arr[i]!)}`;
-                        break;
-                    }
-                }
+function transformFields(
+    fields: ReadonlyArray<DtoField>,
+    op: TransformOp,
+    predicate: ((field: DtoField) => boolean) | undefined
+) {
+    let newFields: Array<DtoField> | undefined = undefined;
+    const size = fields.length;
+    for (let i = 0; i < size; i++) {
+        if (predicate == null || predicate(fields[i]!)) {
+            if (newFields == null) {
+                newFields = [...fields];
             }
-            arr.unshift("..");
+            newFields[i] = transformField(fields[i]!, op);
         }
-        this._parent?._process(arr);
     }
+    return newFields ?? fields;
 }
 
-let currentMappingContext: MappingContext | undefined = undefined;
+function transformField(
+    field: DtoField,
+    op: TransformOp
+): DtoField {
+    let path = 
+        typeof op === "string"
+            ? field.path
+            : replacePathHead(field.path, op.prefix);
+    if (typeof op === "string") {
+        path = addPathHead(path, op);
+    } else if (op.reference) {
+        path = addPathHead(path, "..");
+    }
+    let dto = field.dto;
+    if (dto != null) {
+        const deeperFields = transformFields(
+            dto.fields, 
+            op,
+            deepField => isFlattenReference(deepField)
+        );
+        if (deeperFields !== dto.fields) {
+            dto = {
+                ...dto,
+                fields: deeperFields
+            };
+        }
+    }
+    let nullable = field.nullable;
+    if (typeof op !== "string") {
+        nullable ||= op.nullable;
+    }
+    return {
+        ...field,
+        path,
+        nullable: field.nullable || nullable,
+        dto
+    };
+}
+
+function isFlattenReference(field: DtoField): boolean {
+    return Array.isArray(field.path) 
+        && field.path.length > 1 
+        && field.path[0]! === ".."
+}
+
+function addPathHead(
+    path: Path | undefined, 
+    head: string
+): Path | undefined {
+    if (path == null) {
+        return undefined;
+    }
+    if (typeof path === "string") {
+        return [head, path];
+    }
+    const index = path.findIndex(v => v !== "..");
+    return [
+        ...path.slice(0, index),
+        head,
+        ...path.slice(index)
+    ];
+}
+
+function replacePathHead(
+    path: Path | undefined, 
+    prefix: string
+): Path | undefined {
+    if (path == null || prefix === "") {
+        return undefined;
+    }
+    if (typeof path === "string") {
+        return `${prefix}${capitalize(path)}`;
+    }
+    const index = path.findIndex(v => v !== "..");
+    return [
+        ...path.slice(0, index),
+        `${prefix}${capitalize(path[index]!)}`,
+        ...path.slice(index + 1)
+    ];
+}

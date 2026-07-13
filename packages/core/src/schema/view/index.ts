@@ -159,6 +159,5 @@ export function createView<
 ): View<TModel, Prettify<ViewType<TModel, TViewArgs, "NULL">>> {
     const dtoCreator = DtoCreator.of(Entity.of(model), undefined);
     const dto = dtoCreator.create(viewArgs as any);
-    console.log(JSON.stringify(dto));
     return new View(dtoMapper(dto, false));
 }

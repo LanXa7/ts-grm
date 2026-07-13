@@ -2,7 +2,6 @@ import { AllModelMembers, AnyModel, RequiredModelKey } from "../model";
 import { EmbeddedPropContract, ReferencePropContract } from "../prop_contract";
 import { AllScalarsMapping, MemberType } from "./all_scalars";
 import { DtoBody, DtoKind, DtoMapping, DtoType } from "./dto_context";
-import { EmbeddedMapping } from "./embedded";
 import { TargetMappings, TargetModelOf, WithNullity } from "./utils";
 
 export type ReferenceKeyContext<

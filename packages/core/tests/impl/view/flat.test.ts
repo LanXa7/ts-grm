@@ -1,5 +1,4 @@
 import { describe, expect, it } from "vitest";
-import { dto } from "@/schema/dto";
 import { BOOK, AUTHOR, TREE_NODE } from "../../model/model";
 import { expectCode } from "../../utils";
 import { mapperJson, makeReader, shapeJson } from "./utils";
