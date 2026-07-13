@@ -269,9 +269,18 @@ class ScalarLikeMapping implements AbstractDtoMapping {
     constructor(
         private readonly _prop: EntityProp,
         private readonly _alias: string,
-        readonly outputMapper: ScalarLikeMapper | undefined,
-        readonly inputMapper: ScalarLikeMapper | undefined
+        readonly _output: ScalarLikeMapper | undefined,
+        readonly _input: ScalarLikeMapper | undefined
     ) {}
+
+    as(alias: string): ScalarLikeMapping {
+        return new ScalarLikeMapping(
+            this._prop,
+            alias,
+            this._output,
+            this._input
+        );
+    }
 
     output(
         schema: StandardSchemaV1, 

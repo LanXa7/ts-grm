@@ -1,5 +1,4 @@
 import { describe, expect, it } from "vitest";
-import { dto } from "@/schema/dto";
 import { BOOK, BOOK_STORE } from "../../model/model";
 import { expectCode } from "../../utils";
 import { mapperJson, makeReader, shapeJson } from "./utils";
@@ -816,29 +815,22 @@ describe("ViewTest", () => {
     });
 
     it("rename", () => {
-        const view = dto.view(BOOK, $ => $
-            .id.$as("bookId")
-            .fold("key", $ => $
-                .name.$as("bookName")
-                .edition.$as("bookEdition")
-            )
-            .fold("associations", $ => $
-                .authors($ => $
-                    .allScalars()
-                    .remove("name", "gender")
-                    .flat({
-                        prop: "name",
-                        prefix: "flatten"
-                    }, $ => $
-                        .firstName.$as("fn")
-                        .lastName.$as("ln")
-                    )
-                )
-            )
-        );
-        // const view2 = createView(BOOK, {
-        //     id: { alias: "bookId" }
-        // });
+        const view = newView(BOOK, c => [
+            c.id.as("bookId"),
+            c.$fold("key", c => [
+                c.name.as("bookName"),
+                c.edition.as("bookEdition")
+            ]),
+            c.$fold("associations", c => [
+                c.authors.with(c => [
+                    c.$allScalars.exclude("name", "gender"),
+                    c.$flat("name").prefix("flatten").with(c => [
+                        c.firstName.as("fn"),
+                        c.lastName.as("ln")
+                    ])
+                ])
+            ])
+        ]);
         expect(mapperJson(view.mapper)).toEqual({
             "entity": "Book",
             "fields": [
