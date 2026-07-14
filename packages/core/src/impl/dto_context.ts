@@ -11,7 +11,7 @@ import { Dto, DtoField, FetchProp, InverseFetchProp, TypeNameProp } from "./dto"
 import { EntityPropOrder, toEntityPropOrders } from "./entity_prop_order";
 import { capitalize } from "./util";
 import { Path } from "./dto_mapper";
-import { AnyModel, prop } from "@/internal_types";
+import { AnyModel } from "@/internal_types";
 
 export interface AbstractDtoMapping {
 
