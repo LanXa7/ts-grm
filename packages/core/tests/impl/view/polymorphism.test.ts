@@ -1,22 +1,22 @@
-import { dto } from "@/index";
 import { describe, it, expect } from "vitest";
 import { BOOK_STORE, ONLINE_BOOK_STORE, PHYSICAL_BOOK_STORE, PAPER_BOOK, ELECTRONIC_BOOK, PDF_ELECTRONIC_BOOK } from "../../model/model";
 import { mapperJson, shapeJson } from "./utils";
 import { expectCode } from "../../utils";
+import { newView } from "@/schema/dto/index";
 
 describe("PolymorphismTest", () => {
 
     it("singleTable", () => {
-        const view = dto.view(BOOK_STORE, $ => $
-            .name
-            .instanceOf(ONLINE_BOOK_STORE, $ => $
-                .url
-            )
-            .instanceOf(PHYSICAL_BOOK_STORE, $ => $
-                .city
-                .street
-            )
-        );
+        const view = newView(BOOK_STORE, c => [
+            c.name,
+            c.$instanceOf(ONLINE_BOOK_STORE, c => [
+                c.url
+            ]),
+            c.$instanceOf(PHYSICAL_BOOK_STORE, c => [
+                c.city,
+                c.street
+            ])
+        ]);
         expect(mapperJson(view.mapper)).toEqual({
             "entity": "BookStore",
             "fields": [
@@ -86,22 +86,21 @@ describe("PolymorphismTest", () => {
 
     it("mutlipleTables", () => {
 
-        const view = dto.view(BOOK_STORE, $ => $
-            .name
-            .books(
-                $ => $
-                    .name
-                    .instanceOf(PAPER_BOOK, $ => $
-                        .size()
-                    )
-                    .instanceOf(ELECTRONIC_BOOK, $ => $
-                        .address
-                    )
-                    .instanceOf(PDF_ELECTRONIC_BOOK, $ => $
-                        .pdfVersion
-                    )
-            )
-        );
+        const view = newView(BOOK_STORE, c => [
+            c.name,
+            c.books.with(c => [
+                c.name,
+                c.$instanceOf(PAPER_BOOK, c => [
+                    c.size
+                ]),
+                c.$instanceOf(ELECTRONIC_BOOK, c => [
+                    c.address
+                ]),
+                c.$instanceOf(PDF_ELECTRONIC_BOOK, c => [
+                    c.pdfVersion
+                ])
+            ])
+        ]);
         expect(mapperJson(view.mapper)).toEqual({
             "entity": "BookStore",
             "fields": [
@@ -250,22 +249,21 @@ describe("PolymorphismTest", () => {
     });
 
     it("multipleTablesWithFormulua", () => {
-        const view = dto.view(BOOK_STORE, $ => $
-            .name
-            .books(
-                $ => $
-                    .name
-                    .instanceOf(PAPER_BOOK, $ => $
-                        .area
-                    )
-                    .instanceOf(ELECTRONIC_BOOK, $ => $
-                        .address
-                    )
-                    .instanceOf(PDF_ELECTRONIC_BOOK, $ => $
-                        .pdfVersion
-                    )
-            )
-        );
+        const view = newView(BOOK_STORE, c => [
+            c.name,
+            c.books.with(c => [
+                c.name,
+                c.$instanceOf(PAPER_BOOK, c => [
+                    c.area
+                ]),
+                c.$instanceOf(ELECTRONIC_BOOK, c => [
+                    c.address
+                ]),
+                c.$instanceOf(PDF_ELECTRONIC_BOOK, c => [
+                    c.pdfVersion
+                ])
+            ])
+        ]);
         expect(mapperJson(view.mapper)).toEqual({
             "entity": "BookStore",
             "fields": [

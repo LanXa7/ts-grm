@@ -7,10 +7,11 @@ import { ReferenceFetchType } from "@/schema/dto/reference_fetch_type";
 import { CodeWriter } from "./code_writer";
 import { StandardSchemaV1 } from "@standard-schema/spec";
 import { OrderNullsType } from "@/schema/order";
-import { Dto, DtoField, FetchProp, InverseFetchProp } from "./dto";
-import { EntityPropOrder } from "./entity_prop_order";
+import { Dto, DtoField, FetchProp, InverseFetchProp, TypeNameProp } from "./dto";
+import { EntityPropOrder, toEntityPropOrders } from "./entity_prop_order";
 import { capitalize } from "./util";
 import { Path } from "./dto_mapper";
+import { AnyModel } from "@/internal_types";
 
 export interface AbstractDtoMapping {
 
@@ -259,6 +260,153 @@ class FlatMapping implements AbstractDtoMapping {
             nullable: this._prop.nullable,
             parameter: undefined
         };
+    }
+}
+
+class InstanceOfMapping implements AbstractDtoMapping {
+
+    readonly __mappingType = "INSTANCE_OF";
+
+    constructor(
+        private readonly _downcastTo: Entity,
+        private readonly _body: DtoBody
+    ) {}
+
+    toFields(
+        _: Entity | undefined
+    ): ReadonlyArray<DtoField> {
+        const ctx = newDtoContext(this._downcastTo, true);
+        const dto = createDto(
+            ctx,
+            this._downcastTo,
+            this._body
+        )
+        return dto.fields;
+    }
+}
+
+class RecursiveMapping implements AbstractDtoMapping {
+
+    readonly __mappingType = "RECURSIVE";
+
+    constructor(
+        readonly prop: EntityProp,
+        private readonly _alias: string,
+        private readonly _filter: Filter | undefined,
+        private readonly _orders: ReadonlyArray<EntityPropOrder> | undefined,
+        private readonly _maxRows: number | undefined,
+        private readonly _depth: number
+    ) {}
+
+    static of(prop: EntityProp): RecursiveMapping {
+        return new RecursiveMapping(
+            prop,
+            prop.name,
+            undefined,
+            undefined,
+            undefined,
+            -1
+        );
+    }
+
+    as(alias: string): RecursiveMapping {
+        return new RecursiveMapping(
+            this.prop,
+            alias,
+            this._filter,
+            this._orders,
+            this._maxRows,
+            this._depth
+        );
+    }
+
+    where(filter: Filter): RecursiveMapping {
+        return new RecursiveMapping(
+            this.prop,
+            this._alias,
+            filter,
+            this._orders,
+            this._maxRows,
+            this._depth
+        );
+    }
+
+    orderBy(
+        ...orders: ReadonlyArray<string | {
+            readonly path: string;
+            readonly desc: boolean;
+            readonly nulls: OrderNullsType;
+        }>
+    ): RecursiveMapping {
+        const associationType = this.prop.associationType;
+        if (associationType != "ONE_TO_MANY" && associationType != "MANY_TO_MANY") {
+            throw new StateError(
+                `The "orderBy" operation is not supported because the current property "${
+                    this.prop
+                }" is not collection`
+            );
+        }
+        return new RecursiveMapping(
+            this.prop,
+            this._alias,
+            this._filter,
+            toEntityPropOrders(this.prop.targetEntity!, orders),
+            this._maxRows,
+            this._depth
+        );
+    }
+
+    limit(maxRows: number): RecursiveMapping {
+        const associationType = this.prop.associationType;
+        if (associationType != "ONE_TO_MANY" && associationType != "MANY_TO_MANY") {
+            throw new StateError(
+                `The "limit" operation is not supported because the current property "${
+                    this.prop
+                }" is not collection`
+            );
+        }
+        return new RecursiveMapping(
+            this.prop,
+            this._alias,
+            this._filter,
+            this._orders,
+            maxRows,
+            this._depth
+        );
+    }
+
+    depth(depth: number): RecursiveMapping {
+        if (depth < 1) {
+            throw new ArgumentError(`The recursive depth must be at least 1`);
+        }
+        return new RecursiveMapping(
+            this.prop,
+            this._alias,
+            this._filter,
+            this._orders,
+            this._maxRows,
+            depth
+        );
+    }
+
+    toFields(
+        downcastTo: Entity | undefined
+    ): DtoField {
+        const field: DtoField = {
+            path: this._alias,
+            downcastTo: downcastTo,
+            prop: this.prop,
+            bridgeProp: undefined,
+            dto: undefined,
+            fetchType: undefined,
+            predicateFn: this._filter,
+            orders: this._orders ?? this.prop.orders,
+            limit: this._maxRows,
+            recursiveDepth: this._depth,
+            nullable: this.prop.nullable,
+            parameter: undefined
+        };
+        return field;
     }
 }
 
@@ -559,24 +707,7 @@ class CollectionMapping extends AssociationMapping {
             readonly nulls: OrderNullsType;
         }>
     ): CollectionMapping {
-        const targetPropMap = this._prop.targetEntity!.expandedPropMap;
-        const propOrders: ReadonlyArray<EntityPropOrder> | undefined = 
-            orders.length === 0
-                ? undefined
-                : orders.map(order => {
-                    if (typeof order === "string") {
-                        const prop = targetPropMap.get(order);
-                        if (prop == null) {
-                            throw new ArgumentError(`Illegal order path "${order}" of the collection property "${this._prop.toString()}"`);
-                        }
-                        return { prop, desc: false, nulls: "UNSPECIFIED" };
-                    }
-                    const prop = targetPropMap.get(order.path);
-                    if (prop == null) {
-                        throw new ArgumentError(`Illegal order path "${order.path}" of the collection property "${this._prop.toString()}"`);
-                    }
-                    return { prop, desc: order.desc, nulls: order.nulls };
-                });
+        const propOrders = toEntityPropOrders(this._prop.targetEntity!, orders);
         return new CollectionMapping(
             this._prop,
             this._alias,
@@ -740,6 +871,22 @@ export class AbstractDtoContext {
         return FlatMapping.of(prop);
     }
 
+    $instanceOf(model: AnyModel, body: DtoBody): InstanceOfMapping {
+        const downcastTo = Entity.of(model);
+        if (!this.entity.isAssignableFrom(downcastTo)) {
+            throw new ArgumentError(`The argument "${downcastTo.name}" is not derived model of "${this.entity.name}"`);
+        }
+        return new InstanceOfMapping(downcastTo, body);
+    }
+
+    $recursive(key: string): RecursiveMapping {
+        const prop = this._prop(key);
+        if (!prop.isRecursive) {
+            throw new ArgumentError(`The property ${prop.toString()} is not recursive`);
+        }
+        return RecursiveMapping.of(prop);
+    }
+
     private _prop(key: string): EntityProp {
         if (this.embeddedProp != null) {
             const prop = this.embeddedProp.props!.get(key);
@@ -748,9 +895,16 @@ export class AbstractDtoContext {
             }
             return prop;
         }
+        if (this.declaredOnly) {
+            const prop = this.entity.declaredPropMap.get(key);
+            if (prop == null) {
+                throw new ArgumentError(`There is no directly(ingnore inherited properties) property "${key}" in the entity "${this.entity.name}"`);
+            }
+            return prop;
+        }
         const prop = this.entity.allPropMap.get(key);
         if (prop == null) {
-            throw new ArgumentError(`The is not property "${key}" in the entity "${this.entity.name}"`);
+            throw new ArgumentError(`There is no property "${key}" in the entity "${this.entity.name}"`);
         }
         return prop;
     }
@@ -871,7 +1025,7 @@ class DtoContextCtorCreator {
                         )
                         .newLine(";");
                 }
-            } else if (prop.scalarType != null) {
+            } else if (prop.scalarType != null || prop.getTsFormulaFn(false) != null || prop.sqlFormulaFn != null) {
                 writer
                     .code(
                         `return new $scalarLikeMapping(ThisClass.${
@@ -939,6 +1093,18 @@ export class DtoFactory {
     ) {}
 
     addMapping(mapping: AbstractDtoMapping) {
+        if (mapping instanceof InstanceOfMapping) {
+            this._addTypeName();
+        } else if (mapping instanceof RecursiveMapping) {
+            for (const field of this._fields) {
+                if (field.prop === mapping.prop) {
+                    throw new StateError(
+                        `Cannot fetch the property ${mapping.prop.toString()} recursively 
+                        because annother dto field fetches the association unrecursively`
+                    );
+                }
+            }
+        }
         const fields = mapping.toFields(this._downcastTo);
         if (Array.isArray(fields)) {
             this._fields.push(...fields);
@@ -954,6 +1120,37 @@ export class DtoFactory {
                 : this._source.rootProp.declaringEntity,
             fields: this._fields
         };
+    }
+
+    private _addTypeName() {
+        if (!(this._source instanceof Entity)) {
+            throw new StateError("Only entity dto accept the typename");
+        }
+        for (const field of this._fields) {
+            if (field.prop instanceof TypeNameProp) {
+                return;
+            }
+        }
+        const entity = this._source;
+        const field: DtoField = {
+            path: "__typename",
+            downcastTo: undefined,
+            prop: new TypeNameProp(
+                entity,
+                entity.tableSettings.discriminator?.name,
+                entity.tableSettings.discriminator == null ? entity.name : undefined
+            ),
+            bridgeProp: undefined,
+            dto: undefined,
+            fetchType: undefined,
+            predicateFn: undefined,
+            orders: undefined,
+            limit: undefined,
+            recursiveDepth: undefined,
+            nullable: false,
+            parameter: undefined
+        };
+        this._fields.push(field);
     }
 }
 

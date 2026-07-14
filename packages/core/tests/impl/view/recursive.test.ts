@@ -1,16 +1,16 @@
 import { describe, expect, it } from "vitest";
-import { dto } from "@/schema/dto";
 import { LIBRARY, TREE_NODE } from "../../model/model";
 import { expectCode } from "../../utils";
 import { mapperJson, makeReader, shapeJson } from "./utils";
+import { newView } from "@/schema/dto/index";
 
 describe("RecursiveTest", () => {
 
     it("oneRecursiveProp", () => {
-        const view = dto.view(TREE_NODE, $ => $
-            .name
-            .recursive("parentNode")
-        );
+        const view = newView(TREE_NODE, c => [
+            c.name,
+            c.$recursive("parentNode")
+        ]);
         expect(mapperJson(view.mapper)).toEqual({
             "entity": "TreeNode",
             "fields": [
@@ -193,11 +193,11 @@ describe("RecursiveTest", () => {
     });
 
     it("twoRecursiveProps", () => {
-        const view = dto.view(TREE_NODE, $ => $
-            .name
-            .recursive("parentNode")
-            .recursive("childNodes")
-        );
+        const view = newView(TREE_NODE, c => [
+            c.name,
+            c.$recursive("parentNode"),
+            c.$recursive("childNodes")
+        ]);
         expect(mapperJson(view.mapper)).toEqual({
             "entity": "TreeNode",
             "fields": [
@@ -498,12 +498,12 @@ describe("RecursiveTest", () => {
     });
 
     it("dependenciesAndDependents", () => {
-        const view = dto.view(LIBRARY, $ => $
-            .name
-            .version
-            .recursive("dependencies")
-            .recursive("dependents")
-        );
+        const view = newView(LIBRARY, c => [
+            c.name,
+            c.version,
+            c.$recursive("dependencies"),
+            c.$recursive("dependents")
+        ]);
         expect(mapperJson(view.mapper)).toEqual({
             "entity": "Library",
             "fields": [
