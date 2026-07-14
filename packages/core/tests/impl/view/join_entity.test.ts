@@ -1,18 +1,18 @@
-import { dto } from "@/index";
 import { describe, it, expect } from "vitest";
 import { COURSE, STUDENT } from "../../model/model";
 import { makeReader, mapperJson, shapeJson } from "./utils";
 import { expectCode } from "../../utils";
+import { newView } from "@/schema/dto/index";
 
 describe("JoinEntityTest", () => {
 
     it("joinEntity", () => {
-        const view = dto.view(
-            STUDENT, 
-            $ => $.id.name.courses(
-                $ => $.allScalars()
-            )
-        );
+        const view = newView(STUDENT, c => [
+            c.id,
+            c.name,
+            c.courses
+        ]);
+        console.log(JSON.stringify(mapperJson(view.mapper)));
         expect(mapperJson(view.mapper)).toEqual({
             "entity": "Student",
             "fields": [
@@ -227,12 +227,11 @@ describe("JoinEntityTest", () => {
     });
 
     it("inverseJoinEntity", () => {
-        const view = dto.view(
-            COURSE, 
-            $ => $.id.name.students(
-                $ => $.allScalars()
-            )
-        );
+        const view = newView(COURSE, c => [
+            c.id,
+            c.name,
+            c.students
+        ]);
         expect(mapperJson(view.mapper)).toEqual({
             "entity": "Course",
             "fields": [
@@ -447,10 +446,12 @@ describe("JoinEntityTest", () => {
     });
 
     it("mixed", () => {
-        expect(() => dto.view(STUDENT, $ => $
-            .allScalars()
-            .learningLinks($ => $.id)
-            .fold("tmp", $ => $.courses($ => $.id))
-        )).toThrowError(`The property "Student.learningLinks" and "Student.courses" cannot be fetched together`);
+        expect(
+            () => newView(STUDENT, c => [
+                c.$allScalars,
+                c.learningLinks,
+                c.$fold("tmp", c => [c.courses]) 
+            ])
+        ).toThrowError(`The property "Student.learningLinks" and "Student.courses" cannot be fetched together`);
     });
 });

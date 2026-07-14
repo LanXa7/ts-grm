@@ -1,4 +1,4 @@
-import { AtLeastOne, EntityTable, Predicate } from "@/dsl";
+import { EntityTable, Predicate } from "@/dsl";
 import { AnyModel } from "../model";
 import { DtoBody, DtoType, DtoKind } from "./dto_context";
 import { ModelOrder } from "../order";
@@ -27,7 +27,7 @@ export interface CollectionMapping<
     ): CollectionMapping<TModel, TDtoKind, TKey, TMember, TMappings>;
 
     orderBy(
-        ...orders: AtLeastOne<ModelOrder<TargetModelOf<TModel, TMember>>>
+        ...orders: ReadonlyArray<ModelOrder<TargetModelOf<TModel, TMember>>>
     ): CollectionMapping<TModel, TDtoKind, TKey, TMember, TMappings>;
 
     limit(

@@ -7,7 +7,7 @@ import { ReferenceFetchType } from "@/schema/dto/reference_fetch_type";
 import { CodeWriter } from "./code_writer";
 import { StandardSchemaV1 } from "@standard-schema/spec";
 import { OrderNullsType } from "@/schema/order";
-import { Dto, DtoField } from "./dto";
+import { Dto, DtoField, FetchProp, InverseFetchProp } from "./dto";
 import { EntityPropOrder } from "./entity_prop_order";
 import { capitalize } from "./util";
 import { Path } from "./dto_mapper";
@@ -227,7 +227,7 @@ class FlatMapping implements AbstractDtoMapping {
             this._body
         );
         const flatNullable = this._prop.nullable || this._filter != null;
-        if (this._prefix === "" && !flatNullable) {
+        if (this._prop.props != null && this._prefix === "" && !flatNullable) {
             return dto.fields;
         }
         const fields = transformFields(
@@ -379,17 +379,69 @@ class EmbeddedMapping implements AbstractDtoMapping {
     }
 }
 
-class ReferenceMapping implements AbstractDtoMapping {
+abstract class AssociationMapping implements AbstractDtoMapping {
+
+    abstract readonly __mappingType: string;
+
+    protected constructor(
+        protected readonly _prop: EntityProp,
+        protected readonly _alias: string,
+        protected _body: DtoBody,
+        protected readonly _filter: Filter | undefined
+    ) {
+    }
+
+    protected get _directProp(): FetchProp {
+        const middleEntity = this._prop.middleEntity;
+        return middleEntity != null
+            ? InverseFetchProp.of(middleEntity.joinThisProp)
+            : this._prop;
+    }
+
+    protected get _bridgeProp(): EntityProp | undefined {
+        return this._prop.middleEntity != null
+            ? this._prop
+            : undefined;
+    }
+
+    protected _createChildDto(
+        downloadTo: Entity | undefined
+    ): Dto {
+        const middleEntity = this._prop.middleEntity;
+        const ctx = middleEntity != null 
+            ? newDtoContext(middleEntity.entity!, false)
+            : newDtoContext(this._prop.targetEntity!, false);
+        const body = middleEntity != null
+            ? (c: AbstractDtoContext) => {
+                const flat = c.$flat(middleEntity.joinTargetProp.name)
+                    .prefix("")
+                    .with(this._body);
+                return this._filter == null 
+                    ? [flat]
+                    : [flat.where(this._filter)];
+            }
+            : this._body;
+        return createDto(ctx, downloadTo, body);
+    }
+
+    abstract toFields(
+        downcastTo: Entity | undefined
+    ): DtoField;
+}
+
+class ReferenceMapping extends AssociationMapping {
 
     readonly __mappingType = "REFERENCE";
 
     constructor(
-        private readonly _prop: EntityProp,
-        private readonly _alias: string,
-        private readonly _body: DtoBody,
-        private readonly _filter: Filter | undefined,
+        _prop: EntityProp,
+        _alias: string,
+        _body: DtoBody,
+        _filter: Filter | undefined,
         private readonly _fetchType: ReferenceFetchType
-    ) {}
+    ) {
+        super(_prop, _alias, _body, _filter);
+    }
 
     as(alias: string): ReferenceMapping {
         return new ReferenceMapping(
@@ -434,13 +486,12 @@ class ReferenceMapping implements AbstractDtoMapping {
     toFields(
         downcastTo: Entity | undefined
     ): DtoField {
-        const ctx = newDtoContext(this._prop.targetEntity!, false);
-        const dto = createDto(ctx, downcastTo, this._body);
+        const dto = this._createChildDto(downcastTo);
         return {
             path: this._alias,
             downcastTo,
-            prop: this._prop,
-            bridgeProp: undefined,
+            prop: this._directProp,
+            bridgeProp: this._bridgeProp,
             dto,
             fetchType: this._fetchType,
             predicateFn: this._filter,
@@ -453,18 +504,20 @@ class ReferenceMapping implements AbstractDtoMapping {
     }
 }
 
-class CollectionMapping implements AbstractDtoMapping {
+class CollectionMapping extends AssociationMapping {
 
     readonly __mappingType = "COLLECTION";
 
     constructor(
-        private readonly _prop: EntityProp,
-        private readonly _alias: string,
-        private readonly _body: DtoBody,
-        private readonly _filter: Filter | undefined,
+        _prop: EntityProp,
+        _alias: string,
+        _body: DtoBody,
+        _filter: Filter | undefined,
         private readonly _orders: ReadonlyArray<EntityPropOrder> | undefined,
         private readonly _maxRows: number | undefined
-    ) {}
+    ) {
+        super(_prop, _alias, _body, _filter);
+    }
 
     as(alias: string): CollectionMapping {
         return new CollectionMapping(
@@ -535,6 +588,9 @@ class CollectionMapping implements AbstractDtoMapping {
     }
 
     limit(maxRows: number): CollectionMapping {
+        if (this._prop.middleEntity != null) {
+            throw new StateError(`Cannot set the limit of "${this._prop.toString()}" based on base table`);
+        }
         return new CollectionMapping(
             this._prop,
             this._alias,
@@ -548,17 +604,16 @@ class CollectionMapping implements AbstractDtoMapping {
     toFields(
         downcastTo: Entity | undefined
     ): DtoField {
-        const ctx = newDtoContext(this._prop.targetEntity!, false);
-        const dto = createDto(ctx, downcastTo, this._body);
+        const dto = this._createChildDto(downcastTo);
         return {
             path: this._alias,
             downcastTo,
-            prop: this._prop,
-            bridgeProp: undefined,
+            prop: this._directProp,
+            bridgeProp: this._bridgeProp,
             dto,
             fetchType: undefined,
             predicateFn: undefined,
-            orders: this._orders,
+            orders: undefined,
             limit: this._maxRows,
             recursiveDepth: undefined,
             nullable: this._prop.nullable,
@@ -994,8 +1049,11 @@ function replacePathHead(
     path: Path | undefined, 
     prefix: string
 ): Path | undefined {
-    if (path == null || prefix === "") {
+    if (path == null) {
         return undefined;
+    }
+    if (prefix === "") {
+        return path;
     }
     if (typeof path === "string") {
         return `${prefix}${capitalize(path)}`;
