@@ -11,7 +11,7 @@ import { Dto, DtoField, FetchProp, InverseFetchProp, TypeNameProp } from "./dto"
 import { EntityPropOrder, toEntityPropOrders } from "./entity_prop_order";
 import { capitalize } from "./util";
 import { Path } from "./dto_mapper";
-import { AnyModel } from "@/internal_types";
+import { AnyModel, prop } from "@/internal_types";
 
 export interface AbstractDtoMapping {
 
@@ -417,6 +417,7 @@ class ScalarLikeMapping implements AbstractDtoMapping {
     constructor(
         private readonly _prop: EntityProp,
         private readonly _alias: string,
+        readonly _parameter: any,
         readonly _output: ScalarLikeMapper | undefined,
         readonly _input: ScalarLikeMapper | undefined
     ) {}
@@ -426,7 +427,8 @@ class ScalarLikeMapping implements AbstractDtoMapping {
             this._prop,
             alias,
             this._output,
-            this._input
+            this._input,
+            this._parameter
         );
     }
 
@@ -437,6 +439,7 @@ class ScalarLikeMapping implements AbstractDtoMapping {
         return new ScalarLikeMapping(
             this._prop,
             this._alias,
+            this._parameter,
             { schema, fn },
             undefined
         );
@@ -449,6 +452,7 @@ class ScalarLikeMapping implements AbstractDtoMapping {
         return new ScalarLikeMapping(
             this._prop,
             this._alias,
+            this._parameter,
             undefined,
             { schema, fn }
         );
@@ -469,7 +473,7 @@ class ScalarLikeMapping implements AbstractDtoMapping {
             limit: undefined,
             recursiveDepth: undefined,
             nullable: this._prop.nullable,
-            parameter: undefined
+            parameter: this._parameter
         };
     }
 }
@@ -553,7 +557,7 @@ abstract class AssociationMapping implements AbstractDtoMapping {
     }
 
     protected _createChildDto(
-        downloadTo: Entity | undefined
+        _: Entity | undefined
     ): Dto {
         const middleEntity = this._prop.middleEntity;
         const ctx = middleEntity != null 
@@ -569,7 +573,7 @@ abstract class AssociationMapping implements AbstractDtoMapping {
                     : [flat.where(this._filter)];
             }
             : this._body;
-        return createDto(ctx, downloadTo, body);
+        return createDto(ctx, undefined, body);
     }
 
     abstract toFields(
@@ -778,7 +782,7 @@ class ReferenceKeyMapping implements AbstractDtoMapping {
         downcastTo: Entity | undefined
     ): DtoField {
         const ctx = newDtoContext(this._prop, false);
-        const dto = this._body != null ? createDto(ctx, downcastTo, this._body) : undefined;
+        const dto = this._body != null ? createDto(ctx, undefined, this._body) : undefined;
         return {
             path: this._alias,
             downcastTo,
@@ -793,6 +797,83 @@ class ReferenceKeyMapping implements AbstractDtoMapping {
             nullable: this._prop.nullable,
             parameter: undefined
         };
+    }
+}
+
+class CalculatedAssociationMapping implements AbstractDtoMapping {
+
+    get __mappingType(): string {
+        return CalculatedAssociationMapping._mappingType(this._prop);
+    }
+
+    constructor(    
+        private readonly _prop: EntityProp,
+        private readonly _alias: string,
+        private readonly _parameter: any,
+        private readonly _body: any
+    ) {}
+
+    static of(prop: EntityProp, parameter: any): CalculatedAssociationMapping {
+        const body: DtoBody = c => [c.$allScalars];
+        return new CalculatedAssociationMapping(
+            prop,
+            prop.name,
+            parameter,
+            body
+        );
+    }
+
+    private static _mappingType(prop: EntityProp): string {
+        switch (prop.calculationStrategy?.kind) {
+            case "REFERENCE":
+            case "PARAMETERIZED_REFERENCE":
+                return "CALCULATED_REFERENCE";
+            case "COLLECTION":
+            case "PARAMETERIZED_COLLECTION":
+                return "CALCULATED_COLLECTION";
+            default:
+                throw new ArgumentError(`Illegal calculation stratey: ${prop.calculationStrategy?.kind}`);
+        }
+    }
+
+    as(alias: string): CalculatedAssociationMapping {
+        return new CalculatedAssociationMapping(
+            this._prop,
+            alias,
+            this._parameter,
+            this._body
+        );
+    }
+
+    with(body: DtoBody): CalculatedAssociationMapping {
+        return new CalculatedAssociationMapping(
+            this._prop,
+            this._alias,
+            this._parameter,
+            body
+        );
+    }
+
+    toFields(
+        downcastTo: Entity | undefined
+    ): DtoField {
+        const ctx = newDtoContext(this._prop.targetEntity!, false);
+        const dto = createDto(ctx, undefined, this._body);
+        const field: DtoField = {
+            path: this._alias,
+            downcastTo,
+            prop: this._prop,
+            bridgeProp: undefined,
+            dto,
+            fetchType: undefined,
+            predicateFn: undefined,
+            orders: undefined,
+            limit: undefined,
+            recursiveDepth: undefined,
+            nullable: this._prop.nullable,
+            parameter: this._parameter
+        };
+        return field;
     }
 }
 
@@ -887,6 +968,20 @@ export class AbstractDtoContext {
         return RecursiveMapping.of(prop);
     }
 
+    $parameterized(key: string, parameter: any): AbstractDtoMapping {
+        const prop = this._prop(key);
+        switch (prop.calculationStrategy?.kind) {
+            case "PARAMETERIZED_VALUE":
+                return new ScalarLikeMapping(prop, prop.name, parameter, undefined, undefined);
+            case "PARAMETERIZED_REFERENCE":
+            case "PARAMETERIZED_COLLECTION":
+                return CalculatedAssociationMapping.of(prop, parameter);
+                break;
+            default:
+                throw new ArgumentError(`The property "${prop.toString()}" is not parameterized property`);
+        }
+    }
+
     private _prop(key: string): EntityProp {
         if (this.embeddedProp != null) {
             const prop = this.embeddedProp.props!.get(key);
@@ -948,6 +1043,7 @@ class DtoContextCtorCreator {
             "$referenceMapping",
             "$collectionMapping",
             "$referenceKeyMapping",
+            "$calculatedAssociationMapping",
             writer.toString()
         )(
             this._superCtor, 
@@ -956,16 +1052,19 @@ class DtoContextCtorCreator {
             EmbeddedMapping,
             ReferenceMapping,
             CollectionMapping,
-            ReferenceKeyMapping
+            ReferenceKeyMapping,
+            CalculatedAssociationMapping
         );
     }
 
     private _writerStaticFields(writer: CodeWriter) {
         if (this._source instanceof Entity) {
             for (const prop of this._source.declaredPropMap.values()) {
-                writer
-                    .code(`static ${this._propName(prop)} = $source.allPropMap.get("${prop.name}")`)
-                    .newLine(";");
+                if (this._isVisibleProp(prop)) {
+                    writer
+                        .code(`static ${this._propName(prop)} = $source.allPropMap.get("${prop.name}")`)
+                        .newLine(";");
+                }
             }
         } else {
             for (const prop of this._source.props!.values()) {
@@ -992,7 +1091,9 @@ class DtoContextCtorCreator {
     private _writeProps(writer: CodeWriter) {
         if (this._source instanceof Entity) {
             for (const prop of this._source.declaredPropMap.values()) {
-                this._writeProp(prop, writer);
+                if (this._isVisibleProp(prop)) {
+                    this._writeProp(prop, writer);
+                }
             }
         } else {
             for (const prop of this._source.props!.values()) {
@@ -1032,7 +1133,7 @@ class DtoContextCtorCreator {
                             this._propName(prop)
                         }, "${
                             prop.name
-                        }", undefined, undefined)`
+                        }", undefined, undefined, undefined)`
                     )
                     .newLine(";");
             } else if (prop.props != null) {
@@ -1065,8 +1166,51 @@ class DtoContextCtorCreator {
                         }", c => [c.$allScalars], undefined, undefined, undefined)`
                     )
                     .newLine(";");
+            } else if (prop.calculationStrategy != null) {
+                switch (prop.calculationStrategy.kind) {
+                    case "VALUE":
+                        writer
+                            .code(
+                                `return new $scalarLikeMapping(ThisClass.${
+                                    this._propName(prop)
+                                }, "${
+                                    prop.name
+                                }", undefined, undefined, undefined)`
+                            )
+                            .newLine(";");
+                            break;
+                    case "REFERENCE":
+                        writer
+                            .code(
+                                `return $calculatedAssociationMapping.of(ThisClass.${
+                                    this._propName(prop)
+                                }, undefined)`
+                            )
+                            .newLine(";");
+                            break;
+                    case "COLLECTION":
+                        writer
+                            .code(
+                                `return $calculatedAssociationMapping.of(ThisClass.${
+                                    this._propName(prop)
+                                }, undefined)`
+                            )
+                            .newLine(";");
+                            break;
+                }
             }
         }).newLine();
+    }
+
+    private _isVisibleProp(prop: EntityProp): boolean {
+        switch (prop.calculationStrategy?.kind) {
+            case "PARAMETERIZED_VALUE":
+            case "PARAMETERIZED_REFERENCE":
+            case "PARAMETERIZED_COLLECTION":
+                return false;
+            default:
+                return true;
+        }
     }
 }
 

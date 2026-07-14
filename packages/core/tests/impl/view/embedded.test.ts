@@ -1,5 +1,4 @@
 import { describe, expect, it } from "vitest";
-import { dto } from "@/schema/dto";
 import { ORDER_ITEM } from "../../model/model";
 import { expectCode } from "../../utils";
 import { mapperJson, makeReader, shapeJson } from "./utils";
@@ -150,12 +149,10 @@ describe("EmbeddedTest", () => {
     });
 
     it("explicitEmbeddedReferenceKey", () => {
-        const view = dto.view(ORDER_ITEM, $ => $
-            .orderId()
-            .order($ => $
-                .name
-            )
-        );
+        const view = newView(ORDER_ITEM, c => [
+            c.orderId,
+            c.order.with(c => [c.name])
+        ]);
         expect(mapperJson(view.mapper)).toEqual({
             "entity": "OrderItem",
             "fields": [

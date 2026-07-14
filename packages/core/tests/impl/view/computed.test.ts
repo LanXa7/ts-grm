@@ -1,16 +1,16 @@
-import { dto } from "@/index";
 import { describe, expect, it } from "vitest";
 import { AUTHOR, BOOK, BOOK_STORE } from "../../model/model";
 import { makeReader, mapperJson, shapeJson } from "./utils";
 import { expectCode } from "../../utils";
+import { newView } from "@/schema/dto/index";
 
 describe("ComputedTest", () => {
 
     it("tsFormula", () => {
-        const view = dto.view(AUTHOR, $ => $
-            .id
-            .fullName
-        );
+        const view = newView(AUTHOR, c => [
+            c.id,
+            c.fullName
+        ]);
         expect(mapperJson(view.mapper)).toEqual({
             "entity": "Author",
             "fields": [
@@ -149,11 +149,11 @@ describe("ComputedTest", () => {
     });
 
     it("mixedTsFormula", () => {
-        const view = dto.view(AUTHOR, $ => $
-            .id
-            .fullName
-            .name()
-        );
+        const view = newView(AUTHOR, c => [
+            c.id,
+            c.fullName,
+            c.name
+        ]);
         expect(mapperJson(view.mapper)).toEqual({
             "entity": "Author",
             "fields": [
@@ -317,10 +317,12 @@ describe("ComputedTest", () => {
     });
 
     it("foldTsFormula", () => {
-        const view = dto.view(AUTHOR, $ => $
-            .id
-            .fold("formula", $ => $.fullName.$as("fn"))
-        );
+        const view = newView(AUTHOR, c => [
+            c.id,
+            c.$fold("formula", c => [
+                c.fullName.as("fn")
+            ])
+        ]);
         expect(mapperJson(view.mapper)).toEqual({
             "entity": "Author",
             "fields": [
@@ -472,7 +474,9 @@ describe("ComputedTest", () => {
     });
 
     it("sqlFormula", () => {
-        const view = dto.view(BOOK, $ => $.authorCount);
+        const view = newView(BOOK, c => [
+            c.authorCount
+        ]);
         expect(mapperJson(view.mapper)).toEqual({
             "entity": "Book",
             "fields": [
@@ -495,9 +499,12 @@ describe("ComputedTest", () => {
     });
 
     it("targetCalculator", () => {
-        const view = dto.view(BOOK_STORE, $ => $
-            .newestBooks($ => $.id.name)
-        );
+        const view = newView(BOOK_STORE, c => [
+            c.newestBooks.with(c => [
+                c.id,
+                c.name
+            ])
+        ]);
         expect(mapperJson(view.mapper)).toEqual({
             "entity": "BookStore",
             "fields": [
@@ -590,11 +597,14 @@ describe("ComputedTest", () => {
     });
 
     it("parameterizedTargetCalculator", () => {
-        const view = dto.view(BOOK_STORE, $ => $
-            .id
-            .specifiedBooks({maxPrice: 20}).$as("cheapBooks")
-            .specifiedBooks({minPrice: 60}, $ => $.id.name).$as("expensiveBooks")
-        );
+        const view = newView(BOOK_STORE, c => [
+            c.id,
+            c.$parameterized("specifiedBooks", {maxPrice: 20}).as("cheapBooks"),
+            c.$parameterized("specifiedBooks", {minPrice: 60}).as("expensiveBooks").with(c => [
+                c.id,
+                c.name
+            ])
+        ]);
         expect(JSON.stringify(mapperJson(view.mapper)), `
             {
                 "entity": "BookStore",
@@ -770,10 +780,10 @@ describe("ComputedTest", () => {
     });
 
     it("formulaBasedOnAssociation", () => {
-        const view = dto.view(BOOK_STORE, $ => $
-            .id
-            .bookNames
-        );
+        const view = newView(BOOK_STORE, c => [
+            c.id,
+            c.bookNames
+        ]);
         expect(mapperJson(view.mapper)).toEqual({
             "entity": "BookStore",
             "fields": [
@@ -901,12 +911,13 @@ describe("ComputedTest", () => {
     });
 
     it("flatFormulaBaseOnAssocoation", () => {
-        const view = dto.view(BOOK, $ => $
-            .name.edition
-            .flat("store", $ => $
-                .bookNames
-            )
-        );
+        const view = newView(BOOK, c => [
+            c.name,
+            c.edition,
+            c.$flat("store").with(c => [
+                c.bookNames
+            ])
+        ]);
         expect(mapperJson(view.mapper)).toEqual({
             "entity": "Book",
             "fields": [
