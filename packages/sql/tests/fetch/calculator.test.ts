@@ -11,10 +11,14 @@ describe.sequential("CalculatorTest", async() => {
     const sqlClient = useSqliteClientWithData(sqlRecord);
 
     it("targetCalculator", async () => {
-        const view = dto.view(BOOK_STORE, $ => $
-            .name
-            .newestBooks($ => $.name.edition.price)
-        );
+        const view = dto.view(BOOK_STORE, c => [
+            c.name,
+            c.newestBooks.with(c => [
+                c.name,
+                c.edition,
+                c.price
+            ])
+        ]);
         const rows = await sqlClient.createQuery(BOOK_STORE, (q, store) => {
             return q.select(
                 store.fetch(view)
@@ -90,17 +94,19 @@ describe.sequential("CalculatorTest", async() => {
     });
 
     it("parameterizedTargetCalculator", async() => {
-        const view = dto.view(BOOK_STORE, $ => $
-            .name
-            .specifiedBooks(
-                {minPrice: 60}, 
-                $ => $.name.edition.price
-            ).$as("expensiveBooks")
-            .specifiedBooks(
-                {maxPriceExclusive: 60}, 
-                $ => $.name.edition.price
-            ).$as("cheapBooks")
-        );
+        const view = dto.view(BOOK_STORE, c => [
+            c.name,
+            c.$parameterized("specifiedBooks", {minPrice: 60}).as("expensiveBooks").with(c => [
+                c.name,
+                c.edition,
+                c.price
+            ]),
+            c.$parameterized("specifiedBooks", {maxPriceExclusive: 60}).as("cheapBooks").with(c => [
+                c.name,
+                c.edition,
+                c.price
+            ])
+        ]);
         const row = await sqlClient.createQuery(BOOK_STORE, (q, store) => {
             q.where(store.id.eq(1));
             return q.select(

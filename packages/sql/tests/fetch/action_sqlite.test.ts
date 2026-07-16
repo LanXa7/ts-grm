@@ -11,24 +11,24 @@ describe.sequential("ActionSqliteTest", () => {
     const sqlClient = useSqliteClientWithData(sqlRecord);
 
     it("rename", async () => {
-        const view = dto.view(BOOK_STORE, $ => $
-            .id.$as("bookStoreId")
-            .name.$as("bookStoreName")
-            .version.$as("bookStoreVersion")
-            .books($ => $
-                .id.$as("bookId")
-                .name.$as("bookName")
-                .edition.$as("bookEdition")
-                .price.$as("bookPrice")
-                .authors($ => $
-                    .id.$as("authorId")
-                    .name($ => $
-                        .firstName.$as("_1")
-                        .lastName.$as("_2")
-                    ).$as("authorName")
-                ).$as("bookAuthors")
-            ).$as("bookStoreBooks")
-        );
+        const view = dto.view(BOOK_STORE, c => [
+            c.id.as("bookStoreId"),
+            c.name.as("bookStoreName"),
+            c.version.as("bookStoreVersion"),
+            c.books.as("bookStoreBooks").with(c => [
+                c.id.as("bookId"),
+                c.name.as("bookName"),
+                c.edition.as("bookEdition"),
+                c.price.as("bookPrice"),
+                c.authors.as("bookAuthors").with(c => [
+                    c.id.as("authorId"),
+                    c.name.as("authorName").with(c => [
+                        c.firstName.as("_1"),
+                        c.lastName.as("_2")
+                    ])
+                ])
+            ])
+        ]);
         const rows = await sqlClient.createQuery(BOOK_STORE, (q, store) => {
             q.where(store.id.eq(2));
             return q.select(store.fetch(view));
@@ -142,10 +142,10 @@ describe.sequential("ActionSqliteTest", () => {
     });
 
     it("filter", async () => {
-        const view = dto.view(BOOK_STORE, $ => $
-            .name
-            .books().$where(table => table.edition.eq(3))
-        );
+        const view = dto.view(BOOK_STORE, c => [
+            c.name,
+            c.books.where(table => table.edition.eq(3))
+        ])
         const rows = await sqlClient.createQuery(BOOK_STORE, (q, store) => {
             return q.select(
                 store.fetch(view)
@@ -222,13 +222,10 @@ describe.sequential("ActionSqliteTest", () => {
     });
 
     it("recursiveFilter", async () => {
-        const view = dto.view(TREE_NODE, $ => $
-            .name
-            .recursive({
-                prop: "childNodes",
-                filter: table => table.name.length().lt(8)
-            })
-        );
+        const view = dto.view(TREE_NODE, c => [
+            c.name,
+            c.$recursive("childNodes").where(table => table.name.length().lt(8))
+        ]);
         const row = await sqlClient.createQuery(TREE_NODE, (q, treeNode) => {
             q.where(treeNode.parentNodeId.isNull());
             return q.select(
@@ -311,10 +308,10 @@ describe.sequential("ActionSqliteTest", () => {
     });
 
     it("sort", async () => {
-        const view = dto.view(BOOK_STORE, $ => $
-            .name
-            .books().$orderBy({path: "price", desc: true})
-        );
+        const view = dto.view(BOOK_STORE, c => [
+            c.name,
+            c.books.orderBy({path: "price", desc: true})
+        ]);
         const row = await sqlClient.createQuery(BOOK_STORE, (q, store) => {
             q.where(store.id.eq(2));
             return q.select(
@@ -378,13 +375,10 @@ describe.sequential("ActionSqliteTest", () => {
     });
 
     it("recursiveSort", async () => {
-        const view = dto.view(TREE_NODE, $ => $
-            .name
-            .recursive({
-                prop: "childNodes",
-                orders: [{path: "name", desc: true}]
-            })
-        );
+        const view = dto.view(TREE_NODE, c => [
+            c.name,
+            c.$recursive("childNodes").orderBy({path: "name", desc: true})
+        ])
         const row = await sqlClient.createQuery(TREE_NODE, (q, treeNode) => {
             q.where(treeNode.parentNodeId.isNull());
             return q.select(
@@ -550,10 +544,10 @@ describe.sequential("ActionSqliteTest", () => {
     });
 
     it("limit", async() => {
-        const view = dto.view(BOOK_STORE, $ => $
-            .name
-            .books().$limit(4)
-        );
+        const view = dto.view(BOOK_STORE, c => [
+            c.name,
+            c.books.limit(4)
+        ]);
         const rows = await sqlClient.createQuery(BOOK_STORE, (q, store) => {
             return q.select(
                 store.fetch(view)
@@ -660,10 +654,12 @@ describe.sequential("ActionSqliteTest", () => {
     });
 
     it("limitM2M", async () => {
-        const view = dto.view(BOOK, $ => $
-            .name
-            .authors($ => $.name()).$limit(2)
-        );
+        const view = dto.view(BOOK, c => [
+            c.name,
+            c.authors.limit(2).with(c => [
+                c.name
+            ])
+        ]);
         const rows = await sqlClient.createQuery(BOOK, (q, book) => {
             q.where(book.edition.eq(3));
             return q.select(
@@ -776,13 +772,9 @@ describe.sequential("ActionSqliteTest", () => {
 
     it("recursiveLimitFailed", async () => {
         await expect(async () => {
-            const view = dto.view(TREE_NODE, $ => $
-                .name
-                .recursive({
-                    prop: "childNodes",
-                    limit: 2
-                })
-            );
+            const view = dto.view(TREE_NODE, c => [
+                c.$recursive("childNodes").limit(2)
+            ]);
             await sqlClient.createQuery(TREE_NODE, (q, treeNode) => {
                 q.where(treeNode.parentNodeId.isNull());
                 return q.select(
@@ -793,14 +785,9 @@ describe.sequential("ActionSqliteTest", () => {
     });
 
     it("recursiveLimit", async() => {
-        const view = dto.view(TREE_NODE, $ => $
-            .name
-            .recursive({
-                prop: "childNodes",
-                orders: ["name"],
-                limit: 2
-            })
-        );
+        const view = dto.view(TREE_NODE, c => [
+            c.$recursive("childNodes").orderBy("name").limit(2)
+        ]);
         const row = await sqlClient.createQuery(TREE_NODE, (q, treeNode) => {
             q.where(treeNode.parentNodeId.isNull());
             return q.select(
@@ -987,15 +974,11 @@ describe.sequential("ActionSqliteTest", () => {
     });
 
     it("recursiveLimitOnM2M", async () => {
-        const view = dto.view(LIBRARY, $ => $
-            .name
-            .version
-            .recursive({
-                prop: "dependencies",
-                orders: [{path: "name", desc: true}],
-                limit: 2
-            })
-        );
+        const view = dto.view(LIBRARY, c => [
+            c.name,
+            c.version,
+            c.$recursive("dependencies").limit(2).orderBy("path")
+        ]);
         const row = await sqlClient.createQuery(LIBRARY, (q, lib) => {
             q.where(lib.id.eq(41));
             return q.select(

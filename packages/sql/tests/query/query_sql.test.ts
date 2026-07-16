@@ -141,7 +141,7 @@ describe("QuerySqlTest", () => {
     });
 
     it("recursiveCteBaseQuery", () => {
-        const VIEW = dto.view(TREE_NODE, $ => $.id.name);
+        const VIEW = dto.view(TREE_NODE, c => [c.id, c.name]);
         const baseModel = dsl.cteModel(
             dsl.baseQuery(TREE_NODE, (q, treeNode) => {
                 q.where(treeNode.parentNodeId.isNull());
@@ -687,7 +687,8 @@ describe("QuerySqlTest", () => {
             const baseBook = store.join(
                 baseBookModel,
                 ctx => dsl.and(
-                    ctx.source.id.eq(ctx.target.book.storeId),
+                    // TODO
+                    ctx.source.id.eq(ctx.target.book.storeId.asNonNull()),
                     ctx.target.rank.eq(1)
                 )
             );

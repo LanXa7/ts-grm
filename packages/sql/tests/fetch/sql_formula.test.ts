@@ -11,10 +11,10 @@ describe.sequential("SqlFormulaTest", () => {
     const sqlClient = useSqliteClientWithData(sqlRecord);
 
     it("test", async() => {
-        const view = dto.view(BOOK, $ => $
-            .name
-            .authorCount
-        );
+        const view = dto.view(BOOK, c => [
+            c.name,
+            c.authorCount
+        ]);
         const rows = await sqlClient.createQuery(BOOK, (q, book) => {
             q.where(book.edition.eq(3));
             q.orderBy(book.name);

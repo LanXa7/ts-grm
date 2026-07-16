@@ -1,8 +1,9 @@
 import { AnyModel, IsDerivedModelOf, ModelName } from "../model";
 import { AssociatedPropContract, CollectionPropContract } from "../prop_contract";
 import { DtoKind, DtoMapping } from "./dto_context";
-import { AtLeastOne, EntityTable, Predicate } from "@/dsl";
+import { EntityTable, Predicate } from "@/dsl";
 import { WithNullity } from "./utils";
+import { ModelOrder } from "../order";
 
 export interface RecursiveContext<
     TModel extends AnyModel,
@@ -70,7 +71,7 @@ export interface CollectionRecursiveMapping<
     ): CollectionRecursiveMapping<TModel, TDtoKind, TKey, THasDepth>;
 
     orderBy(
-        ...orders: AtLeastOne<TModel>
+        ...orders: ReadonlyArray<ModelOrder<TModel>>
     ): CollectionRecursiveMapping<TModel, TDtoKind, TKey, THasDepth>;
     
     limit(

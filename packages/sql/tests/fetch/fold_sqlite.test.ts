@@ -11,22 +11,24 @@ describe.sequential("FoldSqliteTest", () => {
     const sqlClient = useSqliteClientWithData(sqlRecord);
 
     it("fold", async () => {
-        const view = dto.view(BOOK, $ => $
-            .fold("key", $ => $
-                .name
-                .edition
-            )
-            .fold("associations", $ => $
-                .store($ => $
-                    .id
-                    .fold("key", $ => $
-                        .name
-                        .version
-                    )
-                )
-                .authors($ => $.name())
-            )
-        );
+        const view = dto.view(BOOK, c => [
+            c.$fold("key", c => [
+                c.name,
+                c.edition
+            ]),
+            c.$fold("associations", c => [
+                c.store.with(c => [
+                    c.id,
+                    c.$fold("key", c => [
+                        c.name,
+                        c.version
+                    ])
+                ]),
+                c.authors.with(c => [
+                    c.name
+                ])
+            ])
+        ]);
         const row = await sqlClient.createQuery(BOOK, (q, book) => {
             q.where(book.id.eq(9));
             return q.select(
@@ -119,24 +121,24 @@ describe.sequential("FoldSqliteTest", () => {
     });
 
     it("foldMixedWithFlat", async () => {
-        const view = dto.view(BOOK, $ => $
-            .fold("key", $ => $
-                .name
-                .edition
-            )
-            .fold("associations", $ => $
-                .flat("store", $ => $
-                    .id
-                    .fold("key", $ => $
-                        .name
-                        .version
-                    )
-                )
-                .authors($ => $
-                    .flat({prop: "name", prefix: ""})
-                )
-            )
-        );
+        const view = dto.view(BOOK, c => [
+            c.$fold("key", c => [
+                c.name,
+                c.edition
+            ]),
+            c.$fold("associations", c => [
+                c.store.with(c => [
+                    c.id,
+                    c.$fold("key", c => [
+                        c.name,
+                        c.version
+                    ])
+                ]),
+                c.authors.with(c => [
+                    c.$flat("name").prefix("")
+                ])
+            ])
+        ]);
         const row = await sqlClient.createQuery(BOOK, (q, book) => {
             q.where(book.id.eq(9));
             return q.select(

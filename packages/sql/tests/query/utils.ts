@@ -17,57 +17,47 @@ export function sql(q: RootQuery<any>): string {
     return sql;
 }
 
-export const SIMPLE_BOOK_VIEW = dto.view(
-    BOOK, 
-    $ => $.id.name.edition
-);
+export const SIMPLE_BOOK_VIEW = dto.view(BOOK, c => [
+    c.id,
+    c.name,
+    c.edition
+]);
 
-export const SIMPLE_STORE_VIEW = dto.view(
-    BOOK_STORE, 
-    $ => $.id.name.version
-);
+export const SIMPLE_STORE_VIEW = dto.view(BOOK_STORE, c => [
+    c.id,
+    c.name,
+    c.version
+]);
 
-export const SIMPLE_PAPER_BOOK_VIEW = dto.view(
-    PAPER_BOOK, 
-    $ => $.allScalars()
-);
+export const SIMPLE_PAPER_BOOK_VIEW = dto.view(PAPER_BOOK, c => [c.$allScalars]);
 
-export const SIMPLE_PHYSICAL_BOOK_STORE_VIEW = dto.view(
-    PHYSICAL_BOOK_STORE, 
-    $ => $.allScalars()
-);
+export const SIMPLE_PHYSICAL_BOOK_STORE_VIEW = dto.view(PHYSICAL_BOOK_STORE, c => [c.$allScalars]);
 
-export const SIMPLE_TREE_NODE_VIEW = dto.view(
-    TREE_NODE,
-    $ => $.allScalars()
-);
+export const SIMPLE_TREE_NODE_VIEW = dto.view(TREE_NODE, c => [c.$allScalars]);
 
-export const SIMPLE_AUTHOR_VIEW = dto.view(
-    AUTHOR,
-    $ => $.id.name($ => $.allScalars())
-);
+export const SIMPLE_AUTHOR_VIEW = dto.view(AUTHOR, c => [
+    c.id,
+    c.name
+]);
 
-export const SIMPLE_ORDER_VIEW = dto.view(
-    ORDER,
-    $ => $.allScalars()
-);
+export const SIMPLE_ORDER_VIEW = dto.view(ORDER, c => [c.$allScalars]);
 
-export const SIMPLE_ITEM_VIEW = dto.view(
-    ORDER_ITEM,
-    $ => $.id.productName
-);
+export const SIMPLE_ITEM_VIEW = dto.view(ORDER_ITEM, c => [
+    c.id,
+    c.productName
+]);
 
-export const SIMPLE_COMMENT_VIEW = dto.view(
-    COMMENT,
-    $ => $.id.name
-);
+export const SIMPLE_COMMENT_VIEW = dto.view(COMMENT, c => [
+    c.id,
+    c.name
+]);
 
-export const SIMPLE_STUDENT_VIEW = dto.view(
-    STUDENT, 
-    $ => $.id.name
-);
+export const SIMPLE_STUDENT_VIEW = dto.view(STUDENT, c => [
+    c.id,
+    c.name
+]);
 
-export const SIMPLE_COURSE_VIEW = dto.view(
-    COURSE,
-    $ => $.id.name
-);
+export const SIMPLE_COURSE_VIEW = dto.view(COURSE, c => [
+    c.id,
+    c.name
+]);

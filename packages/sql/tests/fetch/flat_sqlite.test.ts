@@ -11,15 +11,13 @@ describe.sequential("FlatTest", () => {
     const sqlClient = useSqliteClientWithData(sqlRecord);
 
     it("embedded", async () => {
-        const view = dto.view(BOOK, $ => $
-            .name
-            .authors($ => $
-                .id
-                .flat({prop: "name", prefix: "the"}, $ => $
-                    .allScalars()
-                )
-            )
-        );
+        const view = dto.view(BOOK, c => [
+            c.name,
+            c.authors.with(c => [
+                c.id,
+                c.$flat("name").prefix("the")
+            ])
+        ]);
         const row = await sqlClient.createQuery(BOOK, (q, book) => {
             q.where(book.id.eq(9));
             return q.select(
@@ -70,13 +68,13 @@ describe.sequential("FlatTest", () => {
     });
 
     it("shallow", async () => {
-        const view = dto.view(BOOK, $ => $
-            .allScalars()
-            .flat("store", $ => $
-                .id
-                .name
-            )
-        );
+        const view = dto.view(BOOK, c => [
+            c.$allScalars,
+            c.$flat("store").with(c => [
+                c.id,
+                c.name
+            ])
+        ]);
         const rows = await sqlClient.createQuery(BOOK, (q, book) => {
             q.where(book.id.in(9, 12));
             return q.select(
@@ -134,15 +132,13 @@ describe.sequential("FlatTest", () => {
     });
 
     it("deep", async () => {
-        const view = dto.view(TREE_NODE, $ => $
-            .allScalars()
-            .flat({prop: "parentNode", prefix: "parent"}, $ => $
-                .allScalars()
-                .flat({prop: "parentNode", prefix: "grand"}, $ => $
-                    .allScalars()
-                )
-            )
-        );
+        const view = dto.view(TREE_NODE, c => [
+            c.$allScalars,
+            c.$flat("parentNode").prefix("parent").with(c => [
+                c.$allScalars,
+                c.$flat("parentNode").prefix("grand")
+            ])
+        ]);
         const row = await sqlClient.createQuery(TREE_NODE, (q, treeNode) => {
             q.where(treeNode.name.eq("Coca Cola"));
             return q.select(

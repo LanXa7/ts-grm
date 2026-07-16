@@ -11,7 +11,7 @@ describe.sequential("TsFormulaTest", () => {
     const sqlClient = useSqliteClientWithData(sqlRecord);
 
     it("fullName", async () => {
-        const view = dto.view(AUTHOR, $ => $.fullName);
+        const view = dto.view(AUTHOR, c => [c.name]);
         const rows = await sqlClient.createQuery(AUTHOR, (q, author) => {
             q.where(author.id.in(1, 2));
             return q.select(author.fetch(view));
@@ -35,7 +35,7 @@ describe.sequential("TsFormulaTest", () => {
     });
 
     it("bookNames", async () => {
-        const view = dto.view(BOOK_STORE, $ => $.bookNames);
+        const view = dto.view(BOOK_STORE, c => [c.bookNames]);
         const rows = await sqlClient.createQuery(BOOK_STORE, (q, store) => {
             return q.select(store.fetch(view));
         }).fetchList();
@@ -91,10 +91,11 @@ describe.sequential("TsFormulaTest", () => {
     });
 
     it("association", async () => {
-        const view = dto.view(BOOK, $ => $
-            .name.edition
-            .authors($ => $.fullName)
-        );
+        const view = dto.view(BOOK, c => [
+            c.name,
+            c.edition,
+            c.authors.with(c => [c.fullName])
+        ]);
         const rows = await sqlClient.createQuery(BOOK, (q, book) => {
             q.where(book.name.ilike("yugabyte"));
             return q.select(book.fetch(view));
@@ -164,10 +165,13 @@ describe.sequential("TsFormulaTest", () => {
     });
 
     it("deepAssociation", async () => {
-        const view = dto.view(BOOK, $ => $
-            .name.edition
-            .store($ => $.bookNames)
-        );
+        const view = dto.view(BOOK, c => [
+            c.id,
+            c.name,
+            c.store.with(c => [
+                c.bookNames
+            ])
+        ]);
         const rows = await sqlClient.createQuery(BOOK, (q, book) => {
             q.where(book.name.ilike("yugabyte"));
             return q.select(book.fetch(view));
@@ -271,12 +275,13 @@ describe.sequential("TsFormulaTest", () => {
     });
 
     it("flatDeepAssociation", async() => {
-        const view = dto.view(BOOK, $ => $
-            .name.edition
-            .flat("store", $ => $
-                .bookNames
-            )
-        );
+        const view = dto.view(BOOK, c => [
+            c.name,
+            c.edition,
+            c.$flat("store").with(c => [
+                c.bookNames
+            ])
+        ]);
         const rows = await sqlClient.createQuery(BOOK, (q, book) => {
             q.where(book.name.ilike("yugabyte"));
             return q.select(book.fetch(view));

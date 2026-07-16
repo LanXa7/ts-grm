@@ -748,7 +748,7 @@ class CollectionMapping extends AssociationMapping {
             dto,
             fetchType: undefined,
             predicateFn: undefined,
-            orders: undefined,
+            orders: this._orders ?? this._prop.orders,
             limit: this._maxRows,
             recursiveDepth: undefined,
             nullable: this._prop.nullable,

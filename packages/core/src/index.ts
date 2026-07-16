@@ -9,7 +9,7 @@ export { TB_INHERIT, DV_ABSTRACT, DV_MODEL_NAME } from "./schema/model";
 export * as metadata from "./impl";
 export * as ast from "./impl/ast";
 export * as dto from "./schema/dto/local_api";
-export type * as internal_types from "./internal_types";
+export * from "./internal_types";
 export type { OrderNullsType, ModelOrder } from "./schema/order";
 export type { 
     Model, 

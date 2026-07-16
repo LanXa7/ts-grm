@@ -11,16 +11,16 @@ describe("PolymorphismSqliteTest", () => {
     const sqlClient = useSqliteClientWithData(sqlRecord);
 
     it("singleTable", async () => {
-        const view = dto.view(BOOK_STORE, $ => $
-            .name
-            .instanceOf(ONLINE_BOOK_STORE, $ => $
-                .url
-            )
-            .instanceOf(PHYSICAL_BOOK_STORE, $ => $
-                .city
-                .street
-            )
-        );
+        const view = dto.view(BOOK_STORE, c => [
+            c.name,
+            c.$instanceOf(ONLINE_BOOK_STORE, c => [
+                c.url
+            ]),
+            c.$instanceOf(PHYSICAL_BOOK_STORE, c => [
+                c.city,
+                c.street
+            ])
+        ]);
         const rows = await sqlClient.createQuery(BOOK_STORE, (q, store) => {
             return q.select(
                 store.fetch(view)
@@ -58,22 +58,16 @@ describe("PolymorphismSqliteTest", () => {
 
     it("multipleTables", async () => {
 
-        const view = dto.view(BOOK_STORE, $ => $
-            .name
-            .books(
-                $ => $
-                    .name
-                    .instanceOf(PAPER_BOOK, $ => $
-                        .size($ => $.width.height)
-                    )
-                    .instanceOf(ELECTRONIC_BOOK, $ => $
-                        .address
-                    )
-                    .instanceOf(PDF_ELECTRONIC_BOOK, $ => $
-                        .pdfVersion
-                    )
-            )
-        );
+        const view = dto.view(BOOK_STORE, c => [
+            c.name,
+            c.books.with(c => [
+                c.name,
+                c.$instanceOf(PAPER_BOOK, c => [c.size]),
+                c.$instanceOf(ELECTRONIC_BOOK, c => [c.address]),
+                c.$instanceOf(PDF_ELECTRONIC_BOOK, c => [c.pdfVersion])
+            ])
+        ]);
+
         const rows = await sqlClient.createQuery(BOOK_STORE, (q, store) => {
             return q.select(
                 store.fetch(view)
@@ -202,22 +196,15 @@ describe("PolymorphismSqliteTest", () => {
 
     it("multipleTablesWithFormula", async() => {
 
-        const view = dto.view(BOOK_STORE, $ => $
-            .name
-            .books(
-                $ => $
-                    .name
-                    .instanceOf(PAPER_BOOK, $ => $
-                        .area
-                    )
-                    .instanceOf(ELECTRONIC_BOOK, $ => $
-                        .address
-                    )
-                    .instanceOf(PDF_ELECTRONIC_BOOK, $ => $
-                        .pdfVersion
-                    )
-            )
-        );
+        const view = dto.view(BOOK_STORE, c => [
+            c.name,
+            c.books.with(c => [
+                c.name,
+                c.$instanceOf(PAPER_BOOK, c => [c.area]),
+                c.$instanceOf(ELECTRONIC_BOOK, c => [c.address]),
+                c.$instanceOf(PDF_ELECTRONIC_BOOK, c => [c.pdfVersion])
+            ])
+        ]);
         const rows = await sqlClient.createQuery(BOOK_STORE, (q, store) => {
             return q.select(
                 store.fetch(view)

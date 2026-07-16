@@ -11,10 +11,7 @@ describe.sequential("SimpleSqliteFetchTest", () => {
     const sqlClient = useSqliteClientWithData(sqlRecord);
     
     it("alone", async() => {
-        const view = dto.view(BOOK, $ => $
-            .allScalars()
-            .remove("price")
-        );
+        const view = dto.view(BOOK, c => [c.$allScalars.exclude("price")]);
         const rows = await sqlClient.createQuery(BOOK, (q, book) => {
             q.where(book.storeId.eq(2));
             q.orderBy(book.edition.desc())
@@ -45,14 +42,14 @@ describe.sequential("SimpleSqliteFetchTest", () => {
     });
 
     it("m2o", async() => {
-        const view = dto.view(BOOK, $ => $
-            .allScalars()
-            .store($ => $
-                .id
-                .name
-                .version
-            )
-        );
+        const view = dto.view(BOOK, c => [
+            c.$allScalars,
+            c.store.with(c => [
+                c.id,
+                c.name,
+                c.version
+            ])
+        ]);
         const rows = await sqlClient.createQuery(BOOK, (q, book) => {
             q.where(book.name.ilike("graphql"));
             q.orderBy(book.name, book.edition.desc());
@@ -141,14 +138,14 @@ describe.sequential("SimpleSqliteFetchTest", () => {
     });
 
     it("o2m", async () => {
-        const view = dto.view(BOOK_STORE, $ => $
-            .allScalars()
-            .books($ => $
-                .id
-                .name
-                .edition
-            )
-        );
+        const view = dto.view(BOOK_STORE, c => [
+            c.$allScalars,
+            c.books.with(c => [
+                c.id,
+                c.name,
+                c.edition
+            ])
+        ]);
         const rows = await sqlClient.createQuery(BOOK_STORE, (q, store) => {
             q.orderBy(store.name);
             return q.select(
@@ -266,13 +263,13 @@ describe.sequential("SimpleSqliteFetchTest", () => {
     });
 
     it("m2m", async() => {
-        const view = dto.view(BOOK, $ => $
-            .allScalars()
-            .authors($ => $
-                .id
-                .name()
-            )
-        );
+        const view = dto.view(BOOK, c => [
+            c.$allScalars,
+            c.authors.with(c => [
+                c.id,
+                c.name
+            ])
+        ]);
         const rows = await sqlClient.createQuery(BOOK, (q, book) => {
             q.where(book.edition.eq(3));
             q.orderBy(book.name.asc())
@@ -403,14 +400,14 @@ describe.sequential("SimpleSqliteFetchTest", () => {
     });
 
     it("inverseM2M", async() => {
-        const view = dto.view(AUTHOR, $ => $
-            .allScalars()
-            .books($ => $
-                .id
-                .name
-                .edition
-            )
-        );
+        const view = dto.view(AUTHOR, c => [
+            c.$allScalars,
+            c.books.with(c => [
+                c.id,
+                c.name,
+                c.edition
+            ])
+        ]);
         const rows = await sqlClient.createQuery(AUTHOR, (q, author) => {
             q.where(author.id.in(3, 7));
             return q.select(

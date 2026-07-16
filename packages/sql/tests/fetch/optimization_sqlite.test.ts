@@ -11,10 +11,10 @@ describe.sequential("OptimizationTest", () => {
     const sqlClient = useSqliteClientWithData(sqlRecord);
 
     it("m2o", async() => {
-        const view = dto.view(BOOK, $ => $
-            .allScalars()
-            .store($ => $.id)
-        );
+        const view = dto.view(BOOK, c => [
+            c.$allScalars,
+            c.store.with(c => [c.id])
+        ]);
         const rows = await sqlClient.createQuery(BOOK, (q, book) => {
             q.where(book.storeId.eq(2));
             return q.select(book.fetch(view));
@@ -68,15 +68,17 @@ describe.sequential("OptimizationTest", () => {
     });
 
     it("multipleColumnsM2O", async () => {
-        const view = dto.view(ORDER_ITEM, $ => $
-            .id
-            .order($ => $
-                .id($ => $
-                    .x
-                    .y($ => $.b)
-                )
-            )
-        );
+        const view = dto.view(ORDER_ITEM, c => [
+            c.id,
+            c.order.with(c => [
+                c.id.with(c => [
+                    c.x,
+                    c.y.with(c => [
+                        c.b
+                    ])
+                ])
+            ])
+        ]);
         const rows = await sqlClient.createQuery(ORDER_ITEM, (q, item) => {
             q.where(item.id.in(6, 7));
             return q.select(
@@ -126,10 +128,10 @@ describe.sequential("OptimizationTest", () => {
     });
 
     it("m2m", async () => {
-        const view = dto.view(BOOK, $ => $
-            .name
-            .authors(_ => _.id).$orderBy()
-        );
+        const view = dto.view(BOOK, c => [
+            c.name,
+            c.authors.with(c => [c.id]).orderBy()
+        ]);
         const rows = await sqlClient.createQuery(BOOK, (q, book) => {
             q.where(book.edition.eq(3));
             q.orderBy(book.name);
@@ -195,15 +197,15 @@ describe.sequential("OptimizationTest", () => {
     });
 
     it("multipleColumnsM2M", async () => {
-        const view = dto.view(TAG, $ => $
-            .name
-            .orders($ => $
-                .id($ => $
-                    .x
-                    .y($ => $.b)
-                )
-            )
-        );
+        const view = dto.view(TAG, c => [
+            c.name,
+            c.orders.with(c => [
+                c.id.with(c => [
+                    c.x,
+                    c.y.with(c => [c.b])
+                ])
+            ])
+        ]);
         const rows = await sqlClient.createQuery(TAG, (q, tag) => {
             return q.select(
                 tag.fetch(view)
@@ -348,10 +350,10 @@ describe.sequential("OptimizationTest", () => {
     });
 
     it("m2mByJoinEntity", async() => {
-        const view = dto.view(STUDENT, $ => $
-            .name
-            .courses($ => $.id)
-        );
+        const view = dto.view(STUDENT, c => [
+            c.name,
+            c.courses.with(c => [c.id])
+        ]);
         const rows = await sqlClient.createQuery(STUDENT, (q, student) => {
             return q.select(
                 student.fetch(view)

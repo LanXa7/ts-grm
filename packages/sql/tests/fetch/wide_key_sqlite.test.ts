@@ -11,10 +11,10 @@ describe.sequential("WideKeySqliteTest", () => {
     const sqlClient = useSqliteClientWithData(sqlRecord);
 
     it("m2o", async() => {
-        const view = dto.view(ORDER_ITEM, $ => $
-            .allScalars()
-            .order()
-        );
+        const view = dto.view(ORDER_ITEM, c => [
+            c.$allScalars,
+            c.order
+        ]);
         const rows = await sqlClient.createQuery(ORDER_ITEM, (q, orderItem) => {
             q.where(orderItem.id.in(1, 2, 3, 4));
             return q.select(
@@ -119,10 +119,10 @@ describe.sequential("WideKeySqliteTest", () => {
     });
 
     it("o2m", async() => {
-        const view = dto.view(ORDER, $ => $
-            .allScalars()
-            .items()
-        );
+        const view = dto.view(ORDER, c => [
+            c.$allScalars,
+            c.items
+        ]);
         const rows = await sqlClient.createQuery(ORDER, (q, order) => {
             q.where(order.id().x.eq(2));
             return q.select(
@@ -208,10 +208,12 @@ describe.sequential("WideKeySqliteTest", () => {
     });
 
     it("m2m", async() => {
-        const view = dto.view(ORDER, $ => $
-            .name
-            .tags($ => $.name)
-        );
+        const view = dto.view(ORDER, c => [
+            c.name,
+            c.tags.with(c => [
+                c.name
+            ])
+        ]);
         const rows = await sqlClient.createQuery(ORDER, (q, order) => {
             q.where(order.id().x.eq(2));
             return q.select(order.fetch(view));
@@ -272,10 +274,12 @@ describe.sequential("WideKeySqliteTest", () => {
     });
 
     it("inverseM2M", async() => {
-        const view = dto.view(TAG, $ => $
-            .name
-            .orders($ => $.name)
-        );
+        const view = dto.view(TAG, c => [
+            c.name,
+            c.orders.with(c => [
+                c.name
+            ])
+        ]);
         const rows = await sqlClient.createQuery(TAG, (q, tag) => {
             q.where(tag.id().low.eq(1));
             return q.select(

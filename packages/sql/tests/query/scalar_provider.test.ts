@@ -16,9 +16,9 @@ describe.sequential("ScalarProviderTest", () => {
             q.where(author.gender.eq("FEMALE"));
             return q.select(
                 author.id,
-                // author.fetch(
-                //     dto.view(AUTHOR, $ => $.allScalars())
-                // )
+                author.fetch(
+                    dto.view(AUTHOR, c => [c.$allScalars])
+                )
             );
             
         }).fetchList();
@@ -55,7 +55,7 @@ describe.sequential("ScalarProviderTest", () => {
             );
             return q.select(
                 author.fetch(
-                    dto.view(AUTHOR, $ => $.allScalars())
+                    dto.view(AUTHOR, c => [c.$allScalars])
                 )
             );
         }).fetchList();
@@ -92,7 +92,7 @@ describe.sequential("ScalarProviderTest", () => {
             );
             return q.select(
                 author.fetch(
-                    dto.view(AUTHOR, $ => $.allScalars())
+                    dto.view(AUTHOR, c => [c.$allScalars])
                 )
             );
         }).fetchList();
@@ -182,7 +182,7 @@ describe.sequential("ScalarProviderTest", () => {
             );
             return q.select(
                 author.fetch(
-                    dto.view(AUTHOR, $ => $.allScalars())
+                    dto.view(AUTHOR, c => [c.$allScalars])
                 )
             );
         }).fetchList();

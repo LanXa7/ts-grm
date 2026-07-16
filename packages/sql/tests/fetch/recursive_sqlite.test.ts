@@ -11,10 +11,10 @@ describe.sequential("RecursiveTest", () => {
     const sqlClient = useSqliteClientWithData(sqlRecord);
 
     it("up", async () => {
-        const view = dto.view(TREE_NODE, $ => $
-            .name
-            .recursive("parentNode")
-        );
+        const view = dto.view(TREE_NODE, c => [
+            c.name,
+            c.$recursive("parentNode")
+        ]);
         const rows = await sqlClient.createQuery(TREE_NODE, (q, treeNode) => {
             q.where(treeNode.id.in(5, 8));
             return q.select(treeNode.fetch(view));
@@ -96,10 +96,10 @@ describe.sequential("RecursiveTest", () => {
     });
 
     it("down", async () => {
-        const view = dto.view(TREE_NODE, $ => $
-            .name
-            .recursive("childNodes")
-        );
+        const view = dto.view(TREE_NODE, c => [
+            c.name,
+            c.$recursive("childNodes")
+        ]);
         const row = await sqlClient.createQuery(TREE_NODE, (q, treeNode) => {
             q.where(treeNode.id.eq(1));
             return q.select(treeNode.fetch(view));
@@ -260,11 +260,11 @@ describe.sequential("RecursiveTest", () => {
     });
 
     it("upAndDown", async () => {
-        const view = dto.view(TREE_NODE, $ => $
-            .name
-            .recursive("parentNode")
-            .recursive("childNodes")
-        );
+        const view = dto.view(TREE_NODE, c => [
+            c.name,
+            c.$recursive("parentNode"),
+            c.$recursive("childNodes")
+        ]);
         const row = await sqlClient.createQuery(TREE_NODE, (q, treeNode) => {
             q.where(treeNode.id.eq(10));
             return q.select(treeNode.fetch(view));
@@ -393,14 +393,10 @@ describe.sequential("RecursiveTest", () => {
     });
 
     it("withDepth", async() => {
-        const view = dto.view(TREE_NODE, $ => $
-            .name
-            .recursive({
-                prop: "childNodes",
-                alias: "childList",
-                depth: 2
-            })
-        );
+        const view = dto.view(TREE_NODE, c => [
+            c.name,
+            c.$recursive("childNodes").as("childList").depth(2)
+        ]);
         const row = await sqlClient.createQuery(TREE_NODE, (q, treeNode) => {
             q.where(treeNode.id.eq(1));
             return q.select(treeNode.fetch(view));
@@ -488,11 +484,11 @@ describe.sequential("RecursiveTest", () => {
     });
 
     it("dependencies", async () => {
-        const view = dto.view(LIBRARY, $ => $
-            .name
-            .version
-            .recursive("dependencies")
-        );
+        const view = dto.view(LIBRARY, c => [
+            c.name,
+            c.version,
+            c.$recursive("dependencies")
+        ]);
         const row = await sqlClient.createQuery(LIBRARY, (q, lib) => {
             q.where(lib.id.eq(41));
             return q.select(
@@ -919,11 +915,11 @@ describe.sequential("RecursiveTest", () => {
     });
 
     it("dependents", async () => {
-        const view = dto.view(LIBRARY, $ => $
-            .name
-            .version
-            .recursive("dependents")
-        );
+        const view = dto.view(LIBRARY, c => [
+            c.name,
+            c.version,
+            c.$recursive("dependents")
+        ]);
         const row = await sqlClient.createQuery(LIBRARY, (q, lib) => {
             q.where(lib.id.eq(3));
             return q.select(
@@ -1149,12 +1145,12 @@ describe.sequential("RecursiveTest", () => {
     });
 
     it("dependenciesAndDependents", async() => {
-        const view = dto.view(LIBRARY, $ => $
-            .name
-            .version
-            .recursive("dependencies")
-            .recursive("dependents")
-        );
+        const view = dto.view(LIBRARY, c => [
+            c.name,
+            c.version,
+            c.$recursive("dependencies"),
+            c.$recursive("dependents")
+        ]);
         const row = await sqlClient.createQuery(LIBRARY, (q, lib) => {
             q.where(lib.id.eq(12));
             return q.select(
