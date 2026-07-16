@@ -11,7 +11,7 @@ describe.sequential("TsFormulaTest", () => {
     const sqlClient = useSqliteClientWithData(sqlRecord);
 
     it("fullName", async () => {
-        const view = dto.view(AUTHOR, c => [c.name]);
+        const view = dto.view(AUTHOR, c => [c.fullName]);
         const rows = await sqlClient.createQuery(AUTHOR, (q, author) => {
             q.where(author.id.in(1, 2));
             return q.select(author.fetch(view));
@@ -166,8 +166,8 @@ describe.sequential("TsFormulaTest", () => {
 
     it("deepAssociation", async () => {
         const view = dto.view(BOOK, c => [
-            c.id,
             c.name,
+            c.edition,
             c.store.with(c => [
                 c.bookNames
             ])

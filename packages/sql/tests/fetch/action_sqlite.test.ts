@@ -786,6 +786,7 @@ describe.sequential("ActionSqliteTest", () => {
 
     it("recursiveLimit", async() => {
         const view = dto.view(TREE_NODE, c => [
+            c.name,
             c.$recursive("childNodes").orderBy("name").limit(2)
         ]);
         const row = await sqlClient.createQuery(TREE_NODE, (q, treeNode) => {
@@ -977,7 +978,7 @@ describe.sequential("ActionSqliteTest", () => {
         const view = dto.view(LIBRARY, c => [
             c.name,
             c.version,
-            c.$recursive("dependencies").limit(2).orderBy("path")
+            c.$recursive("dependencies").limit(2).orderBy({path: "name", desc: true})
         ]);
         const row = await sqlClient.createQuery(LIBRARY, (q, lib) => {
             q.where(lib.id.eq(41));

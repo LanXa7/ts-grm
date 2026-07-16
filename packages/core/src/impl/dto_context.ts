@@ -747,7 +747,7 @@ class CollectionMapping extends AssociationMapping {
             bridgeProp: this._bridgeProp,
             dto,
             fetchType: undefined,
-            predicateFn: undefined,
+            predicateFn: this._filter,
             orders: this._orders ?? this._prop.orders,
             limit: this._maxRows,
             recursiveDepth: undefined,

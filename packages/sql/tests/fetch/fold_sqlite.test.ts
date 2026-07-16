@@ -127,7 +127,7 @@ describe.sequential("FoldSqliteTest", () => {
                 c.edition
             ]),
             c.$fold("associations", c => [
-                c.store.with(c => [
+                c.$flat("store").with(c => [
                     c.id,
                     c.$fold("key", c => [
                         c.name,

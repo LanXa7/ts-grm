@@ -15,7 +15,6 @@ describe.sequential("ScalarProviderTest", () => {
         const rows = await sqlClient.createQuery(AUTHOR, (q, author) => {
             q.where(author.gender.eq("FEMALE"));
             return q.select(
-                author.id,
                 author.fetch(
                     dto.view(AUTHOR, c => [c.$allScalars])
                 )
