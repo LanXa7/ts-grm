@@ -112,7 +112,7 @@ export interface ReferenceFlatMapping<
         body: DtoBody<TargetModelOf<TModel, TMember>, TDtoKind, "ENTITY", TargetMembersOf<TMember>, TMappings>
     ): ReferenceFlatMapping<TModel, TDtoKind, TKey, TMember, TMappings, TNullity>;
 
-    where(
+    filter(
         filter: (table: EntityTable<TargetModelOf<TModel, TMember>>) => Predicate | undefined
     ): ReferenceFlatMapping<TModel, TDtoKind, TKey, TMember, TMappings, "NULLABLE">;
 

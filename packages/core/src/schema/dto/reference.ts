@@ -24,7 +24,7 @@ export interface ReferenceMapping<
         body: DtoBody<TargetModelOf<TModel, TMember>, TDtoKind, "ENTITY", TargetMembersOf<TMember>, TMappings>
     ): ReferenceMapping<TModel, TDtoKind, TKey, TMember, TMappings, TNullity>;
 
-    where(
+    filter(
         filter: (table: EntityTable<TargetModelOf<TModel, TMember>>) => Predicate | undefined
     ): ReferenceMapping<TModel, TDtoKind, TKey, TMember, TMappings, "NULLABLE">;
 

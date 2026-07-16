@@ -201,9 +201,9 @@ class FlatMapping implements AbstractDtoMapping {
         return new FlatMapping(this._prop, this._prefix, this._context, body, this._filter, this._fetchType);
     }
 
-    where(filter: Filter): FlatMapping {
+    filter(filter: Filter): FlatMapping {
         if (this._prop.targetEntity == null) {
-            throw new StateError(`The flat mapping based on "${this._prop.toString()}" which is not reference does not support "where"`);
+            throw new StateError(`The flat mapping based on "${this._prop.toString()}" which is not reference does not support "filter"`);
         }
         return new FlatMapping(this._prop, this._prefix, this._context, this._body, filter, this._fetchType);
     }
@@ -320,7 +320,7 @@ class RecursiveMapping implements AbstractDtoMapping {
         );
     }
 
-    where(filter: Filter): RecursiveMapping {
+    filter(filter: Filter): RecursiveMapping {
         return new RecursiveMapping(
             this.prop,
             this._alias,
@@ -331,7 +331,7 @@ class RecursiveMapping implements AbstractDtoMapping {
         );
     }
 
-    orderBy(
+    sort(
         ...orders: ReadonlyArray<string | {
             readonly path: string;
             readonly desc: boolean;
@@ -341,7 +341,7 @@ class RecursiveMapping implements AbstractDtoMapping {
         const associationType = this.prop.associationType;
         if (associationType != "ONE_TO_MANY" && associationType != "MANY_TO_MANY") {
             throw new StateError(
-                `The "orderBy" operation is not supported because the current property "${
+                `The "sort" operation is not supported because the current property "${
                     this.prop
                 }" is not collection`
             );
@@ -570,7 +570,7 @@ abstract class AssociationMapping implements AbstractDtoMapping {
                     .with(this._body);
                 return this._filter == null 
                     ? [flat]
-                    : [flat.where(this._filter)];
+                    : [flat.filter(this._filter)];
             }
             : this._body;
         return createDto(ctx, undefined, body);
@@ -615,7 +615,7 @@ class ReferenceMapping extends AssociationMapping {
         );
     }
 
-    where(filter: Filter): ReferenceMapping {
+    filter(filter: Filter): ReferenceMapping {
         return new ReferenceMapping(
             this._prop,
             this._alias,
@@ -693,7 +693,7 @@ class CollectionMapping extends AssociationMapping {
         );
     }
 
-    where(filter: Filter): CollectionMapping {
+    filter(filter: Filter): CollectionMapping {
         return new CollectionMapping(
             this._prop,
             this._alias,
@@ -704,7 +704,7 @@ class CollectionMapping extends AssociationMapping {
         );
     }
 
-    orderBy(
+    sort(
         ...orders: ReadonlyArray<string | {
             readonly path: string;
             readonly desc: boolean;

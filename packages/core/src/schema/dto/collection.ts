@@ -22,11 +22,11 @@ export interface CollectionMapping<
         body: DtoBody<TargetModelOf<TModel, TMember>, TDtoKind, "ENTITY", TargetMembersOf<TMember>, TMappings>
     ): CollectionMapping<TModel, TDtoKind, TKey, TMember, TMappings>;
 
-    where(
+    filter(
         filter: (table: EntityTable<TargetModelOf<TModel, TMember>>) => Predicate | undefined
     ): CollectionMapping<TModel, TDtoKind, TKey, TMember, TMappings>;
 
-    orderBy(
+    sort(
         ...orders: ReadonlyArray<ModelOrder<TargetModelOf<TModel, TMember>>>
     ): CollectionMapping<TModel, TDtoKind, TKey, TMember, TMappings>;
 

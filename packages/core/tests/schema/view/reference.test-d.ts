@@ -53,7 +53,7 @@ describe("ReferenceTest", () => {
     it("withFilter", () => {
         const view = dto.view(ORDER_ITEM, c => [
             c.id,
-            c.order.where(
+            c.order.filter(
                 table => table.id().x.lt(100)
             ).with(c => [
                 c.id.as("oid").with(c => [

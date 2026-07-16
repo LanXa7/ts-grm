@@ -130,7 +130,7 @@ describe.sequential("OptimizationTest", () => {
     it("m2m", async () => {
         const view = dto.view(BOOK, c => [
             c.name,
-            c.authors.with(c => [c.id]).orderBy()
+            c.authors.with(c => [c.id]).sort()
         ]);
         const rows = await sqlClient.createQuery(BOOK, (q, book) => {
             q.where(book.edition.eq(3));

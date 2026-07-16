@@ -38,7 +38,7 @@ describe("OptimizationTest", () => {
     it("m2m", () => {
         const view1 = dto.view(BOOK, c => [
             c.$allScalars,
-            c.authors.with(c => [c.id]).orderBy()
+            c.authors.with(c => [c.id]).sort()
         ]);
         expect(
             view1.mapper.fields.find(f => f.prop.name === "authors")!.optimizable
@@ -160,7 +160,7 @@ describe("OptimizationTest", () => {
 
         const view1 = dto.view(ORDER, c => [
             c.$allScalars,
-            c.tags.with(c => [c.id]).orderBy()
+            c.tags.with(c => [c.id]).sort()
         ]);
         expect(
             view1.mapper.fields.find(f => f.prop.name === "tags")!.optimizable
@@ -170,7 +170,7 @@ describe("OptimizationTest", () => {
             c.$allScalars,
             c.tags.with(c => [
                 c.id.with(c => [c.low])
-            ]).orderBy()
+            ]).sort()
         ]);
         expect(
             view2.mapper.fields.find(f => f.prop.name === "tags")!.optimizable
@@ -181,7 +181,7 @@ describe("OptimizationTest", () => {
             c.tags.with(c => [
                 c.id, 
                 c.name
-            ]).orderBy()
+            ]).sort()
         ]);
         expect(
             view3.mapper.fields.find(f => f.prop.name === "tags")!.optimizable
@@ -192,7 +192,7 @@ describe("OptimizationTest", () => {
             c.tags.with(c => [
                 c.id.with(c => [c.low]),
                 c.name
-            ]).orderBy()
+            ])
         ]);
         expect(
             view4.mapper.fields.find(f => f.prop.name === "tags")!.optimizable
@@ -214,7 +214,7 @@ describe("OptimizationTest", () => {
             c.$allScalars,
             c.store.with(c => [
                 c.id
-            ]).where(table => table.version.eq(1))
+            ]).filter(table => table.version.eq(1))
         ]);
         expect(
             view2.mapper.fields.find(f => f.prop.name === "store")!.optimizable

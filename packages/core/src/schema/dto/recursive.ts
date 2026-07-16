@@ -44,7 +44,7 @@ export interface ReferenceRecursiveMapping<
         depth: number
     ): ReferenceRecursiveMapping<TModel, TDtoKind, TKey>;
 
-    where(
+    filter(
         filter: (table: EntityTable<TModel>) => Predicate | undefined
     ): ReferenceRecursiveMapping<TModel, TDtoKind, TKey>;
 }
@@ -66,11 +66,11 @@ export interface CollectionRecursiveMapping<
         depth: number
     ): CollectionRecursiveMapping<TModel, TDtoKind, TKey, true>;
 
-    where(
+    filter(
         filter: (table: EntityTable<TModel>) => Predicate | undefined
     ): CollectionRecursiveMapping<TModel, TDtoKind, TKey, THasDepth>;
 
-    orderBy(
+    sort(
         ...orders: ReadonlyArray<ModelOrder<TModel>>
     ): CollectionRecursiveMapping<TModel, TDtoKind, TKey, THasDepth>;
     

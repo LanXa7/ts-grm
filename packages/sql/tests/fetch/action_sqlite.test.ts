@@ -144,7 +144,7 @@ describe.sequential("ActionSqliteTest", () => {
     it("filter", async () => {
         const view = dto.view(BOOK_STORE, c => [
             c.name,
-            c.books.where(table => table.edition.eq(3))
+            c.books.filter(table => table.edition.eq(3))
         ])
         const rows = await sqlClient.createQuery(BOOK_STORE, (q, store) => {
             return q.select(
@@ -224,7 +224,7 @@ describe.sequential("ActionSqliteTest", () => {
     it("recursiveFilter", async () => {
         const view = dto.view(TREE_NODE, c => [
             c.name,
-            c.$recursive("childNodes").where(table => table.name.length().lt(8))
+            c.$recursive("childNodes").filter(table => table.name.length().lt(8))
         ]);
         const row = await sqlClient.createQuery(TREE_NODE, (q, treeNode) => {
             q.where(treeNode.parentNodeId.isNull());
@@ -310,7 +310,7 @@ describe.sequential("ActionSqliteTest", () => {
     it("sort", async () => {
         const view = dto.view(BOOK_STORE, c => [
             c.name,
-            c.books.orderBy({path: "price", desc: true})
+            c.books.sort({path: "price", desc: true})
         ]);
         const row = await sqlClient.createQuery(BOOK_STORE, (q, store) => {
             q.where(store.id.eq(2));
@@ -377,7 +377,7 @@ describe.sequential("ActionSqliteTest", () => {
     it("recursiveSort", async () => {
         const view = dto.view(TREE_NODE, c => [
             c.name,
-            c.$recursive("childNodes").orderBy({path: "name", desc: true})
+            c.$recursive("childNodes").sort({path: "name", desc: true})
         ])
         const row = await sqlClient.createQuery(TREE_NODE, (q, treeNode) => {
             q.where(treeNode.parentNodeId.isNull());
@@ -787,7 +787,7 @@ describe.sequential("ActionSqliteTest", () => {
     it("recursiveLimit", async() => {
         const view = dto.view(TREE_NODE, c => [
             c.name,
-            c.$recursive("childNodes").orderBy("name").limit(2)
+            c.$recursive("childNodes").sort("name").limit(2)
         ]);
         const row = await sqlClient.createQuery(TREE_NODE, (q, treeNode) => {
             q.where(treeNode.parentNodeId.isNull());
@@ -978,7 +978,7 @@ describe.sequential("ActionSqliteTest", () => {
         const view = dto.view(LIBRARY, c => [
             c.name,
             c.version,
-            c.$recursive("dependencies").limit(2).orderBy({path: "name", desc: true})
+            c.$recursive("dependencies").limit(2).sort({path: "name", desc: true})
         ]);
         const row = await sqlClient.createQuery(LIBRARY, (q, lib) => {
             q.where(lib.id.eq(41));
