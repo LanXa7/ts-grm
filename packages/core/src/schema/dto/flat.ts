@@ -3,7 +3,7 @@ import { AnyModel } from "../model";
 import { EmbeddedPropContract, NullityType, ReferencePropContract } from "../prop_contract";
 import { DtoBody, DtoType, DtoKind } from "./dto_context";
 import { DefaultTargetMappings, NullityOf, TargetMappings, TargetMembersOf, TargetModelOf, WithNullity } from "./utils";
-import { ReferenceFetchType } from "./reference_fetch_type";
+import { ReferenceFetchType } from ".";
 
 export interface FlatContext<
     TModel extends AnyModel,

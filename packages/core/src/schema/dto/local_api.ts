@@ -4,7 +4,7 @@ import { DtoBody, DtoMapping, DtoType } from "./dto_context";
 import { Entity } from "@/impl";
 import { createDto, newDtoContext } from "@/impl/dto_context";
 import { dtoMapper } from "@/impl/dto_mapper";
-import { View } from "./global_api";
+import { View } from ".";
 
 export const view = viewCreator();
 
@@ -44,7 +44,7 @@ export type ModelOf<T> =
 
 export type ViewNullType = "NULL" | "UNDEFINED";
 
-export function newView<
+function newView<
     TModel extends AnyModel,
     const TMappings extends ReadonlyArray<
         DtoMapping<TModel>
@@ -62,7 +62,7 @@ export function newView<
     return new View(dtoMapper(dto, false));
 }
 
-export function newViewByNullAsUndefined<
+function newViewByNullAsUndefined<
     TModel extends AnyModel,
     const TMappings extends ReadonlyArray<
         DtoMapping<TModel>

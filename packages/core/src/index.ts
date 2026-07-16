@@ -51,8 +51,8 @@ export {
 } from "./schema/computed";
 export { ScalarProvider, ScalarType, scalars } from "./schema/scalar";
 export type { ScalarKind } from "./schema/scalar";
-export type { TypeOf } from "./schema/dto/global_api";
-export { View } from "./schema/dto/global_api";
+export type { TypeOf } from "./schema/dto";
+export { View } from "./schema/dto";
 export { EntityManager } from "./schema/entity_manager";
 export type { CascadeType } from "./schema/join";
 export type  {

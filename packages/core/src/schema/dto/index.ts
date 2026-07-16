@@ -10,12 +10,10 @@ export class View<TModel extends AnyModel, T> {
     constructor(readonly mapper: DtoMapper) {}
 }
 
-export type ModelOf<TView> =
-    TView extends View<infer M, any>
-        ? M
-        : never;
-
 export type TypeOf<TView> =
     TView extends View<any, infer R>
         ? R
         : never;
+
+export type ReferenceFetchType = 
+    "LOAD" | "JOIN";

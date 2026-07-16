@@ -1,14 +1,13 @@
 import { describe, expectTypeOf, it } from "vitest";
 import { BOOK, BOOK_STORE, ELECTRONIC_BOOK, PAPER_BOOK, PDF_ELECTRONIC_BOOK, PHYSICAL_BOOK_STORE } from "../../model/model";
-import { TypeOf } from "@/index";
-import { newView } from "@/schema/dto/local_api";
+import { dto, TypeOf } from "@/index";
 
 describe("PolymorephismTest", () => {
 
     it("simple", () => {});
 
     it("simple", () => {
-        const view = newView(BOOK_STORE, c => [
+        const view = dto.view(BOOK_STORE, c => [
             c.id,
             c.$instanceOf(PHYSICAL_BOOK_STORE, c => [
                 c.city
@@ -25,7 +24,7 @@ describe("PolymorephismTest", () => {
     });
 
     it("deep", () => {
-        const view = newView(BOOK, c => [
+        const view = dto.view(BOOK, c => [
             c.name,
             c.edition,
             c.$instanceOf(ELECTRONIC_BOOK, c => [
@@ -56,7 +55,7 @@ describe("PolymorephismTest", () => {
     });
 
     it("deepAndWide", () => {
-        const view = newView(BOOK, c => [
+        const view = dto.view(BOOK, c => [
             c.name,
             c.edition,
             c.$instanceOf(PAPER_BOOK, c => [
@@ -98,7 +97,7 @@ describe("PolymorephismTest", () => {
     });
 
     it("associatedDeepAndWide", () => {
-        const view = newView(BOOK_STORE, c => [
+        const view = dto.view(BOOK_STORE, c => [
             c.$allScalars,
             c.books.with(c => [
                 c.name,

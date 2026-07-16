@@ -2,12 +2,12 @@ import { describe, it, expect } from "vitest";
 import { COURSE, STUDENT } from "../../model/model";
 import { makeReader, mapperJson, shapeJson } from "./utils";
 import { expectCode } from "../../utils";
-import { newView } from "@/schema/dto/local_api";
+import { dto } from "@/index";
 
 describe("JoinEntityTest", () => {
 
     it("joinEntity", () => {
-        const view = newView(STUDENT, c => [
+        const view = dto.view(STUDENT, c => [
             c.id,
             c.name,
             c.courses
@@ -226,7 +226,7 @@ describe("JoinEntityTest", () => {
     });
 
     it("inverseJoinEntity", () => {
-        const view = newView(COURSE, c => [
+        const view = dto.view(COURSE, c => [
             c.id,
             c.name,
             c.students
@@ -446,7 +446,7 @@ describe("JoinEntityTest", () => {
 
     it("mixed", () => {
         expect(
-            () => newView(STUDENT, c => [
+            () => dto.view(STUDENT, c => [
                 c.$allScalars,
                 c.learningLinks,
                 c.$fold("tmp", c => [c.courses]) 

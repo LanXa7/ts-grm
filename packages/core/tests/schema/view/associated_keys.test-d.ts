@@ -1,12 +1,11 @@
 import { describe, it, expectTypeOf } from "vitest";
 import { BOOK, ORDER } from "../../model/model";
-import { TypeOf } from "@/index";
-import { newView } from "@/schema/dto/local_api";
+import { dto, TypeOf } from "@/index";
 
 describe("AssociatedKeysTest", () => {
 
     it("scalarKey", () => {
-        const view = newView(BOOK, c => [
+        const view = dto.view(BOOK, c => [
             c.id,
             c.storeId,
             c.$associatedKeys("authors", "authorIds")
@@ -19,7 +18,7 @@ describe("AssociatedKeysTest", () => {
     });
 
     it("embeddedKeys", () => {
-        const view = newView(ORDER, c => [
+        const view = dto.view(ORDER, c => [
             c.id,
             c.$associatedKeys("tags", "tagIds"),
             c.$associatedKeys("comments", "commentIds")

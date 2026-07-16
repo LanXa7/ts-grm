@@ -3,7 +3,6 @@ import { EntityProp } from "./entity_prop";
 import { ArgumentError, StateError } from "@/error/common";
 import { AbstractEntityTable } from "./entity_table";
 import { Predicate } from "@/dsl";
-import { ReferenceFetchType } from "@/schema/dto/reference_fetch_type";
 import { CodeWriter } from "./code_writer";
 import { StandardSchemaV1 } from "@standard-schema/spec";
 import { OrderNullsType } from "@/schema/order";
@@ -12,6 +11,7 @@ import { EntityPropOrder, toEntityPropOrders } from "./entity_prop_order";
 import { capitalize } from "./util";
 import { Path } from "./dto_mapper";
 import { AnyModel } from "@/internal_types";
+import { ReferenceFetchType } from "@/schema/dto";
 
 export interface AbstractDtoMapping {
 

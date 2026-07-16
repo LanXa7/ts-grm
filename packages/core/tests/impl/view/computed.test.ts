@@ -2,12 +2,12 @@ import { describe, expect, it } from "vitest";
 import { AUTHOR, BOOK, BOOK_STORE } from "../../model/model";
 import { makeReader, mapperJson, shapeJson } from "./utils";
 import { expectCode } from "../../utils";
-import { newView } from "@/schema/dto/local_api";
+import { dto } from "@/index";
 
 describe("ComputedTest", () => {
 
     it("tsFormula", () => {
-        const view = newView(AUTHOR, c => [
+        const view = dto.view(AUTHOR, c => [
             c.id,
             c.fullName
         ]);
@@ -149,7 +149,7 @@ describe("ComputedTest", () => {
     });
 
     it("mixedTsFormula", () => {
-        const view = newView(AUTHOR, c => [
+        const view = dto.view(AUTHOR, c => [
             c.id,
             c.fullName,
             c.name
@@ -317,7 +317,7 @@ describe("ComputedTest", () => {
     });
 
     it("foldTsFormula", () => {
-        const view = newView(AUTHOR, c => [
+        const view = dto.view(AUTHOR, c => [
             c.id,
             c.$fold("formula", c => [
                 c.fullName.as("fn")
@@ -474,7 +474,7 @@ describe("ComputedTest", () => {
     });
 
     it("sqlFormula", () => {
-        const view = newView(BOOK, c => [
+        const view = dto.view(BOOK, c => [
             c.authorCount
         ]);
         expect(mapperJson(view.mapper)).toEqual({
@@ -499,7 +499,7 @@ describe("ComputedTest", () => {
     });
 
     it("targetCalculator", () => {
-        const view = newView(BOOK_STORE, c => [
+        const view = dto.view(BOOK_STORE, c => [
             c.newestBooks.with(c => [
                 c.id,
                 c.name
@@ -597,7 +597,7 @@ describe("ComputedTest", () => {
     });
 
     it("parameterizedTargetCalculator", () => {
-        const view = newView(BOOK_STORE, c => [
+        const view = dto.view(BOOK_STORE, c => [
             c.id,
             c.$parameterized("specifiedBooks", {maxPrice: 20}).as("cheapBooks"),
             c.$parameterized("specifiedBooks", {minPrice: 60}).as("expensiveBooks").with(c => [
@@ -780,7 +780,7 @@ describe("ComputedTest", () => {
     });
 
     it("formulaBasedOnAssociation", () => {
-        const view = newView(BOOK_STORE, c => [
+        const view = dto.view(BOOK_STORE, c => [
             c.id,
             c.bookNames
         ]);
@@ -911,7 +911,7 @@ describe("ComputedTest", () => {
     });
 
     it("flatFormulaBaseOnAssocoation", () => {
-        const view = newView(BOOK, c => [
+        const view = dto.view(BOOK, c => [
             c.name,
             c.edition,
             c.$flat("store").with(c => [

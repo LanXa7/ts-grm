@@ -1,12 +1,11 @@
 import { describe, expectTypeOf, it } from "vitest";
 import { AUTHOR, BOOK } from "../../model/model";
-import { TypeOf } from "@/index";
-import { newView } from "@/schema/dto/local_api";
+import { dto, TypeOf } from "@/index";
 
 describe("FlatTest", () => {
 
     it("simple", () => {
-        const view = newView(BOOK, c => [
+        const view = dto.view(BOOK, c => [
             c.id,
             c.name,
             c.$flat("store").with(c => [
@@ -23,7 +22,7 @@ describe("FlatTest", () => {
     });
 
     it("withEmptyPrefix", () => {
-        const view = newView(AUTHOR, c => [
+        const view = dto.view(AUTHOR, c => [
             c.id,
             c.$flat("name").prefix("")
         ]);
@@ -35,7 +34,7 @@ describe("FlatTest", () => {
     });
 
     it("withPrefix", () => {
-        const view = newView(AUTHOR, c => [
+        const view = dto.view(AUTHOR, c => [
             c.id,
             c.$flat("name").prefix("the")
         ]);

@@ -1,12 +1,11 @@
 import { describe, expectTypeOf, it } from "vitest";
 import { BOOK_STORE } from "../../model/model";
-import { TypeOf } from "@/index";
-import { newView } from "@/schema/dto/local_api";
+import { dto, TypeOf } from "@/index";
 
 describe("CalculatorTest", () => {
 
     it("simpleWithoutBody", () => {
-        const view = newView(BOOK_STORE, c => [
+        const view = dto.view(BOOK_STORE, c => [
             c.id,
             c.newestBooks
         ]);
@@ -22,7 +21,7 @@ describe("CalculatorTest", () => {
     });
 
     it("simpleWithBody", () => {
-        const view = newView(BOOK_STORE, c => [
+        const view = dto.view(BOOK_STORE, c => [
             c.id,
             c.newestBooks.with(c => [
                 c.name,
@@ -39,7 +38,7 @@ describe("CalculatorTest", () => {
     });
 
     it("singleParameterizedWithoutBody", () => {
-        const view = newView(BOOK_STORE, c => [
+        const view = dto.view(BOOK_STORE, c => [
             c.id,
             c.$parameterized("specifiedBooks", {maxPrice: 30})
         ]);
@@ -55,7 +54,7 @@ describe("CalculatorTest", () => {
     });
 
     it("singleParameterizedWithBody", () => {
-        const view = newView(BOOK_STORE, c => [
+        const view = dto.view(BOOK_STORE, c => [
             c.id,
             c.$parameterized("specifiedBooks", {maxPrice: 30}).with(c => [
                 c.name,
@@ -72,7 +71,7 @@ describe("CalculatorTest", () => {
     });
 
     it("multipleParameterizedWithoutBody", () => {
-        const view = newView(BOOK_STORE, c => [
+        const view = dto.view(BOOK_STORE, c => [
             c.id,
             c.$parameterized(
                 "specifiedBooks", 
@@ -101,7 +100,7 @@ describe("CalculatorTest", () => {
     });
 
     it("multipleParameterizedWithBody", () => {
-        const view = newView(BOOK_STORE, c => [
+        const view = dto.view(BOOK_STORE, c => [
             c.id,
             c.$parameterized(
                 "specifiedBooks", 

@@ -14,7 +14,7 @@ import { AnyModel } from "@/schema/model";
 import { CalculationStrategy } from "./calculation_strategy";
 import { acceptsNullOrUndefined } from "./util";
 import { ScalarProvider, ScalarType } from "@/schema/scalar";
-import { View } from "@/schema/dto/global_api";
+import { View } from "@/schema/dto";
 
 export class EntityProp {
 

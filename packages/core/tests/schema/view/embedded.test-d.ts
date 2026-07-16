@@ -1,13 +1,12 @@
 import { describe, it } from "node:test";
 import { AUTHOR } from "../../model/model";
 import { expectTypeOf } from "vitest";
-import { TypeOf } from "@/index";
-import { newView } from "@/schema/dto/local_api";
+import { dto, TypeOf } from "@/index";
 
 describe("EmbeddedTest", () => {
 
     it("simple", () => {
-        const view = newView(AUTHOR, c => [
+        const view = dto.view(AUTHOR, c => [
             c.id,
             c.name
         ]);
@@ -21,7 +20,7 @@ describe("EmbeddedTest", () => {
     });
 
     it("nested", () => {
-        const view = newView(AUTHOR, c => [
+        const view = dto.view(AUTHOR, c => [
             c.id,
             c.name.with(c => [
                 c.firstName
@@ -36,7 +35,7 @@ describe("EmbeddedTest", () => {
     });
 
     it("aliases", () => {
-        const view = newView(AUTHOR, c => [
+        const view = dto.view(AUTHOR, c => [
             c.id,
             c.name.as("full").with(c => [
                 c.firstName.as("first"),

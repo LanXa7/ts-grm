@@ -1,12 +1,11 @@
 import { describe, expectTypeOf, it } from "vitest";
 import { BOOK } from "../../model/model";
-import { TypeOf } from "@/index";
-import { newView } from "@/schema/dto/local_api";
+import { dto, TypeOf } from "@/index";
 
 describe("FoldTest", () => {
 
     it("simple", () => {
-        const view = newView(BOOK, c => [
+        const view = dto.view(BOOK, c => [
             c.$fold("scalars", c => [
                 c.$allScalars
             ]),

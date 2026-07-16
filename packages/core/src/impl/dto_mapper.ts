@@ -6,8 +6,8 @@ import { makeErr } from "@/error/util";
 import { AbstractEntityTable, EntityProp } from ".";
 import { EntityPropOrder } from "./entity_prop_order";
 import { Predicate } from "@/dsl";
-import { ReferenceFetchType } from "@/schema/dto/reference_fetch_type";
 import { AbstractDtoContext, createDto, newDtoContext } from "./dto_context";
+import { ReferenceFetchType } from "@/schema/dto";
 
 export function dtoMapper(dto: Dto, nullAsUndefined: boolean): DtoMapper {
     const mapper = new Mapper(

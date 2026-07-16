@@ -1,4 +1,4 @@
-import { View } from "@/schema/dto/global_api";
+import { View } from "@/schema/dto";
 import { AbstractEntityTable } from "../entity_table";
 
 export interface FetchedViewContract {

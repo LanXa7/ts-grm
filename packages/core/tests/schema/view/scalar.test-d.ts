@@ -1,14 +1,13 @@
 import { describe, it } from "node:test";
 import { AUTHOR, BOOK, LEARNING_LINK } from "../../model/model";
 import { expectTypeOf } from "vitest";
-import { TypeOf } from "@/index";
-import { newView, newViewByNullAsUndefined } from "@/schema/dto/local_api";
+import { dto, TypeOf } from "@/index";
 import { z } from "zod";
 
 describe("ScalarTest", () => {
 
     it("simple", () => {
-        const view = newView(BOOK, c => [
+        const view = dto.view(BOOK, c => [
             c.id,
             c.name,
             c.edition
@@ -21,7 +20,7 @@ describe("ScalarTest", () => {
     });
 
     it("null", () => {
-        const view = newView(LEARNING_LINK, c => [
+        const view = dto.view(LEARNING_LINK, c => [
             c.id,
             c.score
         ]);
@@ -32,7 +31,7 @@ describe("ScalarTest", () => {
     });
 
     it("undefined", () => {
-        const view = newViewByNullAsUndefined(LEARNING_LINK, c => [
+        const view = dto.view.nullAsUndefined(LEARNING_LINK, c => [
             c.id,
             c.score
         ]);
@@ -43,7 +42,7 @@ describe("ScalarTest", () => {
     });
 
     it("alias", () => {
-        const view = newView(BOOK, c => [
+        const view = dto.view(BOOK, c => [
             c.id.as("bookId"),
             c.name.as("bookName"),
             c.edition.as("bookEdition")
@@ -56,7 +55,7 @@ describe("ScalarTest", () => {
     });
 
     it("output", () => {
-        const view = newView(AUTHOR, c => [
+        const view = dto.view(AUTHOR, c => [
             c.id,
             c.gender.output(z.enum(["BOY", "GIRL"]), value => {
                 return value === "MALE" ? "BOY" : "GIRL"

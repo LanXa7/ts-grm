@@ -2,12 +2,12 @@ import { describe, expect, it } from "vitest";
 import { BOOK} from "../../model/model";
 import { expectCode } from "../../utils";
 import { mapperJson, makeReader, shapeJson } from "./utils";
-import { newView } from "@/schema/dto/local_api";
+import { dto } from "@/index";
 
 describe("FoldTest", () => {
 
     it("foldScalars", () => {
-        const view = newView(BOOK, c => [
+        const view = dto.view(BOOK, c => [
             c.id,
             c.$fold("key", c => [
                 c.name,
@@ -83,7 +83,7 @@ describe("FoldTest", () => {
     });
 
     it("foldAssociations", () => {
-        const view = newView(BOOK, c => [
+        const view = dto.view(BOOK, c => [
             c.id,
             c.$fold("associations", c => [
                 c.authors.with(c => [
@@ -258,7 +258,7 @@ describe("FoldTest", () => {
     });
 
     it("mixedWithFlat", () => {
-        const view = newView(BOOK, c => [
+        const view = dto.view(BOOK, c => [
             c.$fold("key", c => [
                 c.name,
                 c.edition

@@ -1,12 +1,11 @@
 import { describe, expectTypeOf, it } from "vitest";
 import { BOOK, ORDER_ITEM } from "../../model/model";
-import { TypeOf } from "@/index";
-import { newView } from "@/schema/dto/local_api";
+import { dto, TypeOf } from "@/index";
 
 describe("ReferenceKeyTest", () => {
 
     it("scalarKey", () => {
-        const view = newView(BOOK, c => [
+        const view = dto.view(BOOK, c => [
             c.id,
             c.storeId
         ]);
@@ -17,7 +16,7 @@ describe("ReferenceKeyTest", () => {
     });
 
     it("embeddedKey", () => {
-        const view = newView(ORDER_ITEM, c => [
+        const view = dto.view(ORDER_ITEM, c => [
             c.id,
             c.orderId.as("oid")
         ]);

@@ -2,12 +2,12 @@ import { describe, expect, it } from "vitest";
 import { LIBRARY, TREE_NODE } from "../../model/model";
 import { expectCode } from "../../utils";
 import { mapperJson, makeReader, shapeJson } from "./utils";
-import { newView } from "@/schema/dto/local_api";
+import { dto } from "@/index";
 
 describe("RecursiveTest", () => {
 
     it("oneRecursiveProp", () => {
-        const view = newView(TREE_NODE, c => [
+        const view = dto.view(TREE_NODE, c => [
             c.name,
             c.$recursive("parentNode")
         ]);
@@ -193,7 +193,7 @@ describe("RecursiveTest", () => {
     });
 
     it("twoRecursiveProps", () => {
-        const view = newView(TREE_NODE, c => [
+        const view = dto.view(TREE_NODE, c => [
             c.name,
             c.$recursive("parentNode"),
             c.$recursive("childNodes")
@@ -498,7 +498,7 @@ describe("RecursiveTest", () => {
     });
 
     it("dependenciesAndDependents", () => {
-        const view = newView(LIBRARY, c => [
+        const view = dto.view(LIBRARY, c => [
             c.name,
             c.version,
             c.$recursive("dependencies"),

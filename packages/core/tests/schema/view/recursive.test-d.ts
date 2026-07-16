@@ -1,12 +1,11 @@
 import { describe, it, expectTypeOf } from "vitest";
 import { TREE_NODE } from "../../model/model";
-import { TypeOf } from "@/index";
-import { newView } from "@/schema/dto/local_api";
+import { dto, TypeOf } from "@/index";
 
 describe("RecursiveTest", () => {
 
     it("simple", () => {
-        const view = newView(TREE_NODE, c => [
+        const view = dto.view(TREE_NODE, c => [
             c.id,
             c.name,
             c.$recursive("parentNode"),
@@ -31,7 +30,7 @@ describe("RecursiveTest", () => {
     });
 
     it("alias", () => {
-        const view = newView(TREE_NODE, c => [
+        const view = dto.view(TREE_NODE, c => [
             c.id,
             c.name,
             c.$recursive("parentNode").as("upObj"),
@@ -56,7 +55,7 @@ describe("RecursiveTest", () => {
     });
 
     it("aliasWithDepth", () => {
-        const view = newView(TREE_NODE, c => [
+        const view = dto.view(TREE_NODE, c => [
             c.id,
             c.name,
             c.$recursive("parentNode").as("upObj"),

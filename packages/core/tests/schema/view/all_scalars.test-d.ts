@@ -1,13 +1,12 @@
 import { describe, it } from "node:test";
 import { AUTHOR } from "../../model/model";
 import { expectTypeOf } from "vitest";
-import { newView } from "@/schema/dto/local_api";
-import { TypeOf } from "@/index";
+import { dto, TypeOf } from "@/index";
 
 describe("AllScalarsTest", () => {
 
     it("simple", () => {
-        const view = newView(AUTHOR, c => [
+        const view = dto.view(AUTHOR, c => [
             c.$allScalars
         ]);
         expectTypeOf<TypeOf<typeof view>>().toEqualTypeOf<{
@@ -21,7 +20,7 @@ describe("AllScalarsTest", () => {
     });
 
     it("exclude", () => {
-        const view = newView(AUTHOR, c => [
+        const view = dto.view(AUTHOR, c => [
             c.$allScalars.exclude("gender")
         ])
         expectTypeOf<TypeOf<typeof view>>().toEqualTypeOf<{
@@ -34,7 +33,7 @@ describe("AllScalarsTest", () => {
     });
 
     it("excludeArr", () => {
-        const view = newView(AUTHOR, c => [
+        const view = dto.view(AUTHOR, c => [
             c.$allScalars.exclude("id", "gender")
         ])
         expectTypeOf<TypeOf<typeof view>>().toEqualTypeOf<{

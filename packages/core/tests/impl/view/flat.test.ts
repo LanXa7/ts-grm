@@ -2,13 +2,13 @@ import { describe, expect, it } from "vitest";
 import { BOOK, AUTHOR, TREE_NODE } from "../../model/model";
 import { expectCode } from "../../utils";
 import { mapperJson, makeReader, shapeJson } from "./utils";
-import { newView } from "@/schema/dto/local_api";
+import { dto } from "@/index";
 
 describe("FlatTest", () => {
 
     it("flatAssociation", () => {
 
-        const view = newView(BOOK, c => [
+        const view = dto.view(BOOK, c => [
             c.$allScalars,
             c.$flat("store").with(c => [
                 c.id,
@@ -180,7 +180,7 @@ describe("FlatTest", () => {
     });
 
     it("flatEmbedded", () => {
-        const view = newView(AUTHOR, c => [
+        const view = dto.view(AUTHOR, c => [
             c.id,
             c.$flat("name").prefix("flatten")
         ]);
@@ -234,7 +234,7 @@ describe("FlatTest", () => {
     });
 
     it("deepFlat", () => {
-        const view = newView(TREE_NODE, c => [
+        const view = dto.view(TREE_NODE, c => [
             c.$allScalars,
             c.$flat("parentNode").prefix("parent").with(c => [
                 c.$allScalars,

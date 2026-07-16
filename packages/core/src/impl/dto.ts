@@ -4,7 +4,7 @@ import { Entity } from "./entity";
 import { AssociationType } from "@/schema/prop_contract";
 import { AbstractEntityTable } from ".";
 import { Predicate } from "@/dsl";
-import { ReferenceFetchType } from "@/schema/dto/reference_fetch_type";
+import { ReferenceFetchType } from "@/schema/dto";
 
 export type Dto = {
 

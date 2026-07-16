@@ -1,12 +1,11 @@
 import { describe, expectTypeOf, it } from "vitest";
 import { BOOK, ORDER_ITEM } from "../../model/model";
-import { TypeOf } from "@/index";
-import { newView } from "@/schema/dto/local_api";
+import { dto, TypeOf } from "@/index";
 
 describe("ReferenceTest", () => {
 
     it("simple", () => {
-        const view = newView(BOOK, c => [
+        const view = dto.view(BOOK, c => [
             c.id,
             c.name,
             c.edition,
@@ -25,7 +24,7 @@ describe("ReferenceTest", () => {
     });
 
     it("withoutFilter", () => {
-        const view = newView(ORDER_ITEM, c => [
+        const view = dto.view(ORDER_ITEM, c => [
             c.id,
             c.order.with(c => [
                 c.id.as("oid").with(c => [
@@ -52,7 +51,7 @@ describe("ReferenceTest", () => {
     });
 
     it("withFilter", () => {
-        const view = newView(ORDER_ITEM, c => [
+        const view = dto.view(ORDER_ITEM, c => [
             c.id,
             c.order.where(
                 table => table.id().x.lt(100)

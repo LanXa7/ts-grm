@@ -2,12 +2,12 @@ import { describe, it, expect } from "vitest";
 import { BOOK_STORE, ONLINE_BOOK_STORE, PHYSICAL_BOOK_STORE, PAPER_BOOK, ELECTRONIC_BOOK, PDF_ELECTRONIC_BOOK } from "../../model/model";
 import { mapperJson, shapeJson } from "./utils";
 import { expectCode } from "../../utils";
-import { newView } from "@/schema/dto/local_api";
+import { dto } from "@/index";
 
 describe("PolymorphismTest", () => {
 
     it("singleTable", () => {
-        const view = newView(BOOK_STORE, c => [
+        const view = dto.view(BOOK_STORE, c => [
             c.name,
             c.$instanceOf(ONLINE_BOOK_STORE, c => [
                 c.url
@@ -86,7 +86,7 @@ describe("PolymorphismTest", () => {
 
     it("mutlipleTables", () => {
 
-        const view = newView(BOOK_STORE, c => [
+        const view = dto.view(BOOK_STORE, c => [
             c.name,
             c.books.with(c => [
                 c.name,
@@ -249,7 +249,7 @@ describe("PolymorphismTest", () => {
     });
 
     it("multipleTablesWithFormulua", () => {
-        const view = newView(BOOK_STORE, c => [
+        const view = dto.view(BOOK_STORE, c => [
             c.name,
             c.books.with(c => [
                 c.name,

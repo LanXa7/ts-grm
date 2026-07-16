@@ -2,12 +2,12 @@ import { describe, expect, it } from "vitest";
 import { BOOK, BOOK_STORE } from "../../model/model";
 import { expectCode } from "../../utils";
 import { mapperJson, makeReader, shapeJson } from "./utils";
-import { newView } from "@/schema/dto/local_api";
+import { dto } from "@/index";
 
 describe("ViewTest", () => {
 
     it("allScalars", () => {
-        const view = newView(BOOK, c => [
+        const view = dto.view(BOOK, c => [
             c.$allScalars.exclude("price")
         ]);
         expect(mapperJson(view.mapper)).toEqual({
@@ -61,7 +61,7 @@ describe("ViewTest", () => {
     });
 
     it("wideAssociations", () => {
-        const view = newView(BOOK, c => [
+        const view = dto.view(BOOK, c => [
             c.$allScalars.exclude("id", "price"),
             c.store,
             c.authors.with(c => [
@@ -320,7 +320,7 @@ describe("ViewTest", () => {
     });
 
     it("deepAssociations", () => {
-        const view = newView(BOOK_STORE, c => [
+        const view = dto.view(BOOK_STORE, c => [
             c.id,
             c.name,
             c.books.with(c => [
@@ -569,7 +569,7 @@ describe("ViewTest", () => {
     });
 
     it("implicitDeepAssociations", () => {
-        const view = newView(BOOK_STORE, c => [
+        const view = dto.view(BOOK_STORE, c => [
             c.name,
             c.books.with(c => [
                 c.name,
@@ -815,7 +815,7 @@ describe("ViewTest", () => {
     });
 
     it("rename", () => {
-        const view = newView(BOOK, c => [
+        const view = dto.view(BOOK, c => [
             c.id.as("bookId"),
             c.$fold("key", c => [
                 c.name.as("bookName"),

@@ -2,12 +2,12 @@ import { describe, expect, it } from "vitest";
 import { ORDER_ITEM } from "../../model/model";
 import { expectCode } from "../../utils";
 import { mapperJson, makeReader, shapeJson } from "./utils";
-import { newView } from "@/schema/dto/local_api";
+import { dto } from "@/index";
 
 describe("EmbeddedTest", () => {
 
     it("implicitEmbeddedReferenceKey", () => {
-        const view = newView(ORDER_ITEM, c => [
+        const view = dto.view(ORDER_ITEM, c => [
             c.order.with(c => [c.name])
         ]);
         expect(mapperJson(view.mapper)).toEqual({
@@ -149,7 +149,7 @@ describe("EmbeddedTest", () => {
     });
 
     it("explicitEmbeddedReferenceKey", () => {
-        const view = newView(ORDER_ITEM, c => [
+        const view = dto.view(ORDER_ITEM, c => [
             c.orderId,
             c.order.with(c => [c.name])
         ]);
@@ -324,7 +324,7 @@ describe("EmbeddedTest", () => {
     });
 
     it("mixedEmbeddedReferenceKey", () => {
-        const view = newView(ORDER_ITEM, c => [
+        const view = dto.view(ORDER_ITEM, c => [
             c.orderId.with(c => [c.y]),
             c.order.with(c => [c.name])
         ]);

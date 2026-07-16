@@ -1,12 +1,11 @@
 import { describe, expectTypeOf, it } from "vitest";
 import { BOOK, BOOK_STORE } from "../../model/model";
-import { TypeOf } from "@/index";
-import { newView } from "@/schema/dto/local_api";
+import { dto, TypeOf } from "@/index";
 
 describe("CollectionTest", () => {
 
     it("simple", () => {
-        const view = newView(BOOK_STORE, c => [
+        const view = dto.view(BOOK_STORE, c => [
             c.id,
             c.books
         ]);
@@ -22,7 +21,7 @@ describe("CollectionTest", () => {
     });
 
     it("with", () => {
-        const view = newView(BOOK, c => [
+        const view = dto.view(BOOK, c => [
             c.id,
             c.authors.with(c => [
                 c.id,

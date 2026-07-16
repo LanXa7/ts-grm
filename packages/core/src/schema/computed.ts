@@ -1,6 +1,6 @@
 import { EntityTable, Expression, SqlClient } from "@/dsl";
 import { AllModelMembers, AnyModel, CalculatorSourceKeys, ModelIdKey } from "./model";
-import { View } from "./dto/global_api";
+import { View } from "./dto";
 import { StandardSchemaV1 } from "@standard-schema/spec";
 import { MemberType } from "./dto/all_scalars";
 

@@ -3,7 +3,7 @@ import { AnyModel } from "../model";
 import { NullityType } from "../prop_contract";
 import { DtoBody, DtoType, DtoKind} from "./dto_context";
 import { TargetMappings, TargetMembersOf, TargetModelOf, WithNullity } from "./utils";
-import { ReferenceFetchType } from "./reference_fetch_type";
+import { ReferenceFetchType } from ".";
 
 export interface ReferenceMapping<
     TModel extends AnyModel,

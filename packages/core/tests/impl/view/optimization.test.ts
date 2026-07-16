@@ -1,11 +1,11 @@
 import { describe, it, expect } from "vitest";
 import { AUTHOR, BOOK, BOOK_STORE, ORDER, ORDER_ITEM, STUDENT } from "../../model/model";
-import { newView } from "@/schema/dto/local_api";
+import { dto } from "@/index";
 
 describe("OptimizationTest", () => {
     
     it("m2o", () => {
-        const view1 = newView(BOOK, c => [
+        const view1 = dto.view(BOOK, c => [
             c.$allScalars,
             c.store.with(c => [c.id])
         ]);
@@ -13,7 +13,7 @@ describe("OptimizationTest", () => {
             view1.mapper.fields.find(f => f.prop.name === "store")!.optimizable
         ).toEqual(true);
 
-        const view2 = newView(BOOK, c => [
+        const view2 = dto.view(BOOK, c => [
             c.$allScalars,
             c.store.with(c => [
                 c.id, 
@@ -26,7 +26,7 @@ describe("OptimizationTest", () => {
     });
 
     it("o2m", () => {
-        const view = newView(BOOK_STORE, c => [
+        const view = dto.view(BOOK_STORE, c => [
             c.$allScalars,
             c.books.with(c => [c.id])
         ]);
@@ -36,7 +36,7 @@ describe("OptimizationTest", () => {
     });
 
     it("m2m", () => {
-        const view1 = newView(BOOK, c => [
+        const view1 = dto.view(BOOK, c => [
             c.$allScalars,
             c.authors.with(c => [c.id]).orderBy()
         ]);
@@ -44,7 +44,7 @@ describe("OptimizationTest", () => {
             view1.mapper.fields.find(f => f.prop.name === "authors")!.optimizable
         ).toEqual(true);
 
-        const view2 = newView(BOOK, c => [
+        const view2 = dto.view(BOOK, c => [
             c.$allScalars,
             c.authors.with(c => [c.name])
         ]);
@@ -52,7 +52,7 @@ describe("OptimizationTest", () => {
             view2.mapper.fields.find(f => f.prop.name === "authors")!.optimizable
         ).toEqual(false);
 
-        const view3 = newView(BOOK, c => [
+        const view3 = dto.view(BOOK, c => [
             c.$allScalars,
             c.authors.with(c => [
                 c.name.with(c => [
@@ -67,7 +67,7 @@ describe("OptimizationTest", () => {
 
     it("inverseM2M", () => {
 
-        const view1 = newView(AUTHOR, c => [
+        const view1 = dto.view(AUTHOR, c => [
             c.$allScalars,
             c.books.with(c => [c.id])
         ]);
@@ -75,7 +75,7 @@ describe("OptimizationTest", () => {
             view1.mapper.fields.find(f => f.prop.name === "books")!.optimizable
         ).toEqual(true);
 
-        const view2 = newView(AUTHOR, c => [
+        const view2 = dto.view(AUTHOR, c => [
             c.$allScalars,
             c.books.with(c => [c.name])
         ]);
@@ -86,7 +86,7 @@ describe("OptimizationTest", () => {
 
     it("m2mByMiddleEntity", () => {
 
-        const view1 = newView(STUDENT, c => [
+        const view1 = dto.view(STUDENT, c => [
             c.$allScalars,
             c.courses.with(c => [c.id])
         ]);
@@ -98,7 +98,7 @@ describe("OptimizationTest", () => {
                 .optimizable
         ).toEqual(true);
 
-        const view2 = newView(STUDENT, c => [
+        const view2 = dto.view(STUDENT, c => [
             c.$allScalars,
             c.courses.with(c => [
                 c.id,
@@ -115,7 +115,7 @@ describe("OptimizationTest", () => {
     });
 
     it("multipleColumnsM2O", () => {
-        const view1 = newView(ORDER_ITEM, c => [
+        const view1 = dto.view(ORDER_ITEM, c => [
             c.$allScalars,
             c.order.with(c => [c.id])
         ]);
@@ -123,7 +123,7 @@ describe("OptimizationTest", () => {
             view1.mapper.fields.find(f => f.prop.name === "order")!.optimizable
         ).toEqual(true);
 
-        const view2 = newView(ORDER_ITEM, c => [
+        const view2 = dto.view(ORDER_ITEM, c => [
             c.$allScalars,
             c.order.with(c => [
                 c.id.with(c => [c.x])
@@ -133,7 +133,7 @@ describe("OptimizationTest", () => {
             view2.mapper.fields.find(f => f.prop.name === "order")!.optimizable
         ).toEqual(true);
 
-        const view3 = newView(ORDER_ITEM, c => [
+        const view3 = dto.view(ORDER_ITEM, c => [
             c.$allScalars,
             c.order.with(c => [
                 c.id,
@@ -144,7 +144,7 @@ describe("OptimizationTest", () => {
             view3.mapper.fields.find(f => f.prop.name === "order")!.optimizable
         ).toEqual(false);
 
-        const view4 = newView(ORDER_ITEM, c => [
+        const view4 = dto.view(ORDER_ITEM, c => [
             c.$allScalars,
             c.order.with(c => [
                 c.id.with(c => [c.x]),
@@ -158,7 +158,7 @@ describe("OptimizationTest", () => {
 
     it("multipleColumnsM2M", () => {
 
-        const view1 = newView(ORDER, c => [
+        const view1 = dto.view(ORDER, c => [
             c.$allScalars,
             c.tags.with(c => [c.id]).orderBy()
         ]);
@@ -166,7 +166,7 @@ describe("OptimizationTest", () => {
             view1.mapper.fields.find(f => f.prop.name === "tags")!.optimizable
         ).toEqual(true);
 
-        const view2 = newView(ORDER, c => [
+        const view2 = dto.view(ORDER, c => [
             c.$allScalars,
             c.tags.with(c => [
                 c.id.with(c => [c.low])
@@ -176,7 +176,7 @@ describe("OptimizationTest", () => {
             view2.mapper.fields.find(f => f.prop.name === "tags")!.optimizable
         ).toEqual(true);
 
-        const view3 = newView(ORDER, c => [
+        const view3 = dto.view(ORDER, c => [
             c.$allScalars,
             c.tags.with(c => [
                 c.id, 
@@ -187,7 +187,7 @@ describe("OptimizationTest", () => {
             view3.mapper.fields.find(f => f.prop.name === "tags")!.optimizable
         ).toEqual(false);
 
-        const view4 = newView(ORDER, c => [
+        const view4 = dto.view(ORDER, c => [
             c.$allScalars,
             c.tags.with(c => [
                 c.id.with(c => [c.low]),
@@ -200,7 +200,7 @@ describe("OptimizationTest", () => {
     });
 
     it("brokenByFilter", () => {
-        const view1 = newView(BOOK, c => [
+        const view1 = dto.view(BOOK, c => [
             c.$allScalars,
             c.store.with(c => [
                 c.id
@@ -210,7 +210,7 @@ describe("OptimizationTest", () => {
             view1.mapper.fields.find(f => f.prop.name === "store")!.optimizable
         ).toEqual(true);
 
-        const view2 = newView(BOOK, c => [
+        const view2 = dto.view(BOOK, c => [
             c.$allScalars,
             c.store.with(c => [
                 c.id

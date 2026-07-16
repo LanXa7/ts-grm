@@ -1,13 +1,12 @@
 import { describe, it } from "node:test";
 import { AUTHOR, BOOK_STORE } from "../../model/model";
 import { expectTypeOf } from "vitest";
-import { TypeOf } from "@/index";
-import { newView } from "@/schema/dto/local_api";
+import { dto, TypeOf } from "@/index";
 
 describe("Formula", () => {
 
     it("simple", () => {
-        const view = newView(AUTHOR, c => [
+        const view = dto.view(AUTHOR, c => [
             c.id,
             c.fullName
         ]);
@@ -18,7 +17,7 @@ describe("Formula", () => {
     });
 
     it("deep", () => {
-        const view = newView(BOOK_STORE, c => [
+        const view = dto.view(BOOK_STORE, c => [
             c.$allScalars,
             c.$fold("formulas", c => [
                 c.bookNames
@@ -43,7 +42,7 @@ describe("Formula", () => {
     });
 
     it("deepWithAlias", () => {
-        const view = newView(BOOK_STORE, c => [
+        const view = dto.view(BOOK_STORE, c => [
             c.$allScalars,
             c.$fold("formulas", c => [
                 c.bookNames.as("bNames")
