@@ -27,7 +27,7 @@
     "@vitest/coverage-v8": "4.0.16",
     "@vitest/ui": "4.0.16",
     "tsup": "^8.5.1",
-    "typescript": "^7.0.1-rc",
+    "typescript": "^6.0.3",
     "vitest": "4.0.16"
   },
   "engines": {

@@ -1,17 +1,16 @@
 import { SqlClient } from "@/dsl/sql_client";
-import { dto } from "@/schema/dto";
 import { test } from "vitest";
 import { BOOK } from "../model/model";
 import { expectTypeOf } from "vitest";
+import { newView } from "@/schema/dto/local_api";
 
 function sqlClient(): SqlClient {
     throw new Error("Not implemented");
 }
 
-const SIMPLE_BOOK_VIEW = dto.view(BOOK, $ => $
-    .allScalars()
-    .remove("price")
-);
+const SIMPLE_BOOK_VIEW = newView(BOOK, c => [
+    c.$allScalars.exclude("price")
+]);
 
 test("TestCriteria", async () => {
     const view = await sqlClient().findOne(SIMPLE_BOOK_VIEW, {

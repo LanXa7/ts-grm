@@ -2,8 +2,7 @@ import { describe, expect, it } from "vitest";
 import { BOOK, AUTHOR, TREE_NODE } from "../../model/model";
 import { expectCode } from "../../utils";
 import { mapperJson, makeReader, shapeJson } from "./utils";
-import { createView } from "@/schema/view";
-import { newView } from "@/schema/dto/index";
+import { newView } from "@/schema/dto/local_api";
 
 describe("FlatTest", () => {
 
@@ -181,14 +180,10 @@ describe("FlatTest", () => {
     });
 
     it("flatEmbedded", () => {
-        const view = createView(AUTHOR, {
-            id: true,
-            $flat: c => c({
-                name: {
-                    prefix: "flatten"
-                }
-            })
-        });
+        const view = newView(AUTHOR, c => [
+            c.id,
+            c.$flat("name").prefix("flatten")
+        ]);
         expect(mapperJson(view.mapper)).toEqual({
             "entity": "Author",
             "fields": [

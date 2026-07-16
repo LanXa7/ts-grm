@@ -1,8 +1,8 @@
 import { FetchedView } from "@/dsl/root_query";
-import { View } from "@/schema/dto";
 import { AnyModel } from "@/schema/model";
 import { AbstractEntityTable } from "./entity_table";
 import { AbstractSelection, FetchedViewContract, Node, Visitor } from "./ast";
+import { View } from "@/schema/dto/global_api";
 
 export class FetchedViewImpl<TModel extends AnyModel, X> extends AbstractSelection implements FetchedView<TModel, X>, FetchedViewContract, Node {
 

@@ -2,7 +2,7 @@ import { describe, it } from "node:test";
 import { AUTHOR, BOOK, LEARNING_LINK } from "../../model/model";
 import { expectTypeOf } from "vitest";
 import { TypeOf } from "@/index";
-import { newView } from "@/schema/dto/index";
+import { newView, newViewByNullAsUndefined } from "@/schema/dto/local_api";
 import { z } from "zod";
 
 describe("ScalarTest", () => {
@@ -28,6 +28,17 @@ describe("ScalarTest", () => {
         expectTypeOf<TypeOf<typeof view>>().toEqualTypeOf<{
             id: number;
             score: number | null;
+        }>();
+    });
+
+    it("undefined", () => {
+        const view = newViewByNullAsUndefined(LEARNING_LINK, c => [
+            c.id,
+            c.score
+        ]);
+        expectTypeOf<TypeOf<typeof view>>().toEqualTypeOf<{
+            id: number;
+            score: number | undefined;
         }>();
     });
 

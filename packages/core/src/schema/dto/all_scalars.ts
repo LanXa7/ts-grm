@@ -63,8 +63,12 @@ export type MemberType<
 > =
     TMember extends ScalarPropContract<infer R, infer Nullity>
         ? WithNullity<R, Nullity, TDtoKind>
-    : TMember extends EmbeddedPropContract<infer NestedProps, any, any>
-        ? DefaultEmbeddedType<NestedProps, TDtoKind>
+    : TMember extends EmbeddedPropContract<infer NestedProps, infer Nullity, any>
+        ? WithNullity<
+            DefaultEmbeddedType<NestedProps, TDtoKind>,
+            Nullity,
+            TDtoKind
+        >
     : never;
     
 type DefaultEmbeddedType<

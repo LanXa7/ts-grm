@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { LIBRARY, TREE_NODE } from "../../model/model";
 import { expectCode } from "../../utils";
 import { mapperJson, makeReader, shapeJson } from "./utils";
-import { newView } from "@/schema/dto/index";
+import { newView } from "@/schema/dto/local_api";
 
 describe("RecursiveTest", () => {
 

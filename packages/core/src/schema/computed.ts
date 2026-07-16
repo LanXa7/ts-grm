@@ -1,8 +1,8 @@
 import { EntityTable, Expression, SqlClient } from "@/dsl";
 import { AllModelMembers, AnyModel, CalculatorSourceKeys, ModelIdKey } from "./model";
-import { View } from "./dto";
+import { View } from "./dto/global_api";
 import { StandardSchemaV1 } from "@standard-schema/spec";
-import { SimpleDataTypeOf } from "./output_dto";
+import { MemberType } from "./dto/all_scalars";
 
 export class TsFormula<TValue> {
 
@@ -80,7 +80,7 @@ export abstract class Calculator {
             readonly sourceKeyProp?: TSourceKeyProp,
             readonly valueType: StandardSchemaV1,
             readonly fn: ValueCalculatorFn<
-                SimpleDataTypeOf<AllModelMembers<TSourceModel>[TSourceKeyProp], "UNDEFINED">, 
+                MemberType<AllModelMembers<TSourceModel>[TSourceKeyProp], "NULL_VIEW">, 
                 StandardSchemaV1.InferOutput<TValueType>
             >
         }
@@ -106,7 +106,7 @@ export abstract class Calculator {
             readonly valueType: StandardSchemaV1,
             readonly fn: ParameterizedValueCalculatorFn<
                 StandardSchemaV1.InferOutput<TParameterType>,
-                SimpleDataTypeOf<AllModelMembers<TSourceModel>[TSourceKeyProp], "UNDEFINED">, 
+                MemberType<AllModelMembers<TSourceModel>[TSourceKeyProp], "NULL_VIEW">, 
                 StandardSchemaV1.InferOutput<TValueType>
             >
         }
@@ -130,7 +130,7 @@ export abstract class Calculator {
             readonly sourceKeyProp?: TSourceKeyProp,
             readonly targetModel: () => TTargetModel,
             readonly fn: TargetCalculatorFn<
-                SimpleDataTypeOf<AllModelMembers<TSourceModel>[TSourceKeyProp], "UNDEFINED">, 
+                MemberType<AllModelMembers<TSourceModel>[TSourceKeyProp], "NULL_VIEW">, 
                 TTargetModel
             >
         }
@@ -156,7 +156,7 @@ export abstract class Calculator {
             readonly targetModel: () => TTargetModel,
             readonly fn: ParameterizedTargetCalculatorFn<
                 StandardSchemaV1.InferOutput<TParameterType>,
-                SimpleDataTypeOf<AllModelMembers<TSourceModel>[TSourceKeyProp], "UNDEFINED">, 
+                MemberType<AllModelMembers<TSourceModel>[TSourceKeyProp], "NULL_VIEW">, 
                 TTargetModel
             >
         }

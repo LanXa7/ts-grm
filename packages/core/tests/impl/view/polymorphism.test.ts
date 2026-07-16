@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { BOOK_STORE, ONLINE_BOOK_STORE, PHYSICAL_BOOK_STORE, PAPER_BOOK, ELECTRONIC_BOOK, PDF_ELECTRONIC_BOOK } from "../../model/model";
 import { mapperJson, shapeJson } from "./utils";
 import { expectCode } from "../../utils";
-import { newView } from "@/schema/dto/index";
+import { newView } from "@/schema/dto/local_api";
 
 describe("PolymorphismTest", () => {
 

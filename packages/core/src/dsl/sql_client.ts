@@ -1,4 +1,3 @@
-import { ModelOf, TypeOf, View } from "@/schema/dto";
 import { AtLeastOne } from "./utils";
 import { BaseModel } from "./base_query";
 import { AtomRootQuery, MutableRootQuery, RootQueryProjection } from "./root_query";
@@ -7,6 +6,7 @@ import { Criteria } from "./criteria";
 import { AnyModel } from "@/schema/model";
 import { AnyAssociationModel } from "./association";
 import { FetchPageOptions, FetchRangeOptions, Page } from "./page";
+import { ModelOf, TypeOf, View } from "@/schema/dto/global_api";
 
 export interface SqlClient {
 

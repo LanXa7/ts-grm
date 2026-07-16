@@ -1,6 +1,6 @@
 import { dsl } from "@/dsl";
-import { dto } from "@/index";
 import { SqlFormula, TsFormula, Calculator } from "@/schema/computed";
+import { newView } from "@/schema/dto/local_api";
 import { DV_ABSTRACT, DV_MODEL_NAME, model, TB_INHERIT } from "@/schema/model";
 import { prop } from "@/schema/prop";
 import { z } from "zod"; 
@@ -50,7 +50,12 @@ const BOOK_STORE_SPECIFIED_BOOK_CALCULATOR = Calculator.parameterizedTargetOf({
 const BOOK_STORE_BOOK_NAMES_FORMULA: TsFormula<ReadonlyArray<string>> =
     TsFormula.of({
         valueType: z.array(z.string()),
-        dependency: () => dto.view(BOOK_STORE, $ => $.books($ => $.name.edition)),
+        dependency: () => newView(BOOK_STORE, c => [
+            c.books.with(c => [
+                c.name,
+                c.edition
+            ])
+        ]),
         fn: data => data.books.map(book => `${book.name}(${book.edition})`)
     });
 
@@ -134,7 +139,7 @@ export const BOOK = model("Book", "id", class {
 const PAPER_BOOK_AREA_FORMULA: TsFormula<number> = 
     TsFormula.of({
         valueType: z.number(),
-        dependency: () => dto.view(PAPER_BOOK, $ => $.size()),
+        dependency: () => newView(PAPER_BOOK, c => [c.size]),
         fn: data => data.size.width * data.size.height
     });
 
@@ -180,7 +185,7 @@ export const PDF_ELECTRONIC_BOOK = model.extends(ELECTRONIC_BOOK)(
 const AUTHOR_FULL_NAME_FORMULA : TsFormula<string> = 
     TsFormula.of({
         valueType: z.string(),
-        dependency: () => dto.view(AUTHOR, $ => $.name()),
+        dependency: () => newView(AUTHOR, c => [c.name]),
         fn: data => `${data.name.firstName} ${data.name.lastName}`
     });
 

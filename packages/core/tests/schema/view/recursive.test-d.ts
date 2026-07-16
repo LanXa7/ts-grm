@@ -1,7 +1,7 @@
 import { describe, it, expectTypeOf } from "vitest";
 import { TREE_NODE } from "../../model/model";
 import { TypeOf } from "@/index";
-import { newView } from "@/schema/dto/index";
+import { newView } from "@/schema/dto/local_api";
 
 describe("RecursiveTest", () => {
 

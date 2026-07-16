@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { AUTHOR, BOOK, BOOK_STORE, ORDER, ORDER_ITEM, STUDENT } from "../../model/model";
-import { newView } from "@/schema/dto/index";
+import { newView } from "@/schema/dto/local_api";
 
 describe("OptimizationTest", () => {
     

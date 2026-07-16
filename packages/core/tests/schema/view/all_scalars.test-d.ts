@@ -1,7 +1,7 @@
 import { describe, it } from "node:test";
 import { AUTHOR } from "../../model/model";
 import { expectTypeOf } from "vitest";
-import { newView } from "@/schema/dto/index";
+import { newView } from "@/schema/dto/local_api";
 import { TypeOf } from "@/index";
 
 describe("AllScalarsTest", () => {

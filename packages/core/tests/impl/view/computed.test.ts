@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { AUTHOR, BOOK, BOOK_STORE } from "../../model/model";
 import { makeReader, mapperJson, shapeJson } from "./utils";
 import { expectCode } from "../../utils";
-import { newView } from "@/schema/dto/index";
+import { newView } from "@/schema/dto/local_api";
 
 describe("ComputedTest", () => {
 

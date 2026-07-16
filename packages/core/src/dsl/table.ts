@@ -1,7 +1,7 @@
 import { AllModelMembers, AnyModel, DerivedModel, RequiredModelKey } from "@/schema/model";
 import { Expression, MakeExpression, MakeType, Predicate } from "./expression";
 import { FilterNever } from "@/utils";
-import { View } from "@/schema/dto";
+import { View } from "@/schema/dto/global_api";
 import { FetchedView } from "./root_query";
 import { BaseQuerySelectMapArgs, BaseModel, BaseQueryMapOf } from "./base_query";
 import { AnyAssociationModel, AssociationKeys, AssociationTable, MakeAssociationModel, MakeAssociationTableMembers } from "./association";

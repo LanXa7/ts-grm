@@ -48,13 +48,13 @@ export type WithNullity<T, TNullity extends NullityType, TDtoKind extends DtoKin
     TNullity extends "NULLABLE"
         ? TDtoKind extends "NULL_VIEW"
             ? T | null
-        : TDtoKind extends "UNDFINED_VIEW"
+        : TDtoKind extends "UNDEFINED_VIEW"
             ? T | undefined
         : T | null | undefined
     : TNullity extends "INPUT_NONNULL"
         ? TDtoKind extends "NULL_VIEW"
             ? T | null
-        : TDtoKind extends "UNDFINED_VIEW"
+        : TDtoKind extends "UNDEFINED_VIEW"
             ? T | undefined
         : T
     : T;

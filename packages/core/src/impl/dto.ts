@@ -1,10 +1,10 @@
-import { ReferenceFetchType } from "@/schema/output_dto";
 import { EntityProp } from "./entity_prop";
 import { EntityPropOrder } from "./entity_prop_order";
 import { Entity } from "./entity";
 import { AssociationType } from "@/schema/prop_contract";
 import { AbstractEntityTable } from ".";
 import { Predicate } from "@/dsl";
+import { ReferenceFetchType } from "@/schema/dto/reference_fetch_type";
 
 export type Dto = {
 

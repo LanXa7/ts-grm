@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { ORDER_ITEM } from "../../model/model";
 import { expectCode } from "../../utils";
 import { mapperJson, makeReader, shapeJson } from "./utils";
-import { newView } from "@/schema/dto/index";
+import { newView } from "@/schema/dto/local_api";
 
 describe("EmbeddedTest", () => {
 

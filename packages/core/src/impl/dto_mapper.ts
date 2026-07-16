@@ -1,13 +1,13 @@
 import { ArgumentError, StateError } from "@/error/common";
 import { Dto, DtoField, FetchProp, TypeNameProp } from "./dto";
 import { Entity } from "./entity";
-import { dtoField } from "./dto_builder";
 import { createDtoRowReader, DtoRowReader } from "./row_reader";
 import { makeErr } from "@/error/util";
 import { AbstractEntityTable, EntityProp } from ".";
-import { ReferenceFetchType } from "@/schema/output_dto";
 import { EntityPropOrder } from "./entity_prop_order";
 import { Predicate } from "@/dsl";
+import { ReferenceFetchType } from "@/schema/dto/reference_fetch_type";
+import { AbstractDtoContext, createDto, newDtoContext } from "./dto_context";
 
 export function dtoMapper(dto: Dto, nullAsUndefined: boolean): DtoMapper {
     const mapper = new Mapper(
@@ -656,4 +656,42 @@ function fieldHash(field: DtoMapperField): string {
     }|${
         field.recursiveDepth ?? ""
     }`;
+}
+
+function dtoField(
+    downcastTo: Entity | undefined,
+    prop: EntityProp
+): DtoField {
+    if (prop.props != null) {
+        const ctx = newDtoContext(prop, false);
+        const childDto = createDto(ctx, downcastTo, (c: AbstractDtoContext) => [c.$allScalars]);
+        return {
+            path: prop.name,
+            downcastTo,
+            prop: prop,
+            bridgeProp: undefined,
+            dto: childDto,
+            fetchType: undefined,
+            predicateFn: undefined,
+            orders: prop.orders,
+            limit: undefined,
+            recursiveDepth: undefined,
+            nullable: prop.nullable,
+            parameter: undefined
+        };
+    }
+    return {
+        path: prop.name,
+        downcastTo,
+        prop: prop,
+        bridgeProp: undefined,
+        dto: undefined,
+        fetchType: undefined,
+        predicateFn: undefined,
+        orders: prop.orders,
+        limit: undefined,
+        recursiveDepth: undefined,
+        nullable: false,
+        parameter: undefined
+    };
 }

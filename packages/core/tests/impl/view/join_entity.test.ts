@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { COURSE, STUDENT } from "../../model/model";
 import { makeReader, mapperJson, shapeJson } from "./utils";
 import { expectCode } from "../../utils";
-import { newView } from "@/schema/dto/index";
+import { newView } from "@/schema/dto/local_api";
 
 describe("JoinEntityTest", () => {
 
@@ -12,7 +12,6 @@ describe("JoinEntityTest", () => {
             c.name,
             c.courses
         ]);
-        console.log(JSON.stringify(mapperJson(view.mapper)));
         expect(mapperJson(view.mapper)).toEqual({
             "entity": "Student",
             "fields": [

@@ -8,7 +8,6 @@ import { makeErr } from "@/error/util";
 import { AbstractTable, createJoinedTable } from "./abstract_table";
 import { ShadowAnchor } from "./shadow_anchor";
 import { FetchedView } from "@/dsl/root_query";
-import { View } from "@/schema/dto";
 import { FetchedViewImpl } from "./fetched_view_impl";
 import { TypedBaseTable } from "./base_table";
 import { ArgumentError, StateError } from "@/error/common";
@@ -24,7 +23,7 @@ import { AbstractExpr, AbstractNumExpr, AtomQueryContract } from "./ast";
 import { toTuple } from "./ast/tuple";
 import { capitalize } from "./util";
 import { getQueryFactory } from "./ast/query_factory";
-import { metadata } from "..";
+import { metadata, View } from "..";
 import { exists, notExists } from "@/dsl/sub_query";
 import { count } from "@/dsl/aggregate";
 

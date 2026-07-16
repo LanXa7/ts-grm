@@ -10,11 +10,11 @@ import { isIllegal, fixColumn, fixColumnArr, notEmpty, DatabaseStrategy } from "
 import { Column, Columns, MiddelEntity, MiddleTable, PropStorage, StorageType } from "./storage";
 import { ParameterizedTargetCalculator, ParameterizedValueCalculator, SqlFormulaFn, TargetCalculator, TsFormulaFn, ValueCalculator } from "@/schema/computed";
 import { CascadeType } from "@/schema/join";
-import { View } from "@/schema/dto";
 import { AnyModel } from "@/schema/model";
 import { CalculationStrategy } from "./calculation_strategy";
 import { acceptsNullOrUndefined } from "./util";
 import { ScalarProvider, ScalarType } from "@/schema/scalar";
+import { View } from "@/schema/dto/global_api";
 
 export class EntityProp {
 
@@ -510,6 +510,10 @@ export class EntityProp {
         }
         this._sqlFormulaResolved = true;
         return this._sqlFormulaFn;
+    }
+
+    get isFormula(): boolean {
+        return this._data.formulaData != null;
     }
 
     private validateData() {

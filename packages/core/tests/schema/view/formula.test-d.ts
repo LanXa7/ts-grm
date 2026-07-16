@@ -2,7 +2,7 @@ import { describe, it } from "node:test";
 import { AUTHOR, BOOK_STORE } from "../../model/model";
 import { expectTypeOf } from "vitest";
 import { TypeOf } from "@/index";
-import { newView } from "@/schema/dto/index";
+import { newView } from "@/schema/dto/local_api";
 
 describe("Formula", () => {
 

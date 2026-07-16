@@ -1,6 +1,5 @@
 export { model } from "./schema/model";
 export { prop } from "./schema/prop";
-export { dto } from "./schema/dto";
 export { err } from "./error";
 export { dsl } from "./dsl";
 
@@ -9,6 +8,7 @@ export { ExpressionOrder } from "./dsl";
 export { TB_INHERIT, DV_ABSTRACT, DV_MODEL_NAME } from "./schema/model";
 export * as metadata from "./impl";
 export * as ast from "./impl/ast";
+export * as dto from "./schema/dto/local_api";
 export type * as internal_types from "./internal_types";
 export type { OrderNullsType, ModelOrder } from "./schema/order";
 export type { 
@@ -51,8 +51,8 @@ export {
 } from "./schema/computed";
 export { ScalarProvider, ScalarType, scalars } from "./schema/scalar";
 export type { ScalarKind } from "./schema/scalar";
-export type { TypeOf, ModelOf } from "./schema/dto";
-export { View } from "./schema/dto";
+export type { TypeOf } from "./schema/dto/global_api";
+export { View } from "./schema/dto/global_api";
 export { EntityManager } from "./schema/entity_manager";
 export type { CascadeType } from "./schema/join";
 export type  {

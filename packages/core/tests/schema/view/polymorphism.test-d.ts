@@ -1,7 +1,7 @@
 import { describe, expectTypeOf, it } from "vitest";
 import { BOOK, BOOK_STORE, ELECTRONIC_BOOK, PAPER_BOOK, PDF_ELECTRONIC_BOOK, PHYSICAL_BOOK_STORE } from "../../model/model";
 import { TypeOf } from "@/index";
-import { newView } from "@/schema/dto/index";
+import { newView } from "@/schema/dto/local_api";
 
 describe("PolymorephismTest", () => {
 

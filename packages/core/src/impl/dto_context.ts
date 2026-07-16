@@ -45,8 +45,8 @@ class AllScalarsMapping implements AbstractDtoMapping {
         let props = this._props;
         if (props == null) {
             const allProps = Array.from(
-                this._context!.embeddedProp?.props?.values() 
-                    ?? this._context!.entity.allPropMap.values()
+                this._context!.$embeddedProp?.props?.values() 
+                    ?? this._context!.$entity.allPropMap.values()
             );
             const ex = ExcludingContext.of(this._excludedKeys);
             this._props = props = allProps.filter(p => 
@@ -100,7 +100,7 @@ class AllScalarsMapping implements AbstractDtoMapping {
         }
         const fields = Array.from(prop.props.values()).map(p => this._toField(p, undefined));
         return {
-            entity: this._context.entity,
+            entity: this._context.$entity,
             fields
         }
     }
@@ -877,13 +877,7 @@ class CalculatedAssociationMapping implements AbstractDtoMapping {
     }
 }
 
-export function createDtoContext(
-    source: Entity
-): AbstractDtoContext {
-    return newDtoContext(source, false);
-}
-
-function newDtoContext(
+export function newDtoContext(
     source: Entity |  EntityProp,
     declaredOnly: boolean
 ): AbstractDtoContext {
@@ -918,20 +912,20 @@ export class AbstractDtoContext {
 
     private _allScalarsMapping: AllScalarsMapping | undefined = undefined;
 
-    readonly entity: Entity;
+    readonly $entity: Entity;
 
-    readonly embeddedProp: EntityProp | undefined;
+    readonly $embeddedProp: EntityProp | undefined;
 
     constructor(
         source: Entity |  EntityProp,
         readonly declaredOnly: boolean,
     ) {
         if (source instanceof EntityProp) {
-            this.entity = source.declaringEntity;
-            this.embeddedProp = source;
+            this.$entity = source.declaringEntity;
+            this.$embeddedProp = source;
         } else {
-            this.entity = source;
-            this.embeddedProp = undefined;
+            this.$entity = source;
+            this.$embeddedProp = undefined;
         }
     }
 
@@ -954,8 +948,8 @@ export class AbstractDtoContext {
 
     $instanceOf(model: AnyModel, body: DtoBody): InstanceOfMapping {
         const downcastTo = Entity.of(model);
-        if (!this.entity.isAssignableFrom(downcastTo)) {
-            throw new ArgumentError(`The argument "${downcastTo.name}" is not derived model of "${this.entity.name}"`);
+        if (!this.$entity.isAssignableFrom(downcastTo)) {
+            throw new ArgumentError(`The argument "${downcastTo.name}" is not derived model of "${this.$entity.name}"`);
         }
         return new InstanceOfMapping(downcastTo, body);
     }
@@ -983,23 +977,23 @@ export class AbstractDtoContext {
     }
 
     private _prop(key: string): EntityProp {
-        if (this.embeddedProp != null) {
-            const prop = this.embeddedProp.props!.get(key);
+        if (this.$embeddedProp != null) {
+            const prop = this.$embeddedProp.props!.get(key);
             if (prop == null) {
-                throw new ArgumentError(`The is not property "${key}" in the embedded property "${this.embeddedProp.toString()}"`);
+                throw new ArgumentError(`The is not property "${key}" in the embedded property "${this.$embeddedProp.toString()}"`);
             }
             return prop;
         }
         if (this.declaredOnly) {
-            const prop = this.entity.declaredPropMap.get(key);
+            const prop = this.$entity.declaredPropMap.get(key);
             if (prop == null) {
-                throw new ArgumentError(`There is no directly(ingnore inherited properties) property "${key}" in the entity "${this.entity.name}"`);
+                throw new ArgumentError(`There is no directly(ingnore inherited properties) property "${key}" in the entity "${this.$entity.name}"`);
             }
             return prop;
         }
-        const prop = this.entity.allPropMap.get(key);
+        const prop = this.$entity.allPropMap.get(key);
         if (prop == null) {
-            throw new ArgumentError(`There is no property "${key}" in the entity "${this.entity.name}"`);
+            throw new ArgumentError(`There is no property "${key}" in the entity "${this.$entity.name}"`);
         }
         return prop;
     }
@@ -1083,8 +1077,8 @@ class DtoContextCtorCreator {
         const declaredOnly = this._source instanceof Entity
             ? this._source.superEntity != null && this._superCtor == null
             : false;
-        writer.code("constructor() ").scope("CURLY_BRACKETS", () => {
-            writer.code(`super($source, ${declaredOnly})`).newLine(";");
+        writer.code("constructor(newSource) ").scope("CURLY_BRACKETS", () => {
+            writer.code(`super(newSource ?? $source, ${declaredOnly})`).newLine(";");
         }).newLine();
     }
 
@@ -1126,7 +1120,7 @@ class DtoContextCtorCreator {
                         )
                         .newLine(";");
                 }
-            } else if (prop.scalarType != null || prop.getTsFormulaFn(false) != null || prop.sqlFormulaFn != null) {
+            } else if (prop.scalarType != null || prop.isFormula) {
                 writer
                     .code(
                         `return new $scalarLikeMapping(ThisClass.${
@@ -1220,7 +1214,7 @@ export function createDto(
     body: any
 ) {
     const mappings = body(ctx);
-    const factory = new DtoFactory(ctx.entity, downloadTo);
+    const factory = new DtoFactory(ctx.$entity, downloadTo);
     for (const mapping of mappings) {
         factory.addMapping(mapping as AbstractDtoMapping);
     }

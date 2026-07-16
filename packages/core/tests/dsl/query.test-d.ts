@@ -3,9 +3,9 @@ import { Expression } from "@/dsl/expression";
 import { SqlClient } from "@/dsl/sql_client";
 import { TupleSubQuery } from "../../src/dsl/sub_query";
 import { tuple } from "../../src/dsl/tuple";
-import { dto } from "@/schema/dto";
 import { AUTHOR, BOOK, BOOK_STORE, TREE_NODE } from "../model/model";
 import { expectTypeOf, describe, it } from "vitest";
+import { dto } from "@/index";
 
 describe("QueryTest", () => {
     
@@ -13,24 +13,24 @@ describe("QueryTest", () => {
         throw new Error("Not implemented");
     }
 
-    const SIMPLE_BOOK_VIEW = dto.view(BOOK, $ => $
-        .id
-        .name
-    );
+    const SIMPLE_BOOK_VIEW = dto.view(BOOK, c => [
+        c.id,
+        c.name
+    ]);
 
-    const SIMPLE_AUTHOR_VIEW = dto.view(AUTHOR, $ => $
-        .id
-        .name($ => $
-            .firstName.$as("fn")
-            .lastName.$as("ln")
-        )
-    )
+    const SIMPLE_AUTHOR_VIEW = dto.view(AUTHOR, c => [
+        c.id,
+        c.name.with(c => [
+            c.firstName.as("fn"),
+            c.lastName.as("ln")
+        ])
+    ]);
 
-    const SIMPLE_TREE_NODE_VIEW = dto.view(TREE_NODE, $ => $
-        .id
-        .name
-        .flat("parentNode", $ => $.id)
-    );
+    const SIMPLE_TREE_NODE_VIEW = dto.view(TREE_NODE, c => [
+        c.id,
+        c.name,
+        c.parentNodeId
+    ]);
 
     it("TestRootQueryByOne", async () => {
 
