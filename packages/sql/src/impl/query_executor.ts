@@ -1,8 +1,6 @@
-import { 
-    ast, 
+import {  
     dsl, 
     err,
-    metadata, 
     RootQuery, 
     RootQueryProjection, 
     View, 
@@ -13,12 +11,13 @@ import {
     Expression, 
     AtLeastTwo, 
     Predicate, 
-    EntityTableLike,
     EntityTable,
     SelectionLike,
     RootQuerySelection,
     BaseModel,
-    BaseQuerySelectMapArgs
+    BaseQuerySelectMapArgs,
+    spi,
+    EntityTableLike
 } from "@ts-grm/core";
 import { MergedRootQueryImpl } from "./merged_query";
 import { AtomRootQueryImpl } from "./atom_root_query_impl";
@@ -41,7 +40,7 @@ export function usingExplicitPurpose<R>(
 export async function executeQuery<TProjection extends RootQueryProjection<any>>(
     query: RootQuery<TProjection>
 ): Promise<ReadonlyArray<any>> {
-    const contract = query as any as ast.QueryContract;
+    const contract = query as any as spi.QueryContract;
     const sqlClient = contract.kind === "ATOM"
         ? (query as AtomRootQueryImpl<TProjection>).mutableQuery.sqlClient
         : (query as any as MergedRootQueryImpl<TProjection>).sqlClient;
@@ -70,7 +69,7 @@ async function readColumn(
     selection: RootQuerySelection<any>,
     dataRowReader: DataRowReader,
 ): Promise<ReadonlyArray<any>> {
-    if (selection instanceof metadata.FetchedViewImpl) {
+    if (selection instanceof spi.FetchedViewImpl) {
         return await readDtos(sqlClient, selection.view.mapper, dataRowReader);
     }
     const values = [];
@@ -93,7 +92,7 @@ async function readColumnArray(
         if (columnValues.length === 0) {
             return [];
         }
-        if (selection instanceof metadata.FetchedViewImpl) {
+        if (selection instanceof spi.FetchedViewImpl) {
             dataRowReader = dataRowReader.offset(selection.view.mapper.span);
         } else {
             dataRowReader = dataRowReader.offset(1);
@@ -126,10 +125,10 @@ function buildStatement(
 
 async function readDtos(
     sqlClient: SqlClientImplementor,
-    mapper: metadata.DtoMapper,
+    mapper: spi.DtoMapper,
     dataRowReader: DataRowReader
 ): Promise<ReadonlyArray<any>> {
-    const dtoRows: Array<metadata.DtoRow> = [];
+    const dtoRows: Array<spi.DtoRow> = [];
     const dtos: Array<any> = [];
     const dtoRowReader = mapper.dtoRowReader;
     while (dataRowReader.next()) {
@@ -147,12 +146,12 @@ async function readDtos(
 
 async function resolveAssociations(
     sqlClient: SqlClientImplementor,
-    mapper: metadata.DtoMapper,
-    sourceRows: ReadonlyArray<metadata.DtoRow>,
+    mapper: spi.DtoMapper,
+    sourceRows: ReadonlyArray<spi.DtoRow>,
     recursiveContext: RecursiveContext | undefined
 ): Promise<void> {
     for (const unresolvedField of mapper.unresolvedFields) {
-        if (unresolvedField.prop.isEntityProp && (unresolvedField.prop as metadata.EntityProp).calculationStrategy != null) {
+        if (unresolvedField.prop.isEntityProp && (unresolvedField.prop as spi.EntityProp).calculationStrategy != null) {
             continue;
         }
         if (unresolvedField.subMapper != null || recursiveContext != null) {
@@ -172,13 +171,13 @@ async function resolveAssociations(
 
 class AssociationResolver {
 
-    private readonly _unresolvedField: metadata.DtoMapperField;
+    private readonly _unresolvedField: spi.DtoMapperField;
 
-    private readonly _targetMapper: metadata.DtoMapper;
+    private readonly _targetMapper: spi.DtoMapper;
 
-    private readonly _sourceDtoRowReader: metadata.DtoRowReader;
+    private readonly _sourceDtoRowReader: spi.DtoRowReader;
 
-    private readonly _targetDtoRowReader: metadata.DtoRowReader;
+    private readonly _targetDtoRowReader: spi.DtoRowReader;
 
     private readonly _isCollection: boolean;
 
@@ -192,9 +191,9 @@ class AssociationResolver {
 
     constructor(
         private _sqlClient: SqlClientImplementor,
-        private readonly _sourceMapper: metadata.DtoMapper,
-        unresolvedField: metadata.DtoMapperField,
-        private readonly _sourceRows: ReadonlyArray<metadata.DtoRow>,
+        private readonly _sourceMapper: spi.DtoMapper,
+        unresolvedField: spi.DtoMapperField,
+        private readonly _sourceRows: ReadonlyArray<spi.DtoRow>,
         private readonly _recursiveContext: RecursiveContext | undefined
     ) {
         if (unresolvedField.subMapper != null) { // Association
@@ -244,7 +243,7 @@ class AssociationResolver {
     private _dependencyArr(
         targetTable: any
     ): ReadonlyArray<Expression<any, any>> {
-        const entityTable = targetTable as any as metadata.AbstractEntityTable;
+        const entityTable = targetTable as any as spi.AbstractEntityTable;
         if (this._unresolvedField.prop.referenceKeyProp != null) {
             const keyProps = this._unresolvedField.prop.targetKeyProp!.scalarProps!;
             return keyProps.map(p => entityTable.__expression(p)) as any;
@@ -258,7 +257,7 @@ class AssociationResolver {
     private _keyExprArr(
         targetTable: any
     ): ReadonlyArray<Expression<any, any>> {
-        let keyProps: ReadonlyArray<metadata.EntityProp>;
+        let keyProps: ReadonlyArray<spi.EntityProp>;
         if (this._unresolvedField.prop.referenceKeyProp != null) {
             keyProps = this._unresolvedField.prop.referenceKeyProp.scalarProps!;
         } else {
@@ -267,7 +266,7 @@ class AssociationResolver {
                 ?? this._unresolvedField.prop.targetEntity!.idProp
             ).scalarProps!;
         }
-        const entityTable = targetTable as any as metadata.AbstractEntityTable;
+        const entityTable = targetTable as any as spi.AbstractEntityTable;
         return keyProps.map(p => entityTable.__expression(p)) as any;
     }
 
@@ -289,7 +288,7 @@ class AssociationResolver {
     private _orderExprArr(
         targetTable: any
     ): ReadonlyArray<Expression<any, any>> {
-        const entityTable = targetTable as any as metadata.AbstractEntityTable;
+        const entityTable = targetTable as any as spi.AbstractEntityTable;
         const arr: Array<Expression<any, any>> = [];
         const orders = this._unresolvedField.orders;
         if (orders != null) {
@@ -303,7 +302,7 @@ class AssociationResolver {
     private _orders(
         targetTable: any
     ): ReadonlyArray<ExpressionOrder> {
-        const entityTable = targetTable as any as metadata.AbstractEntityTable;
+        const entityTable = targetTable as any as spi.AbstractEntityTable;
         const arr: Array<ExpressionOrder> = [];
         const orders = this._unresolvedField.orders;
         if (orders != null) {
@@ -393,7 +392,7 @@ class AssociationResolver {
         const recursiveContext = RecursiveContext.merge(recursiveContexts);
         const unresolvedFieldIndex = this._unresolvedField.index;
         const sourceDtoRowReader = this._sourceDtoRowReader;
-        const targetRows: Array<metadata.DtoRow> = [];
+        const targetRows: Array<spi.DtoRow> = [];
         let targetRowMap = this._byTargetKey ? await recursiveContext?.targetRowMap() : undefined;
         for (const binding of this._bindingMap.values()) {
             const targetData = binding.targetData;
@@ -420,14 +419,14 @@ class AssociationResolver {
                     value = targetData.map(row => row.dto);
                     targetRows.push(...targetData);
                 } else {
-                    value = [(targetData as metadata.DtoRow).dto];
-                    targetRows.push(targetData as metadata.DtoRow);
+                    value = [(targetData as spi.DtoRow).dto];
+                    targetRows.push(targetData as spi.DtoRow);
                 }
             } else {
                 if (targetData == null) {
                     value = this._sourceMapper.nullAsUndefined ? undefined : null;
                 } else if (Array.isArray(targetData)) {
-                    const arr = targetData as ReadonlyArray<metadata.DtoRow>;
+                    const arr = targetData as ReadonlyArray<spi.DtoRow>;
                     throw new err.StateError(
                         `Cannot resolve the assocaition property "${
                             this._unresolvedField.prop.toString()
@@ -436,8 +435,8 @@ class AssociationResolver {
                         } associated objects`
                     );
                 } else {
-                    value = (targetData as metadata.DtoRow).dto;
-                    targetRows.push(targetData as metadata.DtoRow);
+                    value = (targetData as spi.DtoRow).dto;
+                    targetRows.push(targetData as spi.DtoRow);
                 }
             }
             for (const sourceRow of binding.sourceRows) {
@@ -490,7 +489,7 @@ class AssociationResolver {
             } else if (!this._isCollection) {
                 // Do nothing
             } else if (!Array.isArray(binding.targetData)) {
-                binding.targetData = [binding.targetData as metadata.DtoRow, row];
+                binding.targetData = [binding.targetData as spi.DtoRow, row];
             } else {
                 binding.targetData.push(row);
             }
@@ -519,7 +518,7 @@ class AssociationResolver {
                 kind: isRecursive 
                     ? (this._byTargetKey ? "LOAD_RECURSIVE_TREE_KEY" : "LOAD_RECURSIVE_TREE")
                     : "LOAD_ASSOCIATION",
-                prop: this._unresolvedField.prop as metadata.EntityProp
+                prop: this._unresolvedField.prop as spi.EntityProp
             });
             if (isRecursive && recursiveContext == null) {
                 recursiveContext = new RecursiveContext(
@@ -546,7 +545,7 @@ class AssociationResolver {
     private async _createOptimizedRowReaders(
         dependencies: ReadonlyArray<any>
     ): Promise<[DataRowReader, DataRowReader, RecursiveContext | undefined]> {
-        const prop = this._unresolvedField.prop as metadata.EntityProp;
+        const prop = this._unresolvedField.prop as spi.EntityProp;
         const referenceKeyProp = prop.referenceKeyProp;
         if (referenceKeyProp != null) {
             const keyRowReader = DataRowReader.of(
@@ -572,8 +571,8 @@ class AssociationResolver {
                 targetKeyProp.props == null
                     ? (association as any)[`target${capitalize(targetKeyProp.name)}`]
                     : (association as any)[`target${capitalize(targetKeyProp.name)}`]();
-            const sourceExprs = metadata.AbstractEntityTable.expandExprArr(sourceKey, sourceKeyProp);
-            let targetExprs = metadata.AbstractEntityTable.expandExprArr(targetKey, targetKeyProp);
+            const sourceExprs = spi.AbstractEntityTable.expandExprArr(sourceKey, sourceKeyProp);
+            let targetExprs = spi.AbstractEntityTable.expandExprArr(targetKey, targetKeyProp);
             if (this._optimizationIndices != null) {
                 targetExprs = this._optimizationIndices.map(i => targetExprs[i]!);
             }
@@ -584,7 +583,7 @@ class AssociationResolver {
         const [sql, args] = buildStatement(this._sqlClient, query);
         const dataRows = await this._sqlClient.executor.executeStatement(sql, args, {
             kind: "LOAD_ASSOCIATION",
-            prop: this._unresolvedField.prop as metadata.EntityProp
+            prop: this._unresolvedField.prop as spi.EntityProp
         });
         const keyRowReader = DataRowReader.of(dataRows);
         return [
@@ -606,7 +605,7 @@ class AssociationResolver {
                 const dependencyArr = this._dependencyArr(target);
                 q.where(expressionsToAst(dependencyArr).in(...dependencies));  
                 if (predicateFn != null) {
-                    q.where(predicateFn(target as any as metadata.AbstractEntityTable));
+                    q.where(predicateFn(target as any as spi.AbstractEntityTable));
                 }
                 if (this._isCollection) {
                     q.orderBy(...this._orders(target));
@@ -620,7 +619,7 @@ class AssociationResolver {
                 const dependencyArr = this._dependencyArr(target);
                 q.where(expressionsToAst(dependencyArr).in(...dependencies));  
                 if (predicateFn != null) {
-                    q.where(predicateFn(target as any as metadata.AbstractEntityTable));
+                    q.where(predicateFn(target as any as spi.AbstractEntityTable));
                 }
                 const orders = this._orders(target);
                 q.orderBy(...this._orders(target));
@@ -661,7 +660,7 @@ class AssociationResolver {
                 const dependencyArr = this._dependencyArr(target) as any;
                 q.where((expressionsToAst(dependencyArr)).in(...dependencies));
                 if (predicateFn != null) {
-                    q.where(predicateFn(target as any as metadata.AbstractEntityTable));
+                    q.where(predicateFn(target as any as spi.AbstractEntityTable));
                 }
                 return q.select(
                     baseQuerySelectionMapArgs(
@@ -678,7 +677,7 @@ class AssociationResolver {
             }).unionAllRecursively(model, {
                 join: (prev, target) => { 
                     const dependencyArr = this._dependencyArr(target) as any;
-                    let keyProps: ReadonlyArray<metadata.EntityProp>;
+                    let keyProps: ReadonlyArray<spi.EntityProp>;
                     if (this._unresolvedField.prop.referenceKeyProp != null) {
                         keyProps = this._unresolvedField.prop.referenceKeyProp.scalarProps!;
                     } else {
@@ -690,14 +689,14 @@ class AssociationResolver {
                     const prevExpressions = keyProps.map((keyProp, index) => 
                         this._byTargetKey
                             ? prev[`_${this._keySpan + index}`] as Expression<any, any>
-                            : (prev.target as any as metadata.AbstractEntityTable).__expression(keyProp)
+                            : (prev.target as any as spi.AbstractEntityTable).__expression(keyProp)
                     );
                     return expressionsToAst(dependencyArr).eq(expressionsToAst(prevExpressions)) as Predicate;
                 },
                 query: (q, target) => {
                     const dependencyArr = this._dependencyArr(target) as any;
                     if (predicateFn != null) {
-                        q.where(predicateFn(target as any as metadata.AbstractEntityTable));
+                        q.where(predicateFn(target as any as spi.AbstractEntityTable));
                     }
                     return q.select(
                         baseQuerySelectionMapArgs(
@@ -774,8 +773,8 @@ class AssociationResolver {
     private async _targetRowMap(
         keys: ReadonlyArray<any>, 
         view: View<AnyModel, any>
-    ): Promise<Map<any, metadata.DtoRow>> {
-        const map = new Map<any, metadata.DtoRow>();
+    ): Promise<Map<any, spi.DtoRow>> {
+        const map = new Map<any, spi.DtoRow>();
         if (keys.length === 0) {
             return map;
         }
@@ -793,7 +792,7 @@ class AssociationResolver {
         const [sql, args] = buildStatement(this._sqlClient, query);
         const dataRows = await this._sqlClient.executor.executeStatement(sql, args, {
             kind: "LOAD_RECURSIVE_TREE_NODE",
-            prop: this._unresolvedField.prop as metadata.EntityProp
+            prop: this._unresolvedField.prop as spi.EntityProp
         });
         const keySpan = this._keySpan;
         const keyReader = DataRowReader.of(dataRows);
@@ -867,8 +866,8 @@ class AssociationResolver {
 
 type AssociationBinding = {
     readonly dependency: any;
-    readonly sourceRows: Array<metadata.DtoRow>;
-    targetData: metadata.DtoRow | ReadonlyArray<metadata.DtoRow> | undefined;
+    readonly sourceRows: Array<spi.DtoRow>;
+    targetData: spi.DtoRow | ReadonlyArray<spi.DtoRow> | undefined;
     targetIdMap: Map<any, any> | undefined;
 };
 
@@ -956,7 +955,7 @@ class RecursiveContext {
         return this._maxDepth != -1 && this._depth + 1 >= this._maxDepth;
     }
 
-    async targetRowMap(): Promise<Map<string, metadata.DtoRow>> {
+    async targetRowMap(): Promise<Map<string, spi.DtoRow>> {
         let targetRowMap = this._targetRowMapData?.map;
         if (targetRowMap == null) {
             const getter = this?._targetRowMapData?.getter;
@@ -1003,13 +1002,13 @@ class RecursiveContext {
 
 type TargetRowMapData = {
     readonly getter: TargetRowMapGetter;
-    map: Map<any, metadata.DtoRow> | undefined;
+    map: Map<any, spi.DtoRow> | undefined;
 };
-type TargetRowMapGetter = (keys: ReadonlyArray<any>) => Promise<Map<any, metadata.DtoRow>>;
+type TargetRowMapGetter = (keys: ReadonlyArray<any>) => Promise<Map<any, spi.DtoRow>>;
 
 function resolveTsFormulas(
-    mapper: metadata.DtoMapper,
-    sourceRows: ReadonlyArray<metadata.DtoRow>
+    mapper: spi.DtoMapper,
+    sourceRows: ReadonlyArray<spi.DtoRow>
 ): void {
     for (const sourceRow of sourceRows) {
         mapper.dtoRowReader.resolveTsFormulas(sourceRow);
@@ -1018,18 +1017,18 @@ function resolveTsFormulas(
 
 async function resolveCalculators(
     sqlClient: SqlClientImplementor,
-    mapper: metadata.DtoMapper,
-    sourceRows: ReadonlyArray<metadata.DtoRow>
+    mapper: spi.DtoMapper,
+    sourceRows: ReadonlyArray<spi.DtoRow>
 ): Promise<void> {
     for (const unresolvedField of mapper.unresolvedFields) {
         if (unresolvedField.prop.isEntityProp) {
-            const entityProp = unresolvedField.prop as metadata.EntityProp;
+            const entityProp = unresolvedField.prop as spi.EntityProp;
             if (entityProp.calculationStrategy != null) {
                 const filteredSourceRows = filterSourceRows(sourceRows, unresolvedField);
                 if (filteredSourceRows.length !== 0) {
                     await usingExplicitPurpose({
                         kind: "LOAD_CALCULATOR",
-                        prop: unresolvedField.prop as metadata.EntityProp,
+                        prop: unresolvedField.prop as spi.EntityProp,
                         parameter: unresolvedField.parameter
                     }, async () => {
                         await new CalculatorResolver(
@@ -1047,7 +1046,7 @@ async function resolveCalculators(
 
 class CalculatorResolver {
     
-    private _strategy: metadata.CalculationStrategy;
+    private _strategy: spi.CalculationStrategy;
 
     private _isCollection: boolean;
 
@@ -1055,11 +1054,11 @@ class CalculatorResolver {
 
     constructor(
         private readonly _sqlClient: SqlClientImplementor,
-        private readonly _sourceMapper: metadata.DtoMapper,
-        private readonly _unresolvedField: metadata.DtoMapperField,
-        sourceRows: ReadonlyArray<metadata.DtoRow>
+        private readonly _sourceMapper: spi.DtoMapper,
+        private readonly _unresolvedField: spi.DtoMapperField,
+        sourceRows: ReadonlyArray<spi.DtoRow>
     ) {
-        const entityProp = _unresolvedField.prop as metadata.EntityProp;
+        const entityProp = _unresolvedField.prop as spi.EntityProp;
         this._strategy = entityProp.calculationStrategy!
         this._isCollection = this._strategy.kind === "COLLECTION" || this._strategy.kind === "PARAMETERIZED_COLLECTION";
         const dtoRowReader = this._sourceMapper.dtoRowReader;
@@ -1210,14 +1209,14 @@ class CalculatorResolver {
 type CalculatorBinding = {
     readonly dependency: any;
     readonly hash: any;
-    readonly sourceRows: Array<metadata.DtoRow>;
+    readonly sourceRows: Array<spi.DtoRow>;
     targetData: any;
 };
 
 function filterSourceRows(
-    rows: ReadonlyArray<metadata.DtoRow>,
-    field: metadata.DtoMapperField
-): ReadonlyArray<metadata.DtoRow> {
+    rows: ReadonlyArray<spi.DtoRow>,
+    field: spi.DtoMapperField
+): ReadonlyArray<spi.DtoRow> {
     const downcastTo = field.downcastTo;
     if (downcastTo == null) {
         return rows;

@@ -1,4 +1,5 @@
-import { ExpressionLike, Predicate, TupleSubQuery } from "@/dsl";
+import { ExpressionLike, Predicate } from "@/dsl/expression";
+import { TupleSubQuery } from "@/dsl/sub_query";
 import { ExprTuple, ExprTupleMatchable } from "@/dsl/tuple";
 import { AtLeastTwo } from "@/dsl/utils";
 import { Node } from "./node";

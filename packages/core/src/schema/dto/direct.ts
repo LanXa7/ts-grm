@@ -1,4 +1,5 @@
 import { AnyModel } from "../model";
+import { NullityOf } from "../prop_internal_behavior";
 import { 
     CalculatedCollectionPropContract, 
     CalculatedReferencePropContract, 
@@ -8,14 +9,14 @@ import {
     ReferencePropContract, 
     ScalarLikePropContract, 
     ScalarPropContract 
-} from "../prop_contract";
+} from "../prop_internal_types";
 import { CalculatedCollectionMapping, CalculatedReferenceMapping } from "./calculator";
 import { CollectionMapping } from "./collection";
 import { DtoKind } from "./dto_context";
 import { EmbeddedMapping } from "./embedded";
 import { ReferenceMapping } from "./reference";
 import { ScalarLikeMapping } from "./scalar_like";
-import { DefaultTargetMappings, NullityOf } from "./utils";
+import { DefaultTargetMappings } from "./utils";
 
 export type DirectContext<
     TModel extends AnyModel,

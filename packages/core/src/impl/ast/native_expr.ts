@@ -1,4 +1,5 @@
-import { ExpressionLike, ExpressionOrder } from "@/dsl";
+import { ExpressionLike } from "@/dsl/expression";
+import { ExpressionOrder } from "@/dsl/utils";
 import { AbstractExpr } from "./expr";
 import { AbstractNumExpr } from "./num_expr";
 import { Visitor } from "./visitor";

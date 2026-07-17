@@ -1,10 +1,9 @@
 import { 
-    ast, 
+    spi,
     AtomBaseQuery, 
     BaseQuery, 
     BaseQueryMapOf, 
     ExpressionOrder, 
-    metadata, 
 } from "@ts-grm/core";
 import { MutableBaseQueryImpl } from "./mutable_base_query_impl";
 import { MapBaseQueryProjection } from "./query_projection";
@@ -15,19 +14,19 @@ export class AtomBaseQueryImpl<TProjection>
 extends AbstractBaseQueryImpl<TProjection>
 implements 
     AtomBaseQuery<TProjection>, 
-    metadata.BaseQueryImplementor<TProjection>, 
-    ast.AtomQueryContract {
+    spi.BaseQueryImplementor<TProjection>, 
+    spi.AtomQueryContract {
 
-    readonly options: ast.AtomQueryOptions;
+    readonly options: spi.AtomQueryOptions;
 
     constructor(
         readonly mutableQuery: MutableBaseQueryImpl,
-        readonly recursivePred: ast.AbstractPred | undefined,
+        readonly recursivePred: spi.AbstractPred | undefined,
         readonly _projection: MapBaseQueryProjection<BaseQueryMapOf<TProjection>>,
-        options: ast.AtomQueryOptions | undefined
+        options: spi.AtomQueryOptions | undefined
     ) {
         super();
-        this.options = options ?? ast.defaultAtomQueryOptions;
+        this.options = options ?? spi.defaultAtomQueryOptions;
     }
 
     __type(): { 
@@ -72,11 +71,11 @@ implements
         return "ATOM";
     }
 
-    get tables(): ReadonlyArray<metadata.AbstractTable> {
+    get tables(): ReadonlyArray<spi.AbstractTable> {
         return this.mutableQuery.tables;
     }
     
-    get wherePred(): ast.AbstractPred | undefined {
+    get wherePred(): spi.AbstractPred | undefined {
         return this.mutableQuery.wherePred;
     }
     
@@ -84,23 +83,23 @@ implements
         return this.mutableQuery.orders;
     }
     
-    get groupByExprs(): ReadonlyArray<ast.AbstractExpr<any>> | undefined {
+    get groupByExprs(): ReadonlyArray<spi.AbstractExpr<any>> | undefined {
         return this.mutableQuery.groupByExprs;
     }
     
-    get havingPred(): ast.AbstractPred | undefined {
+    get havingPred(): spi.AbstractPred | undefined {
         return this.mutableQuery.havingPred;
     }
 
-    get projection(): ast.ProjectionContract {
-        return this._projection as any as ast.ProjectionContract;
+    get projection(): spi.ProjectionContract {
+        return this._projection as any as spi.ProjectionContract;
     }
 
     get isRecursive(): boolean {
         return this.mutableQuery instanceof RecursiveMutableBaseQueryImpl;
     }
 
-    accept(visitor: ast.Visitor): void {
+    accept(visitor: spi.Visitor): void {
         visitor.visitAtomQuery(this);
     }
 }

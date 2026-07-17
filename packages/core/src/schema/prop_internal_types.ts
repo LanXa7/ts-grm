@@ -1,3 +1,6 @@
+import { AnyModel } from "./model";
+import { OptionalModelKey } from "./model_internal_types";
+
 /**
  * These internal interfaces are used to optimize the compilation speed
  * 
@@ -5,9 +8,6 @@
  * - `TProp extends ScalarProp<infer R, infer Nullity>` is slow
  * - `TProp extends ScalarPropContract<infer R, infer Nullity>` is fast
  */
-
-import { AnyModel, OptionalModelKey } from "./model";
-
 export type AssociationType = "ONE_TO_ONE" | "ONE_TO_MANY" | "MANY_TO_ONE" | "MANY_TO_MANY";
 
 export type NullityType = "NONNULL" | "NULLABLE" | "INPUT_NONNULL";

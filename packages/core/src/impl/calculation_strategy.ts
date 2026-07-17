@@ -1,6 +1,6 @@
 import { ParameterizedTargetCalculatorFn, ParameterizedValueCalculatorFn, TargetCalculatorFn, ValueCalculatorFn } from "@/schema/computed";
 import { StandardSchemaV1 } from '@standard-schema/spec';
-import { EntityProp } from ".";
+import { EntityProp } from "./entity_prop";
 
 export type CalculationStrategyKind = CalculationStrategy["kind"];
 

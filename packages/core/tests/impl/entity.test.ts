@@ -2,8 +2,9 @@ import { Entity } from "@/impl/entity";
 import { PAPER_BOOK, ORDER_ITEM, BOOK, AUTHOR, TREE_NODE, BOOK_STORE, ELECTRONIC_BOOK, PDF_ELECTRONIC_BOOK, ORDER, VIP_ORDER, STUDENT, COURSE } from "../model/model";
 import { describe, expect, it } from "vitest";
 import { makeErr } from "@/error/util";
-import { Column, DatabaseStrategy, UPPER_SNAKE_CASE_DATABASE_NAMING_STRATEGY } from "@/impl";
 import { EMPTY_KEYWORD_STRATEGY, expectStorage } from "./utils";
+import { DatabaseStrategy, UPPER_SNAKE_CASE_DATABASE_NAMING_STRATEGY } from "@/impl/strategy";
+import { Column } from "@/impl/storage";
 
 describe("EntityTest", () => {
 

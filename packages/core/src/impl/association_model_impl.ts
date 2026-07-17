@@ -1,8 +1,11 @@
-import { AssociationModel } from "@/dsl";
-import { AnyModel, OptionalModelKey } from "@/schema/model";
-import { AssociationEntity, Entity, EntityProp } from ".";
+import { AssociationModel } from "@/dsl/association";
+import { OptionalModelKey } from "@/schema/model_internal_types";
+import { Entity } from "./entity";
+import { EntityProp } from "./entity_prop";
+import { AssociationEntity } from "./association_entity";
 import { makeErr } from "@/error/util";
-import { JoinPolicyType } from "@/dsl/table";
+import { JoinPolicyType } from "@/dsl/table_internal_types";
+import { AnyModel } from "@/schema/model";
 
 export class AssociationModelImpl<
     TSourceModel extends AnyModel,

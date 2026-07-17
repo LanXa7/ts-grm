@@ -3,7 +3,6 @@ import { Entity } from "./entity";
 import { EntityProp } from "./entity_prop";
 import { not, Predicate } from "@/dsl/expression";
 import { createTableProp } from "./ast/prop_expr";
-import { JoinType, ModelLike } from "@/dsl/table";
 import { makeErr } from "@/error/util";
 import { AbstractTable, createJoinedTable } from "./abstract_table";
 import { ShadowAnchor } from "./shadow_anchor";
@@ -12,7 +11,7 @@ import { FetchedViewImpl } from "./fetched_view_impl";
 import { TypedBaseTable } from "./base_table";
 import { ArgumentError, StateError } from "@/error/common";
 import { ModelContract } from "./model_contract";
-import { BaseQuerySelectMapArgs, dsl, Expression, ExpressionLike, ExprTuple } from "@/dsl";
+import { Expression, ExpressionLike } from "@/dsl/expression";
 import { BaseModelImplementor } from "./base_query_implementor";
 import { AnyModel } from "@/schema/model";
 import { AbstractPred, ConstantPred } from "./ast/pred";
@@ -21,11 +20,16 @@ import { AssociationEntity, AssociationProp } from "./association_entity";
 import { AbstractAssociationTable } from "./association_table";
 import { AbstractExpr, AbstractNumExpr, AtomQueryContract } from "./ast";
 import { toTuple } from "./ast/tuple";
+import { ExprTuple } from "../dsl/tuple";
 import { capitalize } from "./util";
 import { getQueryFactory } from "./ast/query_factory";
-import { metadata, View } from "..";
 import { exists, notExists } from "@/dsl/sub_query";
 import { count } from "@/dsl/aggregate";
+import { ModelLike } from "@/dsl/table_internal_types";
+import { JoinType } from "@/dsl/table";
+import { View } from "@/schema/dto/api";
+import { associationModel } from "@/dsl/association";
+import { BaseQuerySelectMapArgs } from "@/dsl/base_query";
 
 export abstract class AbstractEntityTable implements AbstractTable {
 
@@ -192,8 +196,8 @@ export abstract class AbstractEntityTable implements AbstractTable {
         filter: JoinFilter | undefined,
         ignoreTargetFilters: boolean
     ): AbstractAssociationTable {
-        const associationModel = dsl.associationModel(this.__entity.model!, propName);
-        const associationEntity = AssociationEntity.of(associationModel); 
+        const _associationModel = associationModel(this.__entity.model!, propName);
+        const associationEntity = AssociationEntity.of(_associationModel); 
         return associationEntity.table({
             parent: this,
             joinType,
@@ -250,7 +254,7 @@ export abstract class AbstractEntityTable implements AbstractTable {
         const subQuery = getQueryFactory().createAtomSubQuery(targetEntity.model, (q, table) => {
             q.where(this._associatedPred(prop, table as any as AbstractEntityTable));
             if (filter != null) {
-                const pred = filter(table as any as metadata.AbstractEntityTable) as Predicate | null | undefined;
+                const pred = filter(table as any as AbstractEntityTable) as Predicate | null | undefined;
                 q.where(pred);
             }
         });
@@ -269,7 +273,7 @@ export abstract class AbstractEntityTable implements AbstractTable {
         const subQuery = getQueryFactory().createAtomSubQuery(targetEntity.model, (q, table) => {
             q.where(this._associatedPred(prop, table as any as AbstractEntityTable));
             if (filter != null) {
-                const pred = filter(table as any as metadata.AbstractEntityTable) as Predicate | null | undefined;
+                const pred = filter(table as any as AbstractEntityTable) as Predicate | null | undefined;
                 q.where(pred);
             }
         });
@@ -287,7 +291,7 @@ export abstract class AbstractEntityTable implements AbstractTable {
             ));
         const subQuery = getQueryFactory().createAtomSubQuery(targetEntity.model, (q, table) => {
             if (filter != null) {
-                const pred = filter(table as any as metadata.AbstractEntityTable) as Predicate | null | undefined;
+                const pred = filter(table as any as AbstractEntityTable) as Predicate | null | undefined;
                 if (pred != null) {
                     q.where(this._associatedPred(prop, table as any as AbstractEntityTable));
                     q.where(pred);
@@ -311,7 +315,7 @@ export abstract class AbstractEntityTable implements AbstractTable {
             ));
         const subQuery = getQueryFactory().createAtomSubQuery(targetEntity.model, (q, table) => {
             if (filter != null) {
-                const pred = filter(table as any as metadata.AbstractEntityTable) as Predicate | null | undefined;
+                const pred = filter(table as any as AbstractEntityTable) as Predicate | null | undefined;
                 if (pred != null) {
                     q.where(this._associatedPred(prop, table as any as AbstractEntityTable));
                     q.where(pred);
@@ -339,7 +343,7 @@ export abstract class AbstractEntityTable implements AbstractTable {
             if (filter == null) {
                 throw new ArgumentError(`The filter for "every" must be specified`);
             }
-            const pred = filter(table as any as metadata.AbstractEntityTable) as Predicate | null | undefined;
+            const pred = filter(table as any as AbstractEntityTable) as Predicate | null | undefined;
             if (pred == null) {
                 throw new ArgumentError(`The filter for "every" must return valid predicate`);
             }
@@ -365,7 +369,7 @@ export abstract class AbstractEntityTable implements AbstractTable {
         const subQuery = getQueryFactory().createAtomSubQuery(prop.targetEntity!.model, (q, table) => {
             q.where(this._associatedPred(prop, table as any as AbstractEntityTable));
             if (filter != null) {
-                const pred = filter(table as any as metadata.AbstractEntityTable) as Predicate | null | undefined;
+                const pred = filter(table as any as AbstractEntityTable) as Predicate | null | undefined;
                 q.where(pred);
             }
             return q.select(count());

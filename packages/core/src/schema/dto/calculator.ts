@@ -4,10 +4,10 @@ import {
     ParameterizedCalculatedCollectionPropContract, 
     ParameterizedCalculatedReferencePropContract, 
     ParameterizedCalculatedValuePropContract 
-} from "../prop_contract";
+} from "../prop_internal_types";
 import { DtoBody, DtoKind, DtoType } from "./dto_context";
 import { ScalarLikeMapping } from "./scalar_like";
-import { DefaultTargetMappings, TargetMappings, TargetMembersOf, TargetModelOf, WithNullity } from "./utils";
+import { DefaultTargetMappings, TargetMappings, TargetMembersOf, PropModelOf, WithNullity } from "./utils";
 
 export type ParameterizedContext<
     TModel extends AnyModel,
@@ -97,7 +97,7 @@ export interface CalculatedReferenceMapping<
     ): CalculatedReferenceMapping<TModel, TDtoKind, TAlias, TMember, TMappings, TNullity>;
 
     with<const TMappings extends TargetMappings<TModel, TMember>>(
-        body: DtoBody<TargetModelOf<TModel, TMember>, TDtoKind, "ENTITY", TargetMembersOf<TMember>, TMappings>
+        body: DtoBody<PropModelOf<TModel, TMember>, TDtoKind, "ENTITY", TargetMembersOf<TMember>, TMappings>
     ): CalculatedReferenceMapping<TModel, TDtoKind, TKey, TMember, TMappings, TNullity>;
 }
 
@@ -116,7 +116,7 @@ export interface CalculatedCollectionMapping<
     ): CalculatedCollectionMapping<TModel, TDtoKind, TAlias, TMember, TMappings>;
 
     with<const TMappings extends TargetMappings<TModel, TMember>>(
-        body: DtoBody<TargetModelOf<TModel, TMember>, TDtoKind, "ENTITY", TargetMembersOf<TMember>, TMappings>
+        body: DtoBody<PropModelOf<TModel, TMember>, TDtoKind, "ENTITY", TargetMembersOf<TMember>, TMappings>
     ): CalculatedCollectionMapping<TModel, TDtoKind, TKey, TMember, TMappings>;
 }
 

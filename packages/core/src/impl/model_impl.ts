@@ -1,7 +1,8 @@
 import { ArgumentError, StateError } from "@/error/common";
 import { Entity } from "@/impl/entity";
-import { AnyModel, Ctor, CtorMembers, Model, ModelContext, TableOptions, UniqueKeys } from "@/schema/model";
+import { Ctor, CtorMembers, ModelContext, TableOptions, UniqueKeys } from "@/schema/model_internal_types";
 import { ModelContract } from "./model_contract";
+import { AnyModel, Model } from "@/schema/model";
 
 export class ModelImpl<
     TName extends string, 

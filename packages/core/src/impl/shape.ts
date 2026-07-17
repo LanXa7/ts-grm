@@ -4,7 +4,7 @@ import { DtoMapper, DtoMapperField } from "./dto_mapper";
 import { EntityProp } from "./entity_prop";
 import { CalculationStrategyKind } from "./calculation_strategy";
 import { ScalarType } from "@/schema/scalar";
-import { Entity } from ".";
+import { Entity } from "./entity";
 
 export type Shape = {
     [key: string]: ShapeMember;

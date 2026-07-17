@@ -1,9 +1,9 @@
 import { ColumnDef } from "@/impl/schema_def";
 import { NodeRender } from "./node_render";
 import { TransactionManager } from "@/transaction/transaction_manger";
-import { metadata } from "@ts-grm/core";
+import { spi } from "@ts-grm/core";
 
-export interface Driver extends metadata.DatabaseKeywordStrategy {
+export interface Driver extends spi.DatabaseKeywordStrategy {
 
     readonly name: string;
 

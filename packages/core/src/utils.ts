@@ -1,5 +1,5 @@
-import { FollowNullity, FollowPrefix } from "./schema/prop";
-import { EmbeddedPropContract } from "./schema/prop_contract";
+import { FollowNullity, FollowPrefix } from "./schema/prop_internal_behavior";
+import { EmbeddedPropContract } from "./schema/prop_internal_types";
 
 export type Prettify<T> = 
     T extends Array<infer U>

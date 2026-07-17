@@ -1,11 +1,11 @@
 import { Driver } from "@/driver/deriver";
-import { CascadeType, err, metadata, ScalarType } from "@ts-grm/core";
+import { CascadeType, err, ScalarType, spi } from "@ts-grm/core";
 
 export interface TableDef {
 
-    readonly entity: metadata.Entity | undefined;
+    readonly entity: spi.Entity | undefined;
 
-    readonly prop: metadata.EntityProp | undefined;
+    readonly prop: spi.EntityProp | undefined;
 
     readonly name: string;
 
@@ -22,7 +22,7 @@ export interface ColumnDef {
 
     readonly declaringTable: TableDef;
 
-    readonly prop: metadata.EntityProp | undefined;
+    readonly prop: spi.EntityProp | undefined;
     
     readonly name: string;
 
@@ -32,7 +32,7 @@ export interface ColumnDef {
 
     readonly length: number | undefined;
 
-    readonly when: ReadonlyArray<metadata.Entity> | undefined;
+    readonly when: ReadonlyArray<spi.Entity> | undefined;
 }
 
 export type ConstraintDef = SimpleContraintDef | ForeignKeyConstraintDef;
@@ -62,9 +62,9 @@ export type ForeignKeyConstraintDef = {
 
 export class TableDefImpl implements TableDef {
 
-    readonly entity: metadata.Entity | undefined;
+    readonly entity: spi.Entity | undefined;
 
-    readonly prop: metadata.EntityProp | undefined;
+    readonly prop: spi.EntityProp | undefined;
 
     private readonly _columnMap = new Map<string, ColumnDefImpl>();
 
@@ -77,11 +77,11 @@ export class TableDefImpl implements TableDef {
     private _constraints: ReadonlyArray<ConstraintDef> | undefined = undefined; 
 
     constructor(
-        data: metadata.Entity | metadata.EntityProp,
+        data: spi.Entity | spi.EntityProp,
         readonly name: string
     ) {
-        this.entity = data instanceof metadata.Entity ? data : undefined;
-        this.prop = this.entity == null ? data as metadata.EntityProp : undefined;
+        this.entity = data instanceof spi.Entity ? data : undefined;
+        this.prop = this.entity == null ? data as spi.EntityProp : undefined;
     }
 
     get columns(): ReadonlyArray<ColumnDefImpl> {
@@ -125,7 +125,7 @@ export class TableDefImpl implements TableDef {
         return columnDef;
     }
 
-    findColumnDefByProp(prop: metadata.EntityProp): ColumnDefImpl {
+    findColumnDefByProp(prop: spi.EntityProp): ColumnDefImpl {
         for (const columnDef of this._columnMap.values()) {
             if (columnDef.prop === prop) {
                 return columnDef;
@@ -139,7 +139,7 @@ export class TableDefImpl implements TableDef {
     ): ReadonlyArray<string> {
         const arr: Array<string> = [];
         const inline = driver.requiresInlineConstraints;
-        const writer = new metadata.CodeWriter();
+        const writer = new spi.CodeWriter();
         if (this.entity != null) {
             writer
             .code("-- Entity table for \"")
@@ -217,12 +217,12 @@ export class ColumnDefImpl implements ColumnDef {
 
     constructor(
         readonly declaringTable: TableDefImpl,
-        readonly prop: metadata.EntityProp | undefined,
+        readonly prop: spi.EntityProp | undefined,
         readonly name: string,
         readonly referenceColumnDef: ColumnDefImpl | undefined,
         readonly type: ScalarType<any>,
         readonly nullable: boolean,
-        readonly when: ReadonlyArray<metadata.Entity> | undefined
+        readonly when: ReadonlyArray<spi.Entity> | undefined
     ) {}
 
     get length(): number | undefined {
@@ -244,7 +244,7 @@ export class ColumnDefImpl implements ColumnDef {
 function appendTo(
     columnDef: ColumnDef, 
     driver: Driver,
-    writer: metadata.CodeWriter
+    writer: spi.CodeWriter
 ) {
     writer.separator();
     if (columnDef.when != null) {
@@ -273,7 +273,7 @@ function constraintToSql(
     declaringTable: TableDef,
     inline: boolean
 ): string {
-    const writer = new metadata.CodeWriter();
+    const writer = new spi.CodeWriter();
     switch (constraint.kind) {
         case "PRIMARY_KEY":
             if (constraint.implicit === "MIDDLE_TABLE") {

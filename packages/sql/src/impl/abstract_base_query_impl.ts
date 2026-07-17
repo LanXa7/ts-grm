@@ -1,11 +1,25 @@
-import { AnyModel, ast, AtLeastOne, BaseModel, BaseQuery, BaseQueryMapOf, BaseQueryProjection, BaseQuerySelectMapArgs, BaseTable, dsl, metadata, Predicate, RecursiveMutableBaseQuery, Table } from "@ts-grm/core";
+import { 
+    spi,
+    AnyModel, 
+    AtLeastOne, 
+    BaseModel, 
+    BaseQuery, 
+    BaseQueryMapOf, 
+    BaseQueryProjection, 
+    BaseQuerySelectMapArgs, 
+    BaseTable, 
+    dsl, 
+    Predicate, 
+    RecursiveMutableBaseQuery, 
+    Table 
+} from "@ts-grm/core";
 import { toTables } from "./utils";
 import { RecursiveMutableBaseQueryImpl } from "./recursive_mutable_base_query_impl";
 import { MapBaseQueryProjection } from "./query_projection";
 import { AtomBaseQueryImpl } from "./atom_base_query_impl";
 
 export abstract class AbstractBaseQueryImpl<TProjection> 
-implements metadata.BaseQueryImplementor<TProjection> {
+implements spi.BaseQueryImplementor<TProjection> {
 
     abstract __type(): { 
         baseQuery: TProjection | true; 
@@ -37,7 +51,7 @@ implements metadata.BaseQueryImplementor<TProjection> {
             }
         ]
     ): BaseQuery<TProjection> {
-        const prev = metadata.createTypedBaseTable(this.toModel(true), "PREV") as any as BaseTable<BaseQueryMapOf<TProjection>>;
+        const prev = spi.createTypedBaseTable(this.toModel(true), "PREV") as any as BaseTable<BaseQueryMapOf<TProjection>>;
         const tables = toTables(args);
         const options = args[args.length - 1] as any;
         const join = options.join as Function;
@@ -53,12 +67,12 @@ implements metadata.BaseQueryImplementor<TProjection> {
 
     toModel(
         isCte: boolean
-    ): metadata.BaseModelImplementor<BaseQueryMapOf<TProjection>> {
+    ): spi.BaseModelImplementor<BaseQueryMapOf<TProjection>> {
         return new BaseModelImpl(this as any, isCte);
     }
 }
 
-export class BaseModelImpl<T extends BaseQuerySelectMapArgs> implements metadata.BaseModelImplementor<T> {
+export class BaseModelImpl<T extends BaseQuerySelectMapArgs> implements spi.BaseModelImplementor<T> {
 
     __type(): {
         baseModel: T | true;
@@ -66,7 +80,7 @@ export class BaseModelImpl<T extends BaseQuerySelectMapArgs> implements metadata
         return { baseModel: true };
     }
 
-    readonly identifier: number = metadata.allocateModelIdentifier();
+    readonly identifier: number = spi.allocateModelIdentifier();
 
     private readonly _args: T;
 
@@ -74,7 +88,7 @@ export class BaseModelImpl<T extends BaseQuerySelectMapArgs> implements metadata
         private readonly _query: AbstractBaseQueryImpl<BaseQueryProjection<T>>,
         readonly __isCte: boolean
     ) {
-        this._args = metadata.withShadowAnchor(_query.args, this);
+        this._args = spi.withShadowAnchor(_query.args, this);
     }
 
     get __args(): T {
@@ -82,10 +96,10 @@ export class BaseModelImpl<T extends BaseQuerySelectMapArgs> implements metadata
     }
 
     get __isRecursive(): boolean {
-        return (this._query as any as ast.QueryContract).isRecursive;
+        return (this._query as any as spi.QueryContract).isRecursive;
     }
 
-    __toQuery(): metadata.BaseQueryImplementor<BaseQueryProjection<T>> {
+    __toQuery(): spi.BaseQueryImplementor<BaseQueryProjection<T>> {
         return this._query;
     }
 }

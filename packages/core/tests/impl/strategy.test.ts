@@ -1,7 +1,7 @@
 import { UPPER_SNAKE_CASE_DATABASE_NAMING_STRATEGY, LOWER_SNAKE_CASE_DATABASE_NAMING_STRATEGY } from "@/impl/strategy";
 import { BOOK } from "../model/model";
 import { describe, expect, it } from "vitest";
-import { Entity } from "@/impl";
+import { Entity } from "@/impl/entity";
 
 describe("DatabaseNamingStrategyTest", () => {
 

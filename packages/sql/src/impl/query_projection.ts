@@ -1,4 +1,4 @@
-import { ast, BaseQuerySelectMapArgs, ExpressionLike, RootQueryProjection, RootQuerySelection, SubQueryProjection } from "@ts-grm/core";
+import { BaseQuerySelectMapArgs, ExpressionLike, RootQueryProjection, RootQuerySelection, spi, SubQueryProjection } from "@ts-grm/core";
 
 export abstract class AbstractQueryProjection {
     abstract readonly kind: string;
@@ -16,7 +16,7 @@ implements RootQueryProjection<T, TKind> {
             return new ArrRootQueryProjection(arr as ReadonlyArray<RootQuerySelection<any>>);
         }
         const arg = arr[0];
-        if (arg instanceof ast.AbstractSelection) {
+        if (arg instanceof spi.AbstractSelection) {
             return new ValRootQueryProjection(arg as RootQuerySelection<any>);
         }
         return new MapRootQueryProjection(arg as { readonly [key:string]: RootQuerySelection<any> });

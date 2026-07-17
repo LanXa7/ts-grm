@@ -1,4 +1,4 @@
-import { AnyModel, ast, dsl, EntityTable, err, JoinType, metadata, Predicate } from "@ts-grm/core";
+import { AnyModel, dsl, EntityTable, err, JoinType, Predicate, spi } from "@ts-grm/core";
 import { JoinMergeScope } from "./join_merge_scope";
 import { SqlBuilder } from "./sql_builder";
 import { BaseQueryMetadata } from "./base_query_metadata";
@@ -18,7 +18,7 @@ export class RealTable {
 
     private _joinType: JoinType | undefined;
 
-    private _joinProp: metadata.EntityProp | metadata.AssociationProp | undefined = undefined;
+    private _joinProp: spi.EntityProp | spi.AssociationProp | undefined = undefined;
 
     private _isJoinPropInverse: boolean = false;
 
@@ -26,11 +26,11 @@ export class RealTable {
     // should not be copied to this object because it is 
     // field which cannot be merged
 
-    private _castToEntity: metadata.Entity | undefined = undefined;
+    private _castToEntity: spi.Entity | undefined = undefined;
 
-    private _filters: Set<metadata.JoinFilter> | undefined = undefined;
+    private _filters: Set<spi.JoinFilter> | undefined = undefined;
 
-    private _filterPred: ast.AbstractPred | undefined = undefined;
+    private _filterPred: spi.AbstractPred | undefined = undefined;
 
     private _filterPredResolved = false;
 
@@ -42,14 +42,14 @@ export class RealTable {
 
     private _children: ReadonlyArray<RealTable> | undefined = undefined;
 
-    private _sqlFormulaMap: Map<metadata.EntityProp, ast.AbstractExpr<any>> | undefined;
+    private _sqlFormulaMap: Map<spi.EntityProp, spi.AbstractExpr<any>> | undefined;
 
     cteDefinitionFragment: Fragment | undefined = undefined;
 
     fragment: Fragment | undefined = undefined;
 
     constructor(
-        readonly symbol: metadata.AbstractTable,
+        readonly symbol: spi.AbstractTable,
         readonly shadow: RealTable | undefined
     ) {
         if (symbol.__joinOperation != null) {
@@ -60,7 +60,7 @@ export class RealTable {
             if (symbol.__joinOperation?.filter != null) {
                 let filters = this._filters;
                 if (filters == null) {
-                    this._filters = filters = new Set<metadata.JoinFilter>();
+                    this._filters = filters = new Set<spi.JoinFilter>();
                 }
                 filters.add(symbol.__joinOperation.filter);
             }
@@ -80,7 +80,7 @@ export class RealTable {
         return this._parent;
     }
 
-    get joinProp(): metadata.EntityProp | metadata.AssociationProp | undefined {
+    get joinProp(): spi.EntityProp | spi.AssociationProp | undefined {
         return this._joinProp;
     }
 
@@ -88,16 +88,16 @@ export class RealTable {
         return this._isJoinPropInverse;
     }
 
-    get castToEntity(): metadata.Entity | undefined {
+    get castToEntity(): spi.Entity | undefined {
         return this._castToEntity;
     }
 
-    get filters(): ReadonlySet<metadata.JoinFilter> | undefined {
+    get filters(): ReadonlySet<spi.JoinFilter> | undefined {
         return this._filters;
     }
 
     child(
-        symbol:metadata.AbstractTable, 
+        symbol:spi.AbstractTable, 
         scope: JoinMergeScope | undefined
     ): RealTable {
         const joinOperation = symbol.__joinOperation;
@@ -136,7 +136,7 @@ export class RealTable {
         return child;
     }
 
-    export(table: metadata.AbstractTable): RealTable {
+    export(table: spi.AbstractTable): RealTable {
         if (table.__shadow !== this.symbol) {
             throw new err.ArgumentError("table is not exported table of current base table");
         }
@@ -178,11 +178,11 @@ export class RealTable {
         return children;
     }
 
-    private _mergeFilter(filter: metadata.JoinFilter | undefined) {
+    private _mergeFilter(filter: spi.JoinFilter | undefined) {
         if (filter != null) {
             let filters = this._filters;
             if (filters == null) {
-                this._filters = filters = new Set<metadata.JoinFilter>();
+                this._filters = filters = new Set<spi.JoinFilter>();
             }
             filters.add(filter);
             this._filterPredResolved = false;
@@ -190,7 +190,7 @@ export class RealTable {
     }
 
     private static _restrictKeyOf(
-        symbol: metadata.AbstractTable,
+        symbol: spi.AbstractTable,
         joinType: JoinType | undefined
     ): string {
         return `${
@@ -203,7 +203,7 @@ export class RealTable {
     }
 
     private static _laxKeyOf(
-        symbol: metadata.AbstractTable,
+        symbol: spi.AbstractTable,
         scope: JoinMergeScope | undefined
     ): string {
         return `${
@@ -216,7 +216,7 @@ export class RealTable {
     }
 
     private static _propKey(
-        symbol: metadata.AbstractTable
+        symbol: spi.AbstractTable
     ): string {
         const joinOperation = symbol.__joinOperation!;
         if (joinOperation.joinProp != null) {
@@ -260,7 +260,7 @@ export class RealTable {
         return metadata;
     }
 
-    get filterPred(): ast.AbstractPred | undefined {
+    get filterPred(): spi.AbstractPred | undefined {
         if (this._filterPredResolved) {
             return this._filterPred;
         }
@@ -274,15 +274,15 @@ export class RealTable {
                 predicate = dsl.and(predicate, newPredicate);
             }
         }
-        this._filterPred = predicate as ast.AbstractPred | undefined;
+        this._filterPred = predicate as spi.AbstractPred | undefined;
         this._filterPredResolved = true;
         return this._filterPred;
     }
 
-    sqlFormulaExpr(prop: metadata.EntityProp): ast.AbstractExpr<any> {
+    sqlFormulaExpr(prop: spi.EntityProp): spi.AbstractExpr<any> {
         let expr = this._sqlFormulaMap?.get(prop);
         if (expr == null) {
-            expr = prop.sqlFormulaFn!(this.symbol as any as EntityTable<AnyModel>) as ast.AbstractExpr<any>;
+            expr = prop.sqlFormulaFn!(this.symbol as any as EntityTable<AnyModel>) as spi.AbstractExpr<any>;
             let map = this._sqlFormulaMap;
             if (map == null) {
                 this._sqlFormulaMap = map = new Map();

@@ -1,12 +1,13 @@
 import { AnyModel } from "@/schema/model";
 import { ExpressionLike, Predicate } from "./expression";
-import { BaseTable, EntityTableLike, Table } from "./table";
+import { BaseTable, Table } from "./table";
 import { AtLeastOne, ExpressionOrder } from "./utils";
 import { getQueryFactory } from "@/impl/ast/query_factory";
 import { BaseQueryImplementor } from "@/impl/base_query_implementor";
 import { QueryContract } from "@/impl/ast";
 import { ArgumentError } from "@/error/common";
 import { AnyAssociationModel } from "./association";
+import { EntityTableLike } from "./table_internal_types";
 
 export function derivedModel<TQuery extends BaseQuery<any>>(
     query: TQuery,

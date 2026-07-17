@@ -1,17 +1,17 @@
-import { ast, err, metadata } from "@ts-grm/core";
+import { err, spi } from "@ts-grm/core";
 import { Stack } from "./stack";
 import { JoinMergeScope } from "./join_merge_scope";
 import { RealTable } from "./real_table";
 import { SqlClientImplementor } from "@/sql_client";
 
-export class PreVisitor extends ast.AbstractVisitor {
+export class PreVisitor extends spi.AbstractVisitor {
 
-    private readonly _tableMap = new Map<metadata.AbstractTable, RealTable>();
+    private readonly _tableMap = new Map<spi.AbstractTable, RealTable>();
     
     private readonly _joinMergeScopeStack =
         new Stack<JoinMergeScope>(undefined);
 
-    private readonly _strategy: metadata.DatabaseStrategy;
+    private readonly _strategy: spi.DatabaseStrategy;
 
     private _filterProcessingTables: Array<RealTable> | undefined = undefined;
         
@@ -22,42 +22,42 @@ export class PreVisitor extends ast.AbstractVisitor {
         this._strategy = _sqlClient.strategy;
     }
 
-    get tableMap(): ReadonlyMap<metadata.AbstractTable, RealTable> {
+    get tableMap(): ReadonlyMap<spi.AbstractTable, RealTable> {
         this._processFilters();
         return this._tableMap;
     }
 
-    visitAtomQuery(query: ast.AtomQueryContract): void {
+    visitAtomQuery(query: spi.AtomQueryContract): void {
         const projection = query.projection;
         switch (projection.kind) {
             case "ROOT_SINGLE":
-                (projection.selection as any as ast.Node).accept(this);
+                (projection.selection as any as spi.Node).accept(this);
                 break;
             case "ROOT_ARRAY":
                 for (const selection of projection.selections) {
-                    (selection as any as ast.Node).accept(this);
+                    (selection as any as spi.Node).accept(this);
                 }
                 break;
             case "ROOT_MAP":
                 for (const key in projection.selections) {
-                    (projection.selections[key] as any as ast.Node).accept(this);
+                    (projection.selections[key] as any as spi.Node).accept(this);
                 }
                 break;
             case "SUB_SINGLE":
-                (projection.selection as any as ast.Node).accept(this);
+                (projection.selection as any as spi.Node).accept(this);
                 break;
             case "SUB_ARRAY":
                 for (const selection of projection.selections) {
-                    (selection as any as ast.Node).accept(this);
+                    (selection as any as spi.Node).accept(this);
                 }
                 break;
             case "BASE":
                 for (const key in projection.args) {
                     const value = projection.args[key];
-                    if (value instanceof ast.AbstractExpr) {
+                    if (value instanceof spi.AbstractExpr) {
                         value.accept(this);
                     } else {
-                        const table = value as metadata.AbstractEntityTable;
+                        const table = value as spi.AbstractEntityTable;
                         if (table.__shadow != null) {
                             this._toRealTable(table);
                         }
@@ -71,23 +71,23 @@ export class PreVisitor extends ast.AbstractVisitor {
         }
     }
 
-    visitPropExpr(expr: ast.PropExprContract): void {
+    visitPropExpr(expr: spi.PropExprContract): void {
         if (expr.table.__isPrev) {
             return;
         }
-        let table: metadata.AbstractTable = expr.table;
+        let table: spi.AbstractTable = expr.table;
         let prop = expr.prop;
-        let column: metadata.Column;
+        let column: spi.Column;
         if (this._sqlClient.isDirectAssociatedKey(expr)) {
             table = table.__joinOperation!.parent;
-            column = expr.table.__joinOperation!.joinProp!.sub(prop.subPath).toStorage(this._strategy) as metadata.Column;
+            column = expr.table.__joinOperation!.joinProp!.sub(prop.subPath).toStorage(this._strategy) as spi.Column;
         } else {
             if (!prop.isMiddleTableProp) {
-                table = (table as metadata.AbstractEntityTable).__to(
-                    (prop as metadata.EntityProp).declaringEntity
+                table = (table as spi.AbstractEntityTable).__to(
+                    (prop as spi.EntityProp).declaringEntity
                 );
             }
-            column = prop.toStorage(this._strategy) as metadata.Column;
+            column = prop.toStorage(this._strategy) as spi.Column;
         }
         const shadow = this._toRealTable(table).shadow;
         if (shadow != null) {
@@ -98,7 +98,7 @@ export class PreVisitor extends ast.AbstractVisitor {
         }
     }
 
-    visitIsPred(pred: ast.IsPred): void {
+    visitIsPred(pred: spi.IsPred): void {
         const shadow = this._toRealTable(pred.table).shadow;
         if (shadow != null) {
             shadow.baseQueryMetadata.alias(
@@ -108,7 +108,7 @@ export class PreVisitor extends ast.AbstractVisitor {
         }
     }
 
-    visitFetchedView(view: ast.FetchedViewContract): void {
+    visitFetchedView(view: spi.FetchedViewContract): void {
         const shadow = this._toRealTable(view.table).shadow;
         for (const field of view.view.mapper.fields) {
             if (field.columnIndex == null) {
@@ -119,17 +119,17 @@ export class PreVisitor extends ast.AbstractVisitor {
             if (!field.prop.isEntityProp) {
                 continue;
             }
-            const entityProp = field.prop as metadata.EntityProp;
+            const entityProp = field.prop as spi.EntityProp;
             if (entityProp.sqlFormulaFn != null) {
                 realTable.sqlFormulaExpr(entityProp).accept(this);
             } else if (shadow != null) {
-                const column = entityProp.toStorage(this._strategy) as metadata.Column;
+                const column = entityProp.toStorage(this._strategy) as spi.Column;
                 shadow.baseQueryMetadata.alias(view.table.__anchor!.exportedName, column.name);
             }
         }
     }
 
-    visitShadowExpr(expr: ast.ShadowExprContract): void {
+    visitShadowExpr(expr: spi.ShadowExprContract): void {
         if (expr.shadow != null) {
             this
                 ._toRealTable(expr.shadow)
@@ -138,7 +138,7 @@ export class PreVisitor extends ast.AbstractVisitor {
         }
     }
 
-    visitCompoundPred(pred: ast.CompoundPred): void {
+    visitCompoundPred(pred: spi.CompoundPred): void {
         if (pred.op === "AND") {
             for (const p of pred.preds) {
                 p.accept(this);
@@ -152,12 +152,12 @@ export class PreVisitor extends ast.AbstractVisitor {
     }
 
     private _toRealTable(
-        table: metadata.AbstractTable
+        table: spi.AbstractTable
     ): RealTable {
         let realTable = this._tableMap.get(table.__prototype);
         if (realTable == null) {
             if (table.__shadow == null) {
-                const anchor = (table as metadata.AbstractEntityTable).__anchor;
+                const anchor = (table as spi.AbstractEntityTable).__anchor;
                 if (anchor != null) {
                     throw new err.ArgumentError("The argument cannot be table with shadow anchor does not have shadow");
                 }
@@ -225,7 +225,7 @@ export class PreVisitor extends ast.AbstractVisitor {
     }
 
     private _processMiddleTable(table: RealTable) {
-        const middleTable = (table.joinProp as metadata.EntityProp)!.toStorage(this._strategy)! as metadata.MiddleTable;
+        const middleTable = (table.joinProp as spi.EntityProp)!.toStorage(this._strategy)! as spi.MiddleTable;
         const exportedName = table.parent!.symbol.__anchor!.exportedName;
         for (const column of middleTable.toThisColumns) {
             table.parent!.shadow!.baseQueryMetadata.alias(exportedName, column.referencedColumnName!);
@@ -233,8 +233,8 @@ export class PreVisitor extends ast.AbstractVisitor {
     }
 
     private _processForeignKey(table: RealTable, reverse: boolean) {
-        const storage = (reverse ? (table.joinProp as metadata.EntityProp)!.mappedByProp! : (table.joinProp as metadata.EntityProp)!)
-            .toStorage(this._strategy) as metadata.PropStorage;
+        const storage = (reverse ? (table.joinProp as spi.EntityProp)!.mappedByProp! : (table.joinProp as spi.EntityProp)!)
+            .toStorage(this._strategy) as spi.PropStorage;
         const exportedName = table.parent!.symbol.__anchor!.exportedName;
         if (storage.kind === "COLUMN") {
             table.parent!.shadow!.baseQueryMetadata.alias(

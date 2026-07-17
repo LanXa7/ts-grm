@@ -1,8 +1,11 @@
-import { EntityTable, Expression, SqlClient } from "@/dsl";
-import { AllModelMembers, AnyModel, CalculatorSourceKeys, ModelIdKey } from "./model";
-import { View } from "./dto";
+import { EntityTable } from "@/dsl/table";
+import { Expression } from "@/dsl/expression";
+import { SqlClient } from "@/dsl/sql_client";
+import { AllModelMembers, CalculatorSourceKeys, ModelIdKey } from "./model_internal_types";
+import { View } from "./dto/api";
 import { StandardSchemaV1 } from "@standard-schema/spec";
 import { MemberType } from "./dto/all_scalars";
+import { AnyModel } from "./model";
 
 export class TsFormula<TValue> {
 

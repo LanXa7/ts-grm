@@ -1,4 +1,5 @@
-import { Entity, EntityProp } from ".";
+import { Entity } from "./entity";
+import { EntityProp } from "./entity_prop";
 import { CodeWriter } from "./code_writer";
 import { DataReader } from "./data_reader";
 import { FetchProp } from "./dto";

@@ -1,4 +1,4 @@
-import { ast } from "@ts-grm/core";
+import { spi } from "@ts-grm/core";
 
 export abstract class AbstractTupleSubQueryImpl {
 
@@ -30,12 +30,12 @@ export abstract class AbstractTupleSubQueryImpl {
         return false;
     }
 
-    get recursivePred(): ast.AbstractPred | undefined {
+    get recursivePred(): spi.AbstractPred | undefined {
         return undefined;
     }
 }
 
-export abstract class AbstractExprSubQueryImpl extends ast.AbstractExpr<any> {
+export abstract class AbstractExprSubQueryImpl extends spi.AbstractExpr<any> {
 
     __type(): {
         selectionLike: true;
@@ -65,12 +65,12 @@ export abstract class AbstractExprSubQueryImpl extends ast.AbstractExpr<any> {
         return false;
     }
 
-    get recursivePred(): ast.AbstractPred | undefined {
+    get recursivePred(): spi.AbstractPred | undefined {
         return undefined;
     }
 }
 
-export abstract class AbstractNumSubQueryImpl extends ast.AbstractNumExpr<any> {
+export abstract class AbstractNumSubQueryImpl extends spi.AbstractNumExpr<any> {
 
     __type(): {
         selectionLike: true;
@@ -104,12 +104,12 @@ export abstract class AbstractNumSubQueryImpl extends ast.AbstractNumExpr<any> {
         return false;
     }
 
-    get recursivePred(): ast.AbstractPred | undefined {
+    get recursivePred(): spi.AbstractPred | undefined {
         return undefined;
     }
 }
 
-export abstract class AbstractStrSubQueryImpl extends ast.AbstractStrExpr {
+export abstract class AbstractStrSubQueryImpl extends spi.AbstractStrExpr {
 
     __type(): {
         selectionLike: true;
@@ -143,12 +143,12 @@ export abstract class AbstractStrSubQueryImpl extends ast.AbstractStrExpr {
         return false;
     }
 
-    get recursivePred(): ast.AbstractPred | undefined {
+    get recursivePred(): spi.AbstractPred | undefined {
         return undefined;
     }
 }
 
-export abstract class AbstractDtSubQueryImpl extends ast.AbstractDtExpr {
+export abstract class AbstractDtSubQueryImpl extends spi.AbstractDtExpr {
 
     __type(): {
         selectionLike: true;
@@ -178,7 +178,7 @@ export abstract class AbstractDtSubQueryImpl extends ast.AbstractDtExpr {
         return false;
     }
 
-    get recursivePred(): ast.AbstractPred | undefined {
+    get recursivePred(): spi.AbstractPred | undefined {
         return undefined;
     }
 }

@@ -1,12 +1,12 @@
 import { Composite } from "@/sql/fragment";
 import { SqlBuilder } from "@/sql/sql_builder";
-import { ast, dto, RootQuery } from "@ts-grm/core";
+import { dto, spi, RootQuery } from "@ts-grm/core";
 import { AUTHOR, BOOK, BOOK_STORE, COMMENT, COURSE, ORDER, ORDER_ITEM, PAPER_BOOK, PHYSICAL_BOOK_STORE, STUDENT, TREE_NODE } from "../model/model";
 import { AtomRootQueryImpl } from "@/impl/atom_root_query_impl";
 import { MergedRootQueryImpl } from "@/impl/merged_query";
 
 export function sql(q: RootQuery<any>): string {
-    const contract = q as any as ast.QueryContract;
+    const contract = q as any as spi.QueryContract;
     const sqlClient = contract.kind === "ATOM"
         ? (q as AtomRootQueryImpl<any>).mutableQuery.sqlClient
         : (q as MergedRootQueryImpl<any>).sqlClient;

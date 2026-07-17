@@ -1,4 +1,4 @@
-import { Entity } from "@/impl";
+import { Entity } from "@/impl/entity";
 import { AUTHOR, BOOK, BOOK_STORE, ORDER, ORDER_ITEM, STUDENT } from "../model/model";
 import { describe, expect, it } from "vitest";
 import { EntityTable } from "@/dsl/table";

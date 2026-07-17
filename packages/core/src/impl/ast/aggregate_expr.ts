@@ -1,4 +1,5 @@
-import { AbstractExpr, Visitor } from ".";
+import { AbstractExpr } from "./expr";
+import { Visitor } from "./visitor";
 import { Node } from "./node";
 import { AbstractNumExpr } from "./num_expr";
 

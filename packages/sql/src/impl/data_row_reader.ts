@@ -1,6 +1,6 @@
-import { err, metadata } from "@ts-grm/core";
+import { err, spi } from "@ts-grm/core";
 
-export class DataRowReader implements metadata.DataReader {
+export class DataRowReader implements spi.DataReader {
 
     private readonly _rows: DataRows;
 

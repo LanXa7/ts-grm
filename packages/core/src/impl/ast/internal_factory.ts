@@ -5,7 +5,7 @@ import type { CoalesceCmpExpr, CoalesceDtExpr, CoalesceEsExpr, CoalesceExpr, Coa
 import type { AbstractNumExpr } from "./num_expr";
 import type { AbstractStrExpr } from "./str_expr";
 import type { AbstractDtExpr } from "./dt_expr";
-import { ExpressionOrder } from "@/dsl";
+import { ExpressionOrder } from "@/dsl/utils";
 import { ShadowAnchor } from "../shadow_anchor";
 import { QueryContract } from "./query";
 import { AbstractEsExpr } from "./es_expr";

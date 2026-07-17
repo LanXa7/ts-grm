@@ -14,7 +14,7 @@ import { ExistsPred, SubQueryExprContract } from "./sub_query_expr";
 import { TupleCmpPred, TupleContract, TupleInCollectionPred, TupleInSubQueryPred } from "./tuple";
 import { Node } from "./node";
 import { IsPred } from "./is_pred";
-import { ExpressionOrder } from "@/dsl";
+import { ExpressionOrder } from "@/dsl/utils";
 
 export interface Visitor {
 

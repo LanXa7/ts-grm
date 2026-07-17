@@ -1,8 +1,9 @@
-import { EntityTable, Predicate } from "@/dsl";
+import { EntityTable } from "@/dsl/table";
+import { Predicate } from "@/dsl/expression";
 import { AnyModel } from "../model";
 import { DtoBody, DtoType, DtoKind } from "./dto_context";
 import { ModelOrder } from "../order";
-import { TargetMappings, TargetMembersOf, TargetModelOf } from "./utils";
+import { TargetMappings, TargetMembersOf, PropModelOf } from "./utils";
 
 export interface CollectionMapping<
     TModel extends AnyModel,
@@ -19,15 +20,15 @@ export interface CollectionMapping<
     ): CollectionMapping<TModel, TDtoKind, TAlias, TMember, TMappings>;
 
     with<const TMappings extends TargetMappings<TModel, TMember>>(
-        body: DtoBody<TargetModelOf<TModel, TMember>, TDtoKind, "ENTITY", TargetMembersOf<TMember>, TMappings>
+        body: DtoBody<PropModelOf<TModel, TMember>, TDtoKind, "ENTITY", TargetMembersOf<TMember>, TMappings>
     ): CollectionMapping<TModel, TDtoKind, TKey, TMember, TMappings>;
 
     filter(
-        filter: (table: EntityTable<TargetModelOf<TModel, TMember>>) => Predicate | undefined
+        filter: (table: EntityTable<PropModelOf<TModel, TMember>>) => Predicate | undefined
     ): CollectionMapping<TModel, TDtoKind, TKey, TMember, TMappings>;
 
     sort(
-        ...orders: ReadonlyArray<ModelOrder<TargetModelOf<TModel, TMember>>>
+        ...orders: ReadonlyArray<ModelOrder<PropModelOf<TModel, TMember>>>
     ): CollectionMapping<TModel, TDtoKind, TKey, TMember, TMappings>;
 
     limit(

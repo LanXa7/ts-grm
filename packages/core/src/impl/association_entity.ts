@@ -1,12 +1,15 @@
 import { ArgumentError } from "@/error/common";
 import { EntityProp } from "./entity_prop";
-import { Column, Columns, DatabaseStrategy, Entity, JoinOperation, MiddleTable, StorageType } from ".";
+import { Entity } from "./entity";
 import { capitalize } from "./util";
 import { makeErr } from "@/error/util";
 import { AbstractAssociationTable, AssociationTableCtor, createAssociationTableClass } from "./association_table";
 import { AnyAssociationModel } from "@/dsl/association";
 import { AssociationModelImpl } from "./association_model_impl";
 import { ScalarType } from "@/schema/scalar";
+import { DatabaseStrategy } from "./strategy";
+import { JoinOperation } from "./entity_table";
+import { Column, Columns, MiddleTable, StorageType } from "./storage";
 
 export class AssociationEntity {
 

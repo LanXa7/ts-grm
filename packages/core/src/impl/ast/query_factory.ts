@@ -1,25 +1,13 @@
 import { StateError } from "@/error/common";
 import { makeErr } from "@/error/util";
-import { 
-    AtLeastOne, 
-    BaseModel, 
-    BaseQuery,
-    AtomBaseQuery,
-    BaseQueryProjection, 
-    Expression, 
-    ExpressionSubQuery,
-    TupleSubQuery,
-    AtomTupleSubQuery,
-    AtomExpressionSubQuery, 
-    MutableBaseQuery, 
-    MutableSubQuery, 
-    RootQuery, 
-    RootQueryProjection, 
-    Table,
-    AnyAssociationModel
-} from "@/dsl";
+import { AtLeastOne } from "@/dsl/utils";
 import { AnyModel } from "@/schema/model";
-import { SubQueryProjection } from "@/dsl/sub_query";
+import { SubQueryProjection, ExpressionSubQuery, TupleSubQuery, AtomTupleSubQuery, AtomExpressionSubQuery, MutableSubQuery } from "@/dsl/sub_query";
+import { BaseQuery, BaseModel, AtomBaseQuery, BaseQueryProjection, MutableBaseQuery } from "@/dsl/base_query";
+import { RootQuery, RootQueryProjection } from "@/dsl/root_query";
+import { Expression } from "@/dsl/expression";
+import { Table } from "@/dsl/table";
+import { AnyAssociationModel } from "@/dsl/association";
 
 export interface QueryFactory {
 

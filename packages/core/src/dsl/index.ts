@@ -48,16 +48,9 @@ export type {
 export type { AssociationModel, AnyAssociationModel } from "./association";
 export type { 
     Table, 
-    JoinType, 
-    ModelLike, 
     EntityTable, 
     BaseTable, 
-    FilterType, 
-    FilterContextType, 
-    NullableEntityTableOf, 
-    NullableBaseQuerySelectMapOf,
-    TableLike,
-    EntityTableLike
+    JoinType
 } from "./table";
 export type { LikeMode, Expression, ExpressionLike, Predicate } from "./expression";
 

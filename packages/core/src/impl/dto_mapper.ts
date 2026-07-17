@@ -1,13 +1,14 @@
 import { ArgumentError, StateError } from "@/error/common";
 import { Dto, DtoField, FetchProp, TypeNameProp } from "./dto";
 import { Entity } from "./entity";
+import { EntityProp} from "./entity_prop";
 import { createDtoRowReader, DtoRowReader } from "./row_reader";
 import { makeErr } from "@/error/util";
-import { AbstractEntityTable, EntityProp } from ".";
 import { EntityPropOrder } from "./entity_prop_order";
-import { Predicate } from "@/dsl";
+import { Predicate } from "@/dsl/expression";
 import { AbstractDtoContext, createDto, newDtoContext } from "./dto_context";
-import { ReferenceFetchType } from "@/schema/dto";
+import { ReferenceFetchType } from "@/schema/dto/api";
+import { AbstractEntityTable } from "./entity_table";
 
 export function dtoMapper(dto: Dto, nullAsUndefined: boolean): DtoMapper {
     const mapper = new Mapper(

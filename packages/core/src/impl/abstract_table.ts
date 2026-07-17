@@ -1,7 +1,7 @@
 import { Entity } from "./entity";
 import { BaseModelImplementor } from "./base_query_implementor";
 import { createTypedBaseTable, TypedBaseTable } from "./base_table";
-import { BaseQuerySelectMapArgs, JoinType, ModelLike } from "@/dsl";
+import { BaseQuerySelectMapArgs } from "@/dsl/base_query";
 import { JoinFilter, JoinOperation } from "./entity_table";
 import { ModelImpl } from "./model_impl";
 import { AnyModel } from "@/schema/model";
@@ -9,6 +9,8 @@ import { ModelContract } from "./model_contract";
 import { ShadowAnchor } from "./shadow_anchor";
 import { AssociationEntity } from "./association_entity";
 import { AssociationModelImpl } from "./association_model_impl";
+import { ModelLike } from "@/dsl/table_internal_types";
+import { JoinType } from "@/dsl/table";
 
 export interface AbstractTable {
 

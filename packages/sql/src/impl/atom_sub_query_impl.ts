@@ -1,4 +1,4 @@
-import { ast, ExpressionOrder, metadata, SubQueryProjection } from "@ts-grm/core";
+import { spi, ExpressionOrder, SubQueryProjection } from "@ts-grm/core";
 import { 
     AbstractDtSubQueryImpl, 
     AbstractNumSubQueryImpl, 
@@ -8,17 +8,17 @@ import {
 } from "./abstract_sub_query_impl";
 import { MutableSubQueryImpl } from "./mutable_sub_query_impl";
 
-export class AtomTupleSubQueryImpl extends AbstractTupleSubQueryImpl implements ast.AtomQueryContract {
+export class AtomTupleSubQueryImpl extends AbstractTupleSubQueryImpl implements spi.AtomQueryContract {
 
-    readonly options: ast.AtomQueryOptions;
+    readonly options: spi.AtomQueryOptions;
 
     constructor(
         readonly mutableQuery: MutableSubQueryImpl,
         readonly _projection: SubQueryProjection<any>,
-        optins: ast.AtomQueryOptions | undefined
+        optins: spi.AtomQueryOptions | undefined
     ) {
         super();
-        this.options = optins ?? ast.defaultAtomQueryOptions;
+        this.options = optins ?? spi.defaultAtomQueryOptions;
     }
 
     distinct(): AtomTupleSubQueryImpl {
@@ -49,11 +49,11 @@ export class AtomTupleSubQueryImpl extends AbstractTupleSubQueryImpl implements 
         return "ATOM";
     }
 
-    get tables(): ReadonlyArray<metadata.AbstractTable> {
+    get tables(): ReadonlyArray<spi.AbstractTable> {
         return this.mutableQuery.tables;
     }
     
-    get wherePred(): ast.AbstractPred | undefined {
+    get wherePred(): spi.AbstractPred | undefined {
         return this.mutableQuery.wherePred;
     }
     
@@ -61,34 +61,34 @@ export class AtomTupleSubQueryImpl extends AbstractTupleSubQueryImpl implements 
         return this.mutableQuery.orders;
     }
     
-    get groupByExprs(): ReadonlyArray<ast.AbstractExpr<any>> | undefined {
+    get groupByExprs(): ReadonlyArray<spi.AbstractExpr<any>> | undefined {
         return this.mutableQuery.groupByExprs;
     }
     
-    get havingPred(): ast.AbstractPred | undefined {
+    get havingPred(): spi.AbstractPred | undefined {
         return this.mutableQuery.havingPred;
     }
 
-    get projection(): ast.ProjectionContract {
-        return this._projection as any as ast.ProjectionContract;
+    get projection(): spi.ProjectionContract {
+        return this._projection as any as spi.ProjectionContract;
     }
 
-    accept(visitor: ast.Visitor): void {
+    accept(visitor: spi.Visitor): void {
         visitor.visitAtomQuery(this);
     }
 }
 
-export class AtomExprSubQueryImpl extends AbstractExprSubQueryImpl implements ast.AtomQueryContract {
+export class AtomExprSubQueryImpl extends AbstractExprSubQueryImpl implements spi.AtomQueryContract {
 
-    readonly options: ast.AtomQueryOptions;
+    readonly options: spi.AtomQueryOptions;
 
     constructor(
         readonly mutableQuery: MutableSubQueryImpl,
         readonly _projection: SubQueryProjection<any>,
-        optins: ast.AtomQueryOptions | undefined
+        optins: spi.AtomQueryOptions | undefined
     ) {
         super();
-        this.options = optins ?? ast.defaultAtomQueryOptions;
+        this.options = optins ?? spi.defaultAtomQueryOptions;
     }
 
     distinct(): AtomExprSubQueryImpl {
@@ -119,11 +119,11 @@ export class AtomExprSubQueryImpl extends AbstractExprSubQueryImpl implements as
         return "ATOM";
     }
 
-    get tables(): ReadonlyArray<metadata.AbstractTable> {
+    get tables(): ReadonlyArray<spi.AbstractTable> {
         return this.mutableQuery.tables;
     }
     
-    get wherePred(): ast.AbstractPred | undefined {
+    get wherePred(): spi.AbstractPred | undefined {
         return this.mutableQuery.wherePred;
     }
     
@@ -131,34 +131,34 @@ export class AtomExprSubQueryImpl extends AbstractExprSubQueryImpl implements as
         return this.mutableQuery.orders;
     }
     
-    get groupByExprs(): ReadonlyArray<ast.AbstractExpr<any>> | undefined {
+    get groupByExprs(): ReadonlyArray<spi.AbstractExpr<any>> | undefined {
         return this.mutableQuery.groupByExprs;
     }
     
-    get havingPred(): ast.AbstractPred | undefined {
+    get havingPred(): spi.AbstractPred | undefined {
         return this.mutableQuery.havingPred;
     }
 
-    get projection(): ast.ProjectionContract {
-        return this._projection as any as ast.ProjectionContract;
+    get projection(): spi.ProjectionContract {
+        return this._projection as any as spi.ProjectionContract;
     }
 
-    accept(visitor: ast.Visitor): void {
+    accept(visitor: spi.Visitor): void {
         visitor.visitAtomQuery(this);
     }
 }
 
-export class AtomNumSubQueryImpl extends AbstractNumSubQueryImpl implements ast.AtomQueryContract {
+export class AtomNumSubQueryImpl extends AbstractNumSubQueryImpl implements spi.AtomQueryContract {
 
-    readonly options: ast.AtomQueryOptions;
+    readonly options: spi.AtomQueryOptions;
 
     constructor(
         readonly mutableQuery: MutableSubQueryImpl,
         readonly _projection: SubQueryProjection<any>,
-        optins: ast.AtomQueryOptions | undefined
+        optins: spi.AtomQueryOptions | undefined
     ) {
         super();
-        this.options = optins ?? ast.defaultAtomQueryOptions;
+        this.options = optins ?? spi.defaultAtomQueryOptions;
     }
 
     distinct(): AtomNumSubQueryImpl {
@@ -189,11 +189,11 @@ export class AtomNumSubQueryImpl extends AbstractNumSubQueryImpl implements ast.
         return "ATOM";
     }
 
-    get tables(): ReadonlyArray<metadata.AbstractTable> {
+    get tables(): ReadonlyArray<spi.AbstractTable> {
         return this.mutableQuery.tables;
     }
     
-    get wherePred(): ast.AbstractPred | undefined {
+    get wherePred(): spi.AbstractPred | undefined {
         return this.mutableQuery.wherePred;
     }
     
@@ -201,34 +201,34 @@ export class AtomNumSubQueryImpl extends AbstractNumSubQueryImpl implements ast.
         return this.mutableQuery.orders;
     }
     
-    get groupByExprs(): ReadonlyArray<ast.AbstractExpr<any>> | undefined {
+    get groupByExprs(): ReadonlyArray<spi.AbstractExpr<any>> | undefined {
         return this.mutableQuery.groupByExprs;
     }
     
-    get havingPred(): ast.AbstractPred | undefined {
+    get havingPred(): spi.AbstractPred | undefined {
         return this.mutableQuery.havingPred;
     }
 
-    get projection(): ast.ProjectionContract {
-        return this._projection as any as ast.ProjectionContract;
+    get projection(): spi.ProjectionContract {
+        return this._projection as any as spi.ProjectionContract;
     }
 
-    accept(visitor: ast.Visitor): void {
+    accept(visitor: spi.Visitor): void {
         visitor.visitAtomQuery(this);
     }
 }
 
-export class AtomStrSubQueryImpl extends AbstractStrSubQueryImpl implements ast.AtomQueryContract {
+export class AtomStrSubQueryImpl extends AbstractStrSubQueryImpl implements spi.AtomQueryContract {
 
-    readonly options: ast.AtomQueryOptions;
+    readonly options: spi.AtomQueryOptions;
 
     constructor(
         readonly mutableQuery: MutableSubQueryImpl,
         readonly _projection: SubQueryProjection<any>,
-        optins: ast.AtomQueryOptions | undefined
+        optins: spi.AtomQueryOptions | undefined
     ) {
         super();
-        this.options = optins ?? ast.defaultAtomQueryOptions;
+        this.options = optins ?? spi.defaultAtomQueryOptions;
     }
 
     distinct(): AtomStrSubQueryImpl {
@@ -259,11 +259,11 @@ export class AtomStrSubQueryImpl extends AbstractStrSubQueryImpl implements ast.
         return "ATOM";
     }
 
-    get tables(): ReadonlyArray<metadata.AbstractTable> {
+    get tables(): ReadonlyArray<spi.AbstractTable> {
         return this.mutableQuery.tables;
     }
     
-    get wherePred(): ast.AbstractPred | undefined {
+    get wherePred(): spi.AbstractPred | undefined {
         return this.mutableQuery.wherePred;
     }
     
@@ -271,38 +271,38 @@ export class AtomStrSubQueryImpl extends AbstractStrSubQueryImpl implements ast.
         return this.mutableQuery.orders;
     }
     
-    get groupByExprs(): ReadonlyArray<ast.AbstractExpr<any>> | undefined {
+    get groupByExprs(): ReadonlyArray<spi.AbstractExpr<any>> | undefined {
         return this.mutableQuery.groupByExprs;
     }
     
-    get havingPred(): ast.AbstractPred | undefined {
+    get havingPred(): spi.AbstractPred | undefined {
         return this.mutableQuery.havingPred;
     }
 
-    get projection(): ast.ProjectionContract {
-        return this._projection as any as ast.ProjectionContract;
+    get projection(): spi.ProjectionContract {
+        return this._projection as any as spi.ProjectionContract;
     }
 
     get level(): "SUB" {
         return "SUB";
     }
 
-    accept(visitor: ast.Visitor): void {
+    accept(visitor: spi.Visitor): void {
         visitor.visitAtomQuery(this);
     }
 }
 
-export class AtomDtSubQueryImpl extends AbstractDtSubQueryImpl implements ast.AtomQueryContract {
+export class AtomDtSubQueryImpl extends AbstractDtSubQueryImpl implements spi.AtomQueryContract {
 
-    readonly options: ast.AtomQueryOptions;
+    readonly options: spi.AtomQueryOptions;
 
     constructor(
         readonly mutableQuery: MutableSubQueryImpl,
         readonly _projection: SubQueryProjection<any>,
-        optins: ast.AtomQueryOptions | undefined
+        optins: spi.AtomQueryOptions | undefined
     ) {
         super();
-        this.options = optins ?? ast.defaultAtomQueryOptions;
+        this.options = optins ?? spi.defaultAtomQueryOptions;
     }
 
     get kind(): "ATOM" {
@@ -333,11 +333,11 @@ export class AtomDtSubQueryImpl extends AbstractDtSubQueryImpl implements ast.At
         );
     }
 
-    get tables(): ReadonlyArray<metadata.AbstractTable> {
+    get tables(): ReadonlyArray<spi.AbstractTable> {
         return this.mutableQuery.tables;
     }
     
-    get wherePred(): ast.AbstractPred | undefined {
+    get wherePred(): spi.AbstractPred | undefined {
         return this.mutableQuery.wherePred;
     }
     
@@ -345,23 +345,23 @@ export class AtomDtSubQueryImpl extends AbstractDtSubQueryImpl implements ast.At
         return this.mutableQuery.orders;
     }
     
-    get groupByExprs(): ReadonlyArray<ast.AbstractExpr<any>> | undefined {
+    get groupByExprs(): ReadonlyArray<spi.AbstractExpr<any>> | undefined {
         return this.mutableQuery.groupByExprs;
     }
     
-    get havingPred(): ast.AbstractPred | undefined {
+    get havingPred(): spi.AbstractPred | undefined {
         return this.mutableQuery.havingPred;
     }
 
-    get projection(): ast.ProjectionContract {
-        return this._projection as any as ast.ProjectionContract;
+    get projection(): spi.ProjectionContract {
+        return this._projection as any as spi.ProjectionContract;
     }
 
     get level(): "SUB" {
         return "SUB";
     }
 
-    accept(visitor: ast.Visitor): void {
+    accept(visitor: spi.Visitor): void {
         visitor.visitAtomQuery(this);
     }
 }

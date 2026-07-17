@@ -1,4 +1,4 @@
-import { CombinedNullity } from "@/schema/prop";
+import { CombinedNullity } from "@/schema/prop_internal_behavior";
 import { CompilationError } from "@/utils"
 import { ExpressionSubQuery } from "./sub_query";
 import { AtLeastOne, ExpressionOrder, IsNull } from "./utils";
@@ -8,7 +8,7 @@ import { getInternalFactory } from "@/impl/ast/internal_factory";
 import { OrderNullsType } from "@/schema/order";
 import { CompoundPred } from "@/impl/ast/pred";
 import { ConstantExpr } from "@/impl/ast/constant";
-import { I64PropContract, NullityType, ScalarPropContract } from "@/schema/prop_contract";
+import { I64PropContract, NullityType, ScalarPropContract } from "@/schema/prop_internal_types";
 
 export type Expression<
     T, 

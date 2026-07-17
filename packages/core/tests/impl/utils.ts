@@ -1,4 +1,5 @@
-import { Column, DatabaseKeywordStrategy, PropStorage } from "@/impl";
+import { Column, PropStorage } from "@/impl/storage";
+import { DatabaseKeywordStrategy } from "@/impl/strategy";
 import { expect, JestAssertion } from "vitest";
 
 export function expectStorage(storage: PropStorage | undefined): JestAssertion {

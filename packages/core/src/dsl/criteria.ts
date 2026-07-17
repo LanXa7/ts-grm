@@ -1,6 +1,7 @@
-import { AllModelMembers, AnyModel } from "@/schema/model";
-import { CombinedNullity } from "@/schema/prop";
-import { CollectionPropContract, NullityType, ReferencePropContract, EmbeddedPropContract, I64PropContract, PropContract, ScalarPropContract } from "@/schema/prop_contract";
+import { AnyModel } from "@/schema/model";
+import { AllModelMembers } from "@/schema/model_internal_types";
+import { CombinedNullity } from "@/schema/prop_internal_behavior";
+import { CollectionPropContract, NullityType, ReferencePropContract, EmbeddedPropContract, I64PropContract, PropContract, ScalarPropContract } from "@/schema/prop_internal_types";
 
 export type Criteria<TModel extends AnyModel> =
     CriteriaMembers<AllModelMembers<TModel>, "NONNULL">;

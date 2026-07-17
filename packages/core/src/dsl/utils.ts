@@ -1,5 +1,5 @@
 import { OrderNullsType } from "@/schema/order";
-import { ExpressionLike } from ".";
+import { ExpressionLike } from "./expression";
 
 export class ExpressionOrder {
     

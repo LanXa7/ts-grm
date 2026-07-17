@@ -1,4 +1,4 @@
-import { ast, err, SqlClient } from "@ts-grm/core";
+import { err, spi, SqlClient } from "@ts-grm/core";
 import { RealTable } from "./real_table";
 import { SqlBuilder } from "./sql_builder";
 import { FragmentGenGenVisitor } from "./fragment_gen_visitor";
@@ -54,13 +54,13 @@ export class Composite extends Fragment {
 
     static of(o: any, sqlClient: SqlClient, metadata: BaseQueryMetadata | undefined): Composite {
         const preVisitor = new PreVisitor(sqlClient as SqlClientImplementor);
-        (o as ast.Node).accept(preVisitor);
+        (o as spi.Node).accept(preVisitor);
         const visitor = new FragmentGenGenVisitor(
             sqlClient as SqlClientImplementor, 
             metadata, 
             preVisitor.tableMap
         );
-        (o as ast.Node).accept(visitor);
+        (o as spi.Node).accept(visitor);
         return visitor.toResult();
     }
 }

@@ -1,4 +1,4 @@
-import { AnyModel, ast, dsl, EntityTable, err, ExpressionOrder, metadata, Predicate, ScalarProvider } from "@ts-grm/core";
+import { AnyModel, dsl, EntityTable, err, ExpressionOrder, Predicate, ScalarProvider, spi } from "@ts-grm/core";
 import { Alias, Column, Composite, Query, Scope, ShadowExpr, Source, Value } from "./fragment";
 import { Stack } from "./stack";
 import { Precedence } from "./precedence";
@@ -9,13 +9,13 @@ import { BaseQueryMetadata } from "./base_query_metadata";
 import { TableFragmentCreator } from "./table_fragment_creator";
 import { addTypeMatch } from "./utils";
 
-export class FragmentGenGenVisitor extends ast.AbstractVisitor {
+export class FragmentGenGenVisitor extends spi.AbstractVisitor {
 
     private readonly _compositeStack: Stack<Composite>;
 
     private readonly _precedenceStack: Stack<number>;
 
-    private readonly _strategy: metadata.DatabaseStrategy;
+    private readonly _strategy: spi.DatabaseStrategy;
 
     private readonly _nodeRender: NodeRender;
 
@@ -26,7 +26,7 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
     constructor(
         readonly sqlClient: SqlClientImplementor,
         private readonly _baseQueryMetadata: BaseQueryMetadata | undefined,
-        private readonly _tableMap: ReadonlyMap<metadata.AbstractTable, RealTable>
+        private readonly _tableMap: ReadonlyMap<spi.AbstractTable, RealTable>
     ) {
         super();
         this._strategy = sqlClient.strategy;
@@ -86,7 +86,7 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
                 return that._precedenceStack.with(precedence);
             }
         
-            render(node: ast.Node | Value | string): void {
+            render(node: spi.Node | Value | string): void {
                 if (typeof node === "string") {
                     that._compositeStack.current.add(node);
                 } else if (node instanceof Value) {
@@ -113,7 +113,7 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
         );
     }
 
-    visitAtomQuery(query: ast.AtomQueryContract): void {
+    visitAtomQuery(query: spi.AtomQueryContract): void {
         if (query.level === "SUB" && this._compositeStack.currentOrUndefined?.kind !== "SUB_QUERY") {
             using _ = this._compositeStack.with(new Scope("SUB_QUERY"));
             this._visitAtomQuery(query);
@@ -122,7 +122,7 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
         }
     }
     
-    private _visitAtomQuery(query: ast.AtomQueryContract): void {
+    private _visitAtomQuery(query: spi.AtomQueryContract): void {
 
         using _ = this._precedenceStack.with(Precedence.ROOT);
         using __ = this._compositeStack.with(new Query());
@@ -145,7 +145,7 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
             }
             const tables = query.tables.map(t => 
                 this._toRealTable(
-                    t as metadata.AbstractEntityTable | metadata.TypedBaseTable
+                    t as spi.AbstractEntityTable | spi.TypedBaseTable
                 )
             );
             this._fillTableFragments(tables);
@@ -162,14 +162,14 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
                         const pred = filter(table as any as EntityTable<AnyModel>);
                         if (pred != null) {
                             wherePred = dsl.and(wherePred as Predicate | undefined, pred) as 
-                                ast.AbstractPred;
+                                spi.AbstractPred;
                         }
                     }
                 }
                 wherePred = dsl.and(
                     wherePred as Predicate | undefined, 
-                    (table as metadata.AbstractEntityTable).__typePredicate
-                ) as ast.AbstractPred;
+                    (table as spi.AbstractEntityTable).__typePredicate
+                ) as spi.AbstractPred;
             }
         }
         if (wherePred != null) {
@@ -185,7 +185,7 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
             const current = this._compositeStack.current;
             for (const order of query.orders) {
                 current.separator();
-                (order.expression as ast.AbstractExpr<any>).accept(this);
+                (order.expression as spi.AbstractExpr<any>).accept(this);
                 current.add(order.desc ? " desc" : " asc");
                 if (order.nullsType !== "UNSPECIFIED") {
                     current.add(`nulls ${order.nullsType.toLowerCase()}`);
@@ -211,7 +211,7 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
         }
     }
 
-    visitMergedQuery(query: ast.MergedQueryContract): void {
+    visitMergedQuery(query: spi.MergedQueryContract): void {
         if (query.level === "SUB") {
             using _ = this._compositeStack.with(new Scope("SUB_QUERY"));
             this._visitMergedQuery(query);
@@ -220,7 +220,7 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
         }
     }
 
-    private _visitMergedQuery(query: ast.MergedQueryContract): void {
+    private _visitMergedQuery(query: spi.MergedQueryContract): void {
         using _ = this._compositeStack.with(new Scope(query.kind));
         for (const qry of query.queries) {
             this._compositeStack.current.separator();
@@ -228,12 +228,12 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
         }
     }
 
-    visitTuple(tuple: ast.TupleContract): void {
+    visitTuple(tuple: spi.TupleContract): void {
         this._visitTuple(tuple, []);
     }
 
     private _visitTuple(
-        tuple: ast.TupleContract, 
+        tuple: spi.TupleContract, 
         providers: ReadonlyArray<ScalarProvider<any, any> | undefined>
     ): void {
         using _ = this._precedenceStack.with(Precedence.ROOT);
@@ -250,7 +250,7 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
         }
     }
 
-    visitTupleCmpPred(pred: ast.TupleCmpPred): void {
+    visitTupleCmpPred(pred: spi.TupleCmpPred): void {
         const span = pred.leftTuple.exprs.length;
         const providers: Array<ScalarProvider<any, any> | undefined> = [];
         for (let i = 0; i < span; i++) {
@@ -264,7 +264,7 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
         this._visitTuple(pred.rightTuple, providers);
     }
 
-    visitTupleInCollectionPred(pred: ast.TupleInCollectionPred): void {
+    visitTupleInCollectionPred(pred: spi.TupleInCollectionPred): void {
 
         const span = pred.tuple.exprs.length;
         const providers: Array<ScalarProvider<any, any> | undefined> = [];
@@ -289,7 +289,7 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
         }
     }
 
-    visitTupleInSubQueryPred(pred: ast.TupleInSubQueryPred): void {
+    visitTupleInSubQueryPred(pred: spi.TupleInSubQueryPred): void {
         
         using _ = this._precedenceStack.with(Precedence.COMPARISON);
 
@@ -301,11 +301,11 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
         pred.subQuery.accept(this);
     }
 
-    visitConstantPred(pred: ast.ConstantPred): void {
+    visitConstantPred(pred: spi.ConstantPred): void {
         this._compositeStack.current.add(pred.value ? "1 = 1" : "1 = 0");
     }
 
-    visitCmpPred(pred: ast.CmpPred): void {
+    visitCmpPred(pred: spi.CmpPred): void {
         using _ = this._precedenceStack.with(Precedence.COMPARISON);
         if (pred.leftExpr.scalarProvider != null && pred.rightExpr.isValueExpr) {
             const provider = pred.leftExpr.scalarProvider;
@@ -330,10 +330,10 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
         pred.rightExpr.accept(this);
     }
 
-    visitInCollectionPred(pred: ast.InCollectionPred<any>): void {
+    visitInCollectionPred(pred: spi.InCollectionPred<any>): void {
         const provider = pred.expr.scalarProvider;
         if (provider != null) {
-            const values: Array<ast.AbstractExpr<any> | Value | string> = [];
+            const values: Array<spi.AbstractExpr<any> | Value | string> = [];
             for (const value of pred.values) {
                 if (value.isValueExpr) {
                     values.push(valueOf(value, provider));
@@ -350,7 +350,7 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
         this._nodeRender.renderSingleColumnInCollectionPred(pred, this._nodeRenderContext);
     }
 
-    visitInSubQueryPred(pred: ast.InSubQueryPred): void {
+    visitInSubQueryPred(pred: spi.InSubQueryPred): void {
         using _ = this._precedenceStack.with(Precedence.COMPARISON);
         pred.expr.accept(this);
         this._compositeStack.current.add(pred.neg ? " not in" : " in");
@@ -358,7 +358,7 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
         pred.subQuery.accept(this);
     }
 
-    visitBetweenPred(pred: ast.BetweenPred): void {
+    visitBetweenPred(pred: spi.BetweenPred): void {
         using _ = this._precedenceStack.with(Precedence.COMPARISON);
         pred.expr.accept(this);
         this._compositeStack.current.add(" between ");
@@ -367,11 +367,11 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
         pred.maxExpr.accept(this);
     }
 
-    visitLikePred(pred: ast.LikePred): void {
+    visitLikePred(pred: spi.LikePred): void {
         this._nodeRender.renderLikePred(pred, this._nodeRenderContext);
     }
 
-    visitNullityPred(pred: ast.NullityPred): void {
+    visitNullityPred(pred: spi.NullityPred): void {
         using _ = this._precedenceStack.with(Precedence.UNARY);
         pred.expr.accept(this);
         if (pred.neg) {
@@ -381,7 +381,7 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
         }
     }
 
-    visitCompoundPred(pred: ast.CompoundPred): void {
+    visitCompoundPred(pred: spi.CompoundPred): void {
         using _ = this._precedenceStack.with(pred.op === "AND" ? Precedence.AND : Precedence.OR);
         using __ = this._compositeStack.with(new Scope(pred.op));
         const current = this._compositeStack.current;
@@ -391,17 +391,17 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
         }
     }
 
-    visitExistsPred(pred: ast.ExistsPred): void {
+    visitExistsPred(pred: spi.ExistsPred): void {
         using _ = this._precedenceStack.with(Precedence.UNARY);
         this._compositeStack.current.add(pred.neg ? "not exists" : "exists")
         pred.subQuery.accept(this);
     }
 
-    visitEsOpPred(pred: ast.EsOpPred): void {
+    visitEsOpPred(pred: spi.EsOpPred): void {
         this._nodeRender.renderEsOpPred(pred, this._nodeRenderContext);
     }
 
-    visitFetchedView(fetchedView: ast.FetchedViewContract): void {
+    visitFetchedView(fetchedView: spi.FetchedViewContract): void {
         const table = fetchedView.table;
         for (const field of fetchedView.view.mapper.fields) {
             if (field.columnIndex == null) {
@@ -414,39 +414,39 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
                 const columnName = table.__entity.tableSettings.discriminator!.name;
                 this._compositeStack.current.add(this._createColumn(realTable, columnName));
             } else {
-                const entityProp = prop as metadata.EntityProp;
+                const entityProp = prop as spi.EntityProp;
                 if (entityProp.sqlFormulaFn != null) {
                     realTable.sqlFormulaExpr(entityProp).accept(this);
                 } else {
-                    const column = entityProp.toStorage(this._strategy) as metadata.Column;
+                    const column = entityProp.toStorage(this._strategy) as spi.Column;
                     this._compositeStack.current.add(this._createColumn(realTable, column.name));
                 }
             }
         }
     }
 
-    visitPropExpr(expr: ast.PropExprContract): void {
-        let table: metadata.AbstractTable = expr.table;
+    visitPropExpr(expr: spi.PropExprContract): void {
+        let table: spi.AbstractTable = expr.table;
         let prop = expr.prop;
-        let column: metadata.Column;
+        let column: spi.Column;
         if (this.sqlClient.isDirectAssociatedKey(expr)) {
             table = table.__joinOperation!.parent;
             column = expr.table.__joinOperation!
                 .joinProp!.sub(prop.subPath)
-                .toStorage(this._strategy) as metadata.Column;
+                .toStorage(this._strategy) as spi.Column;
         } else {
             if (!prop.isMiddleTableProp) {
-                table = (table as metadata.AbstractEntityTable).__to(
-                    (prop as metadata.EntityProp).declaringEntity
+                table = (table as spi.AbstractEntityTable).__to(
+                    (prop as spi.EntityProp).declaringEntity
                 );
             }
-            column = prop.toStorage(this._strategy) as metadata.Column;
+            column = prop.toStorage(this._strategy) as spi.Column;
         }
         const realTable = this._toRealTable(table);
         this._compositeStack.current.add(this._createColumn(realTable, column.name));
     }
 
-    visitIsPred(pred: ast.IsPred): void {
+    visitIsPred(pred: spi.IsPred): void {
         using _ = this._precedenceStack.with(Precedence.COMPARISON);
         const realTable = this._toRealTable(pred.table);
         addTypeMatch(
@@ -459,7 +459,7 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
         );
     }
 
-    visitCoalesceExpr(expr: ast.CoalesceExprContract): void {
+    visitCoalesceExpr(expr: spi.CoalesceExprContract): void {
         using _ = this._precedenceStack.with(Precedence.ROOT);
         this._compositeStack.current.add("coalesce")
         using __ = this._compositeStack.with(new Scope("VALUES"));
@@ -470,7 +470,7 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
         }
     }
 
-    visitNativeExpr(expr: ast.NativeExprContract): void {
+    visitNativeExpr(expr: spi.NativeExprContract): void {
         using _ = this._precedenceStack.with(Precedence.ROOT);
         const current = this._compositeStack.current;
         for (const part of expr.parts) {
@@ -480,39 +480,39 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
                 for (const e of part) {
                     current.separator();
                     if (e instanceof ExpressionOrder) {
-                        (e.expression as ast.AbstractExpr<any>).accept(this);
+                        (e.expression as spi.AbstractExpr<any>).accept(this);
                         current.add(e.desc ? " desc" : " asc");
                         if (e.nullsType !== "UNSPECIFIED") {
                             current.add(`nulls ${e.nullsType.toLowerCase()}`);
                         }
                     } else {
-                        (e as ast.AbstractExpr<any>).accept(this);
+                        (e as spi.AbstractExpr<any>).accept(this);
                     }
                 }
             } else if (typeof part === "string") {
                 current.add(part);
             } else {
-                (part as ast.AbstractExpr<any>).accept(this);
+                (part as spi.AbstractExpr<any>).accept(this);
             }
         }
     }
 
-    visitSubQueryExpr(expr: ast.SubQueryExprContract): void {
+    visitSubQueryExpr(expr: spi.SubQueryExprContract): void {
         this._compositeStack.current.add(expr.op.toLowerCase());
         expr.subQuery.accept(this);
     }
 
-    visitShadowExpr(expr: ast.ShadowExprContract): void {
+    visitShadowExpr(expr: spi.ShadowExprContract): void {
         const shadow = expr.shadow;
         if (shadow != null) {
             const realTable = this._toRealTable(shadow);
             this._compositeStack.current.add(new ShadowExpr(realTable, expr.anchor.exportedName));
         } else {
-            (expr.anchor.original as any as ast.Node).accept(this);
+            (expr.anchor.original as any as spi.Node).accept(this);
         }
     }
 
-    visitLowerExpr(expr: ast.LowerExpr): void {
+    visitLowerExpr(expr: spi.LowerExpr): void {
         using _ = this._precedenceStack.with(Precedence.ROOT);
         const current = this._compositeStack.current;
         current.add("lower(");
@@ -520,7 +520,7 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
         current.add(")");
     }
 
-    visitUpperExpr(expr: ast.UpperExpr): void {
+    visitUpperExpr(expr: spi.UpperExpr): void {
         using _ = this._precedenceStack.with(Precedence.ROOT);
         const current = this._compositeStack.current;
         current.add("upper(");
@@ -528,19 +528,19 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
         current.add(")");
     }
 
-    visitReverseExpr(expr: ast.ReverseExpr): void {
+    visitReverseExpr(expr: spi.ReverseExpr): void {
         this._nodeRender.renderReverseExpr(expr, this._nodeRenderContext);
     }
 
-    visitTrimExpr(expr: ast.TrimExpr): void {
+    visitTrimExpr(expr: spi.TrimExpr): void {
         this._nodeRender.renderTrimExpr(expr, this._nodeRenderContext);
     }
 
-    visitLengthExpr(expr: ast.LengthExpr): void {
+    visitLengthExpr(expr: spi.LengthExpr): void {
         this._nodeRender.renderLengthExpr(expr, this._nodeRenderContext);
     }
 
-    visitReplaceExpr(expr: ast.ReplaceExpr): void {
+    visitReplaceExpr(expr: spi.ReplaceExpr): void {
         using _ = this._precedenceStack.with(Precedence.ROOT);
         const current = this._compositeStack.current;
         current.add("replace(");
@@ -552,39 +552,39 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
         current.add(")");
     }
 
-    visitPadExpr(expr: ast.PadExpr): void {
+    visitPadExpr(expr: spi.PadExpr): void {
         this._nodeRender.renderPadExpr(expr, this._nodeRenderContext);
     }
 
-    visitLeftExpr(expr: ast.LeftExpr): void {
+    visitLeftExpr(expr: spi.LeftExpr): void {
         this._nodeRender.renderLeftExpr(expr, this._nodeRenderContext);
     }
 
-    visitRightExpr(expr: ast.RightExpr): void {
+    visitRightExpr(expr: spi.RightExpr): void {
         this._nodeRender.renderRightExpr(expr, this._nodeRenderContext);
     }
 
-    visitPositionExpr(expr: ast.PositionExpr): void {
+    visitPositionExpr(expr: spi.PositionExpr): void {
         this._nodeRender.renderPositionExpr(expr, this._nodeRenderContext);
     }
 
-    visitSubstringExpr(expr: ast.SubstringExpr): void {
+    visitSubstringExpr(expr: spi.SubstringExpr): void {
         this._nodeRender.renderSubstringExpr(expr, this._nodeRenderContext);
     }
 
-    visitConcatExpr(expr: ast.ConcatExpr): void {
+    visitConcatExpr(expr: spi.ConcatExpr): void {
         for (const valueExpr of expr.valueExprs) {
             valueExpr.accept(this);
         }
     }
 
-    visitUnaryMinusExpr(expr: ast.UnaryMinusExpr<any>): void {
+    visitUnaryMinusExpr(expr: spi.UnaryMinusExpr<any>): void {
         using _ = this._precedenceStack.with(Precedence.UNARY);
         this._compositeStack.current.add("-");
         expr.expr.accept(this);
     }
 
-    visitBinaryNumExpr(expr: ast.BinaryNumExpr<any>): void {
+    visitBinaryNumExpr(expr: spi.BinaryNumExpr<any>): void {
         using _ = this._precedenceStack.with(
             expr.op === "+" || expr.op === "-"
                 ? Precedence.PLUS
@@ -595,7 +595,7 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
         expr.rightExpr.accept(this);
     }
 
-    visitAggregateExpr(expr: ast.AggregateExpr<any>): void {
+    visitAggregateExpr(expr: spi.AggregateExpr<any>): void {
         using _ = this._precedenceStack.with(Precedence.ROOT);
         const current = this._compositeStack.current;
         current.add(expr.op.toLowerCase());
@@ -608,11 +608,11 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
         current.add(")");
     }
 
-    visitDtPlusExpr(expr: ast.DtPlusExpr): void {
+    visitDtPlusExpr(expr: spi.DtPlusExpr): void {
         this._nodeRender.renderDtPlusExpr(expr, this._nodeRenderContext);
     }
 
-    visitDtDiffExpr(expr: ast.DtDiffExpr): void {
+    visitDtDiffExpr(expr: spi.DtDiffExpr): void {
         expr.expr.accept(this);
         expr.valueExpr.accept(this);
     }
@@ -625,43 +625,43 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
         this._compositeStack.current.add(value.toString());
     }
 
-    private _visitProjection(projection: ast.ProjectionContract): void {
+    private _visitProjection(projection: spi.ProjectionContract): void {
         switch (projection.kind) {
             case "ROOT_SINGLE":
-                (projection.selection as any as ast.Node).accept(this);
+                (projection.selection as any as spi.Node).accept(this);
                 break;
             case "ROOT_ARRAY":
                 for (const selection of projection.selections) {
                     this._compositeStack.current.separator();
-                    (selection as any as ast.Node).accept(this);
+                    (selection as any as spi.Node).accept(this);
                 }
                 break;
             case "ROOT_MAP":
                 for (const key in projection.selections) {
                     this._compositeStack.current.separator();
-                    (projection.selections[key] as any as ast.Node).accept(this);
+                    (projection.selections[key] as any as spi.Node).accept(this);
                 }
                 break;
             case "SUB_SINGLE":
-                (projection.selection as any as ast.Node).accept(this);
+                (projection.selection as any as spi.Node).accept(this);
                 break;
             case "SUB_ARRAY":
                 for (const selection of projection.selections) {
                     this._compositeStack.current.separator();
-                    (selection as any as ast.Node).accept(this);
+                    (selection as any as spi.Node).accept(this);
                 }
                 break;
             case "BASE":
                 for (const selection of this._baseQueryMetadata!.selections) {
                     this._compositeStack.current.separator();
                     if (selection.columnName == null) {
-                        const expr = projection.args[selection.exportedName] as any as ast.ShadowExprContract;
+                        const expr = projection.args[selection.exportedName] as any as spi.ShadowExprContract;
                         expr.accept(this);
                         if (!this._baseQueryMetadata!.isCte) {
                             this._compositeStack.current.add(" ").add(selection.alias);
                         }
                     } else {
-                        const table = projection.args[selection.exportedName] as metadata.AbstractEntityTable;
+                        const table = projection.args[selection.exportedName] as spi.AbstractEntityTable;
                         const realTable = this._toRealTable(table);
                         this._compositeStack.current.add(new Alias(realTable)).add(".").add(selection.columnName);
                         if (!this._baseQueryMetadata!.isCte) {
@@ -674,7 +674,7 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
     }
 
     private _toRealTable(
-        table: metadata.AbstractTable
+        table: spi.AbstractTable
     ): RealTable {
         if (table.__isPrev) {
             return this._baseQueryMetadata!.realTable;
@@ -726,10 +726,10 @@ export class FragmentGenGenVisitor extends ast.AbstractVisitor {
 }
 
 function valueOf(
-    expr: ast.AbstractExpr<any>,
+    expr: spi.AbstractExpr<any>,
     provider: ScalarProvider<any, any>
 ): Value | string {
-    const valueContract = expr as any as ast.ValueExprContract;
+    const valueContract = expr as any as spi.ValueExprContract;
     const originalValue = valueContract.value;
     const value = provider.toSql(originalValue);
     if (valueContract.isConstant) {

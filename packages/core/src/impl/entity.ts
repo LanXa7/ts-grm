@@ -1,5 +1,5 @@
 import { ModelError, PropError } from "@/error/metadata_error";
-import { DV_ABSTRACT, DV_MODEL_NAME, AnyModel, Ctor, TB_INHERIT, TableOptions } from "@/schema/model";
+import { DV_ABSTRACT, DV_MODEL_NAME, AnyModel, TB_INHERIT } from "@/schema/model";
 import { EntityProp } from "./entity_prop";
 import { AnyModelImpl, ModelImpl, ModelOptions } from "@/impl/model_impl";
 import { dedent, makeErr } from "@/error/util";
@@ -9,7 +9,8 @@ import { ArgumentError, StateError } from "@/error/common";
 import { ShadowAnchor } from "./shadow_anchor";
 import { Mutable } from "@/utils";
 import { AssociationEntity } from "./association_entity";
-import { DatabaseStrategy } from ".";
+import { DatabaseStrategy } from "./strategy";
+import { Ctor, TableOptions } from "@/schema/model_internal_types";
 
 export class Entity {
 

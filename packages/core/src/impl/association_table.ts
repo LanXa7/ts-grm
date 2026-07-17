@@ -4,11 +4,13 @@ import { BaseModelImplementor } from "./base_query_implementor";
 import { AbstractEntityTable, JoinFilter, JoinOperation } from "./entity_table";
 import { ShadowAnchor } from "./shadow_anchor";
 import { TypedBaseTable } from "./base_table";
-import { BaseQuerySelectMapArgs, JoinType, ModelLike } from "@/dsl";
+import { BaseQuerySelectMapArgs } from "@/dsl/base_query";
 import { AssociationEntity, AssociationProp } from "./association_entity";
 import { CodeWriter } from "./code_writer";
 import { createTableProp } from "./ast/prop_expr";
 import { makeErr } from "@/error/util";
+import { ModelLike } from "@/dsl/table_internal_types";
+import { JoinType } from "@/dsl/table";
 
 export class AbstractAssociationTable implements AbstractTable {
 

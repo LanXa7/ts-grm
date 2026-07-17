@@ -1,4 +1,4 @@
-import { ast, dsl, err, ExpressionLike, ExpressionOrder, metadata, Predicate } from "@ts-grm/core";
+import { dsl, err, spi, ExpressionLike, ExpressionOrder, Predicate } from "@ts-grm/core";
 
 export class AbstractMutableQuery {
 
@@ -11,7 +11,7 @@ export class AbstractMutableQuery {
     private _havingPredicate: Predicate | undefined = undefined;
 
     constructor(
-        readonly tables: ReadonlyArray<metadata.AbstractTable>
+        readonly tables: ReadonlyArray<spi.AbstractTable>
     ) {}
 
     where(
@@ -61,19 +61,19 @@ export class AbstractMutableQuery {
         return this;
     }
 
-    get wherePred(): ast.AbstractPred | undefined {
-        return this._predicate as ast.AbstractPred | undefined;
+    get wherePred(): spi.AbstractPred | undefined {
+        return this._predicate as spi.AbstractPred | undefined;
     }
     
     get orders(): ReadonlyArray<ExpressionOrder> {
         return this._orders;
     }
     
-    get groupByExprs(): ReadonlyArray<ast.AbstractExpr<any>> | undefined {
-        return this._groupByExprs as ReadonlyArray<ast.AbstractExpr<any>> | undefined;
+    get groupByExprs(): ReadonlyArray<spi.AbstractExpr<any>> | undefined {
+        return this._groupByExprs as ReadonlyArray<spi.AbstractExpr<any>> | undefined;
     }
     
-    get havingPred(): ast.AbstractPred | undefined {
-        return this._havingPredicate as ast.AbstractPred | undefined;
+    get havingPred(): spi.AbstractPred | undefined {
+        return this._havingPredicate as spi.AbstractPred | undefined;
     }
 }

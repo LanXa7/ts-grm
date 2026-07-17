@@ -1,4 +1,4 @@
-import { metadata, SqlClient } from "@ts-grm/core";
+import { spi, SqlClient } from "@ts-grm/core";
 import { Value } from "./fragment";
 import { SqlClientImplementor } from "@/sql_client";
 import { SqlLoggerParameterType } from "@/cfg/sql_client_options";
@@ -9,7 +9,7 @@ export class SqlBuilder {
         [Symbol.dispose]: (): void => {}
     };
 
-    readonly strategy: metadata.DatabaseStrategy;
+    readonly strategy: spi.DatabaseStrategy;
 
     private readonly _parts: Array<string> = [];
 

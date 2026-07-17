@@ -1,5 +1,6 @@
-import { AllModelMembers, AnyModel, RequiredModelKey } from "../model";
-import { CollectionPropContract } from "../prop_contract";
+import { AnyModel } from "../model";
+import { AllModelMembers, RequiredModelKey } from "../model_internal_types";
+import { CollectionPropContract } from "../prop_internal_types";
 import { MemberType } from "./all_scalars";
 import { DtoKind } from "./dto_context";
 

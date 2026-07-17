@@ -1,7 +1,9 @@
 import { describe, expectTypeOf, it } from "vitest";
 import { ORDER } from "../model/model";
-import { dsl, FilterType } from "@/dsl";
-import { AssociationTable, MakeAssociationModel } from "@/dsl/association";
+import { dsl } from "@/dsl";
+import { AssociationTable } from "@/dsl/association";
+import { MakeAssociationModel } from "@/dsl/association_internal_types";
+import { FilterType } from "@/dsl/table_internal_types";
 
 describe("AssociationTableTypeTest", () => {
 

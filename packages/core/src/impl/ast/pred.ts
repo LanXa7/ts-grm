@@ -1,4 +1,4 @@
-import { Expression } from "@/dsl";
+import { Expression } from "@/dsl/expression";
 import { AbstractExpr } from "./expr";
 import { Visitor } from "./visitor";
 import { QueryContract } from "./query";

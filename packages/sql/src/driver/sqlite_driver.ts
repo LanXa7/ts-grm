@@ -1,4 +1,4 @@
-import { ast, err } from "@ts-grm/core";
+import { err, spi } from "@ts-grm/core";
 import { Driver } from "./deriver";
 import { NodeRender, NodeRenderContext, SingleColumnInCollectionPred } from "./node_render";
 import { Precedence } from "@/sql/precedence";
@@ -34,7 +34,6 @@ export class SqliteDriver implements Driver {
         switch (columnDef.type.kind) {
             case "BOOL":
             case "I8":
-            case "I16":
             case "I16":
             case "I32":
             case "I64":
@@ -78,7 +77,7 @@ const nodeRender = new class implements NodeRender {
         }
     }
 
-    renderLikePred(pred: ast.LikePred, ctx: NodeRenderContext): void {
+    renderLikePred(pred: spi.LikePred, ctx: NodeRenderContext): void {
         using _ = ctx.withPrecedence(Precedence.COMPARISON);
         if (pred.insensitive) {
             ctx.text("lower(");
@@ -92,7 +91,7 @@ const nodeRender = new class implements NodeRender {
     }
 
     renderEsOpPred(
-        pred: ast.EsOpPred,
+        pred: spi.EsOpPred,
         ctx: NodeRenderContext
     ): void {
         const provider = pred.expr.scalarProvider!;
@@ -122,12 +121,12 @@ const nodeRender = new class implements NodeRender {
         }
     }
 
-    renderReverseExpr(_expr: ast.ReverseExpr, _ctx: NodeRenderContext): void {
+    renderReverseExpr(_expr: spi.ReverseExpr, _ctx: NodeRenderContext): void {
         this._unsupported("reverse");
     }
 
     renderTrimExpr(
-        expr: ast.TrimExpr,
+        expr: spi.TrimExpr,
         ctx: NodeRenderContext
     ): void {
         switch (expr.side) {
@@ -147,19 +146,19 @@ const nodeRender = new class implements NodeRender {
         ctx.text(")");
     }
 
-    renderLengthExpr(expr: ast.LengthExpr, ctx: NodeRenderContext): void {
+    renderLengthExpr(expr: spi.LengthExpr, ctx: NodeRenderContext): void {
         ctx.text("length(cast(");
         using _ = ctx.withPrecedence(Precedence.ROOT);
         ctx.render(expr.expr);
         ctx.text(" as text))");
     }
 
-    renderPadExpr(_expr: ast.PadExpr, _ctx: NodeRenderContext): void {
+    renderPadExpr(_expr: spi.PadExpr, _ctx: NodeRenderContext): void {
         this._unsupported("pad");
     }
 
     renderLeftExpr(
-        expr: ast.LeftExpr,
+        expr: spi.LeftExpr,
         ctx: NodeRenderContext
     ): void {
         using _ = ctx.withPrecedence(Precedence.ROOT);
@@ -171,7 +170,7 @@ const nodeRender = new class implements NodeRender {
     }
 
     renderRightExpr(
-        expr: ast.RightExpr,
+        expr: spi.RightExpr,
         ctx: NodeRenderContext
     ): void {
         using _ = ctx.withPrecedence(Precedence.ROOT);
@@ -183,7 +182,7 @@ const nodeRender = new class implements NodeRender {
     }
 
     renderPositionExpr(
-        expr: ast.PositionExpr,
+        expr: spi.PositionExpr,
         ctx: NodeRenderContext
     ): void {
         if (expr.startExpr != null) {
@@ -198,7 +197,7 @@ const nodeRender = new class implements NodeRender {
     }
     
     renderSubstringExpr(
-        expr: ast.SubstringExpr,
+        expr: spi.SubstringExpr,
         ctx: NodeRenderContext
     ): void {
         using _ = ctx.withPrecedence(Precedence.ROOT);
@@ -214,14 +213,14 @@ const nodeRender = new class implements NodeRender {
     }
 
     renderDtPlusExpr(
-        _expr: ast.DtPlusExpr,
+        _expr: spi.DtPlusExpr,
         _ctx: NodeRenderContext
     ): void {
         throw new Error("Unsupported Operation Exception");
     }
 
     renderDtDiffExpr(
-        _expr: ast.DtDiffExpr,
+        _expr: spi.DtDiffExpr,
         _ctx: NodeRenderContext
     ): void {
         throw new Error("Unsupported Operation Exception");

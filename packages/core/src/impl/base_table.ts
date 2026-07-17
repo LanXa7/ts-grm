@@ -1,9 +1,11 @@
 import { StateError } from "@/error/common";
 import { AbstractTable, createJoinedTable } from "./abstract_table";
 import { BaseModelImplementor } from "./base_query_implementor";
-import { BaseQuerySelectMapArgs, JoinType, ModelLike } from "@/dsl";
+import { BaseQuerySelectMapArgs } from "@/dsl/base_query";
 import { makeErr } from "@/error/util";
 import { JoinFilter, JoinOperation } from "./entity_table";
+import { ModelLike } from "@/dsl/table_internal_types";
+import { JoinType } from "@/dsl/table";
 
 class BaseTableTarget {
 

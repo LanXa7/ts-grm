@@ -1,5 +1,4 @@
-import { AssociationType, PropContract } from "@/schema/prop_contract";
-import { JoinColumnData, Prop, PropData } from "@/schema/prop";
+import { AssociationType, PropContract } from "@/schema/prop_internal_types";
 import { Entity } from "./entity";
 import { PropError } from "@/error/metadata_error";
 import { AnyModelImpl, ModelImpl } from "./model_impl";
@@ -14,7 +13,8 @@ import { AnyModel } from "@/schema/model";
 import { CalculationStrategy } from "./calculation_strategy";
 import { acceptsNullOrUndefined } from "./util";
 import { ScalarProvider, ScalarType } from "@/schema/scalar";
-import { View } from "@/schema/dto";
+import { View } from "@/schema/dto/api";
+import { JoinColumnData, Prop, PropData } from "@/schema/prop_internal_behavior";
 
 export class EntityProp {
 

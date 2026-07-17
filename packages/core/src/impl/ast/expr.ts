@@ -1,4 +1,3 @@
-import { ExpressionOrder, ExpressionSubQuery } from "@/dsl";
 import { ArgumentError } from "@/error/common";
 import type { AbstractPred, CmpPred, NullityPred } from "./pred";
 import type { CoalesceExpr } from "./coalesce_expr";
@@ -7,6 +6,8 @@ import { AbstractSelection } from "./selection";
 import { Node } from "./node";
 import { Visitor } from "./visitor";
 import { ScalarProvider } from "@/schema/scalar";
+import { ExpressionOrder } from "@/dsl/utils";
+import { ExpressionSubQuery } from "@/dsl/sub_query";
 
 export abstract class AbstractExpr<T> extends AbstractSelection implements Node {
 

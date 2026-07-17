@@ -1,7 +1,7 @@
 import { ModelOrder, OrderNullsType } from "@/schema/order";
 import { EntityProp } from "./entity_prop";
 import { AnyModel } from "@/schema/model";
-import { Entity } from ".";
+import { Entity } from "./entity";
 import { ArgumentError } from "@/error/common";
 
 export type EntityPropOrder = {

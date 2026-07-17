@@ -1,7 +1,7 @@
 import { StandardSchemaV1 } from "@standard-schema/spec";
 import { AnyModel } from "../model";
 import { DtoKind } from "./dto_context";
-import { NullityType } from "../prop_contract";
+import { NullityType } from "../prop_internal_types";
 import { WithNullity } from "./utils";
 
 export type ScalarLikeMapping<

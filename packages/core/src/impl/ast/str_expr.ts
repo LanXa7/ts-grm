@@ -1,7 +1,7 @@
 import { AbstractCmpExpr } from "./expr";
 import { LikePred } from "./pred";
 import { AbstractNumExpr } from "./num_expr";
-import { LikeMode } from "@/dsl";
+import { LikeMode } from "@/dsl/expression";
 import { ArgumentError } from "@/error/common";
 import { getInternalFactory } from "./internal_factory";
 import type { CoalesceStrExpr } from "./coalesce_expr";

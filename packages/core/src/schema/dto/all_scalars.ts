@@ -1,6 +1,6 @@
-import { AtLeastOne } from "@/dsl";
+import { AtLeastOne } from "@/dsl/utils";
 import { AnyModel } from "../model";
-import { EmbeddedPropContract, ScalarPropContract } from "../prop_contract";
+import { EmbeddedPropContract, ScalarPropContract } from "../prop_internal_types";
 import { DtoKind } from "./dto_context";
 import { WithNullity } from "./utils";
 

@@ -1,5 +1,7 @@
-import { ExpressionLike, ExpressionOrder, RootQuerySelection } from "@/dsl";
-import { TableLike } from "@/dsl/table";
+import { ExpressionLike } from "@/dsl/expression";
+import { ExpressionOrder } from "@/dsl/utils";
+import { RootQuerySelection } from "@/dsl/root_query";
+import { TableLike } from "@/dsl/table_internal_types";
 import { AbstractPred } from "./pred";
 import { AbstractExpr } from "./expr";
 import { AbstractTable } from "../abstract_table";

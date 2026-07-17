@@ -1,9 +1,11 @@
-import { EntityTable, Predicate } from "@/dsl";
+import { Predicate } from "@/dsl/expression";
+import { EntityTable } from "@/dsl/table";
 import { AnyModel } from "../model";
-import { EmbeddedPropContract, NullityType, ReferencePropContract } from "../prop_contract";
+import { EmbeddedPropContract, NullityType, ReferencePropContract } from "../prop_internal_types";
 import { DtoBody, DtoType, DtoKind } from "./dto_context";
-import { DefaultTargetMappings, NullityOf, TargetMappings, TargetMembersOf, TargetModelOf, WithNullity } from "./utils";
-import { ReferenceFetchType } from ".";
+import { DefaultTargetMappings, TargetMappings, TargetMembersOf, PropModelOf, WithNullity } from "./utils";
+import { ReferenceFetchType } from "./api";
+import { NullityOf } from "../prop_internal_behavior";
 
 export interface FlatContext<
     TModel extends AnyModel,
@@ -88,7 +90,7 @@ export interface EmbeddedFlatMapping<
     ): EmbeddedFlatMapping<TModel, TDtoKind, TPrefix, TMember, TMappings, TNullity>;
 
     with<const TMappings extends TargetMappings<TModel, TMember>>(
-        body: DtoBody<TargetModelOf<TModel, TMember>, TDtoKind, "EMBEDDABLE", TargetMembersOf<TMember>, TMappings>
+        body: DtoBody<PropModelOf<TModel, TMember>, TDtoKind, "EMBEDDABLE", TargetMembersOf<TMember>, TMappings>
     ): EmbeddedFlatMapping<TModel, TDtoKind, TKey, TMember, TMappings, TNullity>;
 }
 
@@ -109,11 +111,11 @@ export interface ReferenceFlatMapping<
     ): ReferenceFlatMapping<TModel, TDtoKind, TPrefix, TMember, TMappings, TNullity>;
 
     with<const TMappings extends TargetMappings<TModel, TMember>>(
-        body: DtoBody<TargetModelOf<TModel, TMember>, TDtoKind, "ENTITY", TargetMembersOf<TMember>, TMappings>
+        body: DtoBody<PropModelOf<TModel, TMember>, TDtoKind, "ENTITY", TargetMembersOf<TMember>, TMappings>
     ): ReferenceFlatMapping<TModel, TDtoKind, TKey, TMember, TMappings, TNullity>;
 
     filter(
-        filter: (table: EntityTable<TargetModelOf<TModel, TMember>>) => Predicate | undefined
+        filter: (table: EntityTable<PropModelOf<TModel, TMember>>) => Predicate | undefined
     ): ReferenceFlatMapping<TModel, TDtoKind, TKey, TMember, TMappings, "NULLABLE">;
 
     fetch(

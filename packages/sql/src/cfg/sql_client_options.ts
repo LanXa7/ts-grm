@@ -1,10 +1,10 @@
-import { EntityManager, metadata } from "@ts-grm/core";
+import { EntityManager, spi } from "@ts-grm/core";
 import { FilterManager } from "./filter";
 import { Executor } from "@/transaction/executor";
 
 export type SqlClientOptions = {
     
-    readonly strategy: metadata.DatabaseNamingStrategy;
+    readonly strategy: spi.DatabaseNamingStrategy;
 
     readonly defaultBatchSize: number;
 

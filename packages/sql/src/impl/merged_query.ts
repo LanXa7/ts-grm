@@ -1,4 +1,4 @@
-import { ast, BaseQuery, BaseQueryMapOf, FetchOptions, FetchPageOptions, FetchRangeOptions, Page, RootQuery, RootQueryProjection, RowTypeOf, suppressUnused } from "@ts-grm/core";
+import { spi, BaseQuery, BaseQueryMapOf, FetchOptions, FetchPageOptions, FetchRangeOptions, Page, RootQuery, RootQueryProjection, RowTypeOf, suppressUnused } from "@ts-grm/core";
 import { AbstractBaseQueryImpl } from "./abstract_base_query_impl";
 import { AbstractDtSubQueryImpl, AbstractExprSubQueryImpl, AbstractNumSubQueryImpl, AbstractStrSubQueryImpl, AbstractTupleSubQueryImpl } from "./abstract_sub_query_impl";
 import { SqlClientImplementor } from "@/sql_client";
@@ -6,7 +6,7 @@ import { AtomRootQueryImpl } from "./atom_root_query_impl";
 
 export class MergedRootQueryImpl<
     TProjection extends RootQueryProjection<any>
-> implements RootQuery<TProjection>, ast.MergedQueryContract {
+> implements RootQuery<TProjection>, spi.MergedQueryContract {
 
     __type(): { rootQuery: TProjection | true; } {
         return { rootQuery: true };
@@ -59,24 +59,24 @@ export class MergedRootQueryImpl<
     }
 
     constructor(
-        readonly kind: ast.MergedQueryKind,
-        readonly queries: ReadonlyArray<ast.QueryContract>
+        readonly kind: spi.MergedQueryKind,
+        readonly queries: ReadonlyArray<spi.QueryContract>
     ) {}
 
     get isRecursive(): boolean {
         return false;
     }
 
-    get projection(): ast.ProjectionContract {
+    get projection(): spi.ProjectionContract {
         return this.queries[0]!.projection;
     }
 
-    accept(visitor: ast.Visitor): void {
+    accept(visitor: spi.Visitor): void {
         visitor.visitMergedQuery(this);
     }
 
     get sqlClient(): SqlClientImplementor {
-        const q = this.queries[0] as ast.QueryContract;
+        const q = this.queries[0] as spi.QueryContract;
         if (q.kind === "ATOM") {
             return (q as AtomRootQueryImpl<any>).mutableQuery.sqlClient;
         }
@@ -86,7 +86,7 @@ export class MergedRootQueryImpl<
 
 export class MergedBaseQueryImpl<TProjection>
 extends AbstractBaseQueryImpl<TProjection>
-implements BaseQuery<TProjection>, ast.MergedQueryContract {
+implements BaseQuery<TProjection>, spi.MergedQueryContract {
 
     __type(): { baseQuery: TProjection | true; } {
         return { baseQuery: true };
@@ -95,8 +95,8 @@ implements BaseQuery<TProjection>, ast.MergedQueryContract {
     readonly isRecursive: boolean;
     
     constructor(
-        readonly kind: ast.MergedQueryKind,
-        readonly queries: ReadonlyArray<ast.QueryContract>
+        readonly kind: spi.MergedQueryKind,
+        readonly queries: ReadonlyArray<spi.QueryContract>
     ) {
         super();
         let recursive = false;
@@ -113,102 +113,102 @@ implements BaseQuery<TProjection>, ast.MergedQueryContract {
         return (this.queries[0]! as any as AbstractBaseQueryImpl<TProjection>).args;
     }
 
-    get projection(): ast.ProjectionContract {
+    get projection(): spi.ProjectionContract {
         return this.queries[0]!.projection;
     }
 
-    accept(visitor: ast.Visitor): void {
+    accept(visitor: spi.Visitor): void {
         visitor.visitMergedQuery(this);
     }
 }
 
 export class MergedTupleSubQueryImpl
 extends AbstractTupleSubQueryImpl
-implements ast.MergedQueryContract {
+implements spi.MergedQueryContract {
     
     constructor(
-        readonly kind: ast.MergedQueryKind,
-        readonly queries: ReadonlyArray<ast.QueryContract>
+        readonly kind: spi.MergedQueryKind,
+        readonly queries: ReadonlyArray<spi.QueryContract>
     ) {
         super();
     }
 
-    get projection(): ast.ProjectionContract {
+    get projection(): spi.ProjectionContract {
         return this.queries[0]!.projection;
     }
 
-    accept(visitor: ast.Visitor): void {
+    accept(visitor: spi.Visitor): void {
         visitor.visitMergedQuery(this);
     }
 }
 
 export class MergedExprSubQueryImpl
 extends AbstractExprSubQueryImpl
-implements ast.MergedQueryContract {
+implements spi.MergedQueryContract {
     
     constructor(
-        readonly kind: ast.MergedQueryKind,
-        readonly queries: ReadonlyArray<ast.QueryContract>
+        readonly kind: spi.MergedQueryKind,
+        readonly queries: ReadonlyArray<spi.QueryContract>
     ) {
         super();
     }
 
-    get projection(): ast.ProjectionContract {
+    get projection(): spi.ProjectionContract {
         return this.queries[0]!.projection;
     }
 
-    accept(visitor: ast.Visitor): void {
+    accept(visitor: spi.Visitor): void {
         visitor.visitMergedQuery(this);
     }
 }
 
 export class MergedNumSubQueryImpl
 extends AbstractNumSubQueryImpl
-implements ast.MergedQueryContract {
+implements spi.MergedQueryContract {
     
     constructor(
-        readonly kind: ast.MergedQueryKind,
-        readonly queries: ReadonlyArray<ast.QueryContract>
+        readonly kind: spi.MergedQueryKind,
+        readonly queries: ReadonlyArray<spi.QueryContract>
     ) {
         super();
     }
 
-    get projection(): ast.ProjectionContract {
+    get projection(): spi.ProjectionContract {
         return this.queries[0]!.projection;
     }
 
-    accept(visitor: ast.Visitor): void {
+    accept(visitor: spi.Visitor): void {
         visitor.visitMergedQuery(this);
     }
 }
 
 export class MergedStrSubQueryImpl
 extends AbstractStrSubQueryImpl
-implements ast.MergedQueryContract {
+implements spi.MergedQueryContract {
     
     constructor(
-        readonly kind: ast.MergedQueryKind,
-        readonly queries: ReadonlyArray<ast.QueryContract>
+        readonly kind: spi.MergedQueryKind,
+        readonly queries: ReadonlyArray<spi.QueryContract>
     ) {
         super();
     }
 
-    get projection(): ast.ProjectionContract {
+    get projection(): spi.ProjectionContract {
         return this.queries[0]!.projection;
     }
 
-    accept(visitor: ast.Visitor): void {
+    accept(visitor: spi.Visitor): void {
         visitor.visitMergedQuery(this);
     }
 }
 
 export class MergedDtSubQueryImpl
 extends AbstractDtSubQueryImpl
-implements ast.MergedQueryContract {
+implements spi.MergedQueryContract {
     
     constructor(
-        readonly kind: ast.MergedQueryKind,
-        readonly queries: ReadonlyArray<ast.QueryContract>
+        readonly kind: spi.MergedQueryKind,
+        readonly queries: ReadonlyArray<spi.QueryContract>
     ) {
         super();
     }
@@ -217,11 +217,11 @@ implements ast.MergedQueryContract {
         return "SUB";
     }
 
-    get projection(): ast.ProjectionContract {
+    get projection(): spi.ProjectionContract {
         return this.queries[0]!.projection;
     }
 
-    accept(visitor: ast.Visitor): void {
+    accept(visitor: spi.Visitor): void {
         visitor.visitMergedQuery(this);
     }
 }

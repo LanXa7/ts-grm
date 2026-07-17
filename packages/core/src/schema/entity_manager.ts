@@ -1,5 +1,5 @@
-import { AtLeastOne } from "@/dsl";
-import { Entity } from "../impl";
+import { AtLeastOne } from "@/dsl/utils";
+import { Entity } from "../impl/entity";
 import { ALL_MODEL_MAP, ModelImpl } from "../impl/model_impl";
 import { AtLeastTwo } from "@/dsl/utils";
 import { ArgumentError } from "@/error/common";

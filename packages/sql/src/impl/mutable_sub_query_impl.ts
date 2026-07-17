@@ -1,4 +1,4 @@
-import { ExpressionLike, metadata, MutableSubQuery, SubQueryProjection, SubQuerySelectArrArgs } from "@ts-grm/core";
+import { spi, ExpressionLike, MutableSubQuery, SubQueryProjection, SubQuerySelectArrArgs } from "@ts-grm/core";
 import { AbstractMutableQuery } from "./abstract_mutable_query";
 import { AbstractSubQueryProjection } from "./query_projection";
 
@@ -11,7 +11,7 @@ implements MutableSubQuery {
     }
 
     constructor(
-        tables: ReadonlyArray<metadata.AbstractTable>
+        tables: ReadonlyArray<spi.AbstractTable>
     ) {
         super(tables);
     }

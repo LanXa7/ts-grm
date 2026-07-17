@@ -1,7 +1,8 @@
-import { Entity, UPPER_SNAKE_CASE_DATABASE_NAMING_STRATEGY } from "@/impl";
+import { Entity } from "@/impl/entity";
 import { describe, expect, it } from "vitest";
 import { AUTHOR, BOOK, COMMENT, ORDER, TAG } from "../model/model";
 import { EMPTY_KEYWORD_STRATEGY, expectStorage } from "./utils";
+import { UPPER_SNAKE_CASE_DATABASE_NAMING_STRATEGY } from "@/impl/strategy";
 
 describe("AssociationEntityTest", () => {
 

@@ -1,4 +1,4 @@
-import { Entity } from ".";
+import { Entity } from "./entity";
 import { EntityProp } from "./entity_prop";
 
 export type StorageType = "NONE" 

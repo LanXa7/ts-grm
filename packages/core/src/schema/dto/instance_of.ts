@@ -1,7 +1,8 @@
 import { UnionToIntersection } from "@/utils";
-import { AnyModel, DeclaredModelMembers, DerivedModel, ModelName, ModelSuperNames } from "../model";
+import { DeclaredModelMembers, DerivedModel, ModelName, ModelSuperNames } from "../model_internal_types";
 import { DtoBody, DtoKind, DtoMapping, DtoType } from "./dto_context";
 import { SelfMappings } from "./utils";
+import { AnyModel } from "../model";
 
 export interface InstanceOfContext<
     TModel extends AnyModel,

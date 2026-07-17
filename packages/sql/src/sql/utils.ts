@@ -1,11 +1,11 @@
-import { metadata } from "@ts-grm/core";
+import { spi } from "@ts-grm/core";
 import { Column, Composite, Scope } from "./fragment";
 import { RealTable } from "./real_table";
 
 export function addTypeMatch(
     table: RealTable,
-    currentEntity: metadata.Entity | undefined,
-    castToEntity: metadata.Entity,
+    currentEntity: spi.Entity | undefined,
+    castToEntity: spi.Entity,
     createColumn: (realTable: RealTable, columnName: string) => Column,
     negative: boolean,
     composite: Composite

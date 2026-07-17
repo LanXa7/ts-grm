@@ -1,9 +1,11 @@
-import { AnyModel, IsDerivedModelOf, ModelName } from "../model";
-import { AssociatedPropContract, CollectionPropContract } from "../prop_contract";
+import { IsDerivedModelOf, ModelName } from "../model_internal_types";
+import { AssociatedPropContract, CollectionPropContract } from "../prop_internal_types";
 import { DtoKind, DtoMapping } from "./dto_context";
-import { EntityTable, Predicate } from "@/dsl";
+import { EntityTable } from "@/dsl/table";
+import { Predicate } from "@/dsl/expression";
 import { WithNullity } from "./utils";
 import { ModelOrder } from "../order";
+import { AnyModel } from "../model";
 
 export interface RecursiveContext<
     TModel extends AnyModel,

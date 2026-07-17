@@ -1,11 +1,10 @@
 import { AnyFilter, SqlClientOptions } from "@/cfg";
 import { Driver } from "@/driver/deriver";
 import { SqlClientImplementor } from "@/sql_client";
-import type { 
+import { 
     Criteria, 
     View, 
     TypeOf, 
-    ModelOf, 
     AtLeastOne, 
     AnyModel,
     BaseModel,
@@ -26,7 +25,6 @@ import type {
     AtomExpressionSubQuery,
     AtomTupleSubQuery,
     AtomBaseQuery,
-    metadata,
     AnyAssociationModel,
     Isolation,
     Propagation,
@@ -34,9 +32,11 @@ import type {
     Schema,
     FetchRangeOptions,
     FetchPageOptions,
-    Page
+    Page,
+    spi,
+    ModelOf
 } from "@ts-grm/core";
-import { suppressUnused, ast, dsl, err } from "@ts-grm/core";
+import { suppressUnused, dsl, err } from "@ts-grm/core";
 import { MutableRootQueryImpl } from "./mutable_root_query_impl";
 import { AtomRootQueryImpl } from "./atom_root_query_impl";
 import { AbstractRootQueryProjection, AbstractSubQueryProjection, ExpressionSubQueryProjection, MapBaseQueryProjection } from "./query_projection";
@@ -56,12 +56,12 @@ export class SqlClientImpl implements SqlClientImplementor {
         return { sqlClient: undefined }
     }
 
-    private readonly _configuredFilterMap: Map<metadata.Entity, ReadonlyArray<AnyFilter>>;
+    private readonly _configuredFilterMap: Map<spi.Entity, ReadonlyArray<AnyFilter>>;
 
     private readonly _filterMap =
-        new Map<metadata.Entity, ReadonlyArray<AnyFilter>>();
+        new Map<spi.Entity, ReadonlyArray<AnyFilter>>();
 
-    readonly strategy: metadata.DatabaseStrategy;
+    readonly strategy: spi.DatabaseStrategy;
 
     constructor(
         readonly driver: Driver,
@@ -155,7 +155,7 @@ export class SqlClientImpl implements SqlClientImplementor {
     }
 
     isDirectAssociatedKey(
-        expr: ast.PropExprContract
+        expr: spi.PropExprContract
     ): boolean {
         const joinProp = expr.table.__joinOperation?.joinProp;
         if (joinProp == null || expr.table.__joinOperation!.isJoinPropInverse) {
@@ -174,7 +174,7 @@ export class SqlClientImpl implements SqlClientImplementor {
     }
 
     getFilters(
-        entity: metadata.Entity
+        entity: spi.Entity
     ): ReadonlyArray<AnyFilter> {
         let filters = this._filterMap.get(entity);
         if (filters == null) {
@@ -185,10 +185,10 @@ export class SqlClientImpl implements SqlClientImplementor {
     }
 
     private _createFilters(
-        entity: metadata.Entity
+        entity: spi.Entity
     ): ReadonlyArray<AnyFilter> {
         const filters: Array<AnyFilter> = [];
-        for (let e: metadata.Entity | undefined = entity; 
+        for (let e: spi.Entity | undefined = entity; 
             e != null; 
             e = e.superEntity) {
             const arr = this._configuredFilterMap?.get(e);
@@ -254,7 +254,7 @@ export class SqlClientImpl implements SqlClientImplementor {
     }
 }
 
-class QueryFactoryImpl implements ast.QueryFactory {
+class QueryFactoryImpl implements spi.QueryFactory {
     
     createAtomSubQuery<
         const TModels extends AtLeastOne<AnyModel | BaseModel<any> | AnyAssociationModel>,
@@ -292,13 +292,13 @@ class QueryFactoryImpl implements ast.QueryFactory {
             return new AtomTupleSubQueryImpl(mutableQuery, projection, undefined) as any;
         }
         const selection = (projection as ExpressionSubQueryProjection<any>).selection;
-        if (selection instanceof ast.AbstractDtExpr) {
+        if (selection instanceof spi.AbstractDtExpr) {
             return new AtomDtSubQueryImpl(mutableQuery, projection, undefined) as any;
         }
-        if (selection instanceof ast.AbstractStrExpr) {
+        if (selection instanceof spi.AbstractStrExpr) {
             return new AtomStrSubQueryImpl(mutableQuery, projection, undefined) as any;
         }
-        if (selection instanceof ast.AbstractNumExpr) {
+        if (selection instanceof spi.AbstractNumExpr) {
             return new AtomNumSubQueryImpl(mutableQuery, projection, undefined) as any;
         }
         return new AtomExprSubQueryImpl(mutableQuery, projection, undefined) as any;
@@ -327,37 +327,37 @@ class QueryFactoryImpl implements ast.QueryFactory {
     }
 
     createMergedRootQuery<TProjection extends RootQueryProjection<any>>(
-        kind: ast.MergedQueryKind, 
+        kind: spi.MergedQueryKind, 
         queries: ReadonlyArray<RootQuery<TProjection>>
     ): RootQuery<TProjection> {
         return new MergedRootQueryImpl(kind, queries as any);
     }
 
     createMergedExpressionSubQuery<TProjection>(
-        kind: ast.MergedQueryKind, 
+        kind: spi.MergedQueryKind, 
         queries: ReadonlyArray<ExpressionSubQuery<TProjection>>
     ): ExpressionSubQuery<TProjection> {
-        if (queries instanceof ast.AbstractDtExpr) {
+        if (queries instanceof spi.AbstractDtExpr) {
             return new MergedDtSubQueryImpl(kind, queries as any) as any;
         }
-        if (queries instanceof ast.AbstractStrExpr) {
+        if (queries instanceof spi.AbstractStrExpr) {
             return new MergedStrSubQueryImpl(kind, queries as any) as any;
         }
-        if (queries instanceof ast.AbstractNumExpr) {
+        if (queries instanceof spi.AbstractNumExpr) {
             return new MergedNumSubQueryImpl(kind, queries as any) as any;
         }
         return new MergedExprSubQueryImpl(kind, queries as any) as any;
     }
 
     createMergedTupleSubQuery<TProjection>(
-        kind: ast.MergedQueryKind, 
+        kind: spi.MergedQueryKind, 
         queries: ReadonlyArray<TupleSubQuery<TProjection>>
     ): TupleSubQuery<TProjection> {
         return new MergedTupleSubQueryImpl(kind, queries as any) as any;
     }
 
     createMergedBaseQuery<TProjection>(
-        kind: ast.MergedQueryKind, 
+        kind: spi.MergedQueryKind, 
         queries: ReadonlyArray<BaseQuery<TProjection>>
     ): BaseQuery<TProjection> {
         return new MergedBaseQueryImpl(kind, queries as any);
@@ -366,7 +366,7 @@ class QueryFactoryImpl implements ast.QueryFactory {
 
 const queryFactory = new QueryFactoryImpl();
 
-ast.setQueryFactory(queryFactory);
+spi.setQueryFactory(queryFactory);
 
 class SchemaImpl implements Schema {
 

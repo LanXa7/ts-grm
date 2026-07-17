@@ -1,5 +1,6 @@
 import { collectNativeParts, NativeDtExpr, NativeNumExpr, NativeStrExpr } from "@/impl/ast/native_expr";
-import { Expression, ExpressionLike, ExpressionOrder } from ".";
+import { Expression, ExpressionLike } from "./expression";
+import { ExpressionOrder } from "./utils";
 
 export type NativeValueType = 
     ExpressionLike 

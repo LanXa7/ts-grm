@@ -1,6 +1,6 @@
 import { DataRows } from "@/impl/data_row_reader";
 import { Value } from "@/sql/fragment";
-import { metadata } from "@ts-grm/core";
+import { spi } from "@ts-grm/core";
 
 export interface Executor {
 
@@ -60,26 +60,26 @@ export type QueryPurpose = {
 
 export type LoadAssociationPurpose = {
     readonly kind: "LOAD_ASSOCIATION",
-    readonly prop: metadata.EntityProp
+    readonly prop: spi.EntityProp
 };
 
 export type LoadRecursiveTreePurpose = {
     readonly kind: "LOAD_RECURSIVE_TREE",
-    readonly prop: metadata.EntityProp
+    readonly prop: spi.EntityProp
 };
 
 export type LoadRecursiveTreeKeyPurpose = {
     kind: "LOAD_RECURSIVE_TREE_KEY",
-    prop: metadata.EntityProp
+    prop: spi.EntityProp
 };
 
 export type LoadRecursiveTreeNodePurpose = {
     readonly kind: "LOAD_RECURSIVE_TREE_NODE",
-    readonly prop: metadata.EntityProp
+    readonly prop: spi.EntityProp
 };
 
 export type LoadCalculatorPurpose = {
     readonly kind: "LOAD_CALCULATOR",
-    readonly prop: metadata.EntityProp,
+    readonly prop: spi.EntityProp,
     readonly parameter: any
 };

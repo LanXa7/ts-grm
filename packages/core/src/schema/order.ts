@@ -1,4 +1,5 @@
-import { AnyModel, OrderedKeys } from "@/schema/model";
+import { AnyModel } from "@/schema/model";
+import { OrderedKeys } from "./model_internal_types";
 
 export type ModelOrder<TModel extends AnyModel> = 
     OrderedKeys<TModel> 

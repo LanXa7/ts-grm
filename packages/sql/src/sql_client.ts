@@ -1,7 +1,6 @@
-import { ast, err, SqlClient } from "@ts-grm/core";
+import { err, spi, SqlClient } from "@ts-grm/core";
 import { SqlClientOptions } from "./cfg/sql_client_options";
 import { Driver } from "./driver/deriver";
-import { metadata } from "@ts-grm/core";
 import { SqlClientImpl } from "./impl/sql_client_impl";
 import { DeepPartial, merge } from "./utils";
 import { AnyFilter, FilterManager } from "./cfg/filter";
@@ -49,21 +48,21 @@ export interface SqlClientImplementor extends SqlClient {
     readonly options: SqlClientOptions;
 
     isDirectAssociatedKey(
-        expr: ast.PropExprContract
+        expr: spi.PropExprContract
     ): boolean;
 
     getFilters(
-        entity: metadata.Entity
+        entity: spi.Entity
     ): ReadonlyArray<AnyFilter>;
 
     readonly executor: Executor;
     
-    readonly strategy: metadata.DatabaseStrategy;
+    readonly strategy: spi.DatabaseStrategy;
 }
 
 function createDefaultOptions(): SqlClientOptions {
     return {
-        strategy: metadata.UPPER_SNAKE_CASE_DATABASE_NAMING_STRATEGY,
+        strategy: spi.UPPER_SNAKE_CASE_DATABASE_NAMING_STRATEGY,
         defaultBatchSize: 128,
         defaultListBatchSize: 16,
         sqlLogger: {

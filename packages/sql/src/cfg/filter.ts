@@ -1,4 +1,4 @@
-import { AnyModel, EntityTable, metadata, Predicate } from "@ts-grm/core";
+import { AnyModel, EntityTable, Predicate, spi } from "@ts-grm/core";
 
 export interface Filter<TModel extends AnyModel> {
 
@@ -9,7 +9,7 @@ export type AnyFilter = Filter<AnyModel>;
 
 export class FilterManager {
 
-    private _filterMap: Map<metadata.Entity, Array<AnyFilter>> | undefined = undefined;
+    private _filterMap: Map<spi.Entity, Array<AnyFilter>> | undefined = undefined;
 
     add<TModel extends AnyModel>(
         model: TModel,
@@ -18,7 +18,7 @@ export class FilterManager {
         if (filter == null) {
             return this;
         }
-        const entity = metadata.Entity.of(model);
+        const entity = spi.Entity.of(model);
         let filterMap = this._filterMap;
         if (filterMap == null) {
             this._filterMap = filterMap = new Map();
@@ -33,7 +33,7 @@ export class FilterManager {
     }
 
     // @ts-ignore
-    private _toMap(): ReadonlyMap<metadata.Entity, ReadonlyArray<AnyFilter>> | undefined {
+    private _toMap(): ReadonlyMap<spi.Entity, ReadonlyArray<AnyFilter>> | undefined {
         return new Map(this._filterMap);
     }
 }

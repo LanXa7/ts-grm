@@ -1,4 +1,4 @@
-import { AnyModel, ast, dsl, EntityTable, metadata, Predicate } from "@ts-grm/core";
+import { AnyModel, dsl, EntityTable, Predicate, spi } from "@ts-grm/core";
 import { Alias, Column, Composite, Scope } from "./fragment";
 import { RealTable } from "./real_table";
 import { FragmentGenGenVisitor } from "./fragment_gen_visitor";
@@ -7,7 +7,7 @@ import { addTypeMatch } from "./utils";
 
 export class TableFragmentCreator {
 
-    private readonly _strategy: metadata.DatabaseStrategy;
+    private readonly _strategy: spi.DatabaseStrategy;
 
     constructor(
         private readonly _sqlClient: SqlClientImplementor,
@@ -67,7 +67,7 @@ export class TableFragmentCreator {
                 .add(" ")
                 .add(new Alias(table));
         } else {
-            const baseTable = table.symbol as metadata.TypedBaseTable;
+            const baseTable = table.symbol as spi.TypedBaseTable;
             if (baseTable.__isCte) {
                 composite.add(new Alias(table));
             } else {
@@ -87,7 +87,7 @@ export class TableFragmentCreator {
             .add(" join ");
         this._addTable(table, composite);
         composite.add(" on ");
-        const storage = table.joinProp!.toStorage(this._strategy) as metadata.PropStorage;
+        const storage = table.joinProp!.toStorage(this._strategy) as spi.PropStorage;
         const conditionScope = new Scope("AND");
         if (storage.kind === "COLUMN") {
             conditionScope
@@ -147,7 +147,7 @@ export class TableFragmentCreator {
                     )
                     .add(" = ")
                     .add(
-                        this._createColumn(table!, (storage as metadata.Column).name)
+                        this._createColumn(table!, (storage as spi.Column).name)
                     );
                 break;
             case "COLUMNS":
@@ -159,7 +159,7 @@ export class TableFragmentCreator {
                         )
                         .add(" = ")
                         .add(
-                            this._createColumn(table!, (storage as metadata.Columns)[i]!.name)
+                            this._createColumn(table!, (storage as spi.Columns)[i]!.name)
                         );
                 }
                 break;
@@ -197,11 +197,11 @@ export class TableFragmentCreator {
             }
         }
         if (predicate != null) {
-            this._addFilterPredicate(predicate as ast.AbstractPred, scope);
+            this._addFilterPredicate(predicate as spi.AbstractPred, scope);
         }
     }
 
-    private _addFilterPredicate(pred: ast.AbstractPred, scope: Scope) {
+    private _addFilterPredicate(pred: spi.AbstractPred, scope: Scope) {
         scope.separator();
         const visitor = this._cloneVisitor();
         pred.accept(visitor);

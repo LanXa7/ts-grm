@@ -1,8 +1,9 @@
-import { AllModelMembers, AnyModel, RequiredModelKey } from "../model";
-import { EmbeddedPropContract, ReferencePropContract } from "../prop_contract";
+import { AnyModel } from "../model";
+import { AllModelMembers, RequiredModelKey } from "../model_internal_types";
+import { EmbeddedPropContract, ReferencePropContract } from "../prop_internal_types";
 import { AllScalarsMapping, MemberType } from "./all_scalars";
 import { DtoBody, DtoKind, DtoMapping, DtoType } from "./dto_context";
-import { TargetMappings, TargetModelOf, WithNullity } from "./utils";
+import { TargetMappings, PropModelOf, WithNullity } from "./utils";
 
 export type ReferenceKeyContext<
     TModel extends AnyModel,
@@ -82,7 +83,7 @@ export interface EmbeddedReferenceKeyMapping<
         const TMappings extends TargetMappings<TModel, TMember>
     >(
         body: DtoBody<
-            TargetModelOf<TModel, TMember>, 
+            PropModelOf<TModel, TMember>, 
             TDtoKind, 
             "EMBEDDABLE", 
             TargetKeyMembersOf<TModel, TMember>,
@@ -101,7 +102,7 @@ type TargetKeyPropOf<
     TMember
 > =
     AllModelMembers<
-        TargetModelOf<TModel, TMember>
+        PropModelOf<TModel, TMember>
     >[TargetKeyOf<TMember>];
 
 type TargetKeyMembersOf<

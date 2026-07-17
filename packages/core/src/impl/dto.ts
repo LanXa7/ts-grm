@@ -1,10 +1,10 @@
 import { EntityProp } from "./entity_prop";
 import { EntityPropOrder } from "./entity_prop_order";
 import { Entity } from "./entity";
-import { AssociationType } from "@/schema/prop_contract";
-import { AbstractEntityTable } from ".";
-import { Predicate } from "@/dsl";
-import { ReferenceFetchType } from "@/schema/dto";
+import { AssociationType } from "@/schema/prop_internal_types";
+import { AbstractEntityTable } from "./entity_table";
+import { Predicate } from "@/dsl/expression";
+import { ReferenceFetchType } from "@/schema/dto/api";
 
 export type Dto = {
 

@@ -1,4 +1,4 @@
-import { BaseModel, BaseQuery } from "@/dsl";
+import { BaseModel, BaseQuery } from "@/dsl/base_query";
 import { BaseQueryMapOf, BaseQueryProjection, BaseQuerySelectMapArgs } from "@/dsl/base_query";
 import { ModelContract } from "./model_contract";
 

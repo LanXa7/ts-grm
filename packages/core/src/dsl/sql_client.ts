@@ -6,8 +6,8 @@ import { Criteria } from "./criteria";
 import { AnyModel } from "@/schema/model";
 import { AnyAssociationModel } from "./association";
 import { FetchPageOptions, FetchRangeOptions, Page } from "./page";
-import { TypeOf, View } from "@/schema/dto";
-import { ModelOf } from "@/schema/dto/local_api";
+import { TypeOf, View } from "@/schema/dto/api";
+import { ModelOf } from "@/schema/dto/internal_types";
 
 export interface SqlClient {
 

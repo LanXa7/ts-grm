@@ -1,6 +1,6 @@
 import { AnyModel } from "../model";
 import { DtoBody, DtoType, DtoKind } from "./dto_context";
-import { TargetMappings, TargetMembersOf, TargetModelOf } from "./utils";
+import { TargetMappings, TargetMembersOf, PropModelOf } from "./utils";
 
 export interface EmbeddedMapping<
     TModel extends AnyModel,
@@ -17,7 +17,7 @@ export interface EmbeddedMapping<
     ): EmbeddedMapping<TModel, TDtoKind, TAlias, TMember, TMappings>;
 
     with<const TMappings extends TargetMappings<TModel, TMember>>(
-        body: DtoBody<TargetModelOf<TModel, TMember>, TDtoKind, "EMBEDDABLE", TargetMembersOf<TMember>, TMappings>
+        body: DtoBody<PropModelOf<TModel, TMember>, TDtoKind, "EMBEDDABLE", TargetMembersOf<TMember>, TMappings>
     ): EmbeddedMapping<TModel, TDtoKind, TKey, TMember, TMappings>;
 }
 

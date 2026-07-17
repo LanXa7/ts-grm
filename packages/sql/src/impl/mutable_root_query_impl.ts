@@ -1,4 +1,4 @@
-import { metadata, MutableRootQuery, RootQueryProjection, RootQuerySelectArrArgs, RootQuerySelection, RootQuerySelectMapArgs } from "@ts-grm/core";
+import { spi, MutableRootQuery, RootQueryProjection, RootQuerySelectArrArgs, RootQuerySelection, RootQuerySelectMapArgs } from "@ts-grm/core";
 import { SqlClientImplementor } from "@/sql_client";
 import { AbstractRootQueryProjection } from "./query_projection";
 import { AbstractMutableQuery } from "./abstract_mutable_query";
@@ -13,7 +13,7 @@ implements MutableRootQuery {
 
     constructor(
         readonly sqlClient: SqlClientImplementor,
-        tables: ReadonlyArray<metadata.AbstractTable>
+        tables: ReadonlyArray<spi.AbstractTable>
     ) {
         super(tables);
     }

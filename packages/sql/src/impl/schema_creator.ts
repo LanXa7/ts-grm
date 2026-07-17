@@ -1,5 +1,5 @@
 import { SqlClientImplementor } from "@/sql_client";
-import { CascadeType, err, metadata, ScalarType } from "@ts-grm/core";
+import { CascadeType, err, spi, ScalarType } from "@ts-grm/core";
 import { ColumnDefImpl, ForeignKeyConstraintDef, TableDef, TableDefImpl } from "./schema_def";
 
 export async function createSchema(
@@ -12,11 +12,11 @@ export async function createSchema(
 
 class SchemaCreatorExecutor {
 
-    private readonly _strategy: metadata.DatabaseStrategy;
+    private readonly _strategy: spi.DatabaseStrategy;
 
-    private readonly _processedMetadatas = new Set<metadata.Entity | metadata.EntityProp>();
+    private readonly _processedMetadatas = new Set<spi.Entity | spi.EntityProp>();
 
-    readonly tableMap = new Map<metadata.Entity | metadata.EntityProp, TableDefImpl>();
+    readonly tableMap = new Map<spi.Entity | spi.EntityProp, TableDefImpl>();
 
     constructor(
         private readonly _sqlClient: SqlClientImplementor
@@ -47,7 +47,7 @@ class SchemaCreatorExecutor {
         }
     }
 
-    private _processEntity(entity: metadata.Entity) {
+    private _processEntity(entity: spi.Entity) {
         if (!this._isProcessable(entity)) {
             return;
         }
@@ -113,7 +113,7 @@ class SchemaCreatorExecutor {
     }
 
     private _processProp(
-        prop: metadata.EntityProp, 
+        prop: spi.EntityProp, 
         tableDefImpl: TableDefImpl
     ) {
         if (prop.isOverride && prop.declaringEntity.tableSettings.sharedTable) {
@@ -137,7 +137,7 @@ class SchemaCreatorExecutor {
                 ? new ForeignKeyBuilder(referenceProp!.cascadeType, false)
                 : undefined; 
         for (const scalarProp of scalaProps) {
-            const column = scalarProp.toStorage(this._strategy) as metadata.Column;
+            const column = scalarProp.toStorage(this._strategy) as spi.Column;
             const referenceColumnDef = 
                 referencedTableDef != null
                     ? referencedTableDef.referencedColumnDef(column.referencedColumnName!)
@@ -163,7 +163,7 @@ class SchemaCreatorExecutor {
     }
 
     private _processMiddleTable(
-        prop: metadata.EntityProp
+        prop: spi.EntityProp
     ) {
         if (!this._isProcessable(prop)) {
             return;
@@ -172,7 +172,7 @@ class SchemaCreatorExecutor {
         this._processEntity(prop.targetEntity!);
         const toThisTableDefImpl = this.tableMap.get(prop.declaringEntity)!;
         const toTargetTableDefImpl = this.tableMap.get(prop.targetEntity!)!;
-        const middleTable = prop.toStorage(this._strategy) as metadata.MiddleTable;
+        const middleTable = prop.toStorage(this._strategy) as spi.MiddleTable;
         let tableDefImpl = this.tableMap.get(prop);
         if (tableDefImpl == null) {
             tableDefImpl = new TableDefImpl(
@@ -230,7 +230,7 @@ class SchemaCreatorExecutor {
     }
 
     private _isProcessable(
-        metadata: metadata.Entity | metadata.EntityProp
+        metadata: spi.Entity | spi.EntityProp
     ): boolean {
         if (this._processedMetadatas.has(metadata)) {
             return false;
@@ -317,7 +317,7 @@ class SchemaCreatorExecutor {
         }
     }
 
-    private _addMiddleEntityUniqueConstraints(middleEntity: metadata.MiddelEntity) {
+    private _addMiddleEntityUniqueConstraints(middleEntity: spi.MiddelEntity) {
         const tableDefImpl = this.tableMap.get(middleEntity.entity.tableEntity)!;
         const columnDefImpls: Array<ColumnDefImpl> = [];
         for (const prop of middleEntity.joinThisProp.referenceKeyProp!.scalarProps!) {
@@ -369,9 +369,9 @@ class ForeignKeyBuilder {
 }
 
 function subEntities(
-    entity: metadata.Entity
-): ReadonlyArray<metadata.Entity> | undefined {
-    const arr: Array<metadata.Entity> = [];
+    entity: spi.Entity
+): ReadonlyArray<spi.Entity> | undefined {
+    const arr: Array<spi.Entity> = [];
     if (entity.tableSettings.discriminatorValue != null) {
         arr.push(entity);
     }

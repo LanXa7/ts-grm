@@ -1,9 +1,10 @@
-import { AllModelMembers, AnyModel } from "../model";
-import { AssociatedLikePropContract, EmbeddedPropContract, NullityType, PropContract } from "../prop_contract";
+import { AnyModel } from "../model";
+import { AllModelMembers } from "../model_internal_types";
+import { AssociatedLikePropContract, EmbeddedPropContract, NullityType } from "../prop_internal_types";
 import { AllScalarsMapping } from "./all_scalars";
 import { DtoMapping, DtoKind } from "./dto_context";
 
-export type TargetModelOf<
+export type PropModelOf<
     TModel extends AnyModel, 
     TMember
 > =
@@ -34,14 +35,14 @@ export type TargetContextKindOf<
 export type TargetMappings<
     TModel extends AnyModel, 
     TMember
-> = ReadonlyArray<DtoMapping<TargetModelOf<TModel, TMember>>>;
+> = ReadonlyArray<DtoMapping<PropModelOf<TModel, TMember>>>;
 
 export type DefaultTargetMappings<
     TModel extends AnyModel, 
     TDtoKind extends DtoKind,
     TMember
 > = [ 
-    AllScalarsMapping<TargetModelOf<TModel, TMember>, TDtoKind, TargetMembersOf<TMember>, never> 
+    AllScalarsMapping<PropModelOf<TModel, TMember>, TDtoKind, TargetMembersOf<TMember>, never> 
 ];
 
 export type WithNullity<T, TNullity extends NullityType, TDtoKind extends DtoKind> =
@@ -58,11 +59,6 @@ export type WithNullity<T, TNullity extends NullityType, TDtoKind extends DtoKin
             ? T | undefined
         : T
     : T;
-
-export type NullityOf<TMember> =
-    TMember extends PropContract<any, infer Nullity>
-        ? Nullity
-        : "NONNULL";
 
 export type SelfMappings<
     TModel extends AnyModel, 

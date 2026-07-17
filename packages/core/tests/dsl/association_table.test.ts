@@ -1,9 +1,10 @@
 import { dsl, Table } from "@/dsl";
-import { AbstractEntityTable, Entity } from "@/impl";
+import { Entity } from "@/impl/entity";
 import { describe, expect, it } from "vitest";
 import { BOOK, ORDER } from "../model/model";
 import { expectCode } from "../utils";
 import { AbstractNumExpr } from "@/impl/ast";
+import { AbstractEntityTable } from "@/impl/entity_table";
 
 describe("AssociationTableTest", () => {
 

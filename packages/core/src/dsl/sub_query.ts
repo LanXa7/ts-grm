@@ -5,7 +5,7 @@ import { getQueryFactory } from "@/impl/ast/query_factory";
 import { ExistsPred, subQueryExpr } from "@/impl/ast/sub_query_expr";
 import { BaseModel } from "./base_query";
 import { AnyAssociationModel } from "./association";
-import { Table } from ".";
+import { Table } from "./table";
 
 export function subQuery<
     const TModels extends AtLeastOne<AnyModel | BaseModel<any> | AnyAssociationModel>,

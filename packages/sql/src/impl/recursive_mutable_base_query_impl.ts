@@ -1,4 +1,4 @@
-import { BaseQueryMapOf, BaseTable, metadata, RecursiveMutableBaseQuery } from "@ts-grm/core";
+import { BaseQueryMapOf, BaseTable, RecursiveMutableBaseQuery, spi } from "@ts-grm/core";
 import { MutableBaseQueryImpl } from "./mutable_base_query_impl";
 
 export class RecursiveMutableBaseQueryImpl<TProjection>
@@ -17,7 +17,7 @@ implements RecursiveMutableBaseQuery<TProjection> {
 
     constructor(
         readonly prev: BaseTable<BaseQueryMapOf<TProjection>>,
-        tables: ReadonlyArray<metadata.AbstractTable>
+        tables: ReadonlyArray<spi.AbstractTable>
     ) {
         super(tables);
     }

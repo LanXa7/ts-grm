@@ -3,7 +3,7 @@ import { describe, it } from "vitest";
 import { SIMPLE_AUTHOR_VIEW, SIMPLE_BOOK_VIEW, SIMPLE_COMMENT_VIEW, SIMPLE_STORE_VIEW, sql } from "./utils";
 import { FilterManager } from "@/cfg";
 import { AUTHOR, BOOK, BOOK_STORE, COMMENT, ORDER } from "../model/model";
-import { dsl, Expression, ExprTuple, metadata } from "@ts-grm/core";
+import { dsl, spi, Expression, ExprTuple } from "@ts-grm/core";
 import { expectCode, useSqliteClient } from "../utils";
 
 // Internal API, not public API for users
@@ -27,9 +27,9 @@ describe("InternalInverseJoinSqlTest", () => {
 
     it("inverseO2M", () => {
         const q = sqlClientWithFilter.createQuery(BOOK, (q, book) => {
-            const parentId1 = (book as any as metadata.AbstractEntityTable)
+            const parentId1 = (book as any as spi.AbstractEntityTable)
                 .__inverseAssociatedKey(BOOK_STORE, "books") as Expression<number>;
-            const parentId2 = (book as any as metadata.AbstractEntityTable)
+            const parentId2 = (book as any as spi.AbstractEntityTable)
                 .__inverseAssociatedKey(BOOK_STORE, "books") as Expression<number>;
             q.where(
                 dsl.or(
@@ -58,9 +58,9 @@ describe("InternalInverseJoinSqlTest", () => {
 
     it("inverseM2O", () => {
         const q = sqlClientWithFilter.createQuery(BOOK_STORE, (q, store) => {
-            const parentId1 = (store as any as metadata.AbstractEntityTable)
+            const parentId1 = (store as any as spi.AbstractEntityTable)
                 .__inverseAssociatedKey(BOOK, "store") as Expression<number>;
-            const parentId2 = (store as any as metadata.AbstractEntityTable)
+            const parentId2 = (store as any as spi.AbstractEntityTable)
                 .__inverseAssociatedKey(BOOK, "store") as Expression<number>;
             q.where(
                 dsl.or(
@@ -93,9 +93,9 @@ describe("InternalInverseJoinSqlTest", () => {
 
     it("inverseM2M1", () => {
         const q = sqlClientWithFilter.createQuery(BOOK, (q, book) => {
-            const parentId1 = (book as any as metadata.AbstractEntityTable)
+            const parentId1 = (book as any as spi.AbstractEntityTable)
                 .__inverseAssociatedKey(AUTHOR, "books") as Expression<number>;
-            const parentId2 = (book as any as metadata.AbstractEntityTable)
+            const parentId2 = (book as any as spi.AbstractEntityTable)
                 .__inverseAssociatedKey(AUTHOR, "books") as Expression<number>;
             q.where(
                 dsl.or(
@@ -126,9 +126,9 @@ describe("InternalInverseJoinSqlTest", () => {
 
     it("inverseM2M2", () => {
         const q = sqlClientWithFilter.createQuery(AUTHOR, (q, author) => {
-            const parentId1 = (author as any as metadata.AbstractEntityTable)
+            const parentId1 = (author as any as spi.AbstractEntityTable)
                 .__inverseAssociatedKey(BOOK, "authors") as Expression<number>;
-            const parentId2 = (author as any as metadata.AbstractEntityTable)
+            const parentId2 = (author as any as spi.AbstractEntityTable)
                 .__inverseAssociatedKey(BOOK, "authors") as Expression<number>;
             q.where(
                 dsl.or(
@@ -159,13 +159,13 @@ describe("InternalInverseJoinSqlTest", () => {
 
     it("inverseM2MByMultiColumns", () => {
         const q = sqlClientWithFilter.createQuery(COMMENT, (q, comment) => {
-            const parentId1 = (comment as any as metadata.AbstractEntityTable)
+            const parentId1 = (comment as any as spi.AbstractEntityTable)
                 .__inverseAssociatedKey(ORDER, "comments") as ExprTuple<[
                     Expression<number>,
                     Expression<number>,
                     Expression<number>
                 ]>;
-            const parentId2 = (comment as any as metadata.AbstractEntityTable)
+            const parentId2 = (comment as any as spi.AbstractEntityTable)
                 .__inverseAssociatedKey(ORDER, "comments") as ExprTuple<[
                     Expression<number>,
                     Expression<number>,

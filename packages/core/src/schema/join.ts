@@ -1,5 +1,6 @@
-import { AnyModel, MiddleEntityJoinTargetKeys, MiddleEntityJoinThisKeys, OptionalModelKey } from "./model";
-import { AssociationType } from "./prop_contract";
+import { AnyModel } from "./model";
+import { MiddleEntityJoinTargetKeys, MiddleEntityJoinThisKeys, OptionalModelKey } from "./model_internal_types";
+import { AssociationType } from "./prop_internal_types";
 
 export type JoinEntity<
     TMiddleModel extends AnyModel,

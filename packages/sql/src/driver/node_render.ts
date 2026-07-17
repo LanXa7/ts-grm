@@ -1,5 +1,5 @@
 import { Composite, Value } from "@/sql/fragment";
-import { ast } from "@ts-grm/core";
+import { spi } from "@ts-grm/core";
 
 export interface NodeRender {
 
@@ -9,62 +9,62 @@ export interface NodeRender {
     ): void;
 
     renderLikePred(
-        pred: ast.LikePred,
+        pred: spi.LikePred,
         ctx: NodeRenderContext
     ): void;
 
     renderEsOpPred(
-        pred: ast.EsOpPred,
+        pred: spi.EsOpPred,
         ctx: NodeRenderContext
     ): void;
 
     renderReverseExpr(
-        expr: ast.ReverseExpr,
+        expr: spi.ReverseExpr,
         ctx: NodeRenderContext
     ): void;
 
     renderTrimExpr(
-        expr: ast.TrimExpr, 
+        expr: spi.TrimExpr, 
         ctx: NodeRenderContext
     ): void;
 
     renderLengthExpr(
-        expr: ast.LengthExpr,
+        expr: spi.LengthExpr,
         ctx: NodeRenderContext
     ): void;
 
     renderPadExpr(
-        expr: ast.PadExpr,
+        expr: spi.PadExpr,
         ctx: NodeRenderContext
     ): void;
 
     renderLeftExpr(
-        expr: ast.LeftExpr,
+        expr: spi.LeftExpr,
         ctx: NodeRenderContext
     ): void;
 
     renderRightExpr(
-        expr: ast.RightExpr,
+        expr: spi.RightExpr,
         ctx: NodeRenderContext
     ): void;
 
     renderPositionExpr(
-        expr: ast.PositionExpr,
+        expr: spi.PositionExpr,
         ctx: NodeRenderContext
     ): void;
 
     renderSubstringExpr(
-        expr: ast.SubstringExpr,
+        expr: spi.SubstringExpr,
         ctx: NodeRenderContext
     ): void;
 
     renderDtPlusExpr(
-        expr: ast.DtPlusExpr,
+        expr: spi.DtPlusExpr,
         ctx: NodeRenderContext
     ): void;
 
     renderDtDiffExpr(
-        expr: ast.DtDiffExpr,
+        expr: spi.DtDiffExpr,
         ctx: NodeRenderContext
     ): void;
 }
@@ -79,14 +79,14 @@ export interface NodeRenderContext {
 
     withPrecedence(precedence: number): Disposable;
 
-    render(node: ast.Node | Value | string): void;
+    render(node: spi.Node | Value | string): void;
 }
 
 export type SingleColumnInCollectionPred = {
 
     readonly neg: boolean;
 
-    readonly expr: ast.AbstractExpr<any>;
+    readonly expr: spi.AbstractExpr<any>;
 
-    readonly values: ReadonlyArray<ast.AbstractExpr<any> | Value | string>;
+    readonly values: ReadonlyArray<spi.AbstractExpr<any> | Value | string>;
 };
