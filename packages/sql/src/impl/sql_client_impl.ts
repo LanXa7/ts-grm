@@ -33,10 +33,11 @@ import {
     FetchRangeOptions,
     FetchPageOptions,
     Page,
+    ModelOf,
     spi,
-    ModelOf
+    dsl,
+    suppressUnused
 } from "@ts-grm/core";
-import { suppressUnused, dsl, err } from "@ts-grm/core";
 import { MutableRootQueryImpl } from "./mutable_root_query_impl";
 import { AtomRootQueryImpl } from "./atom_root_query_impl";
 import { AbstractRootQueryProjection, AbstractSubQueryProjection, ExpressionSubQueryProjection, MapBaseQueryProjection } from "./query_projection";

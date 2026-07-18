@@ -253,3 +253,31 @@ export type ForeignKeyPropLike<T> =
       ? T
       : never
     : never;
+
+/*
+ * Utils for TProp
+ */
+export type TargetModelOf<TProp> =
+    TProp extends AssociatedPropContract<infer TargetModel, any, any, any, any, any>
+        ? TargetModel
+        : never;
+
+export type SourceKeyOf<TProp> =
+    TProp extends AssociatedPropContract<infer _, any, any, any, infer SourceKey, any>
+        ? SourceKey
+        : never;
+
+export type TargetKeyOf<TProp> =
+    TProp extends AssociatedPropContract<infer _, any, any, any, any, infer TargetKey>
+        ? TargetKey
+        : never;
+        
+export type DirectTypeOf<TProp> =
+    TProp extends PropContract<infer R, any>
+        ? R
+        : never;
+
+export type NullityOf<TProp> =
+    TProp extends PropContract<any, infer R>
+        ? R
+        : never;

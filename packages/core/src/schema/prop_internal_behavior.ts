@@ -36,8 +36,11 @@ import {
     PropContract, 
     ReferencePropContract, 
     ScalarPropContract, 
+    SourceKeyOf, 
     SqlFormulaPropContract, 
     StrPropContract, 
+    TargetKeyOf, 
+    TargetModelOf, 
     TsFormulaPropContract 
 } from "./prop_internal_types";
 import { AnyModel } from "./model";
@@ -1008,31 +1011,6 @@ export const EMPTY_PROP_DEFINITION_DATA: PropData = {
     formulaData: undefined,
     calculatorData: undefined
 }
-
-export type TargetModelOf<TProp> =
-    TProp extends AssociatedPropContract<infer TargetModel, any, any, any, any, any>
-        ? TargetModel
-        : never;
-
-export type SourceKeyOf<TProp> =
-    TProp extends AssociatedPropContract<infer _, any, any, any, infer SourceKey, any>
-        ? SourceKey
-        : never;
-
-export type TargetKeyOf<TProp> =
-    TProp extends AssociatedPropContract<infer _, any, any, any, any, infer TargetKey>
-        ? TargetKey
-        : never;
-        
-export type DirectTypeOf<TProp> =
-    TProp extends PropContract<infer R, any>
-        ? R
-        : never;
-
-export type NullityOf<TProp> =
-    TProp extends PropContract<any, infer R>
-        ? R
-        : never;
 
 export type ModelRef<TModel extends AnyModel> =
     TModel | (() => TModel);

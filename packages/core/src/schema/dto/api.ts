@@ -1,11 +1,11 @@
 import { dtoMapper, type DtoMapper } from "@/impl/dto_mapper";
 import { AnyModel } from "../model";
-import { ViewCreator } from "./internal_types";
 import { DtoBody, DtoMapping, DtoType } from "./dto_context";
 import { AllModelMembers } from "../model_internal_types";
 import { createDto, newDtoContext } from "@/impl/dto_context";
 import { Entity } from "@/impl/entity";
 import { Prettify } from "@/utils";
+import { ViewCreator } from "@/schema/dto/internal_types";
 
 export class View<TModel extends AnyModel, T> {
 

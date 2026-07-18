@@ -1,11 +1,10 @@
 import { Predicate } from "@/dsl/expression";
 import { EntityTable } from "@/dsl/table";
 import { AnyModel } from "../model";
-import { EmbeddedPropContract, NullityType, ReferencePropContract } from "../prop_internal_types";
+import { EmbeddedPropContract, NullityOf, NullityType, ReferencePropContract } from "../prop_internal_types";
 import { DtoBody, DtoType, DtoKind } from "./dto_context";
 import { DefaultTargetMappings, TargetMappings, TargetMembersOf, PropModelOf, WithNullity } from "./utils";
 import { ReferenceFetchType } from "./api";
-import { NullityOf } from "../prop_internal_behavior";
 
 export interface FlatContext<
     TModel extends AnyModel,

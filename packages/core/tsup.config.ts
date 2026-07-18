@@ -8,7 +8,8 @@ export default defineConfig({
   dts: {
     compilerOptions: {
       ignoreDeprecations: "6.0",
-    }
+    },
+    resolve: true,
   },
   splitting: false,
   sourcemap: true,

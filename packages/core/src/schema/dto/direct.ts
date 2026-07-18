@@ -1,11 +1,11 @@
 import { AnyModel } from "../model";
-import { NullityOf } from "../prop_internal_behavior";
 import { 
     CalculatedCollectionPropContract, 
     CalculatedReferencePropContract, 
     CalculatedValuePropContract, 
     CollectionPropContract, 
     EmbeddedPropContract, 
+    NullityOf, 
     ReferencePropContract, 
     ScalarLikePropContract, 
     ScalarPropContract 

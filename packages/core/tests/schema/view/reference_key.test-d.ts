@@ -31,4 +31,23 @@ describe("ReferenceKeyTest", () => {
             };
         }>();
     });
+
+    it("embeddedKeyWithBody", () => {
+        const view = dto.view(ORDER_ITEM, c => [
+            c.id,
+            c.orderId.as("oid").with(c => [
+                c.y.with(c => [
+                    c.b
+                ])
+            ])
+        ]);
+        expectTypeOf<TypeOf<typeof view>>().toEqualTypeOf<{
+            id: number;
+            oid: {
+                y: {
+                    b: number;
+                };
+            };
+        }>();
+    });
 });
