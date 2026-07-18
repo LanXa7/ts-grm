@@ -31,21 +31,21 @@ export * as spi from "./spi";
  * kind of namespacing is fine for values a user might occasionally reach
  * for, but not for types that must remain structurally reachable through
  * arbitrarily deep type-level computation.
- * 
- * For internal, configuring a dedicated export entry in `package.json` 
- * is the best choice. 
  *
- * * This is different from the `spi` namespace, which exists for a related
+ * For `internal`, configuring a dedicated export entry in `package.json`
+ * is the best choice.
+ *
+ * This is different from the `spi` namespace, which exists for a related
  * but distinct reason. The `spi` namespace holds symbols that ordinary
  * users never need, but that `@ts-grm/sql` (a layer built directly on
  * top of this package) does need. Crucially, none of the `spi` symbols
  * are intermediate types consumed by our type gymnastics — they're
  * ordinary values and interfaces used at a fixed, shallow depth. Because
  * of that, `export * as spi from "..."` works perfectly well for them.
- *  
- * However, multi-entry exports (subpath exports) for `internal` 
- * conflict with `export * as spi from './spi'`. In spi, all types 
- * — whether pure types or classes — are reduced to values of type 
+ *
+ * However, multi-entry exports (subpath exports) for `internal`
+ * conflict with `export * as spi from './spi'`. In `spi`, all types
+ * — whether pure types or classes — are reduced to values of type
  * any and become unusable.
  *
  * If we instead forced `spi` itself onto the same multi-entry-point
@@ -60,7 +60,7 @@ export * as spi from "./spi";
  * `index_internal` problem well: it keeps deeply-referenced types fully
  * resolvable while still hiding them behind a namespace member access.
  * Unfortunately, `namespace` is strongly discouraged in modern
- * TypeScript in favor of ES modules, and we don't want to build a核心
+ * TypeScript in favor of ES modules, and we don't want to build a core
  * dependency of this project on a deprecated pattern.
  *
  * Given all of the above, the pragmatic choice for now is to re-export
