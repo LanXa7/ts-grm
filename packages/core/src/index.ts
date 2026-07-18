@@ -31,34 +31,30 @@ export * as spi from "./spi";
  * kind of namespacing is fine for values a user might occasionally reach
  * for, but not for types that must remain structurally reachable through
  * arbitrarily deep type-level computation.
+ * 
+ * For internal, configuring a dedicated export entry in `package.json` 
+ * is the best choice. 
  *
- * This is different from the `spi` namespace, which exists for a related
+ * * This is different from the `spi` namespace, which exists for a related
  * but distinct reason. The `spi` namespace holds symbols that ordinary
  * users never need, but that `@ts-grm/sql` (a layer built directly on
  * top of this package) does need. Crucially, none of the `spi` symbols
  * are intermediate types consumed by our type gymnastics — they're
  * ordinary values and interfaces used at a fixed, shallow depth. Because
  * of that, `export * as spi from "..."` works perfectly well for them.
+ *  
+ * However, multi-entry exports (subpath exports) for `internal` 
+ * conflict with `export * as spi from './spi'`. In spi, all types 
+ * — whether pure types or classes — are reduced to values of type 
+ * any and become unusable.
  *
- * We did try to give `index_internal`'s types the same isolation as
- * `spi`, using multiple package.json export entry points (subpath
- * exports) instead of relying on flat re-exports from the main entry.
- * That attempt backfired in two ways:
- *
- * 1. The subpath-export setup for `index_internal`'s types actively
- *    conflicted with `spi`'s `export * as` re-export. Type-only exports
- *    inside `spi` lost their `type` marker somewhere in the bundler's
- *    chunk-extraction step, silently degrading into value-only exports.
- *    Every type consumed through `spi` then required an awkward
- *    `typeof spi.X` workaround just to be used as a type.
- *
- * 2. If we instead forced `spi` itself onto the same multi-entry-point
- *    export strategy (to sidestep the conflict above), its classes ended
- *    up duplicated across separately bundled entry points. Each entry
- *    point got its own physically distinct copy of the same class, which
- *    silently broke every `instanceof` check written against those
- *    classes — a much worse failure mode than the naming inconvenience
- *    we were trying to avoid.
+ * If we instead forced `spi` itself onto the same multi-entry-point
+ * export strategy (to sidestep the conflict above), its classes ended
+ * up duplicated across separately bundled entry points. Each entry
+ * point got its own physically distinct copy of the same class, which
+ * silently broke every `instanceof` check written against those
+ * classes — a much worse failure mode than the naming inconvenience
+ * we were trying to avoid.
  *
  * TypeScript's `namespace` keyword would, structurally, solve the
  * `index_internal` problem well: it keeps deeply-referenced types fully
