@@ -4,7 +4,7 @@ import { BaseModelImplementor } from "./base_query_implementor";
 import { BaseQuerySelectMapArgs } from "@/dsl/base_query";
 import { makeErr } from "@/error/util";
 import { JoinFilter, JoinOperation } from "./entity_table";
-import { ModelLike } from "@/dsl/table_internal_types";
+import { __ModelLike } from "@/dsl/table_internal_types";
 import { JoinType } from "@/dsl/table";
 
 class BaseTableTarget {
@@ -116,7 +116,7 @@ const typedBaseTableHandler: ProxyHandler<BaseTableTarget> = {
             case "__shadow":
                 return undefined;
             case "join":
-                return (model: ModelLike, options: {
+                return (model: __ModelLike, options: {
                     readonly joinType?: JoinType,
                     readonly filter: JoinFilter
                 }) => createJoinedTable(target.self, model, options);

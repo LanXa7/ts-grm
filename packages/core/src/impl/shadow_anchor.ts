@@ -4,7 +4,7 @@ import { BaseModelImplementor } from "./base_query_implementor";
 import { AbstractEntityTable } from "./entity_table";
 import { AbstractExpr } from "./ast";
 import { getInternalFactory } from "./ast/internal_factory";
-import { TableLike } from "@/dsl/table_internal_types";
+import { __TableLike } from "@/dsl/table_internal_types";
 import { StateError } from "@/error/common";
 
 export type ShadowAnchor = {
@@ -13,7 +13,7 @@ export type ShadowAnchor = {
 
     readonly exportedName: string;
 
-    readonly original: ExpressionLike | TableLike;
+    readonly original: ExpressionLike | __TableLike;
 };
 
 export function withShadowAnchor<
@@ -22,7 +22,7 @@ export function withShadowAnchor<
     args: T,
     baseModel: BaseModelImplementor<T>
 ): T {
-    const withAnchorArgs: {[key: string]: ExpressionLike | TableLike } = {};
+    const withAnchorArgs: {[key: string]: ExpressionLike | __TableLike } = {};
     for (const key in args) {
         if (typeof key !== "string") {
             continue;

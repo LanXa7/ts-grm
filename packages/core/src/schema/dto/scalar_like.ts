@@ -1,25 +1,25 @@
 import { StandardSchemaV1 } from "@standard-schema/spec";
 import { AnyModel } from "../model";
-import { DtoKind } from "./dto_context";
-import { NullityType } from "../prop_internal_types";
-import { WithNullity } from "./utils";
+import { __DtoKind } from "./dto_context";
+import { __NullityType } from "../prop_internal_types";
+import { __WithNullity } from "./utils";
 
-export type ScalarLikeMapping<
+export type __ScalarLikeMapping<
     TModel extends AnyModel, 
-    TDtoKind extends DtoKind,
+    TDtoKind extends __DtoKind,
     TKey extends string, 
     TValue,
-    TNullity extends NullityType
+    TNullity extends __NullityType
 > =
     TDtoKind extends "INPUT"
-        ? InputScalarLikeMapping<
+        ? __InputScalarLikeMapping<
             TModel, 
             TDtoKind,
             TKey, 
             TValue,
             TNullity
         >
-        : OutputScalarLikeMapping<
+        : __OutputScalarLikeMapping<
             TModel, 
             TDtoKind, 
             TKey, 
@@ -27,12 +27,12 @@ export type ScalarLikeMapping<
             TNullity
         >;
 
-interface OutputScalarLikeMapping<
+export interface __OutputScalarLikeMapping<
     TModel extends AnyModel, 
-    TDtoKind extends DtoKind,
+    TDtoKind extends __DtoKind,
     TKey extends string, 
     TValue,
-    TNullity extends NullityType
+    TNullity extends __NullityType
 > {
 
     readonly __mappingType: "SCALAR_LIKE";
@@ -40,22 +40,22 @@ interface OutputScalarLikeMapping<
     
     as<TAlias extends string>(
         alias: TAlias
-    ): OutputScalarLikeMapping<TModel, TDtoKind, TAlias, TValue, TNullity>;
+    ): __OutputScalarLikeMapping<TModel, TDtoKind, TAlias, TValue, TNullity>;
 
     output<TOutputSchema extends StandardSchemaV1>(
-        schema: RequiredSchema<TOutputSchema>,
+        schema: __RequiredSchema<TOutputSchema>,
         mapper: (
             value: TValue
         ) => StandardSchemaV1.InferOutput<TOutputSchema>
-    ): OutputScalarLikeMapping<TModel, TDtoKind, TKey, StandardSchemaV1.InferOutput<TOutputSchema>, TNullity>;
+    ): __OutputScalarLikeMapping<TModel, TDtoKind, TKey, StandardSchemaV1.InferOutput<TOutputSchema>, TNullity>;
 }
 
-interface InputScalarLikeMapping<
+export interface __InputScalarLikeMapping<
     TModel extends AnyModel, 
-    TDtoKind extends DtoKind,
+    TDtoKind extends __DtoKind,
     TKey extends string, 
     TValue,
-    TNullity extends NullityType
+    TNullity extends __NullityType
 > {
 
     readonly __mappingType: "SCALAR_LIKE";
@@ -63,20 +63,20 @@ interface InputScalarLikeMapping<
     
     as<TAlias extends string>(
         alias: TAlias
-    ): InputScalarLikeMapping<TModel, TDtoKind, TAlias, TValue, TNullity>;
+    ): __InputScalarLikeMapping<TModel, TDtoKind, TAlias, TValue, TNullity>;
 
     input<TInputSchema extends StandardSchemaV1>(
-        schema: RequiredSchema<TInputSchema>,
+        schema: __RequiredSchema<TInputSchema>,
         mapper: (
             value: StandardSchemaV1.InferOutput<TInputSchema>
         ) => TValue
-    ): InputScalarLikeMapping<TModel, TDtoKind, TKey, StandardSchemaV1.InferOutput<TInputSchema>, TNullity>;
+    ): __InputScalarLikeMapping<TModel, TDtoKind, TKey, StandardSchemaV1.InferOutput<TInputSchema>, TNullity>;
 }
 
-export type ScalarLikeDtoType<TMapping> =
-    TMapping extends ScalarLikeMapping<any, infer DtoKind, infer Key, infer Value, infer Nullity>
+export type __ScalarLikeDtoType<TMapping> =
+    TMapping extends __ScalarLikeMapping<any, infer DtoKind, infer Key, infer Value, infer Nullity>
         ? {
-            [K in Key]: WithNullity<
+            [K in Key]: __WithNullity<
                 Value,
                 Nullity,
                 DtoKind
@@ -84,12 +84,12 @@ export type ScalarLikeDtoType<TMapping> =
         }
         : never;
 
-type RequiredSchema<
+type __RequiredSchema<
     TSchema extends StandardSchemaV1
 > = 
-    ContainsNullish<StandardSchemaV1.InferOutput<TSchema>> extends true
+    __ContainsNullish<StandardSchemaV1.InferOutput<TSchema>> extends true
         ? never
         : TSchema;
 
-type ContainsNullish<T> = 
+type __ContainsNullish<T> = 
     [T] extends [NonNullable<T>] ? false : true;

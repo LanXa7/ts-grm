@@ -1,21 +1,21 @@
 import { AnyModel } from "../model";
-import { AllModelMembers, RequiredModelKey } from "../model_internal_types";
-import { CollectionPropContract } from "../prop_internal_types";
-import { MemberType } from "./all_scalars";
-import { DtoKind } from "./dto_context";
+import { __AllModelMembers, __RequiredModelKey } from "../model_internal_types";
+import { __CollectionPropContract } from "../prop_internal_types";
+import { __MemberType } from "./all_scalars";
+import { __DtoKind } from "./dto_context";
 
-export interface AssociatedKeysContext<
+export interface __AssociatedKeysContext<
     TModel extends AnyModel,
-    TDtoKind extends DtoKind,
+    TDtoKind extends __DtoKind,
     TMembers
 > {
     $associatedKeys<
-        TKey extends CollectionKeys<TMembers>,
+        TKey extends __CollectionKeys<TMembers>,
         TAlias extends string
     >(
         key: TKey, 
         alias: TAlias
-    ): AssociatedKeysMapping<
+    ): __AssociatedKeysMapping<
         TModel, 
         TDtoKind,
         TAlias, 
@@ -23,19 +23,19 @@ export interface AssociatedKeysContext<
     >;
 }
 
-type CollectionKeys<TMembers> = 
+export type __CollectionKeys<TMembers> = 
     keyof {
         [
             K in keyof TMembers as 
-                TMembers[K] extends CollectionPropContract<any, any, any, any, any>
+                TMembers[K] extends __CollectionPropContract<any, any, any, any, any>
                     ? K
                     : never
         ]: never
     };
 
-export interface AssociatedKeysMapping<
+export interface __AssociatedKeysMapping<
     TModel extends AnyModel, 
-    TDtoKind extends DtoKind,
+    TDtoKind extends __DtoKind,
     TKey extends string, 
     TMember
 > {
@@ -47,13 +47,13 @@ export interface AssociatedKeysMapping<
     readonly __member?: TMember;
 }
 
-export type AssociatedKeysDtoType<TMapping> = 
-    TMapping extends AssociatedKeysMapping<any, infer DtoKind, infer Key, infer Member>
+export type __AssociatedKeysDtoType<TMapping> = 
+    TMapping extends __AssociatedKeysMapping<any, infer DtoKind, infer Key, infer Member>
         ? {
-            [K in Key]: Member extends CollectionPropContract<infer TargetModel, any, any, any, infer TargetKey>
+            [K in Key]: Member extends __CollectionPropContract<infer TargetModel, any, any, any, infer TargetKey>
                 ? ReadonlyArray<
-                    MemberType<
-                        AllModelMembers<TargetModel>[RequiredModelKey<TargetModel, TargetKey>], 
+                    __MemberType<
+                        __AllModelMembers<TargetModel>[__RequiredModelKey<TargetModel, TargetKey>], 
                         DtoKind
                     >
                 >

@@ -1,11 +1,11 @@
 import { dtoMapper, type DtoMapper } from "@/impl/dto_mapper";
 import { AnyModel } from "../model";
-import { DtoBody, DtoMapping, DtoType } from "./dto_context";
-import { AllModelMembers } from "../model_internal_types";
+import { __DtoBody, __DtoMapping, __DtoType } from "./dto_context";
+import { __AllModelMembers } from "../model_internal_types";
 import { createDto, newDtoContext } from "@/impl/dto_context";
 import { Entity } from "@/impl/entity";
 import { Prettify } from "@/utils";
-import { ViewCreator } from "@/schema/dto/internal_types";
+import { __ViewCreator } from "@/schema/dto/internal_types";
 
 export class View<TModel extends AnyModel, T> {
 
@@ -28,23 +28,23 @@ export const dto = {
     view: viewCreator()
 } as const;
 
-function viewCreator(): ViewCreator {
+function viewCreator(): __ViewCreator {
     const fun = newView;
     (fun as any).nullAsUndefined = newViewByNullAsUndefined;
-    return fun as ViewCreator;
+    return fun as __ViewCreator;
 }
 
 function newView<
     TModel extends AnyModel,
     const TMappings extends ReadonlyArray<
-        DtoMapping<TModel>
+        __DtoMapping<TModel>
     >,
 >(
     model: TModel,
-    fn: DtoBody<TModel, "NULL_VIEW", "ENTITY", AllModelMembers<TModel>, TMappings>
+    fn: __DtoBody<TModel, "NULL_VIEW", "ENTITY", __AllModelMembers<TModel>, TMappings>
 ): View<
     TModel, 
-    Prettify<DtoType<TMappings>>
+    Prettify<__DtoType<TMappings>>
 > {
     const entity = Entity.of(model);
     const ctx = newDtoContext(entity, false) as any;
@@ -56,14 +56,14 @@ function newView<
 function newViewByNullAsUndefined<
     TModel extends AnyModel,
     const TMappings extends ReadonlyArray<
-        DtoMapping<TModel>
+        __DtoMapping<TModel>
     >,
 >(
     model: TModel,
-    fn: DtoBody<TModel, "UNDEFINED_VIEW", "ENTITY", AllModelMembers<TModel>, TMappings>
+    fn: __DtoBody<TModel, "UNDEFINED_VIEW", "ENTITY", __AllModelMembers<TModel>, TMappings>
 ): View<
     TModel, 
-    Prettify<DtoType<TMappings>>
+    Prettify<__DtoType<TMappings>>
 > {
     const entity = Entity.of(model);
     const ctx = newDtoContext(entity, false) as any;

@@ -1,18 +1,18 @@
 import { AssociationModel } from "@/dsl/association";
-import { OptionalModelKey } from "@/schema/model_internal_types";
+import { __OptionalModelKey } from "@/schema/model_internal_types";
 import { Entity } from "./entity";
 import { EntityProp } from "./entity_prop";
 import { AssociationEntity } from "./association_entity";
 import { makeErr } from "@/error/util";
-import { JoinPolicyType } from "@/dsl/table_internal_types";
+import { __JoinPolicyType } from "@/dsl/table_internal_types";
 import { AnyModel } from "@/schema/model";
 
 export class AssociationModelImpl<
     TSourceModel extends AnyModel,
-    TSourceKey extends OptionalModelKey<TSourceModel>,
+    TSourceKey extends __OptionalModelKey<TSourceModel>,
     TTargetModel extends AnyModel,
-    TTargetKey extends OptionalModelKey<TTargetModel>,
-    TJoinPolicy extends JoinPolicyType
+    TTargetKey extends __OptionalModelKey<TTargetModel>,
+    TJoinPolicy extends __JoinPolicyType
 > implements AssociationModel<TSourceModel, TSourceKey, TTargetModel, TTargetKey, TJoinPolicy> {
 
     __type(): {

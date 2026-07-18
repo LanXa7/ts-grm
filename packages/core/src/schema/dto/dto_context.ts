@@ -1,117 +1,117 @@
 import { UnionToIntersection } from "@/utils";
 import { AnyModel } from "../model";
-import { AllScalarsContext, AllScalarsDtoType, AllScalarsMapping } from "./all_scalars";
-import { AssociatedKeysContext, AssociatedKeysDtoType, AssociatedKeysMapping } from "./associated_keys";
-import { CollectionDtoType, CollectionMapping } from "./collection";
-import { EmbeddedDtoType, EmbeddedMapping } from "./embedded";
-import { FlatContext, FlatDtoType, FlatMapping } from "./flat";
-import { FoldContext, FoldDotType, FoldMapping } from "./fold";
-import { ReferenceDtoType, ReferenceMapping } from "./reference";
-import { ReferenceKeyContext, ReferenceKeyDtoType, ReferenceKeyMapping } from "./reference_key";
-import { ScalarLikeDtoType, ScalarLikeMapping } from "./scalar_like";
-import { DirectContext } from "./direct";
-import { ApplyInstanceOfMappings, InstanceOfContext, InstanceOfMappping } from "./instance_of";
-import { ApplyRecursiveMappings, RecursiveContext, RecursiveMapping } from "./recursive";
-import { CalculatedCollectionDtoType, CalculatedCollectionMapping, CalculatedReferenceDtoType, CalculatedReferenceMapping, ParameterizedContext } from "./calculator";
+import { __AllScalarsContext, __AllScalarsDtoType, __AllScalarsMapping } from "./all_scalars";
+import { __AssociatedKeysContext, __AssociatedKeysDtoType, __AssociatedKeysMapping } from "./associated_keys";
+import { __CollectionDtoType, __CollectionMapping } from "./collection";
+import { __EmbeddedDtoType, __EmbeddedMapping } from "./embedded";
+import { __FlatContext, __FlatDtoType, __FlatMapping } from "./flat";
+import { __FoldContext, __FoldDtoType, __FoldMapping } from "./fold";
+import { __ReferenceDtoType, __ReferenceMapping } from "./reference";
+import { __ReferenceKeyContext, __ReferenceKeyDtoType, __ReferenceKeyMapping } from "./reference_key";
+import { __ScalarLikeDtoType, __ScalarLikeMapping } from "./scalar_like";
+import { __DirectContext } from "./direct";
+import { __ApplyInstanceOfMappings, __InstanceOfContext, __InstanceOfMappping } from "./instance_of";
+import { ApplyRecursiveMappings, __RecursiveContext, __RecursiveMapping } from "./recursive";
+import { __CalculatedCollectionDtoType, __CalculatedCollectionMapping, __CalculatedReferenceDtoType, __CalculatedReferenceMapping, __ParameterizedContext } from "./calculator";
 
-export type DtoContext<
+export type __DtoContext<
     TModel extends AnyModel,
-    TDtoKind extends DtoKind,
-    TContextKind extends ContextKind,
+    TDtoKind extends __DtoKind,
+    TContextKind extends __ContextKind,
     TMembers
 > = 
-    DirectContext<TModel, TDtoKind, TMembers>
-    & FoldContext<TModel, TDtoKind, TContextKind, TMembers>
-    & FlatContext<TModel, TDtoKind, TMembers>
-    & ParameterizedContext<TModel, TDtoKind, TMembers>
-    & InstanceOfContext<TModel, TDtoKind>
-    & RecursiveContext<TModel, TDtoKind, TMembers>
+    __DirectContext<TModel, TDtoKind, TMembers>
+    & __FoldContext<TModel, TDtoKind, TContextKind, TMembers>
+    & __FlatContext<TModel, TDtoKind, TMembers>
+    & __ParameterizedContext<TModel, TDtoKind, TMembers>
+    & __InstanceOfContext<TModel, TDtoKind>
+    & __RecursiveContext<TModel, TDtoKind, TMembers>
     & (
         TContextKind extends "EMBEDDABLE"
             ? object
-            : ReferenceKeyContext<TModel, TDtoKind, TMembers>
+            : __ReferenceKeyContext<TModel, TDtoKind, TMembers>
     )
     & (
         TContextKind extends "EMBEDDABLE"
             ? object
-            : AssociatedKeysContext<TModel, TDtoKind, TMembers>
+            : __AssociatedKeysContext<TModel, TDtoKind, TMembers>
     )
     & (
         TContextKind extends "DERIVED_ENTITY"
             ? object
-            : AllScalarsContext<TModel, TDtoKind, TMembers>
+            : __AllScalarsContext<TModel, TDtoKind, TMembers>
     );
 
-export type ContextKind = "ENTITY" | "EMBEDDABLE" | "DERIVED_ENTITY";
+export type __ContextKind = "ENTITY" | "EMBEDDABLE" | "DERIVED_ENTITY";
 
-export type DtoKind = "NULL_VIEW" | "UNDEFINED_VIEW" | "INPUT";
+export type __DtoKind = "NULL_VIEW" | "UNDEFINED_VIEW" | "INPUT";
 
-export interface DtoBody<
+export interface __DtoBody<
     TModel extends AnyModel,
-    TDtoKind extends DtoKind,
-    TContextKind extends ContextKind,
+    TDtoKind extends __DtoKind,
+    TContextKind extends __ContextKind,
     TMembers,
-    TMappings extends ReadonlyArray<DtoMapping<TModel>>
+    TMappings extends ReadonlyArray<__DtoMapping<TModel>>
 > {
 
     (
-        ctx: DtoContext<TModel, TDtoKind, TContextKind, TMembers>
+        ctx: __DtoContext<TModel, TDtoKind, TContextKind, TMembers>
     ): TMappings;
 }
 
-export type DtoMapping<
+export type __DtoMapping<
     TModel extends AnyModel
 > = 
-    AllScalarsMapping<TModel, any, any, any> 
-    | FoldMapping<TModel, any, any, any>
-    | FlatMapping<TModel, any, any, any, any, any>
-    | InstanceOfMappping<TModel, any, any, any>
-    | RecursiveMapping<TModel, any, any>
-    | ScalarLikeMapping<TModel, any, any, any, any>
-    | EmbeddedMapping<TModel, any, any, any, any>
-    | ReferenceKeyMapping<TModel, any, any, any>
-    | AssociatedKeysMapping<TModel, any, any, any>
-    | ReferenceMapping<TModel, any, any, any, any, any>
-    | CollectionMapping<TModel, any, any, any, any>
-    | CalculatedReferenceMapping<TModel, any, any, any, any, any>
-    | CalculatedCollectionMapping<TModel, any, any, any, any>;
+    __AllScalarsMapping<TModel, any, any, any> 
+    | __FoldMapping<TModel, any, any, any>
+    | __FlatMapping<TModel, any, any, any, any, any>
+    | __InstanceOfMappping<TModel, any, any, any>
+    | __RecursiveMapping<TModel, any, any>
+    | __ScalarLikeMapping<TModel, any, any, any, any>
+    | __EmbeddedMapping<TModel, any, any, any, any>
+    | __ReferenceKeyMapping<TModel, any, any, any>
+    | __AssociatedKeysMapping<TModel, any, any, any>
+    | __ReferenceMapping<TModel, any, any, any, any, any>
+    | __CollectionMapping<TModel, any, any, any, any>
+    | __CalculatedReferenceMapping<TModel, any, any, any, any, any>
+    | __CalculatedCollectionMapping<TModel, any, any, any, any>;
 
-export type DtoType<
-    TMappings extends ReadonlyArray<DtoMapping<any>>
+export type __DtoType<
+    TMappings extends ReadonlyArray<__DtoMapping<any>>
 > = 
     ApplyRecursiveMappings<
-        ApplyInstanceOfMappings<
+        __ApplyInstanceOfMappings<
             UnionToIntersection<{
-                [K in keyof TMappings]: DtoMappingType<TMappings[K]>
+                [K in keyof TMappings]: __DtoMappingType<TMappings[K]>
             }[number]>,
             TMappings
         >,
         TMappings
     >;
     
-type DtoMappingType<
-    TMapping extends DtoMapping<any>
+export type __DtoMappingType<
+    TMapping extends __DtoMapping<any>
 > =
     TMapping["__mappingType"] extends "SCALAR_LIKE"
-        ? ScalarLikeDtoType<TMapping>
+        ? __ScalarLikeDtoType<TMapping>
     : TMapping["__mappingType"] extends "ALL_SCALARS"
-        ? AllScalarsDtoType<TMapping>
+        ? __AllScalarsDtoType<TMapping>
     : TMapping["__mappingType"] extends "EMBEDDED"
-        ? EmbeddedDtoType<TMapping>
+        ? __EmbeddedDtoType<TMapping>
     : TMapping["__mappingType"] extends "REFERENCE"
-        ? ReferenceDtoType<TMapping>
+        ? __ReferenceDtoType<TMapping>
     : TMapping["__mappingType"] extends "COLLECTION"
-        ? CollectionDtoType<TMapping>
+        ? __CollectionDtoType<TMapping>
     : TMapping["__mappingType"] extends "REFERENCE_KEY"
-        ? ReferenceKeyDtoType<TMapping>
+        ? __ReferenceKeyDtoType<TMapping>
     : TMapping["__mappingType"] extends "ASSOCIATED_KEYS"
-        ? AssociatedKeysDtoType<TMapping>
+        ? __AssociatedKeysDtoType<TMapping>
     : TMapping["__mappingType"] extends "FOLD"
-        ? FoldDotType<TMapping>
+        ? __FoldDtoType<TMapping>
     : TMapping["__mappingType"] extends "FLAT"
-        ? FlatDtoType<TMapping>
+        ? __FlatDtoType<TMapping>
     : TMapping["__mappingType"] extends "CALCULATED_REFERENCE"
-        ? CalculatedReferenceDtoType<TMapping>
+        ? __CalculatedReferenceDtoType<TMapping>
     : TMapping["__mappingType"] extends "CALCULATED_COLLECTION"
-        ? CalculatedCollectionDtoType<TMapping>
+        ? __CalculatedCollectionDtoType<TMapping>
     : never;

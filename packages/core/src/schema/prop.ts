@@ -1,80 +1,80 @@
 import { FlattenMembers } from "@/utils";
 import { StandardSchemaV1 } from "@standard-schema/spec"; 
 import { scalars, ScalarType } from "./scalar";
-import { calculatedCreator, EmbeddedProp, EMPTY_PROP_DEFINITION_DATA, enumCreator, enumSetCreator, formulaCreator, I64Prop, m2mCreator, m2oCreator, o2mCreator, o2oCreator, ScalarProp, scalarPropCreator, StrProp } from "./prop_internal_behavior";
-import { EmbeddedMember } from "./prop_internal_types";
+import { __calculatedCreator, __EmbeddedProp, __EMPTY_PROP_DEFINITION_DATA, __enumCreator, __enumSetCreator, __formulaCreator, __I64Prop, __m2mCreator, __m2oCreator, __o2mCreator, __o2oCreator, __ScalarProp, __scalarPropCreator, __StrProp } from "./prop_internal_behavior";
+import { __EmbeddedMember } from "./prop_internal_types";
 
 export const prop = {
 
-    str(length: number): StrProp {
-        return new StrProp({...EMPTY_PROP_DEFINITION_DATA, scalarType: ScalarType.str(length)});
+    str(length: number): __StrProp {
+        return new __StrProp({...__EMPTY_PROP_DEFINITION_DATA, scalarType: ScalarType.str(length)});
     },
 
-    i8(): ScalarProp<number> {
-        return new ScalarProp({...EMPTY_PROP_DEFINITION_DATA, scalarType: ScalarType.I8});
+    i8(): __ScalarProp<number> {
+        return new __ScalarProp({...__EMPTY_PROP_DEFINITION_DATA, scalarType: ScalarType.I8});
     },
 
-    i16(): ScalarProp<number> {
-        return new ScalarProp({...EMPTY_PROP_DEFINITION_DATA, scalarType: ScalarType.I16});
+    i16(): __ScalarProp<number> {
+        return new __ScalarProp({...__EMPTY_PROP_DEFINITION_DATA, scalarType: ScalarType.I16});
     },
 
-    i32(): ScalarProp<number> {
-        return new ScalarProp({...EMPTY_PROP_DEFINITION_DATA, scalarType: ScalarType.I32});
+    i32(): __ScalarProp<number> {
+        return new __ScalarProp({...__EMPTY_PROP_DEFINITION_DATA, scalarType: ScalarType.I32});
     },
 
-    i64(): I64Prop<number> {
-        return new I64Prop({...EMPTY_PROP_DEFINITION_DATA, scalarType: ScalarType.I64});
+    i64(): __I64Prop<number> {
+        return new __I64Prop({...__EMPTY_PROP_DEFINITION_DATA, scalarType: ScalarType.I64});
     },
 
-    f32(): ScalarProp<number> {
-        return new ScalarProp({...EMPTY_PROP_DEFINITION_DATA, scalarType: ScalarType.F32});
+    f32(): __ScalarProp<number> {
+        return new __ScalarProp({...__EMPTY_PROP_DEFINITION_DATA, scalarType: ScalarType.F32});
     },
 
-    f64(): ScalarProp<number> {
-        return new ScalarProp({...EMPTY_PROP_DEFINITION_DATA, scalarType: ScalarType.F64});
+    f64(): __ScalarProp<number> {
+        return new __ScalarProp({...__EMPTY_PROP_DEFINITION_DATA, scalarType: ScalarType.F64});
     },
 
-    num(): ScalarProp<number> {
-        return new ScalarProp({...EMPTY_PROP_DEFINITION_DATA, scalarType: ScalarType.NUM});
+    num(): __ScalarProp<number> {
+        return new __ScalarProp({...__EMPTY_PROP_DEFINITION_DATA, scalarType: ScalarType.NUM});
     },
 
-    date(): ScalarProp<Date> {
-        return new ScalarProp({...EMPTY_PROP_DEFINITION_DATA, scalarType: ScalarType.DATE});
+    date(): __ScalarProp<Date> {
+        return new __ScalarProp({...__EMPTY_PROP_DEFINITION_DATA, scalarType: ScalarType.DATE});
     },
 
-    scalar: scalarPropCreator(),
+    scalar: __scalarPropCreator(),
 
-    enum: enumCreator(),
+    enum: __enumCreator(),
 
-    enumSet: enumSetCreator(),
+    enumSet: __enumSetCreator(),
 
     json<TValueType extends StandardSchemaV1>(
         valueType: TValueType
-    ): ScalarProp<StandardSchemaV1.InferOutput<TValueType>> {
+    ): __ScalarProp<StandardSchemaV1.InferOutput<TValueType>> {
         return this.scalar(scalars.jsonProvider(valueType));
     },
 
     jsonb<TValueType extends StandardSchemaV1>(
         valueType: TValueType
-    ): ScalarProp<StandardSchemaV1.InferOutput<TValueType>> {
+    ): __ScalarProp<StandardSchemaV1.InferOutput<TValueType>> {
         return this.scalar(scalars.jsonbProvider(valueType));
     },
 
-    embedded<TProps extends Record<string, EmbeddedMember>>(
+    embedded<TProps extends Record<string, __EmbeddedMember>>(
         props: TProps
-    ): EmbeddedProp<TProps, "NONNULL", FlattenMembers<TProps>> {
-        return new EmbeddedProp({...EMPTY_PROP_DEFINITION_DATA, props});
+    ): __EmbeddedProp<TProps, "NONNULL", FlattenMembers<TProps>> {
+        return new __EmbeddedProp({...__EMPTY_PROP_DEFINITION_DATA, props});
     },
 
-    o2o: o2oCreator(),
+    o2o: __o2oCreator(),
 
-    m2o: m2oCreator(),
+    m2o: __m2oCreator(),
 
-    o2m: o2mCreator(),
+    o2m: __o2mCreator(),
 
-    m2m: m2mCreator(),
+    m2m: __m2mCreator(),
 
-    formula: formulaCreator(),
+    formula: __formulaCreator(),
 
-    calculated: calculatedCreator()
+    calculated: __calculatedCreator()
 } as const;

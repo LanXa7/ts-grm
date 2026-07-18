@@ -1,17 +1,17 @@
 import { Entity } from "@/impl/entity";
-import { AllModelMembers } from "@/schema/model_internal_types";
-import { JoinPolicyType } from "./table_internal_types";
+import { __AllModelMembers } from "@/schema/model_internal_types";
+import { __JoinPolicyType } from "./table_internal_types";
 import { AssociationModelImpl } from "@/impl/association_model_impl";
-import { AssociationKeys, AssociationTableMembers, MakeAssociationModel } from "./association_internal_types";
+import { __AssociationKeys, __AssociationTableMembers, __MakeAssociationModel } from "./association_internal_types";
 import { AnyModel } from "@/schema/model";
 import { EntityProp } from "@/impl/entity_prop";
 
 export interface AssociationModel<
     TSourceModel extends AnyModel,
-    TSourceKey extends keyof AllModelMembers<TSourceModel> & string,
+    TSourceKey extends keyof __AllModelMembers<TSourceModel> & string,
     TTargetModel extends AnyModel,
-    TTargetKey extends keyof AllModelMembers<TTargetModel> & string,
-    TJoinPolicy extends JoinPolicyType
+    TTargetKey extends keyof __AllModelMembers<TTargetModel> & string,
+    TJoinPolicy extends __JoinPolicyType
 > {
     __type(): {
         readonly associationModel: [
@@ -36,11 +36,11 @@ export type AnyAssociationModel = AssociationModel<AnyModel, any, AnyModel, any,
 
 export function associationModel<
     TModel extends AnyModel,
-    TAssociationKey extends AssociationKeys<TModel>
+    TAssociationKey extends __AssociationKeys<TModel>
 >(
     model: TModel,
     associationKey: TAssociationKey
-): MakeAssociationModel<TModel, TAssociationKey> {
+): __MakeAssociationModel<TModel, TAssociationKey> {
     const sourceEntity = Entity.of(model);
     const associationProp = sourceEntity.prop(associationKey);
     return new AssociationModelImpl(associationProp) as any;
@@ -56,7 +56,7 @@ export type AssociationTable<
         infer TargetKey,
         infer JoinPolicy
     >
-        ? AssociationTableMembers<
+        ? __AssociationTableMembers<
             SourceModel, 
             SourceKey, 
             TargetModel, 

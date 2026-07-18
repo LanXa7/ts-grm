@@ -1,20 +1,20 @@
 import { AtLeastOne } from "@/dsl/utils";
 import { AnyModel } from "../model";
-import { EmbeddedPropContract, ScalarPropContract } from "../prop_internal_types";
-import { DtoKind } from "./dto_context";
-import { WithNullity } from "./utils";
+import { __EmbeddedPropContract, __ScalarPropContract } from "../prop_internal_types";
+import { __DtoKind } from "./dto_context";
+import { __WithNullity } from "./utils";
 
-export type AllScalarsContext<
+export type __AllScalarsContext<
     TModel extends AnyModel,
-    TDtoKind extends DtoKind,
+    TDtoKind extends __DtoKind,
     TMembers
 > = {
-    $allScalars: AllScalarsMapping<TModel, TDtoKind, TMembers, never>;
+    $allScalars: __AllScalarsMapping<TModel, TDtoKind, TMembers, never>;
 }
 
-export interface AllScalarsMapping<
+export interface __AllScalarsMapping<
     TModel extends AnyModel,
-    TDtoKind extends DtoKind,
+    TDtoKind extends __DtoKind,
     TMembers, 
     TExcludedKeys extends keyof TMembers
 > {
@@ -23,9 +23,9 @@ export interface AllScalarsMapping<
     readonly __members?: TMembers;
     readonly __excludedKeys?: TExcludedKeys;
 
-    exclude<const TExcludedKeys extends AtLeastOne<ScalarKeys<TMembers>>>(
+    exclude<const TExcludedKeys extends AtLeastOne<__ScalarKeys<TMembers>>>(
         ...keys: TExcludedKeys
-    ): AllScalarsMapping<
+    ): __AllScalarsMapping<
         TModel,
         TDtoKind,
         TMembers,
@@ -33,48 +33,48 @@ export interface AllScalarsMapping<
     >;
 }
 
-type ScalarKeys<TMembers> = 
+type __ScalarKeys<TMembers> = 
     keyof {
         [K in keyof TMembers as 
-            TMembers[K] extends ScalarPropContract<any, any>
+            TMembers[K] extends __ScalarPropContract<any, any>
                 ? K
-            : TMembers[K] extends EmbeddedPropContract<any, any, any>
+            : TMembers[K] extends __EmbeddedPropContract<any, any, any>
                 ? K
             : never
         ]: never
     } & string;
 
-export type AllScalarsDtoType<TMapping> =
-    TMapping extends AllScalarsMapping<any, infer DtoKind, infer Members, infer ExcludedKeys>
+export type __AllScalarsDtoType<TMapping> =
+    TMapping extends __AllScalarsMapping<any, infer DtoKind, infer Members, infer ExcludedKeys>
         ? { 
             [
-                K in ScalarKeys<Members> as 
+                K in __ScalarKeys<Members> as 
                     K extends ExcludedKeys
                         ? never
                         : K
             ]: 
-            MemberType<Members[K], DtoKind> 
+            __MemberType<Members[K], DtoKind> 
         }
         : never;
 
-export type MemberType<
+export type __MemberType<
     TMember, 
-    TDtoKind extends DtoKind
+    TDtoKind extends __DtoKind
 > =
-    TMember extends ScalarPropContract<infer R, infer Nullity>
-        ? WithNullity<R, Nullity, TDtoKind>
-    : TMember extends EmbeddedPropContract<infer NestedProps, infer Nullity, any>
-        ? WithNullity<
-            DefaultEmbeddedType<NestedProps, TDtoKind>,
+    TMember extends __ScalarPropContract<infer R, infer Nullity>
+        ? __WithNullity<R, Nullity, TDtoKind>
+    : TMember extends __EmbeddedPropContract<infer NestedProps, infer Nullity, any>
+        ? __WithNullity<
+            __DefaultEmbeddedType<NestedProps, TDtoKind>,
             Nullity,
             TDtoKind
         >
     : never;
     
-type DefaultEmbeddedType<
+export type __DefaultEmbeddedType<
     TProps,
-    TDtoKind extends DtoKind
+    TDtoKind extends __DtoKind
 > = {
-    [K in keyof TProps]: MemberType<TProps[K], TDtoKind>;
+    [K in keyof TProps]: __MemberType<TProps[K], TDtoKind>;
 };
     

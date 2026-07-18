@@ -1,82 +1,82 @@
 import { AnyModel } from "../model";
 import { 
-    CalculatedCollectionPropContract, 
-    CalculatedReferencePropContract, 
-    CalculatedValuePropContract, 
-    CollectionPropContract, 
-    EmbeddedPropContract, 
-    NullityOf, 
-    ReferencePropContract, 
-    ScalarLikePropContract, 
-    ScalarPropContract 
+    __CalculatedCollectionPropContract, 
+    __CalculatedReferencePropContract, 
+    __CalculatedValuePropContract, 
+    __CollectionPropContract, 
+    __EmbeddedPropContract, 
+    __NullityOf, 
+    __ReferencePropContract, 
+    __ScalarLikePropContract, 
+    __ScalarPropContract 
 } from "../prop_internal_types";
-import { CalculatedCollectionMapping, CalculatedReferenceMapping } from "./calculator";
-import { CollectionMapping } from "./collection";
-import { DtoKind } from "./dto_context";
-import { EmbeddedMapping } from "./embedded";
-import { ReferenceMapping } from "./reference";
-import { ScalarLikeMapping } from "./scalar_like";
-import { DefaultTargetMappings } from "./utils";
+import { __CalculatedCollectionMapping, __CalculatedReferenceMapping } from "./calculator";
+import { __CollectionMapping } from "./collection";
+import { __DtoKind } from "./dto_context";
+import { __EmbeddedMapping } from "./embedded";
+import { __ReferenceMapping } from "./reference";
+import { __ScalarLikeMapping } from "./scalar_like";
+import { __DefaultTargetMappings } from "./utils";
 
-export type DirectContext<
+export type __DirectContext<
     TModel extends AnyModel,
-    TDtoKind extends DtoKind,
+    TDtoKind extends __DtoKind,
     TMembers
 > = {
     [
         K in keyof TMembers as 
-            IsScalarLikeProp<TMembers[K], TDtoKind> extends true
+            __IsScalarLikeProp<TMembers[K], TDtoKind> extends true
                 ? K
-            : TMembers[K] extends EmbeddedPropContract<any, any, any>
+            : TMembers[K] extends __EmbeddedPropContract<any, any, any>
                 ? K
-            : TMembers[K] extends ReferencePropContract<any, any, any, any, any, any>
+            : TMembers[K] extends __ReferencePropContract<any, any, any, any, any, any>
                 ? K
-            : TMembers[K] extends CollectionPropContract<any, any, any, any, any>
+            : TMembers[K] extends __CollectionPropContract<any, any, any, any, any>
                 ? K
-            : TMembers[K] extends CalculatedValuePropContract<any, any>
-                ? IfView<K, TDtoKind>
-            : TMembers[K] extends CalculatedReferencePropContract<any, any>
-                ? IfView<K, TDtoKind>
-            : TMembers[K] extends CalculatedCollectionPropContract<any>
-                ? IfView<K, TDtoKind>
+            : TMembers[K] extends __CalculatedValuePropContract<any, any>
+                ? __IfView<K, TDtoKind>
+            : TMembers[K] extends __CalculatedReferencePropContract<any, any>
+                ? __IfView<K, TDtoKind>
+            : TMembers[K] extends __CalculatedCollectionPropContract<any>
+                ? __IfView<K, TDtoKind>
             : never
     ]: 
-        IsScalarLikeProp<TMembers[K], TDtoKind> extends true
-            ? ScalarLikeMapping<
+        __IsScalarLikeProp<TMembers[K], TDtoKind> extends true
+            ? __ScalarLikeMapping<
                 TModel, 
                 TDtoKind,
                 K & string, 
-                ScalarTypeOf<TMembers[K]>,
-                NullityOf<TMembers[K]>
+                __ScalarTypeOf<TMembers[K]>,
+                __NullityOf<TMembers[K]>
             >
-        : TMembers[K] extends EmbeddedPropContract<any, any, any>
-            ? EmbeddedMapping<
+        : TMembers[K] extends __EmbeddedPropContract<any, any, any>
+            ? __EmbeddedMapping<
                 TModel, 
                 TDtoKind,
                 K & string, 
                 TMembers[K], 
-                DefaultTargetMappings<TModel, TDtoKind, TMembers[K]>
+                __DefaultTargetMappings<TModel, TDtoKind, TMembers[K]>
             >
-        : TMembers[K] extends ReferencePropContract<any, any, any, any, any, any>
-            ? ReferenceMapping<
+        : TMembers[K] extends __ReferencePropContract<any, any, any, any, any, any>
+            ? __ReferenceMapping<
                 TModel, 
                 TDtoKind,
                 K & string, 
                 TMembers[K],
-                DefaultTargetMappings<TModel, TDtoKind, TMembers[K]>,
-                NullityOf<TMembers[K]>
+                __DefaultTargetMappings<TModel, TDtoKind, TMembers[K]>,
+                __NullityOf<TMembers[K]>
             >
-        : TMembers[K] extends CollectionPropContract<any, any, any, any, any>
-            ? CollectionMapping<
+        : TMembers[K] extends __CollectionPropContract<any, any, any, any, any>
+            ? __CollectionMapping<
                 TModel, 
                 TDtoKind,
                 K & string, 
                 TMembers[K],
-                DefaultTargetMappings<TModel, TDtoKind, TMembers[K]>
+                __DefaultTargetMappings<TModel, TDtoKind, TMembers[K]>
             >
-        : TMembers[K] extends CalculatedValuePropContract<infer Value, infer Nullity>
-            ? IfView<
-                ScalarLikeMapping<
+        : TMembers[K] extends __CalculatedValuePropContract<infer Value, infer Nullity>
+            ? __IfView<
+                __ScalarLikeMapping<
                     TModel, 
                     TDtoKind,
                     K & string, 
@@ -85,43 +85,43 @@ export type DirectContext<
                 >,
                 TDtoKind
             >
-        : TMembers[K] extends CalculatedReferencePropContract<any, infer Nullity>
-            ? IfView<
-                CalculatedReferenceMapping<
+        : TMembers[K] extends __CalculatedReferencePropContract<any, infer Nullity>
+            ? __IfView<
+                __CalculatedReferenceMapping<
                     TModel, 
                     TDtoKind,
                     K & string, 
                     TMembers[K],
-                    DefaultTargetMappings<TModel, TDtoKind, TMembers[K]>,
+                    __DefaultTargetMappings<TModel, TDtoKind, TMembers[K]>,
                     Nullity
                 >,
                 TDtoKind
             >
-        : TMembers[K] extends CalculatedCollectionPropContract<any>
-            ? IfView<
-                CalculatedCollectionMapping<
+        : TMembers[K] extends __CalculatedCollectionPropContract<any>
+            ? __IfView<
+                __CalculatedCollectionMapping<
                     TModel, 
                     TDtoKind,
                     K & string, 
                     TMembers[K],
-                    DefaultTargetMappings<TModel, TDtoKind, TMembers[K]>
+                    __DefaultTargetMappings<TModel, TDtoKind, TMembers[K]>
                 >,
                 TDtoKind
             >
         : never;
 }
 
-type IsScalarLikeProp<TMember, TDtoKind extends DtoKind> =
+export type __IsScalarLikeProp<TMember, TDtoKind extends __DtoKind> =
     TDtoKind extends "INPUT"
-        ? TMember extends ScalarPropContract<any, any> ? true : false
-        : TMember extends ScalarLikePropContract<any, any> ? true : false;
+        ? TMember extends __ScalarPropContract<any, any> ? true : false
+        : TMember extends __ScalarLikePropContract<any, any> ? true : false;
 
-type ScalarTypeOf<TMember> =
-    TMember extends ScalarLikePropContract<infer Value, any> 
+export type __ScalarTypeOf<TMember> =
+    TMember extends __ScalarLikePropContract<infer Value, any> 
         ? Value 
         : never
 
-type IfView<T, TDtoKind> = 
+export type __IfView<T, TDtoKind> = 
     TDtoKind extends "INPUT"
         ? never
         : T;

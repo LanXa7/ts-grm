@@ -1,4 +1,4 @@
-import { Extends } from "@/schema/model_internal_types";
+import { __Extends } from "@/schema/model_internal_types";
 import { test } from "vitest";
 import { expectTypeOf } from "vitest";
 import { BOOK, ELECTRONIC_BOOK, PAPER_BOOK, PDF_ELECTRONIC_BOOK, TREE_NODE } from "../model/model";
@@ -6,34 +6,34 @@ import { BOOK, ELECTRONIC_BOOK, PAPER_BOOK, PDF_ELECTRONIC_BOOK, TREE_NODE } fro
 test("TestExtends", () => {
     
     expectTypeOf<
-        Extends<typeof TREE_NODE, typeof TREE_NODE>
+        __Extends<typeof TREE_NODE, typeof TREE_NODE>
     >().toEqualTypeOf<true>();
 
     expectTypeOf<
-        Extends<typeof PAPER_BOOK, typeof BOOK>
+        __Extends<typeof PAPER_BOOK, typeof BOOK>
     >().toEqualTypeOf<true>();
     expectTypeOf<
-        Extends<typeof BOOK, typeof PAPER_BOOK>
+        __Extends<typeof BOOK, typeof PAPER_BOOK>
     >().toEqualTypeOf<false>();
 
     expectTypeOf<
-        Extends<typeof ELECTRONIC_BOOK, typeof BOOK>
+        __Extends<typeof ELECTRONIC_BOOK, typeof BOOK>
     >().toEqualTypeOf<true>();
     expectTypeOf<
-        Extends<typeof BOOK, typeof ELECTRONIC_BOOK>
+        __Extends<typeof BOOK, typeof ELECTRONIC_BOOK>
     >().toEqualTypeOf<false>();
 
     expectTypeOf<
-        Extends<typeof PDF_ELECTRONIC_BOOK, typeof ELECTRONIC_BOOK>
+        __Extends<typeof PDF_ELECTRONIC_BOOK, typeof ELECTRONIC_BOOK>
     >().toEqualTypeOf<true>();
     expectTypeOf<
-        Extends<typeof ELECTRONIC_BOOK, typeof PDF_ELECTRONIC_BOOK>
+        __Extends<typeof ELECTRONIC_BOOK, typeof PDF_ELECTRONIC_BOOK>
     >().toEqualTypeOf<false>();
 
     expectTypeOf<
-        Extends<typeof PDF_ELECTRONIC_BOOK, typeof BOOK>
+        __Extends<typeof PDF_ELECTRONIC_BOOK, typeof BOOK>
     >().toEqualTypeOf<true>();
     expectTypeOf<
-        Extends<typeof BOOK, typeof PDF_ELECTRONIC_BOOK>
+        __Extends<typeof BOOK, typeof PDF_ELECTRONIC_BOOK>
     >().toEqualTypeOf<false>();
 });

@@ -1,20 +1,20 @@
 import { UnionToIntersection } from "@/utils";
-import { DeclaredModelMembers, DerivedModel, ModelName, ModelSuperNames } from "../model_internal_types";
-import { DtoBody, DtoKind, DtoMapping, DtoType } from "./dto_context";
-import { SelfMappings } from "./utils";
+import { __DeclaredModelMembers, __DerivedModel, __ModelName, __ModelSuperNames } from "../model_internal_types";
+import { __DtoBody, __DtoKind, __DtoMapping, __DtoType } from "./dto_context";
+import { __SelfMappings } from "./utils";
 import { AnyModel } from "../model";
 
-export interface InstanceOfContext<
+export interface __InstanceOfContext<
     TModel extends AnyModel,
-    TDtoKind extends DtoKind
+    TDtoKind extends __DtoKind
 > {
     $instanceOf<
         TDerivedModel extends AnyModel, 
-        const TMappings extends SelfMappings<TDerivedModel>
+        const TMappings extends __SelfMappings<TDerivedModel>
     >(
-        derivedModel: DerivedModel<TDerivedModel, TModel>,
-        body: DtoBody<TDerivedModel, TDtoKind, "DERIVED_ENTITY", DeclaredModelMembers<TDerivedModel>, TMappings>
-    ): InstanceOfMappping<
+        derivedModel: __DerivedModel<TDerivedModel, TModel>,
+        body: __DtoBody<TDerivedModel, TDtoKind, "DERIVED_ENTITY", __DeclaredModelMembers<TDerivedModel>, TMappings>
+    ): __InstanceOfMappping<
         TModel,
         TDtoKind,
         TDerivedModel,
@@ -22,11 +22,11 @@ export interface InstanceOfContext<
     >;
 }
 
-export interface InstanceOfMappping<
+export interface __InstanceOfMappping<
     TModel extends AnyModel,
-    TDtoKind extends DtoKind,
+    TDtoKind extends __DtoKind,
     TDerivedModel extends AnyModel,
-    TMappings extends SelfMappings<TDerivedModel>
+    TMappings extends __SelfMappings<TDerivedModel>
 > {
     readonly __mappingType: "INSTANCE_OF";
     readonly __model?: TModel;
@@ -35,21 +35,21 @@ export interface InstanceOfMappping<
     readonly __mappings: TMappings;
 }
 
-export type ApplyInstanceOfMappings<
+export type __ApplyInstanceOfMappings<
     TPrevData,
-    TMappings extends ReadonlyArray<DtoMapping<any>>,
+    TMappings extends ReadonlyArray<__DtoMapping<any>>,
     THasInstanceOf extends boolean = false
 > = 
-    TMappings extends readonly [infer First, ...infer Rest extends ReadonlyArray<DtoMapping<any>>]
-        ? First extends InstanceOfMappping<infer Model, any, infer DerivedModel, infer DerivedMappings>
-            ? DerivedType<TPrevData, DtoType<DerivedMappings>, Model, DerivedModel>
-                | ApplyInstanceOfMappings<TPrevData, Rest, true>
-            : ApplyInstanceOfMappings<TPrevData, Rest, THasInstanceOf>
+    TMappings extends readonly [infer First, ...infer Rest extends ReadonlyArray<__DtoMapping<any>>]
+        ? First extends __InstanceOfMappping<infer Model, any, infer DerivedModel, infer DerivedMappings>
+            ? __DerivedType<TPrevData, __DtoType<DerivedMappings>, Model, DerivedModel>
+                | __ApplyInstanceOfMappings<TPrevData, Rest, true>
+            : __ApplyInstanceOfMappings<TPrevData, Rest, THasInstanceOf>
         : THasInstanceOf extends true
             ? never
             : TPrevData;
 
-type DerivedType<
+export type __DerivedType<
     TSuper,
     TDerived,
     TModel extends AnyModel,
@@ -58,43 +58,43 @@ type DerivedType<
     ( 
         TDerived extends { __typename: string; }
             ? TDerived
-                & SuperFields<
+                & __SuperFields<
                     TSuper, 
-                    ModelSuperNames<TDerivedModel>
+                    __ModelSuperNames<TDerivedModel>
                 >
-            : { __typename: ModelName<TDerivedModel> } 
+            : { __typename: __ModelName<TDerivedModel> } 
                 & TDerived
-                & SuperFields<
+                & __SuperFields<
                     TSuper, 
-                    ModelSuperNames<TDerivedModel>
+                    __ModelSuperNames<TDerivedModel>
                 >
     ) | (
         TSuper extends { __typename: string; }
             ? TSuper
-            : { __typename: ModelName<TModel> } & TSuper
+            : { __typename: __ModelName<TModel> } & TSuper
     );
 
-type SuperFields<
+export type __SuperFields<
     TPrevData,
     TTypeNames extends string
 > = [TPrevData] extends [{ __typename: string }]
     ? UnionToIntersection<
-        ExtractSuperFields<TPrevData, TTypeNames>
+        __ExtractSuperFields<TPrevData, TTypeNames>
     >
     : TPrevData;
 
-type ExtractSuperFields<
+export type __ExtractSuperFields<
     TPrevData,
     TTypeNames extends string,
 > = TTypeNames extends any
-    ? ExtractByTypeName<TPrevData, TTypeNames> extends infer ST
+    ? __ExtractByTypeName<TPrevData, TTypeNames> extends infer ST
         ? ST extends { __typename: string; }
             ? Omit<ST, "__typename">
             : never
         : never
     : never;
 
-type ExtractByTypeName<TUnion, TTypeNames> = 
+export type __ExtractByTypeName<TUnion, TTypeNames> = 
     TUnion extends { __typename: TTypeNames; } 
         ? TUnion 
         : never;

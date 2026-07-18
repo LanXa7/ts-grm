@@ -1,38 +1,38 @@
-import { IsDerivedModelOf, ModelName } from "../model_internal_types";
-import { AssociatedPropContract, CollectionPropContract } from "../prop_internal_types";
-import { DtoKind, DtoMapping } from "./dto_context";
+import { __Extends, __IsDerivedModelOf, __ModelName } from "../model_internal_types";
+import { __AssociatedPropContract, __CollectionPropContract } from "../prop_internal_types";
+import { __DtoKind, __DtoMapping } from "./dto_context";
 import { EntityTable } from "@/dsl/table";
 import { Predicate } from "@/dsl/expression";
-import { WithNullity } from "./utils";
+import { __WithNullity } from "./utils";
 import { ModelOrder } from "../order";
 import { AnyModel } from "../model";
 
-export interface RecursiveContext<
+export interface __RecursiveContext<
     TModel extends AnyModel,
-    TDtoKind extends DtoKind,
+    TDtoKind extends __DtoKind,
     TMembers
 > {
 
     $recursive<
-        TKey extends RecursiveKeys<TModel, TMembers>
+        TKey extends __RecursiveKeys<TModel, TMembers>
     >(
         key: TKey
-    ): TMembers[TKey] extends CollectionPropContract<any, any, any, any, any>
-        ? CollectionRecursiveMapping<TModel, TDtoKind, TKey, false>
-        : ReferenceRecursiveMapping<TModel, TDtoKind, TKey>;
+    ): TMembers[TKey] extends __CollectionPropContract<any, any, any, any, any>
+        ? __CollectionRecursiveMapping<TModel, TDtoKind, TKey, false>
+        : __ReferenceRecursiveMapping<TModel, TDtoKind, TKey>;
 }
 
-export type RecursiveMapping<
+export type __RecursiveMapping<
     TModel extends AnyModel,
-    TDtoKind extends DtoKind,
+    TDtoKind extends __DtoKind,
     TKey extends string,
 > = 
-    ReferenceRecursiveMapping<TModel, TDtoKind, TKey>
-    | CollectionRecursiveMapping<TModel, TDtoKind, TKey, any>;
+    __ReferenceRecursiveMapping<TModel, TDtoKind, TKey>
+    | __CollectionRecursiveMapping<TModel, TDtoKind, TKey, any>;
 
-export interface ReferenceRecursiveMapping<
+export interface __ReferenceRecursiveMapping<
     TModel extends AnyModel,
-    TDtoKind extends DtoKind,
+    TDtoKind extends __DtoKind,
     TKey extends string,
 > {
     readonly __mappingType: "RECURSIVE";
@@ -40,20 +40,20 @@ export interface ReferenceRecursiveMapping<
 
     as<TAlias extends string>(
         alias: TAlias
-    ): ReferenceRecursiveMapping<TModel, TDtoKind, TAlias>;
+    ): __ReferenceRecursiveMapping<TModel, TDtoKind, TAlias>;
 
     depth(
         depth: number
-    ): ReferenceRecursiveMapping<TModel, TDtoKind, TKey>;
+    ): __ReferenceRecursiveMapping<TModel, TDtoKind, TKey>;
 
     filter(
         filter: (table: EntityTable<TModel>) => Predicate | undefined
-    ): ReferenceRecursiveMapping<TModel, TDtoKind, TKey>;
+    ): __ReferenceRecursiveMapping<TModel, TDtoKind, TKey>;
 }
 
-export interface CollectionRecursiveMapping<
+export interface __CollectionRecursiveMapping<
     TModel extends AnyModel,
-    TDtoKind extends DtoKind,
+    TDtoKind extends __DtoKind,
     TKey extends string,
     THasDepth extends boolean
 > {
@@ -62,88 +62,80 @@ export interface CollectionRecursiveMapping<
 
     as<TAlias extends string>(
         alias: TAlias
-    ): CollectionRecursiveMapping<TModel, TDtoKind, TAlias, THasDepth>;
+    ): __CollectionRecursiveMapping<TModel, TDtoKind, TAlias, THasDepth>;
 
     depth(
         depth: number
-    ): CollectionRecursiveMapping<TModel, TDtoKind, TKey, true>;
+    ): __CollectionRecursiveMapping<TModel, TDtoKind, TKey, true>;
 
     filter(
         filter: (table: EntityTable<TModel>) => Predicate | undefined
-    ): CollectionRecursiveMapping<TModel, TDtoKind, TKey, THasDepth>;
+    ): __CollectionRecursiveMapping<TModel, TDtoKind, TKey, THasDepth>;
 
     sort(
         ...orders: ReadonlyArray<ModelOrder<TModel>>
-    ): CollectionRecursiveMapping<TModel, TDtoKind, TKey, THasDepth>;
+    ): __CollectionRecursiveMapping<TModel, TDtoKind, TKey, THasDepth>;
     
     limit(
         maxRows: number
-    ): CollectionRecursiveMapping<TModel, TDtoKind, TKey, THasDepth>;
+    ): __CollectionRecursiveMapping<TModel, TDtoKind, TKey, THasDepth>;
 }
 
-export type RecursiveKeys<TModel extends AnyModel, TMembers> = 
+export type __RecursiveKeys<TModel extends AnyModel, TMembers> = 
     keyof {
         [K in keyof TMembers
-            as IsRecursiveProp<TModel, TMembers[K]> extends true
+            as __IsRecursiveProp<TModel, TMembers[K]> extends true
                 ? K & string
                 : never
         ]: never
     };
 
-type IsRecursiveProp<TModel extends AnyModel, TProp> =
-    TProp extends AssociatedPropContract<infer TargetModel, any, any, any, any, any>
-        ? Extends<TModel, TargetModel> extends true
+export type __IsRecursiveProp<TModel extends AnyModel, TProp> =
+    TProp extends __AssociatedPropContract<infer TargetModel, any, any, any, any, any>
+        ? __Extends<TModel, TargetModel> extends true
             ? true
             : false
         : false;
 
-type Extends<
-    TModel1 extends AnyModel,
-    TModel2 extends AnyModel
-> =
-    ModelName<TModel1> extends ModelName<TModel2>
-        ? true
-        : IsDerivedModelOf<TModel1, TModel2>;
-
 export type ApplyRecursiveMappings<
     TPrevData,
-    TMappings extends ReadonlyArray<DtoMapping<any>>
+    TMappings extends ReadonlyArray<__DtoMapping<any>>
 > = 
     TPrevData 
-    & WithRecursiveMappings<TPrevData, TMappings>;
+    & __WithRecursiveMappings<TPrevData, TMappings>;
 
-type WithRecursiveMappings<
+export type __WithRecursiveMappings<
     TPrevData,
-    TMappings extends ReadonlyArray<DtoMapping<any>>
+    TMappings extends ReadonlyArray<__DtoMapping<any>>
 > = 
-    TMappings extends readonly [infer First, ...infer Rest extends ReadonlyArray<DtoMapping<any>>]
+    TMappings extends readonly [infer First, ...infer Rest extends ReadonlyArray<__DtoMapping<any>>]
         ? (
-            First extends ReferenceRecursiveMapping<any, infer DtoKind, infer Key>
-                ? WithRecursiveReference<TPrevData, DtoKind, Key>
-                    & WithRecursiveMappings<TPrevData, Rest>
-            : First extends CollectionRecursiveMapping<any, infer DtoKind, infer Key, infer HasDepth>
-                ? WithRecursiveCollection<TPrevData, DtoKind, Key, HasDepth>
-                    & WithRecursiveMappings<TPrevData, Rest>
-            : WithRecursiveMappings<TPrevData, Rest>
+            First extends __ReferenceRecursiveMapping<any, infer DtoKind, infer Key>
+                ? __WithRecursiveReference<TPrevData, DtoKind, Key>
+                    & __WithRecursiveMappings<TPrevData, Rest>
+            : First extends __CollectionRecursiveMapping<any, infer DtoKind, infer Key, infer HasDepth>
+                ? __WithRecursiveCollection<TPrevData, DtoKind, Key, HasDepth>
+                    & __WithRecursiveMappings<TPrevData, Rest>
+            : __WithRecursiveMappings<TPrevData, Rest>
         )
         : object;
 
-type WithRecursiveReference<
+export type __WithRecursiveReference<
     TPrevData,
-    TDtoKind extends DtoKind,
+    TDtoKind extends __DtoKind,
     TKey extends string
 > =
     {
-        [K in TKey]: WithNullity<
-            TPrevData & WithRecursiveReference<TPrevData, TDtoKind, K>,
+        [K in TKey]: __WithNullity<
+            TPrevData & __WithRecursiveReference<TPrevData, TDtoKind, K>,
             "NULLABLE",
             TDtoKind
         >
     };
 
-type WithRecursiveCollection<
+export type __WithRecursiveCollection<
     TPrevData,
-    TDtoKind extends DtoKind,
+    TDtoKind extends __DtoKind,
     TKey extends string,
     THasDepth
 > =
@@ -151,14 +143,14 @@ type WithRecursiveCollection<
         [K in TKey]: 
             THasDepth extends true 
                 ?
-                WithNullity<
+                __WithNullity<
                     Array<
-                        TPrevData & WithRecursiveCollection<TPrevData, TDtoKind, K, THasDepth>
+                        TPrevData & __WithRecursiveCollection<TPrevData, TDtoKind, K, THasDepth>
                     >,
                     "NULLABLE",
                     TDtoKind
                 >
                 : Array<
-                    TPrevData & WithRecursiveCollection<TPrevData, TDtoKind, K, THasDepth>
+                    TPrevData & __WithRecursiveCollection<TPrevData, TDtoKind, K, THasDepth>
                 >
     };

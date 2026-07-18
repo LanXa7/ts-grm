@@ -50,7 +50,9 @@ export type {
     Table, 
     EntityTable, 
     BaseTable, 
-    JoinType
+    JoinType,
+    FilterType,
+    FilterContextType
 } from "./table";
 export type { LikeMode, Expression, ExpressionLike, Predicate } from "./expression";
 

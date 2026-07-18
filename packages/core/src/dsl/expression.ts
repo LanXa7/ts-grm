@@ -1,4 +1,4 @@
-import { CombinedNullity } from "@/schema/prop_internal_behavior";
+import { __CombinedNullity } from "@/schema/prop_internal_behavior";
 import { CompilationError } from "@/utils"
 import { ExpressionSubQuery } from "./sub_query";
 import { AtLeastOne, ExpressionOrder, IsNull } from "./utils";
@@ -8,7 +8,7 @@ import { getInternalFactory } from "@/impl/ast/internal_factory";
 import { OrderNullsType } from "@/schema/order";
 import { CompoundPred } from "@/impl/ast/pred";
 import { ConstantExpr } from "@/impl/ast/constant";
-import { I64PropContract, NullityType, ScalarPropContract } from "@/schema/prop_internal_types";
+import { __I64PropContract, __NullityType, __ScalarPropContract } from "@/schema/prop_internal_types";
 
 export type Expression<
     T, 
@@ -128,20 +128,20 @@ export type TimeUnit =
     | "DECADES"
     | "CENTURIES";
 
-export type MakeType<T, TNullity extends NullityType> =
+export type MakeType<T, TNullity extends __NullityType> =
     TNullity extends "NONNULL"
         ? T
         : T | null;
 
-export type MakeExpression<TProp, TNullity extends NullityType> =
-    TProp extends I64PropContract<infer R, infer Nullity>
+export type MakeExpression<TProp, TNullity extends __NullityType> =
+    TProp extends __I64PropContract<infer R, infer Nullity>
         ? Expression<
-            MakeType<R, CombinedNullity<Nullity, TNullity>>, 
+            MakeType<R, __CombinedNullity<Nullity, TNullity>>, 
             R extends string ? "AS_NUMBER" : ""
         >
-    : TProp extends ScalarPropContract<infer R, infer Nullity>
+    : TProp extends __ScalarPropContract<infer R, infer Nullity>
         ? Expression<
-            MakeType<R, CombinedNullity<Nullity, TNullity>>
+            MakeType<R, __CombinedNullity<Nullity, TNullity>>
         >
     : never;
 

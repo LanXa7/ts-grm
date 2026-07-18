@@ -7,7 +7,7 @@ import { AnyModel } from "@/schema/model";
 import { AnyAssociationModel } from "./association";
 import { FetchPageOptions, FetchRangeOptions, Page } from "./page";
 import { TypeOf, View } from "@/schema/dto/api";
-import { ModelOf } from "@/schema/dto/internal_types";
+import { __ModelOf } from "@/schema/dto/internal_types";
 
 export interface SqlClient {
 
@@ -15,33 +15,33 @@ export interface SqlClient {
 
     findOne<V extends View<any, any>>(
         view: V,
-        criteria: Criteria<ModelOf<V>>
+        criteria: Criteria<__ModelOf<V>>
     ): Promise<TypeOf<V>>;
 
     findOneOrNull<V extends View<any, any>>(
         view: V,
-        criteria: Criteria<ModelOf<V>>
+        criteria: Criteria<__ModelOf<V>>
     ): Promise<TypeOf<V> | null>;
 
     findOneOrUndefined<V extends View<any, any>>(
         view: V,
-        criteria: Criteria<ModelOf<V>>
+        criteria: Criteria<__ModelOf<V>>
     ): Promise<TypeOf<V> | undefined>;
 
     findMany<V extends View<any, any>>(
         view: V,
-        criteria: Criteria<ModelOf<V>>
+        criteria: Criteria<__ModelOf<V>>
     ): Promise<Array<TypeOf<V>>>;
 
     findRange<V extends View<any, any>>(
         view: V,
-        criteria: Criteria<ModelOf<V>>,
+        criteria: Criteria<__ModelOf<V>>,
         options: FetchRangeOptions
     ): Promise<Array<TypeOf<V>>>;
 
     findPage<V extends View<any, any>>(
         view: V,
-        criteria: Criteria<ModelOf<V>>,
+        criteria: Criteria<__ModelOf<V>>,
         options: FetchPageOptions
     ): Promise<Page<TypeOf<V>>>;
 

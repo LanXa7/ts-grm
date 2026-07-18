@@ -17,7 +17,7 @@ import {
     BaseModel,
     BaseQuerySelectMapArgs,
     spi,
-    EntityTableLike
+    __EntityTableLike
 } from "@ts-grm/core";
 import { MergedRootQueryImpl } from "./merged_query";
 import { AtomRootQueryImpl } from "./atom_root_query_impl";
@@ -883,13 +883,13 @@ function expressionsToAst(
 function baseQuerySelectionMapArgs(
     ...partials: ReadonlyArray<
         ReadonlyArray<ExpressionLike> 
-        | { readonly [key: string]: ExpressionLike | EntityTableLike }
+        | { readonly [key: string]: ExpressionLike | __EntityTableLike }
         | null
         | undefined
     >
 ): BaseQuerySelectMapArgs {
     const args: { 
-        [key: string]: ExpressionLike | EntityTableLike;
+        [key: string]: ExpressionLike | __EntityTableLike;
     } = {};
     let autoIndex = 0;
     for (const partial of partials) {

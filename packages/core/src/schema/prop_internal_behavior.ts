@@ -1,14 +1,14 @@
 import { ModelOrder, OrderNullsType } from "@/schema/order";
 import { 
-    AllModelMembers, 
-    ModelIdKey, 
-    RequiredModelKey, 
-    OptionalModelKey, 
-    OneToManyMappedByKeys, 
-    OneToOneMappedByKeys, 
-    ManyToManyMappedByKeys, 
-    MiddleEntityJoinThisKeys,
-    MiddleEntityJoinTargetKeys
+    __AllModelMembers, 
+    __ModelIdKey, 
+    __RequiredModelKey, 
+    __OptionalModelKey, 
+    __OneToManyMappedByKeys, 
+    __OneToOneMappedByKeys, 
+    __ManyToManyMappedByKeys, 
+    __MiddleEntityJoinThisKeys,
+    __MiddleEntityJoinTargetKeys
 } from "@/schema/model_internal_types";
 import { CascadeType, JoinTable, JoinColumns, JoinEntity } from "./join";
 import { ArgumentError } from "@/error/common";
@@ -17,36 +17,36 @@ import { Calculator, ParameterizedTargetCalculator, ParameterizedValueCalculator
 import { StandardSchemaV1 } from "@standard-schema/spec"; 
 import { scalars, ScalarProvider, ScalarType, EnumSetProvider } from "./scalar";
 import { 
-    AssociatedPropContract, 
-    AssociationType, 
-    CalculatedCollectionPropContract, 
-    CalculatedReferencePropContract, 
-    CalculatedValuePropContract, 
-    CollectionPropContract, 
-    DirectionType, 
-    EmbeddedMember, 
-    EmbeddedPropContract, 
-    EnumSetPropContract, 
-    FormulaPropContract, 
-    I64PropContract, 
-    NullityType, 
-    ParameterizedCalculatedCollectionPropContract, 
-    ParameterizedCalculatedReferencePropContract, 
-    ParameterizedCalculatedValuePropContract, 
-    PropContract, 
-    ReferencePropContract, 
-    ScalarPropContract, 
-    SourceKeyOf, 
-    SqlFormulaPropContract, 
-    StrPropContract, 
-    TargetKeyOf, 
-    TargetModelOf, 
-    TsFormulaPropContract 
+    __AssociatedPropContract, 
+    __AssociationType, 
+    __CalculatedCollectionPropContract, 
+    __CalculatedReferencePropContract, 
+    __CalculatedValuePropContract, 
+    __CollectionPropContract, 
+    __DirectionType, 
+    __EmbeddedMember, 
+    __EmbeddedPropContract, 
+    __EnumSetPropContract, 
+    __FormulaPropContract, 
+    __I64PropContract, 
+    __NullityType, 
+    __ParameterizedCalculatedCollectionPropContract, 
+    __ParameterizedCalculatedReferencePropContract, 
+    __ParameterizedCalculatedValuePropContract, 
+    __PropContract, 
+    __ReferencePropContract, 
+    __ScalarPropContract, 
+    __SourceKeyOf, 
+    __SqlFormulaPropContract, 
+    __StrPropContract, 
+    __TargetKeyOf, 
+    __TargetModelOf, 
+    __TsFormulaPropContract 
 } from "./prop_internal_types";
 import { AnyModel } from "./model";
 
-export class Prop<T, TNullity extends NullityType> 
-implements PropContract<T, TNullity> {
+export class __Prop<T, TNullity extends __NullityType> 
+implements __PropContract<T, TNullity> {
 
     readonly __prop = true;
 
@@ -54,71 +54,71 @@ implements PropContract<T, TNullity> {
 
     declare readonly __nullity?: TNullity;
 
-    protected constructor(readonly __data: PropData) {}
+    protected constructor(readonly __data: __PropData) {}
 }
 
-export class ScalarProp<
-    T, TNullity extends NullityType = "NONNULL"
-> extends Prop<T, TNullity> implements ScalarPropContract<T, TNullity> {
+export class __ScalarProp<
+    T, TNullity extends __NullityType = "NONNULL"
+> extends __Prop<T, TNullity> implements __ScalarPropContract<T, TNullity> {
 
     readonly __scalarLikeProp = true;
 
     readonly __scalarProp = true;
 
-    constructor(data: PropData) {
+    constructor(data: __PropData) {
         super(data);
     }
 
-    nullable(): ScalarProp<T, "NULLABLE"> {
-        return new ScalarProp({...this.__data, nullity: "NULLABLE"})
+    nullable(): __ScalarProp<T, "NULLABLE"> {
+        return new __ScalarProp({...this.__data, nullity: "NULLABLE"})
     }
 }
 
-export class StrProp<
-    TNullity extends NullityType = "NONNULL"
-> extends ScalarProp<string, TNullity> implements StrPropContract<string, TNullity> {
+export class __StrProp<
+    TNullity extends __NullityType = "NONNULL"
+> extends __ScalarProp<string, TNullity> implements __StrPropContract<string, TNullity> {
 
     readonly __strProp = true;
 
-    override nullable(): StrProp<"NULLABLE"> {
-        return new StrProp({...this.__data, nullity: "NULLABLE"});
+    override nullable(): __StrProp<"NULLABLE"> {
+        return new __StrProp({...this.__data, nullity: "NULLABLE"});
     }
 }
 
-export class I64Prop<
+export class __I64Prop<
     T extends string | number, 
-    TNullity extends NullityType = "NONNULL"
-> extends ScalarProp<T, TNullity> implements I64PropContract<T, TNullity> {
+    TNullity extends __NullityType = "NONNULL"
+> extends __ScalarProp<T, TNullity> implements __I64PropContract<T, TNullity> {
 
     readonly __i64Prop = true;
 
-    override nullable(): I64Prop<T, "NULLABLE"> {
-        return new I64Prop({...this.__data, nullity: "NULLABLE"});
+    override nullable(): __I64Prop<T, "NULLABLE"> {
+        return new __I64Prop({...this.__data, nullity: "NULLABLE"});
     }
 
-    asString(): I64Prop<string, TNullity> {
-        return new I64Prop({...this.__data});
+    asString(): __I64Prop<string, TNullity> {
+        return new __I64Prop({...this.__data});
     }
 }
 
-export class EnumSetProp<
+export class __EnumSetProp<
     TEnum extends string
-> extends ScalarProp<ReadonlyArray<TEnum>, "NONNULL"> implements EnumSetPropContract<TEnum> {
+> extends __ScalarProp<ReadonlyArray<TEnum>, "NONNULL"> implements __EnumSetPropContract<TEnum> {
 
     readonly __enumSetProp = true;
 }
 
-export class EmbeddedProp<
-    TProps extends Record<string, EmbeddedMember>,
-    TNullity extends NullityType,
+export class __EmbeddedProp<
+    TProps extends Record<string, __EmbeddedMember>,
+    TNullity extends __NullityType,
     TFlattenProps extends Record<string, any>
-> extends Prop<TProps, TNullity> implements EmbeddedPropContract<TProps, TNullity, TFlattenProps> {
+> extends __Prop<TProps, TNullity> implements __EmbeddedPropContract<TProps, TNullity, TFlattenProps> {
 
     readonly __embeddedProp = true;
 
     declare readonly __flattenProps?: TFlattenProps;
 
-    constructor(data: PropData) {
+    constructor(data: __PropData) {
         super(data)
     }
 
@@ -127,23 +127,23 @@ export class EmbeddedProp<
     }
 }
 
-export type FollowPrefix<TKey extends string, TParentKey extends string> =
+export type __FollowPrefix<TKey extends string, TParentKey extends string> =
     `${TParentKey}.${TKey}`;
 
-export type FollowNullity<TProp, TParentNullity extends NullityType> =
-    TProp extends ScalarPropContract<infer T, infer Nullity>
-        ? ScalarProp<T, CombinedNullity<TParentNullity, Nullity>>
+export type __FollowNullity<TProp, TParentNullity extends __NullityType> =
+    TProp extends __ScalarPropContract<infer T, infer Nullity>
+        ? __ScalarProp<T, __CombinedNullity<TParentNullity, Nullity>>
         : never;
 
-export abstract class AssociatedProp<
+export abstract class __AssociatedProp<
     TModel extends AnyModel,
-    TNullity extends NullityType,
-    TDirection extends DirectionType,
+    TNullity extends __NullityType,
+    TDirection extends __DirectionType,
     TMiddleTable extends boolean,
     TBackOptionalModelKey extends string,
     TTargetOptionalModelKey extends string
-> extends Prop<TModel, TNullity> 
-implements AssociatedPropContract<
+> extends __Prop<TModel, TNullity> 
+implements __AssociatedPropContract<
     TModel, 
     TNullity, 
     TDirection, 
@@ -164,7 +164,7 @@ implements AssociatedPropContract<
 
     declare readonly __targetOptionalModelKey?: TTargetOptionalModelKey;
 
-    constructor(data: PropData) {
+    constructor(data: __PropData) {
         super(data);
     }
 
@@ -173,25 +173,25 @@ implements AssociatedPropContract<
     }
 }
 
-export class OneToOneProp<
+export class __OneToOneProp<
     TModel extends AnyModel,
-    TNullity extends NullityType,
-    TDirection extends DirectionType,
+    TNullity extends __NullityType,
+    TDirection extends __DirectionType,
     TMiddleTable extends boolean,
     TBackOptionalModelKey extends string,
     TTargetOptionalModelKey extends string
-> extends AssociatedProp<TModel, TNullity, TDirection, TMiddleTable, TBackOptionalModelKey, TTargetOptionalModelKey> 
-implements ReferencePropContract<TModel, TNullity, TDirection, TMiddleTable, TBackOptionalModelKey, TTargetOptionalModelKey> {
+> extends __AssociatedProp<TModel, TNullity, TDirection, TMiddleTable, TBackOptionalModelKey, TTargetOptionalModelKey> 
+implements __ReferencePropContract<TModel, TNullity, TDirection, TMiddleTable, TBackOptionalModelKey, TTargetOptionalModelKey> {
 
     readonly __referenceProp = true;
 
     readonly __oneToOneProp = true;
 
-    constructor(data: PropData) {
+    constructor(data: __PropData) {
         super(data);
     }
 
-    nullable(): OneToOneProp<
+    nullable(): __OneToOneProp<
         TModel, 
         "NULLABLE", 
         TDirection, 
@@ -199,26 +199,26 @@ implements ReferencePropContract<TModel, TNullity, TDirection, TMiddleTable, TBa
         TBackOptionalModelKey, 
         TTargetOptionalModelKey
     > {
-        return new OneToOneProp(
+        return new __OneToOneProp(
             {...this.__data, nullity: "NULLABLE"}
         );
     }
 }
 
-export class ConfigurableOneToOneProp<
+export class __ConfigurableOneToOneProp<
     TModel extends AnyModel,
-    TNullity extends NullityType,
-    TDirection extends DirectionType,
+    TNullity extends __NullityType,
+    TDirection extends __DirectionType,
     TMiddleTable extends boolean,
     TBackOptionalModelKey extends string,
     TTargetOptionalModelKey extends string
-> extends OneToOneProp<TModel, TNullity, TDirection, TMiddleTable, TBackOptionalModelKey, TTargetOptionalModelKey> {
+> extends __OneToOneProp<TModel, TNullity, TDirection, TMiddleTable, TBackOptionalModelKey, TTargetOptionalModelKey> {
 
-    constructor(data: PropData) {
+    constructor(data: __PropData) {
         super(data);
     }
 
-    nullable(): ConfigurableOneToOneProp<
+    nullable(): __ConfigurableOneToOneProp<
         TModel, 
         "NULLABLE", 
         TDirection, 
@@ -226,29 +226,29 @@ export class ConfigurableOneToOneProp<
         TBackOptionalModelKey, 
         TTargetOptionalModelKey
     > {
-        return new ConfigurableOneToOneProp({...this.__data, nullity: "NULLABLE"});
+        return new __ConfigurableOneToOneProp({...this.__data, nullity: "NULLABLE"});
     }
 
-    mappedBy<TMappedBy extends OneToOneMappedByKeys<TModel>>(
+    mappedBy<TMappedBy extends __OneToOneMappedByKeys<TModel>>(
         mappedBy: TMappedBy
-    ): OneToOneProp<
+    ): __OneToOneProp<
         TModel, 
         "NULLABLE", 
         "INVERSE", 
         false,
-        TargetKeyOf<AllModelMembers<TModel>[TMappedBy]>, 
-        SourceKeyOf<AllModelMembers<TModel>[TMappedBy]>
+        __TargetKeyOf<__AllModelMembers<TModel>[TMappedBy]>, 
+        __SourceKeyOf<__AllModelMembers<TModel>[TMappedBy]>
     > {
-        return new OneToOneProp({...this.__data, mappedBy, nullity: "NULLABLE"});
+        return new __OneToOneProp({...this.__data, mappedBy, nullity: "NULLABLE"});
     }
 
-    joinColumns<TTargetKeyProp extends OptionalModelKey<TModel> = "">(
+    joinColumns<TTargetKeyProp extends __OptionalModelKey<TModel> = "">(
         options: {
             targetKeyProp?: TTargetKeyProp
             columns?: JoinColumns
             cascade?: CascadeType
         }
-    ): OneToOneProp<
+    ): __OneToOneProp<
         TModel, 
         TNullity, 
         "OWNING", 
@@ -259,37 +259,37 @@ export class ConfigurableOneToOneProp<
 
     joinColumns(
         ...joinColumns: JoinColumns
-    ): OneToOneProp<
+    ): __OneToOneProp<
         TModel, 
         TNullity, 
         "OWNING", 
         false,
         TBackOptionalModelKey, 
-        ModelIdKey<TModel>
+        __ModelIdKey<TModel>
     >;
 
     joinColumns(
         data: any
-    ): OneToOneProp<
+    ): __OneToOneProp<
         TModel, 
         TNullity, 
         "OWNING", 
         false,
         TBackOptionalModelKey, 
-        ModelIdKey<TModel>
+        __ModelIdKey<TModel>
     > {
-        return new OneToOneProp({
+        return new __OneToOneProp({
             ...this.__data, 
-            joinColumns: joinColumnsDataOf(data, this.__data.targetModel)
+            joinColumns: __joinColumnsDataOf(data, this.__data.targetModel)
         });
     }
 
     joinTable<
         TBackReferencedProp extends string = "",
-        TTargetReferencedProp extends OptionalModelKey<TModel> = "",
+        TTargetReferencedProp extends __OptionalModelKey<TModel> = "",
     >(
-        options: JoinTable<TModel, TBackReferencedProp, RequiredModelKey<TModel, TTargetReferencedProp>>
-    ): OneToOneProp<
+        options: JoinTable<TModel, TBackReferencedProp, __RequiredModelKey<TModel, TTargetReferencedProp>>
+    ): __OneToOneProp<
         TModel, 
         TNullity, 
         "OWNING", 
@@ -297,16 +297,16 @@ export class ConfigurableOneToOneProp<
         TBackReferencedProp, 
         TTargetReferencedProp
     > {
-        return new OneToOneProp({
+        return new __OneToOneProp({
             ...this.__data,
-            joinTable: joinTableDataOf(options, this.targetModel)
+            joinTable: __joinTableDataOf(options, this.targetModel)
         });
     }
 
     joinEntity<
         TMiddleModel extends AnyModel,
-        TJoinThisProp extends MiddleEntityJoinThisKeys<TMiddleModel, "ONE_TO_ONE">,
-        TJoinTargetProp extends MiddleEntityJoinTargetKeys<TMiddleModel, TModel, "ONE_TO_ONE">
+        TJoinThisProp extends __MiddleEntityJoinThisKeys<TMiddleModel, "ONE_TO_ONE">,
+        TJoinTargetProp extends __MiddleEntityJoinTargetKeys<TMiddleModel, TModel, "ONE_TO_ONE">
     >(
         options: JoinEntity<
             TMiddleModel, 
@@ -315,15 +315,15 @@ export class ConfigurableOneToOneProp<
             TJoinThisProp, 
             TJoinTargetProp
         >
-    ): OneToOneProp<
-        TargetModelOf<AllModelMembers<TMiddleModel>[TJoinTargetProp]>,
+    ): __OneToOneProp<
+        __TargetModelOf<__AllModelMembers<TMiddleModel>[TJoinTargetProp]>,
         TNullity,
         "OWNING",
         true,
-        TargetKeyOf<AllModelMembers<TMiddleModel>[TJoinThisProp]>,
-        TargetKeyOf<AllModelMembers<TMiddleModel>[TJoinTargetProp]>
+        __TargetKeyOf<__AllModelMembers<TMiddleModel>[TJoinThisProp]>,
+        __TargetKeyOf<__AllModelMembers<TMiddleModel>[TJoinTargetProp]>
     > {
-        return new OneToOneProp({
+        return new __OneToOneProp({
             ...this.__data,
             joinEntity: {
                 model: options.model,
@@ -334,25 +334,25 @@ export class ConfigurableOneToOneProp<
     }
 }
 
-export class ManyToOneProp<
+export class __ManyToOneProp<
     TModel extends AnyModel,
-    TNullity extends NullityType,
-    TDirection extends DirectionType,
+    TNullity extends __NullityType,
+    TDirection extends __DirectionType,
     TMiddleTable extends boolean,
     TBackOptionalModelKey extends string,
     TTargetOptionalModelKey extends string
-> extends AssociatedProp<TModel, TNullity, TDirection, TMiddleTable, TBackOptionalModelKey, TTargetOptionalModelKey> 
-implements ReferencePropContract<TModel, TNullity, TDirection, TMiddleTable, TBackOptionalModelKey, TTargetOptionalModelKey> {
+> extends __AssociatedProp<TModel, TNullity, TDirection, TMiddleTable, TBackOptionalModelKey, TTargetOptionalModelKey> 
+implements __ReferencePropContract<TModel, TNullity, TDirection, TMiddleTable, TBackOptionalModelKey, TTargetOptionalModelKey> {
 
     readonly __referenceProp = true;
 
     readonly __manyToOneProp = true;
 
-    constructor(data: PropData) {
+    constructor(data: __PropData) {
         super(data);
     }
 
-    nullable(): ManyToOneProp<
+    nullable(): __ManyToOneProp<
         TModel, 
         "NULLABLE", 
         TDirection, 
@@ -360,26 +360,26 @@ implements ReferencePropContract<TModel, TNullity, TDirection, TMiddleTable, TBa
         TBackOptionalModelKey, 
         TTargetOptionalModelKey
     > {
-        return new ManyToOneProp(
+        return new __ManyToOneProp(
             {...this.__data, nullity: "NULLABLE"}
         );
     }
 }
 
-export class ConfigurableManyToOneProp<
+export class __ConfigurableManyToOneProp<
     TModel extends AnyModel,
-    TNullity extends NullityType,
-    TDirection extends DirectionType,
+    TNullity extends __NullityType,
+    TDirection extends __DirectionType,
     TMiddleTable extends boolean,
     TBackOptionalModelKey extends string,
     TTargetOptionalModelKey extends string
-> extends ManyToOneProp<TModel, TNullity, TDirection, TMiddleTable, TBackOptionalModelKey, TTargetOptionalModelKey> {
+> extends __ManyToOneProp<TModel, TNullity, TDirection, TMiddleTable, TBackOptionalModelKey, TTargetOptionalModelKey> {
 
-    constructor(data: PropData) {
+    constructor(data: __PropData) {
         super(data);
     }
 
-    nullable(): ConfigurableManyToOneProp<
+    nullable(): __ConfigurableManyToOneProp<
         TModel, 
         "NULLABLE", 
         TDirection, 
@@ -387,16 +387,16 @@ export class ConfigurableManyToOneProp<
         TBackOptionalModelKey, 
         TTargetOptionalModelKey
     > {
-        return new ConfigurableManyToOneProp({...this.__data, nullity: "NULLABLE"});
+        return new __ConfigurableManyToOneProp({...this.__data, nullity: "NULLABLE"});
     }
 
-    joinColumns<TTargetKeyProp extends OptionalModelKey<TModel> = "">(
+    joinColumns<TTargetKeyProp extends __OptionalModelKey<TModel> = "">(
         options: {
             targetKeyProp?: TTargetKeyProp
             columns?: JoinColumns
             cascade?: CascadeType
         }
-    ): ManyToOneProp<
+    ): __ManyToOneProp<
         TModel, 
         TNullity, 
         "OWNING", 
@@ -407,37 +407,37 @@ export class ConfigurableManyToOneProp<
 
     joinColumns(
         ...joinColumns: JoinColumns
-    ): ManyToOneProp<
+    ): __ManyToOneProp<
         TModel, 
         TNullity, 
         "OWNING", 
         false,
         TBackOptionalModelKey, 
-        ModelIdKey<TModel>
+        __ModelIdKey<TModel>
     >;
 
     joinColumns(
         options: any
-    ): ManyToOneProp<
+    ): __ManyToOneProp<
         TModel, 
         TNullity, 
         "OWNING", 
         false,
         TBackOptionalModelKey, 
-        ModelIdKey<TModel>
+        __ModelIdKey<TModel>
     > {
-        return new ManyToOneProp({
+        return new __ManyToOneProp({
             ...this.__data,
-            joinColumns: joinColumnsDataOf(options, this.__data.targetModel)
+            joinColumns: __joinColumnsDataOf(options, this.__data.targetModel)
         });
     }
 
     joinTable<
         TBackReferenceProp extends string = "",
-        TTargetReferencedProp extends OptionalModelKey<TModel> = ""
+        TTargetReferencedProp extends __OptionalModelKey<TModel> = ""
     >(
-        options: JoinTable<TModel, TBackReferenceProp, RequiredModelKey<TModel, TTargetReferencedProp>>
-    ): ManyToOneProp<
+        options: JoinTable<TModel, TBackReferenceProp, __RequiredModelKey<TModel, TTargetReferencedProp>>
+    ): __ManyToOneProp<
         TModel, 
         TNullity, 
         "OWNING", 
@@ -445,16 +445,16 @@ export class ConfigurableManyToOneProp<
         TBackReferenceProp, 
         TTargetReferencedProp
     > {
-        return new ManyToOneProp({
+        return new __ManyToOneProp({
             ...this.__data,
-            joinColumns: joinColumnsDataOf(options, this.__data.targetModel)
+            joinColumns: __joinColumnsDataOf(options, this.__data.targetModel)
         });
     }
 
     joinEntity<
         TMiddleModel extends AnyModel,
-        TJoinSourceProp extends MiddleEntityJoinThisKeys<TMiddleModel, "MANY_TO_ONE">,
-        TJoinTargetProp extends MiddleEntityJoinTargetKeys<TMiddleModel, TModel, "MANY_TO_ONE"> 
+        TJoinSourceProp extends __MiddleEntityJoinThisKeys<TMiddleModel, "MANY_TO_ONE">,
+        TJoinTargetProp extends __MiddleEntityJoinTargetKeys<TMiddleModel, TModel, "MANY_TO_ONE"> 
     >(
         options: JoinEntity<
             TMiddleModel, 
@@ -463,15 +463,15 @@ export class ConfigurableManyToOneProp<
             TJoinSourceProp, 
             TJoinTargetProp
         >
-    ): ManyToOneProp<
-        TargetModelOf<AllModelMembers<TMiddleModel>[TJoinTargetProp]>,
+    ): __ManyToOneProp<
+        __TargetModelOf<__AllModelMembers<TMiddleModel>[TJoinTargetProp]>,
         TNullity,
         "OWNING",
         true,
-        TargetKeyOf<AllModelMembers<TMiddleModel>[TJoinSourceProp]>,
-        TargetKeyOf<AllModelMembers<TMiddleModel>[TJoinTargetProp]>
+        __TargetKeyOf<__AllModelMembers<TMiddleModel>[TJoinSourceProp]>,
+        __TargetKeyOf<__AllModelMembers<TMiddleModel>[TJoinTargetProp]>
     > {
-        return new ManyToOneProp({
+        return new __ManyToOneProp({
             ...this.__data,
             joinEntity: {
                 model: options.model,
@@ -482,26 +482,26 @@ export class ConfigurableManyToOneProp<
     }
 }
 
-export class OneToManyProp<
+export class __OneToManyProp<
     TModel extends AnyModel,
-    TDirection extends DirectionType,
+    TDirection extends __DirectionType,
     TMiddleTable extends boolean,
     TBackOptionalModelKey extends string,
     TTargetOptionalModelKey extends string
-> extends AssociatedProp<TModel, "NONNULL", TDirection, TMiddleTable, TBackOptionalModelKey, TTargetOptionalModelKey> 
-implements CollectionPropContract<TModel, TDirection, TMiddleTable, TBackOptionalModelKey, TTargetOptionalModelKey> {
+> extends __AssociatedProp<TModel, "NONNULL", TDirection, TMiddleTable, TBackOptionalModelKey, TTargetOptionalModelKey> 
+implements __CollectionPropContract<TModel, TDirection, TMiddleTable, TBackOptionalModelKey, TTargetOptionalModelKey> {
 
     readonly __collectionProp = true;
 
     readonly __oneToManyProp = true;
 
-    constructor(data: PropData) {
+    constructor(data: __PropData) {
         super(data);
     }
 
     orderBy(
         ...orders: ModelOrder<TModel>[]
-    ): OneToManyProp<
+    ): __OneToManyProp<
         TModel, 
         TDirection, 
         TMiddleTable,
@@ -524,28 +524,28 @@ implements CollectionPropContract<TModel, TDirection, TMiddleTable, TBackOptiona
                     nulls: "UNSPECIFIED"
                 }
         );
-        return new OneToManyProp(
+        return new __OneToManyProp(
             {...this.__data, orders: arr }
         );
     }
 }
 
-export class ConfigurableOneToManyProp<
+export class __ConfigurableOneToManyProp<
     TModel extends AnyModel,
-    TDirection extends DirectionType,
+    TDirection extends __DirectionType,
     TMiddleTable extends boolean,
     TBackOptionalModelKey extends string,
     TTargetOptionalModelKey extends string
-> extends OneToManyProp<TModel, TDirection, TMiddleTable, TBackOptionalModelKey, TTargetOptionalModelKey> {
+> extends __OneToManyProp<TModel, TDirection, TMiddleTable, TBackOptionalModelKey, TTargetOptionalModelKey> {
 
-    constructor(data: PropData) {
+    constructor(data: __PropData) {
         super(data);
     }
 
     joinEntity<
         TMiddleModel extends AnyModel,
-        TJoinSourceProp extends MiddleEntityJoinThisKeys<TMiddleModel, "ONE_TO_MANY">,
-        TJoinTargetProp extends MiddleEntityJoinTargetKeys<TMiddleModel, TModel, "ONE_TO_MANY"> 
+        TJoinSourceProp extends __MiddleEntityJoinThisKeys<TMiddleModel, "ONE_TO_MANY">,
+        TJoinTargetProp extends __MiddleEntityJoinTargetKeys<TMiddleModel, TModel, "ONE_TO_MANY"> 
     >(
         options: JoinEntity<
             TMiddleModel, 
@@ -554,14 +554,14 @@ export class ConfigurableOneToManyProp<
             TJoinSourceProp, 
             TJoinTargetProp
         >
-    ): OneToManyProp<
-        TargetModelOf<AllModelMembers<TMiddleModel>[TJoinTargetProp]>,
+    ): __OneToManyProp<
+        __TargetModelOf<__AllModelMembers<TMiddleModel>[TJoinTargetProp]>,
         "OWNING",
         true,
-        TargetKeyOf<AllModelMembers<TMiddleModel>[TJoinSourceProp]>,
-        TargetKeyOf<AllModelMembers<TMiddleModel>[TJoinTargetProp]>
+        __TargetKeyOf<__AllModelMembers<TMiddleModel>[TJoinSourceProp]>,
+        __TargetKeyOf<__AllModelMembers<TMiddleModel>[TJoinTargetProp]>
     > {
-        return new OneToManyProp({
+        return new __OneToManyProp({
             ...this.__data,
             joinEntity: {
                 model: options.model,
@@ -571,111 +571,111 @@ export class ConfigurableOneToManyProp<
         });
     }
 
-    mappedBy<TMappedBy extends OneToManyMappedByKeys<TModel>>(
+    mappedBy<TMappedBy extends __OneToManyMappedByKeys<TModel>>(
         mappedBy: TMappedBy
-    ): OneToManyProp<
+    ): __OneToManyProp<
         TModel, 
         "INVERSE", 
         false,
-        TargetKeyOf<AllModelMembers<TModel>[TMappedBy]>, 
-        SourceKeyOf<AllModelMembers<TModel>[TMappedBy]>
+        __TargetKeyOf<__AllModelMembers<TModel>[TMappedBy]>, 
+        __SourceKeyOf<__AllModelMembers<TModel>[TMappedBy]>
     > {
-        return new OneToManyProp({...this.__data, mappedBy});
+        return new __OneToManyProp({...this.__data, mappedBy});
     }
 
     override orderBy(
         ...orders: ModelOrder<TModel>[]
-    ): OneToManyProp<
+    ): __OneToManyProp<
         TModel, 
         TDirection, 
         TMiddleTable,
         TBackOptionalModelKey, 
         TTargetOptionalModelKey
     > {
-        return new OneToManyProp(
+        return new __OneToManyProp(
             {...this.__data, orders: [...orders] as ReadonlyArray<any> }
         );
     }
 }
 
-export class ManyToManyProp<
+export class __ManyToManyProp<
     TModel extends AnyModel,
-    TDirection extends DirectionType,
+    TDirection extends __DirectionType,
     TMiddleTable extends boolean,
     TBackOptionalModelKey extends string,
     TTargetOptionalModelKey extends string
-> extends AssociatedProp<TModel, "NONNULL", TDirection, TMiddleTable, TBackOptionalModelKey, TTargetOptionalModelKey> 
-implements CollectionPropContract<TModel, TDirection, TMiddleTable, TBackOptionalModelKey, TTargetOptionalModelKey> {
+> extends __AssociatedProp<TModel, "NONNULL", TDirection, TMiddleTable, TBackOptionalModelKey, TTargetOptionalModelKey> 
+implements __CollectionPropContract<TModel, TDirection, TMiddleTable, TBackOptionalModelKey, TTargetOptionalModelKey> {
 
     readonly __collectionProp = true;
 
     readonly __manyToManyProp = true;
 
-    constructor(data: PropData) {
+    constructor(data: __PropData) {
         super(data);
     }
 
     orderBy(
         ...orders: ModelOrder<TModel>[]
-    ): ManyToManyProp<
+    ): __ManyToManyProp<
         TModel, 
         TDirection, 
         TMiddleTable,
         TBackOptionalModelKey, 
         TTargetOptionalModelKey
     > {
-        return new ManyToManyProp(
+        return new __ManyToManyProp(
             {...this.__data, orders: [...orders] as ReadonlyArray<any> }
         );
     }
 }
 
-export class ConfigurableManyToManyProp<
+export class __ConfigurableManyToManyProp<
     TModel extends AnyModel,
-    TDirection extends DirectionType,
+    TDirection extends __DirectionType,
     TMiddleTable extends boolean,
     TBackOptionalModelKey extends string,
     TTargetOptionalModelKey extends string
-> extends ManyToManyProp<TModel, TDirection, TMiddleTable, TBackOptionalModelKey, TTargetOptionalModelKey> {
+> extends __ManyToManyProp<TModel, TDirection, TMiddleTable, TBackOptionalModelKey, TTargetOptionalModelKey> {
 
-    constructor(data: PropData) {
+    constructor(data: __PropData) {
         super(data);
     }
 
-    mappedBy<TMappedBy extends ManyToManyMappedByKeys<TModel>>(
+    mappedBy<TMappedBy extends __ManyToManyMappedByKeys<TModel>>(
         mappedBy: TMappedBy
-    ): ManyToManyProp<
+    ): __ManyToManyProp<
         TModel, 
         "INVERSE",
         true,
-        TargetKeyOf<AllModelMembers<TModel>[TMappedBy]>, 
-        SourceKeyOf<AllModelMembers<TModel>[TMappedBy]>
+        __TargetKeyOf<__AllModelMembers<TModel>[TMappedBy]>, 
+        __SourceKeyOf<__AllModelMembers<TModel>[TMappedBy]>
     > {
-        return new ManyToManyProp({...this.__data, mappedBy});
+        return new __ManyToManyProp({...this.__data, mappedBy});
     }
 
     joinTable<
         TBackReferenceProp extends string = "",
-        TTargetReferencedProp extends OptionalModelKey<TModel> = ""
+        TTargetReferencedProp extends __OptionalModelKey<TModel> = ""
     >(
-        options: JoinTable<TModel, TBackReferenceProp, RequiredModelKey<TModel, TTargetReferencedProp>>
-    ): ManyToManyProp<
+        options: JoinTable<TModel, TBackReferenceProp, __RequiredModelKey<TModel, TTargetReferencedProp>>
+    ): __ManyToManyProp<
         TModel, 
         "OWNING", 
         true,
         TBackReferenceProp, 
         TTargetReferencedProp
     > {
-        return new ManyToManyProp({
+        return new __ManyToManyProp({
             ...this.__data,
-            joinTable: joinTableDataOf(options, this.__data.targetModel)
+            joinTable: __joinTableDataOf(options, this.__data.targetModel)
         });
     }
 
     joinEntity<
         TMiddleModel extends AnyModel,
-        TJoinSourceProp extends MiddleEntityJoinThisKeys<TMiddleModel, "MANY_TO_MANY">,
-        TJoinTargetProp extends MiddleEntityJoinTargetKeys<TMiddleModel, TModel, "MANY_TO_MANY"> 
+        TJoinSourceProp extends __MiddleEntityJoinThisKeys<TMiddleModel, "MANY_TO_MANY">,
+        TJoinTargetProp extends __MiddleEntityJoinTargetKeys<TMiddleModel, TModel, "MANY_TO_MANY"> 
     >(
         options: JoinEntity<
             TMiddleModel, 
@@ -684,14 +684,14 @@ export class ConfigurableManyToManyProp<
             TJoinSourceProp, 
             TJoinTargetProp
         >
-    ): ManyToManyProp<
-        TargetModelOf<AllModelMembers<TMiddleModel>[TJoinTargetProp]>,
+    ): __ManyToManyProp<
+        __TargetModelOf<__AllModelMembers<TMiddleModel>[TJoinTargetProp]>,
         "OWNING",
         true,
-        TargetKeyOf<AllModelMembers<TMiddleModel>[TJoinSourceProp]>,
-        TargetKeyOf<AllModelMembers<TMiddleModel>[TJoinTargetProp]>
+        __TargetKeyOf<__AllModelMembers<TMiddleModel>[TJoinSourceProp]>,
+        __TargetKeyOf<__AllModelMembers<TMiddleModel>[TJoinTargetProp]>
     > {
-        return new ManyToManyProp({
+        return new __ManyToManyProp({
             ...this.__data,
             joinEntity: {
                 model: options.model,
@@ -703,110 +703,110 @@ export class ConfigurableManyToManyProp<
 
     orderBy(
         ...orders: ModelOrder<TModel>[]
-    ): ConfigurableManyToManyProp<
+    ): __ConfigurableManyToManyProp<
         TModel, 
         TDirection, 
         TMiddleTable,
         TBackOptionalModelKey, 
         TTargetOptionalModelKey
     > {
-        return new ConfigurableManyToManyProp(
+        return new __ConfigurableManyToManyProp(
             {...this.__data, orders: [...orders] as ReadonlyArray<any> }
         );
     }
 }
 
-export abstract class FormulaProp<
+export abstract class __FormulaProp<
     T, 
-    TNullity extends NullityType
-> extends Prop<T, TNullity> 
-implements FormulaPropContract<T, TNullity> {
+    TNullity extends __NullityType
+> extends __Prop<T, TNullity> 
+implements __FormulaPropContract<T, TNullity> {
 
     readonly __scalarLikeProp = true;
 
     readonly __formulaProp = true;
 
-    constructor(data: PropData) {
+    constructor(data: __PropData) {
         super(data);
     }
 }
 
-export class TsFormulaProp<
+export class __TsFormulaProp<
     T, 
-    TNullity extends NullityType
-> extends FormulaProp<T, TNullity> 
-implements TsFormulaPropContract<T, TNullity> {
+    TNullity extends __NullityType
+> extends __FormulaProp<T, TNullity> 
+implements __TsFormulaPropContract<T, TNullity> {
  
     readonly __tsFormulaProp = true;
 
-    constructor(data: PropData) {
+    constructor(data: __PropData) {
         super(data);
     }
 }
 
-export class SqlFormulaProp<
+export class __SqlFormulaProp<
     T, 
-    TNullity extends NullityType
-> extends FormulaProp<T, TNullity>
-implements SqlFormulaPropContract<T, TNullity> {
+    TNullity extends __NullityType
+> extends __FormulaProp<T, TNullity>
+implements __SqlFormulaPropContract<T, TNullity> {
  
     readonly __sqlFormulaProp = true;
 
-    constructor(data: PropData) {
+    constructor(data: __PropData) {
         super(data);
     }
 }
 
-export class CalculatedValueProp<
+export class __CalculatedValueProp<
     TValue, 
-    TNullity extends NullityType
-> extends Prop<TValue, TNullity>
-implements CalculatedValuePropContract<TValue, TNullity> {
+    TNullity extends __NullityType
+> extends __Prop<TValue, TNullity>
+implements __CalculatedValuePropContract<TValue, TNullity> {
 
     readonly __calculatedValueProp = true;
 
-    constructor(data: PropData) {
+    constructor(data: __PropData) {
         super(data);
     }
 }
 
-export class ParameterizedCalculatedValueProp<
+export class __ParameterizedCalculatedValueProp<
     TParameter,
     TValue, 
-    TNullity extends NullityType
-> extends Prop<TValue, TNullity>
-implements ParameterizedCalculatedValuePropContract<TParameter, TValue, TNullity> {
+    TNullity extends __NullityType
+> extends __Prop<TValue, TNullity>
+implements __ParameterizedCalculatedValuePropContract<TParameter, TValue, TNullity> {
 
     readonly __parameterizedCalculatedValueProp = true;
 
     declare readonly __parameter?: TParameter;
 
-    constructor(data: PropData) {
+    constructor(data: __PropData) {
         super(data);
     }
 }
 
-export class CalculatedReferenceProp<
+export class __CalculatedReferenceProp<
     TModel extends AnyModel,
-    TNullity extends NullityType
-> extends Prop<TModel, TNullity>
-implements CalculatedReferencePropContract<TModel, TNullity> {
+    TNullity extends __NullityType
+> extends __Prop<TModel, TNullity>
+implements __CalculatedReferencePropContract<TModel, TNullity> {
 
     readonly __associatedLikeProp = true;
 
     readonly __calculatedReferenceProp = true;
 
-    constructor(data: PropData) {
+    constructor(data: __PropData) {
         super(data);
     }
 }
 
-export class ParameterizedCalculatedReferenceProp<
+export class __ParameterizedCalculatedReferenceProp<
     TParameter,
     TModel extends AnyModel,
-    TNullity extends NullityType
-> extends Prop<TModel, TNullity>
-implements ParameterizedCalculatedReferencePropContract<TParameter, TModel, TNullity> {
+    TNullity extends __NullityType
+> extends __Prop<TModel, TNullity>
+implements __ParameterizedCalculatedReferencePropContract<TParameter, TModel, TNullity> {
 
     readonly __associatedLikeProp = true;
 
@@ -814,30 +814,30 @@ implements ParameterizedCalculatedReferencePropContract<TParameter, TModel, TNul
 
     declare readonly __parameter?: TParameter;
 
-    constructor(data: PropData) {
+    constructor(data: __PropData) {
         super(data);
     }
 }
 
-export class CalculatedCollectionProp<
+export class __CalculatedCollectionProp<
     TModel extends AnyModel
-> extends Prop<TModel, "NONNULL">
-implements CalculatedCollectionPropContract<TModel> {
+> extends __Prop<TModel, "NONNULL">
+implements __CalculatedCollectionPropContract<TModel> {
 
     readonly __associatedLikeProp = true;
 
     readonly __calculatedCollectionProp = true;
 
-    constructor(data: PropData) {
+    constructor(data: __PropData) {
         super(data);
     }
 }
 
-export class ParameterizedCalculatedCollectionProp<
+export class __ParameterizedCalculatedCollectionProp<
     TParameter,
     TModel extends AnyModel
-> extends Prop<TModel, "NONNULL">
-implements ParameterizedCalculatedCollectionPropContract<TParameter, TModel> {
+> extends __Prop<TModel, "NONNULL">
+implements __ParameterizedCalculatedCollectionPropContract<TParameter, TModel> {
 
     readonly __associatedLikeProp = true;
 
@@ -845,54 +845,54 @@ implements ParameterizedCalculatedCollectionPropContract<TParameter, TModel> {
 
     declare readonly __parameter?: TParameter;
 
-    constructor(data: PropData) {
+    constructor(data: __PropData) {
         super(data);
     }
 }
 
-export type ScalarPropCreator = {
+export type __ScalarPropCreator = {
     
     <TEnum extends string>(
         provider: EnumSetProvider<TEnum>
-    ): EnumSetProp<TEnum>;
+    ): __EnumSetProp<TEnum>;
     
     <TValueType extends StandardSchemaV1>(
         provider: ScalarProvider<TValueType, any>
-    ): ScalarProp<StandardSchemaV1.InferOutput<TValueType>>;
+    ): __ScalarProp<StandardSchemaV1.InferOutput<TValueType>>;
 }
 
-export function scalarPropCreator(): ScalarPropCreator {
+export function __scalarPropCreator(): __ScalarPropCreator {
     function impl(
         provider: ScalarProvider<any, any>
-    ): ScalarProp<any> {
+    ): __ScalarProp<any> {
         if (provider instanceof EnumSetProvider) {
-            return new EnumSetProp({...EMPTY_PROP_DEFINITION_DATA, scalarType: provider.sqlType, scalarProvider: provider as any});
+            return new __EnumSetProp({...__EMPTY_PROP_DEFINITION_DATA, scalarType: provider.sqlType, scalarProvider: provider as any});
         }
-        return new ScalarProp({...EMPTY_PROP_DEFINITION_DATA, scalarType: provider.sqlType, scalarProvider: provider});
+        return new __ScalarProp({...__EMPTY_PROP_DEFINITION_DATA, scalarType: provider.sqlType, scalarProvider: provider});
     };
     return impl as any;
 }
 
-export type EnumCreator = {
+export type __EnumCreator = {
 
     <const TValues extends ReadonlyArray<string>>(
         ...values: TValues
-    ): ScalarProp<TValues[number]>;
+    ): __ScalarProp<TValues[number]>;
 
     <TMap extends { readonly [key: string]: string; }>(
         map: TMap
-    ): ScalarProp<keyof TMap>;
+    ): __ScalarProp<keyof TMap>;
 
     <TMap extends { readonly [key: string]: number; }>(
         map: TMap
-    ): ScalarProp<keyof TMap>;
+    ): __ScalarProp<keyof TMap>;
 }
 
-export function enumCreator(): EnumCreator {
-    function impl(...args: ReadonlyArray<any>): ScalarProp<ScalarProp<any>> {
+export function __enumCreator(): __EnumCreator {
+    function impl(...args: ReadonlyArray<any>): __ScalarProp<__ScalarProp<any>> {
         const scalarProvider = scalars.enumProvider(...args);
-        return new ScalarProp({
-            ...EMPTY_PROP_DEFINITION_DATA, 
+        return new __ScalarProp({
+            ...__EMPTY_PROP_DEFINITION_DATA, 
             scalarType: scalarProvider.sqlType,
             scalarProvider
         });
@@ -900,22 +900,22 @@ export function enumCreator(): EnumCreator {
     return impl as any;
 }
 
-export type EnumSetCreator = {
+export type __EnumSetCreator = {
 
     <const TValues extends ReadonlyArray<string>>(
         ...values: TValues
-    ): EnumSetProp<TValues[number] & string>;
+    ): __EnumSetProp<TValues[number] & string>;
 
     <TMap extends { readonly [key: string]: string; }>(
         map: TMap
-    ): EnumSetProp<keyof TMap & string>;
+    ): __EnumSetProp<keyof TMap & string>;
 }
 
-export function enumSetCreator(): EnumSetCreator {
-    function impl(...args: ReadonlyArray<any>): EnumSetProp<any> {
+export function __enumSetCreator(): __EnumSetCreator {
+    function impl(...args: ReadonlyArray<any>): __EnumSetProp<any> {
         const scalarProvider = scalars.enumSetProvider(...args);
-        return new EnumSetProp({
-            ...EMPTY_PROP_DEFINITION_DATA, 
+        return new __EnumSetProp({
+            ...__EMPTY_PROP_DEFINITION_DATA, 
             scalarType: scalarProvider.sqlType,
             scalarProvider: scalarProvider as any
         });
@@ -923,26 +923,26 @@ export function enumSetCreator(): EnumSetCreator {
     return impl as any;
 }
 
-export type CombinedNullity<
-    TNullity1 extends NullityType, 
-    TNullity2 extends NullityType
+export type __CombinedNullity<
+    TNullity1 extends __NullityType, 
+    TNullity2 extends __NullityType
 > = TNullity1 extends "NULLABLE"
         ? "NULLABLE"
     : TNullity2 extends "NULLABLE"
         ? "NULLABLE"
     : "NONNULL";
 
-export type PropData = {
-    readonly nullity: NullityType;
+export type __PropData = {
+    readonly nullity: __NullityType;
     readonly scalarType: ScalarType<any> | undefined;
     readonly scalarProvider: ScalarProvider<any, any> | undefined;
-    readonly props: Record<string, PropContract<any, any>> | undefined;
-    readonly targetModel: ModelRef<AnyModel> | undefined;
-    readonly associationType: AssociationType | undefined;
+    readonly props: Record<string, __PropContract<any, any>> | undefined;
+    readonly targetModel: __ModelRef<AnyModel> | undefined;
+    readonly associationType: __AssociationType | undefined;
     readonly columnName: string | undefined;
-    readonly joinColumns: ForeignKeyData | undefined;
-    readonly joinTable: JoinTableData | undefined;
-    readonly joinEntity: JoinEntityData | undefined;
+    readonly joinColumns: __ForeignKeyData | undefined;
+    readonly joinTable: __JoinTableData | undefined;
+    readonly joinEntity: __JoinEntityData | undefined;
     readonly mappedBy: string | undefined,
     readonly orders: ReadonlyArray<{
         readonly path: string;
@@ -950,34 +950,34 @@ export type PropData = {
         readonly nulls: OrderNullsType;
     }> | undefined;
     readonly reference: string | undefined;
-    readonly formulaData: FormulaData | undefined;
-    readonly calculatorData: CalculatorData | undefined;
+    readonly formulaData: __FormulaData | undefined;
+    readonly calculatorData: __CalculatorData | undefined;
 };
 
-export type JoinTableData = {
+export type __JoinTableData = {
     readonly name: string | undefined;
-    readonly joinThis: ForeignKeyData | undefined;
-    readonly joinTarget: ForeignKeyData | undefined;
+    readonly joinThis: __ForeignKeyData | undefined;
+    readonly joinTarget: __ForeignKeyData | undefined;
 };
 
-export type JoinEntityData = {
+export type __JoinEntityData = {
     readonly model: AnyModel;
     readonly joinThisProp: string;
     readonly joinTargetProp: string;
 };
 
-export type ForeignKeyData = {
+export type __ForeignKeyData = {
     readonly keyProp: string | undefined;
-    readonly columns: ReadonlyArray<JoinColumnData>;
+    readonly columns: ReadonlyArray<__JoinColumnData>;
     readonly cascade: CascadeType;
 };
 
-export type JoinColumnData = {
+export type __JoinColumnData = {
     readonly columnName: string;
     readonly referencedSubPath: string | undefined;
 }
 
-export type FormulaData = {
+export type __FormulaData = {
     readonly kind: "TS";
     readonly formula: TsFormula<any>;
 } | {
@@ -985,16 +985,16 @@ export type FormulaData = {
     readonly formula: SqlFormula<any>;
 };
 
-export type CalculatorKind = 
+export type __CalculatorKind = 
     "VALUE" |  "NONNULL_REFERENCE" | "NULLABLE_REFERENCE" | "COLLECTION";
 
-export type CalculatorData = {
-    readonly kind: CalculatorKind;
+export type __CalculatorData = {
+    readonly kind: __CalculatorKind;
     readonly parameterType: StandardSchemaV1 | undefined;
     readonly calculator: Calculator;
 };
 
-export const EMPTY_PROP_DEFINITION_DATA: PropData = {
+export const __EMPTY_PROP_DEFINITION_DATA: __PropData = {
     nullity: "NONNULL",
     scalarType: undefined,
     scalarProvider: undefined,
@@ -1012,31 +1012,31 @@ export const EMPTY_PROP_DEFINITION_DATA: PropData = {
     calculatorData: undefined
 }
 
-export type ModelRef<TModel extends AnyModel> =
+export type __ModelRef<TModel extends AnyModel> =
     TModel | (() => TModel);
 
-function joinTableDataOf(
+function __joinTableDataOf(
     joinTable: any,
     targetModel: any
-): JoinTableData {
+): __JoinTableData {
     return {
         name: joinTable.name,
-        joinThis: joinColumnsDataOf(
+        joinThis: __joinColumnsDataOf(
             joinTable.joinThis ?? joinTable.joinThisColumns, undefined
         ),
-        joinTarget: joinColumnsDataOf(
+        joinTarget: __joinColumnsDataOf(
             joinTable.joinTarget ?? joinTable.joinTargetColumns, targetModel
         )
     };
 }
 
-function joinColumnsDataOf(data: any, targetModel: any): ForeignKeyData | undefined {
+function __joinColumnsDataOf(data: any, targetModel: any): __ForeignKeyData | undefined {
     if (data === undefined) {
         return undefined;
     }
     if (Array.isArray(data)) {
         const arr = data as JoinColumns;
-        const columns = arr.map(joinColumnDataOf);
+        const columns = arr.map(__joinColumnDataOf);
         if (columns.length > 1) {
             for (const column of columns) {
                 if (column.referencedSubPath == null) {
@@ -1056,12 +1056,12 @@ function joinColumnsDataOf(data: any, targetModel: any): ForeignKeyData | undefi
     }
     return {
         keyProp: data.keyProp ?? targetModel?._idKey,
-        columns: data.columns?.map((c: any) => joinColumnDataOf(c)),
+        columns: data.columns?.map((c: any) => __joinColumnDataOf(c)),
         cascade: data.cascade ?? "NONE"
     };
 }
 
-function joinColumnDataOf(data: any): JoinColumnData {
+function __joinColumnDataOf(data: any): __JoinColumnData {
     if (typeof data === "string") {
         return { columnName: data as string, referencedSubPath: undefined };
     }
@@ -1073,26 +1073,26 @@ function joinColumnDataOf(data: any): JoinColumnData {
     };
 }
 
-export type O2OCreator = {
+export type __O2OCreator = {
 
     <TModel extends AnyModel>(
         targetModel: TModel
-    ): ConfigurableOneToOneProp<
+    ): __ConfigurableOneToOneProp<
         TModel, 
         "NONNULL", 
         "OWNING", 
         false,
         "",
-        ModelIdKey<TModel>
+        __ModelIdKey<TModel>
     >;
 
     self<
         TSelf extends AnyModel, 
-        TTargetKeyProp extends OptionalModelKey<TSelf> = ""
+        TTargetKeyProp extends __OptionalModelKey<TSelf> = ""
     >(
         selfModelGetter: () => TSelf,
-        options?: SelfJoinColumnsOptions<TTargetKeyProp> 
-    ): OneToOneProp<
+        options?: __SelfJoinColumnsOptions<TTargetKeyProp> 
+    ): __OneToOneProp<
         TSelf,
         "NULLABLE",
         "OWNING",
@@ -1103,12 +1103,12 @@ export type O2OCreator = {
 
     self<
         TSelf extends AnyModel, 
-        TSourceKeyProp extends OptionalModelKey<TSelf> = "",
-        TTargetKeyProp extends OptionalModelKey<TSelf> = ""
+        TSourceKeyProp extends __OptionalModelKey<TSelf> = "",
+        TTargetKeyProp extends __OptionalModelKey<TSelf> = ""
     >(
         selfModelGetter: () => TSelf,
-        options?: SelfJoinTableOptions<TSourceKeyProp, TTargetKeyProp>
-    ): OneToOneProp<
+        options?: __SelfJoinTableOptions<TSourceKeyProp, TTargetKeyProp>
+    ): __OneToOneProp<
         TSelf,
         "NULLABLE",
         "OWNING",
@@ -1119,12 +1119,12 @@ export type O2OCreator = {
 
     self<
         TSelf extends AnyModel, 
-        TSourceKeyProp extends OptionalModelKey<TSelf> = "",
-        TTargetKeyProp extends OptionalModelKey<TSelf> = ""
+        TSourceKeyProp extends __OptionalModelKey<TSelf> = "",
+        TTargetKeyProp extends __OptionalModelKey<TSelf> = ""
     >(
         selfModelGetter: () => TSelf,
-        options?: SelfMappedByOptions<TSelf, TSourceKeyProp, TTargetKeyProp>
-    ): OneToOneProp<
+        options?: __SelfMappedByOptions<TSelf, TSourceKeyProp, TTargetKeyProp>
+    ): __OneToOneProp<
         TSelf,
         "NULLABLE",
         "INVERSE",
@@ -1134,26 +1134,26 @@ export type O2OCreator = {
     >;
 };
 
-export type M2OCreator = {
+export type __M2OCreator = {
 
     <TModel extends AnyModel>(
         targetModel: TModel
-    ): ConfigurableManyToOneProp<
+    ): __ConfigurableManyToOneProp<
         TModel, 
         "NONNULL", 
         "OWNING", 
         false,
         "",
-        ModelIdKey<TModel>
+        __ModelIdKey<TModel>
     >;
 
     self<
         TSelf extends AnyModel, 
-        TTargetKeyProp extends OptionalModelKey<TSelf> = ""
+        TTargetKeyProp extends __OptionalModelKey<TSelf> = ""
     >(
         selfModelGetter: () => TSelf,
-        options?: SelfJoinColumnsOptions<TTargetKeyProp>
-    ): ManyToOneProp<
+        options?: __SelfJoinColumnsOptions<TTargetKeyProp>
+    ): __ManyToOneProp<
         TSelf,
         "NULLABLE",
         "OWNING",
@@ -1164,12 +1164,12 @@ export type M2OCreator = {
 
     self<
         TSelf extends AnyModel, 
-        TSourceKeyProp extends OptionalModelKey<TSelf> = "",
-        TTargetKeyProp extends OptionalModelKey<TSelf> = ""
+        TSourceKeyProp extends __OptionalModelKey<TSelf> = "",
+        TTargetKeyProp extends __OptionalModelKey<TSelf> = ""
     >(
         selfModelGetter: () => TSelf,
-        options?: SelfJoinTableOptions<TSourceKeyProp, TTargetKeyProp>
-    ): ManyToOneProp<
+        options?: __SelfJoinTableOptions<TSourceKeyProp, TTargetKeyProp>
+    ): __ManyToOneProp<
         TSelf,
         "NULLABLE",
         "OWNING",
@@ -1179,26 +1179,26 @@ export type M2OCreator = {
     >;
 };
 
-export type O2MCreator = {
+export type __O2MCreator = {
 
     <TModel extends AnyModel>(
         targetModel: TModel
-    ): ConfigurableOneToManyProp<
+    ): __ConfigurableOneToManyProp<
         TModel, 
         "OWNING", 
         false, 
         "", 
-        ModelIdKey<TModel>
+        __ModelIdKey<TModel>
     >;
 
     self<
         TSelf extends AnyModel, 
-        TSourceKeyProp extends OptionalModelKey<TSelf> = "",
-        TTargetKeyProp extends OptionalModelKey<TSelf> = ""
+        TSourceKeyProp extends __OptionalModelKey<TSelf> = "",
+        TTargetKeyProp extends __OptionalModelKey<TSelf> = ""
     >(
         selfModelGetter: () => TSelf,
-        options: SelfMappedByOptions<TSelf, TSourceKeyProp, TTargetKeyProp>
-    ): OneToManyProp<
+        options: __SelfMappedByOptions<TSelf, TSourceKeyProp, TTargetKeyProp>
+    ): __OneToManyProp<
         TSelf,
         "INVERSE",
         false,
@@ -1207,26 +1207,26 @@ export type O2MCreator = {
     >;
 };
 
-export type M2MCreator = {
+export type __M2MCreator = {
 
     <TModel extends AnyModel>(
         targetModel: TModel
-    ): ConfigurableManyToManyProp<
+    ): __ConfigurableManyToManyProp<
         TModel,
         "OWNING",
         true,
         "",
-        ModelIdKey<TModel>
+        __ModelIdKey<TModel>
     >;
 
     self<
         TSelf extends AnyModel, 
-        TSourceKeyProp extends OptionalModelKey<TSelf> = "",
-        TTargetKeyProp extends OptionalModelKey<TSelf> = ""
+        TSourceKeyProp extends __OptionalModelKey<TSelf> = "",
+        TTargetKeyProp extends __OptionalModelKey<TSelf> = ""
     >(
         selfModelGetter: () => TSelf,
-        options:SelfMappedByOptions<TSelf, TSourceKeyProp, TTargetKeyProp>
-    ): ManyToManyProp<
+        options:__SelfMappedByOptions<TSelf, TSourceKeyProp, TTargetKeyProp>
+    ): __ManyToManyProp<
         TSelf,
         "INVERSE",
         false,
@@ -1235,12 +1235,12 @@ export type M2MCreator = {
     >;
 
     self<TSelf extends AnyModel, 
-        TSourceKeyProp extends OptionalModelKey<TSelf> = "",
-        TTargetKeyProp extends OptionalModelKey<TSelf> = ""
+        TSourceKeyProp extends __OptionalModelKey<TSelf> = "",
+        TTargetKeyProp extends __OptionalModelKey<TSelf> = ""
     >(
         selfModelGetter: () => TSelf,
-        options?: SelfJoinTableOptions<TSourceKeyProp, TTargetKeyProp>
-    ): ManyToManyProp<
+        options?: __SelfJoinTableOptions<TSourceKeyProp, TTargetKeyProp>
+    ): __ManyToManyProp<
         TSelf,
         "OWNING",
         false,
@@ -1249,35 +1249,35 @@ export type M2MCreator = {
     >;
 };
 
-export type FormulaCreator = {
+export type __FormulaCreator = {
 
     ts<R>(
         formula: TsFormula<R>
-    ): TsFormulaProp<
+    ): __TsFormulaProp<
         NonNullable<R>,
         IsNull<R> extends true ? "NULLABLE" : "NONNULL"
     >;
 
     sql<R>(
         formula: SqlFormula<R>
-    ): SqlFormulaProp<
+    ): __SqlFormulaProp<
         NonNullable<R>,
         IsNull<R> extends true ? "NULLABLE" : "NONNULL"
     >;
 };
 
-export type CalculatedCreator = {
+export type __CalculatedCreator = {
 
     value<R>(
         calculator: ValueCalculator<R>
-    ): CalculatedValueProp<
+    ): __CalculatedValueProp<
         NonNullable<R>, 
         IsNull<R> extends true ? "NULLABLE" : "NONNULL"
     >;
 
     value<TParameter, R>(
         calculator: ParameterizedValueCalculator<TParameter, R>
-    ): ParameterizedCalculatedValueProp<
+    ): __ParameterizedCalculatedValueProp<
         TParameter, 
         NonNullable<R>,
         IsNull<R> extends true ? "NULLABLE" : "NONNULL"
@@ -1287,7 +1287,7 @@ export type CalculatedCreator = {
         TTargetModel extends AnyModel
     >(
         calculator: TargetCalculator<TTargetModel>
-    ): CalculatedReferenceProp<
+    ): __CalculatedReferenceProp<
         TTargetModel, 
         "NONNULL"
     >;
@@ -1297,7 +1297,7 @@ export type CalculatedCreator = {
         TTargetModel extends AnyModel
     >(
         calculator: ParameterizedTargetCalculator<TParameter, TTargetModel>
-    ): ParameterizedCalculatedReferenceProp<
+    ): __ParameterizedCalculatedReferenceProp<
         TParameter, 
         TTargetModel, 
         "NONNULL"
@@ -1307,7 +1307,7 @@ export type CalculatedCreator = {
         TTargetModel extends AnyModel
     >(
         calculator: TargetCalculator<TTargetModel>
-    ): CalculatedReferenceProp<
+    ): __CalculatedReferenceProp<
         TTargetModel, 
         "NULLABLE"
     >;
@@ -1317,7 +1317,7 @@ export type CalculatedCreator = {
         TTargetModel extends AnyModel
     >(
         calculator: ParameterizedTargetCalculator<TParameter, TTargetModel>
-    ): ParameterizedCalculatedReferenceProp<
+    ): __ParameterizedCalculatedReferenceProp<
         TParameter,
         TTargetModel, 
         "NULLABLE"
@@ -1327,17 +1327,17 @@ export type CalculatedCreator = {
         TTargetModel extends AnyModel
     >(
         calculator: TargetCalculator<TTargetModel>
-    ): CalculatedCollectionProp<TTargetModel>;
+    ): __CalculatedCollectionProp<TTargetModel>;
 
     collection<
         TParameter,
         TTargetModel extends AnyModel
     >(
         calculator: ParameterizedTargetCalculator<TParameter, TTargetModel>
-    ): ParameterizedCalculatedCollectionProp<TParameter, TTargetModel>;
+    ): __ParameterizedCalculatedCollectionProp<TParameter, TTargetModel>;
 };
 
-type SelfJoinColumnsOptions<
+type __SelfJoinColumnsOptions<
     TTargetKeyProp extends string
 > = {
     readonly joinColumns?: JoinColumns | {
@@ -1347,7 +1347,7 @@ type SelfJoinColumnsOptions<
     } | undefined;
 };
 
-type SelfJoinTableOptions<
+type __SelfJoinTableOptions<
     TSourceKeyProp extends string, 
     TTargetKeyProp extends string
 > = {
@@ -1370,23 +1370,23 @@ type SelfJoinTableOptions<
     };
 };
 
-type SelfMappedByOptions<
+type __SelfMappedByOptions<
     TSelf extends AnyModel,
-    TSourceKeyProp extends OptionalModelKey<TSelf> = "", 
-    TTargetKeyProp extends OptionalModelKey<TSelf> = ""
+    TSourceKeyProp extends __OptionalModelKey<TSelf> = "", 
+    TTargetKeyProp extends __OptionalModelKey<TSelf> = ""
 > = {
-    readonly mappedBy: OptionalModelKey<TSelf>;
+    readonly mappedBy: __OptionalModelKey<TSelf>;
     readonly sourceKeyProp?: TSourceKeyProp | undefined;
     readonly targetKeyProp?: TTargetKeyProp | undefined;
 };
 
-export function o2oCreator(): O2OCreator {
+export function __o2oCreator(): __O2OCreator {
 
     function o2o<TModel extends AnyModel>(
-        targetModel: ModelRef<TModel>
-    ): ConfigurableOneToOneProp<TModel, "NONNULL", "OWNING", false, "", ModelIdKey<TModel>> {
-        return new ConfigurableOneToOneProp({
-            ...EMPTY_PROP_DEFINITION_DATA, 
+        targetModel: __ModelRef<TModel>
+    ): __ConfigurableOneToOneProp<TModel, "NONNULL", "OWNING", false, "", __ModelIdKey<TModel>> {
+        return new __ConfigurableOneToOneProp({
+            ...__EMPTY_PROP_DEFINITION_DATA, 
             targetModel, 
             associationType: "ONE_TO_ONE"
         });
@@ -1394,14 +1394,14 @@ export function o2oCreator(): O2OCreator {
 
     function self<
         TSelf extends AnyModel, 
-        TSourceKeyProp extends OptionalModelKey<TSelf> = "",
-        TTargetKeyProp extends OptionalModelKey<TSelf> = ""
+        TSourceKeyProp extends __OptionalModelKey<TSelf> = "",
+        TTargetKeyProp extends __OptionalModelKey<TSelf> = ""
     >(
         selfModelGetter: () => TSelf,
-        options?: SelfJoinColumnsOptions<TTargetKeyProp>
-            | SelfJoinTableOptions<TSourceKeyProp, TTargetKeyProp>
-            | SelfMappedByOptions<TSelf, TSourceKeyProp, TTargetKeyProp>
-    ): OneToManyProp<
+        options?: __SelfJoinColumnsOptions<TTargetKeyProp>
+            | __SelfJoinTableOptions<TSourceKeyProp, TTargetKeyProp>
+            | __SelfMappedByOptions<TSelf, TSourceKeyProp, TTargetKeyProp>
+    ): __OneToManyProp<
         TSelf,
         any,
         false,
@@ -1409,53 +1409,53 @@ export function o2oCreator(): O2OCreator {
         TTargetKeyProp
     > {
         const mappedBy = (options as any)?.mappedBy;
-        return new OneToManyProp({
-            ...EMPTY_PROP_DEFINITION_DATA, 
+        return new __OneToManyProp({
+            ...__EMPTY_PROP_DEFINITION_DATA, 
             targetModel: selfModelGetter, 
             associationType: "ONE_TO_MANY",
             mappedBy: mappedBy != null && typeof mappedBy === "string"
                 ? mappedBy
                 : mappedBy.opposite,
             joinTable: (options as any)?.joinTable != null 
-                ? joinTableDataOf((options as any).joinTable, undefined)
+                ? __joinTableDataOf((options as any).joinTable, undefined)
                 : undefined,
             joinColumns: (options as any)?.joinColumns != null
-                ? joinColumnsDataOf((options as any).joinColumns, undefined)
+                ? __joinColumnsDataOf((options as any).joinColumns, undefined)
                 : undefined
         });
     }
 
     (o2o as any).self = self;
-    return o2o as O2OCreator;
+    return o2o as __O2OCreator;
 }
 
-export function m2oCreator(): M2OCreator {
+export function __m2oCreator(): __M2OCreator {
     
     function m2o<TModel extends AnyModel>(
-        targetModel: ModelRef<TModel>
-    ): ConfigurableManyToOneProp<
+        targetModel: __ModelRef<TModel>
+    ): __ConfigurableManyToOneProp<
         TModel, 
         "NONNULL", 
         "OWNING", 
         false,
         "",
-        ModelIdKey<TModel>
+        __ModelIdKey<TModel>
     > {
-        return new ConfigurableManyToOneProp({
-            ...EMPTY_PROP_DEFINITION_DATA, 
+        return new __ConfigurableManyToOneProp({
+            ...__EMPTY_PROP_DEFINITION_DATA, 
             targetModel, 
             associationType: "MANY_TO_ONE"
         });
     }
 
     function self<TSelf extends AnyModel, 
-        TSourceKeyProp extends OptionalModelKey<TSelf> = "",
-        TTargetKeyProp extends OptionalModelKey<TSelf> = ""
+        TSourceKeyProp extends __OptionalModelKey<TSelf> = "",
+        TTargetKeyProp extends __OptionalModelKey<TSelf> = ""
     >(
         selfModelGetter: () => TSelf,
-        options?: SelfJoinColumnsOptions<TTargetKeyProp> 
-            | SelfJoinTableOptions<TSourceKeyProp, TTargetKeyProp>
-    ): ManyToOneProp<
+        options?: __SelfJoinColumnsOptions<TTargetKeyProp> 
+            | __SelfJoinTableOptions<TSourceKeyProp, TTargetKeyProp>
+    ): __ManyToOneProp<
         TSelf,
         any,
         "OWNING",
@@ -1463,48 +1463,48 @@ export function m2oCreator(): M2OCreator {
         TSourceKeyProp,
         TTargetKeyProp
     > {
-        return new ManyToOneProp({
-            ...EMPTY_PROP_DEFINITION_DATA, 
+        return new __ManyToOneProp({
+            ...__EMPTY_PROP_DEFINITION_DATA, 
             targetModel: selfModelGetter, 
             associationType: "MANY_TO_ONE",
             joinTable: (options as any)?.joinTable != null 
-                ? joinTableDataOf((options as any).joinTable, undefined) 
+                ? __joinTableDataOf((options as any).joinTable, undefined) 
                 : undefined,
             joinColumns: (options as any)?.joinColumns != null 
-                ? joinColumnsDataOf((options as any).joinColumns, undefined) 
+                ? __joinColumnsDataOf((options as any).joinColumns, undefined) 
                 : undefined
         });
     }
 
     (m2o as any).self = self;
-    return m2o as any as M2OCreator;
+    return m2o as any as __M2OCreator;
 }
 
-export function o2mCreator(): O2MCreator {
+export function __o2mCreator(): __O2MCreator {
 
     function o2m<TModel extends AnyModel>(
-        targetModel: ModelRef<TModel>
-    ): ConfigurableOneToManyProp<
+        targetModel: __ModelRef<TModel>
+    ): __ConfigurableOneToManyProp<
         TModel, 
         "OWNING", 
         false, 
         "", 
-        ModelIdKey<TModel>
+        __ModelIdKey<TModel>
     > {
-        return new ConfigurableOneToManyProp({
-            ...EMPTY_PROP_DEFINITION_DATA, 
+        return new __ConfigurableOneToManyProp({
+            ...__EMPTY_PROP_DEFINITION_DATA, 
             targetModel, 
             associationType: "ONE_TO_MANY"
         });
     }
 
     function self<TSelf extends AnyModel, 
-        TSourceKeyProp extends OptionalModelKey<TSelf> = "",
-        TTargetKeyProp extends OptionalModelKey<TSelf> = ""
+        TSourceKeyProp extends __OptionalModelKey<TSelf> = "",
+        TTargetKeyProp extends __OptionalModelKey<TSelf> = ""
     >(
         selfModelGetter: () => TSelf,
-        options: SelfMappedByOptions<TSelf, TSourceKeyProp, TTargetKeyProp>
-    ): OneToManyProp<
+        options: __SelfMappedByOptions<TSelf, TSourceKeyProp, TTargetKeyProp>
+    ): __OneToManyProp<
         TSelf,
         "INVERSE",
         false,
@@ -1512,8 +1512,8 @@ export function o2mCreator(): O2MCreator {
         TTargetKeyProp
     > {
         const self = selfModelGetter();
-        return new OneToManyProp({
-            ...EMPTY_PROP_DEFINITION_DATA, 
+        return new __OneToManyProp({
+            ...__EMPTY_PROP_DEFINITION_DATA, 
             targetModel: self, 
             associationType: "ONE_TO_MANY",
             mappedBy: options.mappedBy
@@ -1521,22 +1521,22 @@ export function o2mCreator(): O2MCreator {
     }
 
     (o2m as any).self = self;
-    return o2m as O2MCreator;
+    return o2m as __O2MCreator;
 }
 
-export function m2mCreator(): M2MCreator {
+export function __m2mCreator(): __M2MCreator {
 
     function m2m<TModel extends AnyModel>(
-        targetModel: ModelRef<TModel>
-    ): ConfigurableManyToManyProp<
+        targetModel: __ModelRef<TModel>
+    ): __ConfigurableManyToManyProp<
         TModel,
         "OWNING",
         true,
         "",
-        ModelIdKey<TModel>
+        __ModelIdKey<TModel>
     > {
-        return new ConfigurableManyToManyProp({
-            ...EMPTY_PROP_DEFINITION_DATA, 
+        return new __ConfigurableManyToManyProp({
+            ...__EMPTY_PROP_DEFINITION_DATA, 
             targetModel, 
             associationType: "MANY_TO_MANY"
         });
@@ -1544,13 +1544,13 @@ export function m2mCreator(): M2MCreator {
 
     function self<
         TSelf extends AnyModel, 
-        TSourceKeyProp extends OptionalModelKey<TSelf> = "",
-        TTargetKeyProp extends OptionalModelKey<TSelf> = ""
+        TSourceKeyProp extends __OptionalModelKey<TSelf> = "",
+        TTargetKeyProp extends __OptionalModelKey<TSelf> = ""
     >(
         selfModelGetter: () => TSelf,
-        options?: SelfJoinTableOptions<TSourceKeyProp, TTargetKeyProp>
-            | SelfMappedByOptions<TSelf, TSourceKeyProp, TTargetKeyProp>
-    ): ManyToManyProp<
+        options?: __SelfJoinTableOptions<TSourceKeyProp, TTargetKeyProp>
+            | __SelfMappedByOptions<TSelf, TSourceKeyProp, TTargetKeyProp>
+    ): __ManyToManyProp<
         TSelf,
         any,
         false,
@@ -1559,31 +1559,31 @@ export function m2mCreator(): M2MCreator {
     > {
         const mappedBy = (options as any)?.mappedBy;
         const self = selfModelGetter();
-        return new ManyToManyProp({
-            ...EMPTY_PROP_DEFINITION_DATA, 
+        return new __ManyToManyProp({
+            ...__EMPTY_PROP_DEFINITION_DATA, 
             targetModel: self, 
             associationType: "MANY_TO_MANY",
             mappedBy: mappedBy,
             joinTable: (options as any)?.joinTable != null 
-                ? joinTableDataOf((options as any).joinTable, undefined)
+                ? __joinTableDataOf((options as any).joinTable, undefined)
                 : undefined 
         });
     }
 
     (m2m as any).self = self;
-    return m2m as M2MCreator;
+    return m2m as __M2MCreator;
 }
 
-export function formulaCreator(): FormulaCreator {
+export function __formulaCreator(): __FormulaCreator {
 
     function ts<R>(
         formula: TsFormula<R>
-    ): TsFormulaProp<
+    ): __TsFormulaProp<
         NonNullable<R>, 
         IsNull<R> extends true ? "NULLABLE" : "NONNULL"
     > {
-        return new TsFormulaProp({
-            ...EMPTY_PROP_DEFINITION_DATA,
+        return new __TsFormulaProp({
+            ...__EMPTY_PROP_DEFINITION_DATA,
             formulaData: {
                 kind: "TS",
                 formula
@@ -1593,12 +1593,12 @@ export function formulaCreator(): FormulaCreator {
 
     function sql<R>(
         formula: SqlFormula<R>
-    ): SqlFormulaProp<
+    ): __SqlFormulaProp<
         NonNullable<R>,
         IsNull<R> extends true ? "NULLABLE" : "NONNULL"
     > {
-        return new SqlFormulaProp({
-            ...EMPTY_PROP_DEFINITION_DATA,
+        return new __SqlFormulaProp({
+            ...__EMPTY_PROP_DEFINITION_DATA,
             formulaData: {
                 kind: "SQL",
                 formula
@@ -1612,12 +1612,12 @@ export function formulaCreator(): FormulaCreator {
     };
 }
 
-export function calculatedCreator(): CalculatedCreator {
+export function __calculatedCreator(): __CalculatedCreator {
 
     function value(calculator: any): any {
         if (calculator instanceof ParameterizedValueCalculator) {
-            return new ParameterizedCalculatedValueProp({
-                ...EMPTY_PROP_DEFINITION_DATA,
+            return new __ParameterizedCalculatedValueProp({
+                ...__EMPTY_PROP_DEFINITION_DATA,
                 calculatorData: {
                     kind: "VALUE",
                     parameterType: calculator.parameterType,
@@ -1625,8 +1625,8 @@ export function calculatedCreator(): CalculatedCreator {
                 }
             });
         }
-        return new CalculatedValueProp({
-            ...EMPTY_PROP_DEFINITION_DATA,
+        return new __CalculatedValueProp({
+            ...__EMPTY_PROP_DEFINITION_DATA,
             calculatorData: {
                 kind: "VALUE",
                 parameterType: undefined,
@@ -1637,8 +1637,8 @@ export function calculatedCreator(): CalculatedCreator {
 
     function nonnullReference(calculator: any): any {
         if (calculator instanceof ParameterizedTargetCalculator) {
-            return new ParameterizedCalculatedCollectionProp({
-                ...EMPTY_PROP_DEFINITION_DATA,
+            return new __ParameterizedCalculatedCollectionProp({
+                ...__EMPTY_PROP_DEFINITION_DATA,
                 calculatorData: {
                     kind: "NONNULL_REFERENCE",
                     parameterType: calculator.parameterType,
@@ -1646,8 +1646,8 @@ export function calculatedCreator(): CalculatedCreator {
                 }
             });
         }
-        return new CalculatedReferenceProp({
-            ...EMPTY_PROP_DEFINITION_DATA,
+        return new __CalculatedReferenceProp({
+            ...__EMPTY_PROP_DEFINITION_DATA,
             calculatorData: {
                 kind: "NONNULL_REFERENCE",
                 parameterType: undefined,
@@ -1658,8 +1658,8 @@ export function calculatedCreator(): CalculatedCreator {
 
     function nullableReference(calculator: any): any {
         if (calculator instanceof ParameterizedTargetCalculator) {
-            return new ParameterizedCalculatedCollectionProp({
-                ...EMPTY_PROP_DEFINITION_DATA,
+            return new __ParameterizedCalculatedCollectionProp({
+                ...__EMPTY_PROP_DEFINITION_DATA,
                 calculatorData: {
                     kind: "NULLABLE_REFERENCE",
                     parameterType: calculator.parameterType,
@@ -1667,8 +1667,8 @@ export function calculatedCreator(): CalculatedCreator {
                 }
             });
         }
-        return new CalculatedReferenceProp({
-            ...EMPTY_PROP_DEFINITION_DATA,
+        return new __CalculatedReferenceProp({
+            ...__EMPTY_PROP_DEFINITION_DATA,
             calculatorData: {
                 kind: "NULLABLE_REFERENCE",
                 parameterType: undefined,
@@ -1679,8 +1679,8 @@ export function calculatedCreator(): CalculatedCreator {
 
     function collection(calculator: any): any {
         if (calculator instanceof ParameterizedTargetCalculator) {
-            return new ParameterizedCalculatedCollectionProp({
-                ...EMPTY_PROP_DEFINITION_DATA,
+            return new __ParameterizedCalculatedCollectionProp({
+                ...__EMPTY_PROP_DEFINITION_DATA,
                 calculatorData: {
                     kind: "COLLECTION",
                     parameterType: calculator.parameterType,
@@ -1688,8 +1688,8 @@ export function calculatedCreator(): CalculatedCreator {
                 }
             });
         }
-        return new CalculatedCollectionProp({
-            ...EMPTY_PROP_DEFINITION_DATA,
+        return new __CalculatedCollectionProp({
+            ...__EMPTY_PROP_DEFINITION_DATA,
             calculatorData: {
                 kind: "COLLECTION",
                 parameterType: undefined,

@@ -1,28 +1,28 @@
 import { AnyModel } from "../model";
-import { ContextKind, DtoBody, DtoType, DtoKind } from "./dto_context";
-import { SelfMappings } from "./utils";
+import { __ContextKind, __DtoBody, __DtoType, __DtoKind } from "./dto_context";
+import { __SelfMappings } from "./utils";
 
-export interface FoldContext<
+export interface __FoldContext<
     TModel extends AnyModel,
-    TDtoKind extends DtoKind,
-    TContextKind extends ContextKind,
+    TDtoKind extends __DtoKind,
+    TContextKind extends __ContextKind,
     TMembers
 > {
 
     $fold<
         TName extends string,
-        const TMappings extends SelfMappings<TModel>
+        const TMappings extends __SelfMappings<TModel>
     >(
         name: TName,
-        body: DtoBody<TModel, TDtoKind, TContextKind, TMembers, TMappings>
-    ): FoldMapping<TModel, TDtoKind, TName, TMappings>;
+        body: __DtoBody<TModel, TDtoKind, TContextKind, TMembers, TMappings>
+    ): __FoldMapping<TModel, TDtoKind, TName, TMappings>;
 }
 
-export interface FoldMapping<
+export interface __FoldMapping<
     TModel extends AnyModel,
-    TDtoKind extends DtoKind,
+    TDtoKind extends __DtoKind,
     TName extends string,
-    TMappings extends SelfMappings<TModel>
+    TMappings extends __SelfMappings<TModel>
 > {
 
     readonly __mappingType: 'FOLD';
@@ -32,7 +32,7 @@ export interface FoldMapping<
     readonly __mappings?: TMappings;
 }
 
-export type FoldDotType<TMapping> =
-    TMapping extends FoldMapping<any, any, infer Name, infer Mappings>
-        ? { [K in Name]: DtoType<Mappings> }
+export type __FoldDtoType<TMapping> =
+    TMapping extends __FoldMapping<any, any, infer Name, infer Mappings>
+        ? { [K in Name]: __DtoType<Mappings> }
         : never;

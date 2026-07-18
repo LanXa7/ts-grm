@@ -1,30 +1,30 @@
 import { ModelContextImpl, ModelImpl } from "@/impl/model_impl";
 import { 
-    Ctor, 
-    CtorMembers, 
-    InheritanceModelCreator, 
-    MakeAllModelMembers, 
-    ModelContext, 
-    ModelCreator, 
-    ModelName, 
-    ModelSuperNames, 
-    SuperIdKey 
+    __Ctor, 
+    __CtorMembers, 
+    __InheritanceModelCreator, 
+    __MakeAllModelMembers, 
+    __ModelContext, 
+    __ModelCreator, 
+    __ModelName, 
+    __ModelSuperNames, 
+    __SuperIdKey 
 } from "./model_internal_types";
 
-export const model: ModelCreator = modelImpl();
+export const model: __ModelCreator = modelImpl();
 
-function modelImpl(): ModelCreator {
+function modelImpl(): __ModelCreator {
 
     function create<
         TName extends string, 
-        TIdKey extends keyof CtorMembers<TCtor> & string,
-        TCtor extends Ctor
+        TIdKey extends keyof __CtorMembers<TCtor> & string,
+        TCtor extends __Ctor
     >(
         name: TName,
         idKey: TIdKey,
         ctor: TCtor,
-        configurator?: (ctx: ModelContext<TCtor, never>) => void
-    ): Model<TName, TIdKey, TCtor, CtorMembers<TCtor>, never> {
+        configurator?: (ctx: __ModelContext<TCtor, never>) => void
+    ): Model<TName, TIdKey, TCtor, __CtorMembers<TCtor>, never> {
         const ctx = new ModelContextImpl<TCtor, never>();
         if (configurator != null) {
             configurator(ctx);
@@ -36,20 +36,20 @@ function modelImpl(): ModelCreator {
         TSuperModel extends AnyModel
     >(
         superModel: TSuperModel
-    ): InheritanceModelCreator<TSuperModel> {
+    ): __InheritanceModelCreator<TSuperModel> {
         return <
             TName extends string, 
-            TCtor extends Ctor
+            TCtor extends __Ctor
         >(
             name: TName,
             ctor: TCtor,
-            configurator?: (ctx: ModelContext<TCtor, TSuperModel>) => void
+            configurator?: (ctx: __ModelContext<TCtor, TSuperModel>) => void
         ): Model<
             TName, 
-            SuperIdKey<TSuperModel>, 
+            __SuperIdKey<TSuperModel>, 
             TCtor, 
-            MakeAllModelMembers<TCtor, TSuperModel>,
-            ModelName<TSuperModel> | ModelSuperNames<TSuperModel>
+            __MakeAllModelMembers<TCtor, TSuperModel>,
+            __ModelName<TSuperModel> | __ModelSuperNames<TSuperModel>
         > => {
             const ctx = new ModelContextImpl<TCtor, TSuperModel>();
             if (configurator != null) {
@@ -57,10 +57,10 @@ function modelImpl(): ModelCreator {
             }
             return new ModelImpl<
                 TName, 
-                SuperIdKey<TSuperModel>, 
+                __SuperIdKey<TSuperModel>, 
                 TCtor, 
-                MakeAllModelMembers<TCtor, TSuperModel>,
-                ModelName<TSuperModel> | ModelSuperNames<TSuperModel>
+                __MakeAllModelMembers<TCtor, TSuperModel>,
+                __ModelName<TSuperModel> | __ModelSuperNames<TSuperModel>
             >(
                 name, 
                 undefined, 
@@ -71,13 +71,13 @@ function modelImpl(): ModelCreator {
         }
     }
     create.extends = ext;
-    return create as any as ModelCreator;
+    return create as any as __ModelCreator;
 }
 
 export interface Model<
     TName extends string, 
     TIdKey extends string = string,
-    TCtor extends Ctor = Ctor,
+    TCtor extends __Ctor = __Ctor,
     TAllMembers extends object = object,
     TSuperNames extends string | never = never
 > {

@@ -1,30 +1,30 @@
 import { AnyModel } from "../model";
-import { DtoBody, DtoType, DtoKind } from "./dto_context";
-import { TargetMappings, TargetMembersOf, PropModelOf } from "./utils";
+import { __DtoBody, __DtoType, __DtoKind } from "./dto_context";
+import { __TargetMappings, __TargetMembersOf, __PropModelOf } from "./utils";
 
-export interface EmbeddedMapping<
+export interface __EmbeddedMapping<
     TModel extends AnyModel,
-    TDtoKind extends DtoKind,
+    TDtoKind extends __DtoKind,
     TKey extends string,
     TMember,
-    TMappings extends TargetMappings<TModel, TMember>
+    TMappings extends __TargetMappings<TModel, TMember>
 > {
 
     readonly __mappingType: "EMBEDDED";
 
     as<TAlias extends string>(
         alias: TAlias
-    ): EmbeddedMapping<TModel, TDtoKind, TAlias, TMember, TMappings>;
+    ): __EmbeddedMapping<TModel, TDtoKind, TAlias, TMember, TMappings>;
 
-    with<const TMappings extends TargetMappings<TModel, TMember>>(
-        body: DtoBody<PropModelOf<TModel, TMember>, TDtoKind, "EMBEDDABLE", TargetMembersOf<TMember>, TMappings>
-    ): EmbeddedMapping<TModel, TDtoKind, TKey, TMember, TMappings>;
+    with<const TMappings extends __TargetMappings<TModel, TMember>>(
+        body: __DtoBody<__PropModelOf<TModel, TMember>, TDtoKind, "EMBEDDABLE", __TargetMembersOf<TMember>, TMappings>
+    ): __EmbeddedMapping<TModel, TDtoKind, TKey, TMember, TMappings>;
 }
 
-export type EmbeddedDtoType<TMapping> =
-    TMapping extends EmbeddedMapping<any, any, infer Key, any, infer Mappings>
+export type __EmbeddedDtoType<TMapping> =
+    TMapping extends __EmbeddedMapping<any, any, infer Key, any, infer Mappings>
         ? {
             [K in Key]: 
-                DtoType<Mappings>
+                __DtoType<Mappings>
         }
         : object;

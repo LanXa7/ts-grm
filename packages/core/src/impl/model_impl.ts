@@ -1,13 +1,13 @@
 import { ArgumentError, StateError } from "@/error/common";
 import { Entity } from "@/impl/entity";
-import { Ctor, CtorMembers, ModelContext, TableOptions, UniqueKeys } from "@/schema/model_internal_types";
+import { __Ctor, __CtorMembers, __ModelContext, __TableOptions, __UniqueKeys } from "@/schema/model_internal_types";
 import { ModelContract } from "./model_contract";
 import { AnyModel, Model } from "@/schema/model";
 
 export class ModelImpl<
     TName extends string, 
     TIdKey extends string,
-    TCtor extends Ctor,
+    TCtor extends __Ctor,
     TAllMembers extends object,
     TSuperNames extends string | never
 > implements Model<
@@ -77,14 +77,14 @@ export class ModelImpl<
 export type AnyModelImpl = ModelImpl<any, any, any, any, any>;
 
 export type ModelOptions = {
-    readonly tableOptions: TableOptions<AnyModel | never> | undefined;
+    readonly tableOptions: __TableOptions<AnyModel | never> | undefined;
     readonly uniqueConstraints: ReadonlyArray<ReadonlyArray<string>>;
 };
 
-export class ModelContextImpl<TCtor extends Ctor, TSuperModel extends AnyModel | never> 
-implements ModelContext<TCtor, TSuperModel> {
+export class ModelContextImpl<TCtor extends __Ctor, TSuperModel extends AnyModel | never> 
+implements __ModelContext<TCtor, TSuperModel> {
 
-    private _tableOptions: TableOptions<TSuperModel> | undefined = undefined;
+    private _tableOptions: __TableOptions<TSuperModel> | undefined = undefined;
 
     private readonly _uniqueConstraints: Array<ReadonlyArray<string>> = [];
 
@@ -94,12 +94,12 @@ implements ModelContext<TCtor, TSuperModel> {
         return { modelContext: true };
     }
 
-    table(options: TableOptions<TSuperModel>): this {
+    table(options: __TableOptions<TSuperModel>): this {
         this._tableOptions = options;
         return this;
     }
 
-    unique(...paths : UniqueKeys<CtorMembers<TCtor>>[]): this {
+    unique(...paths : __UniqueKeys<__CtorMembers<TCtor>>[]): this {
         this._uniqueConstraints.push(paths);
         return this;
     }

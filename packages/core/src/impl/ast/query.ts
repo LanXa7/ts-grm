@@ -1,7 +1,7 @@
 import { ExpressionLike } from "@/dsl/expression";
 import { ExpressionOrder } from "@/dsl/utils";
 import { RootQuerySelection } from "@/dsl/root_query";
-import { TableLike } from "@/dsl/table_internal_types";
+import { __TableLike } from "@/dsl/table_internal_types";
 import { AbstractPred } from "./pred";
 import { AbstractExpr } from "./expr";
 import { AbstractTable } from "../abstract_table";
@@ -65,7 +65,7 @@ export type ProjectionContract = {
     readonly selections: ReadonlyArray<ExpressionLike>;
 } | {
     kind: "BASE";
-    args: { readonly [key: string]: ExpressionLike | TableLike; }
+    args: { readonly [key: string]: ExpressionLike | __TableLike; }
 };
 
 export type AtomQueryOptions = {

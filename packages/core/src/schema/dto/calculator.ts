@@ -1,31 +1,31 @@
 import { AnyModel } from "../model";
 import { 
-    NullityType, 
-    ParameterizedCalculatedCollectionPropContract, 
-    ParameterizedCalculatedReferencePropContract, 
-    ParameterizedCalculatedValuePropContract 
+    __NullityType, 
+    __ParameterizedCalculatedCollectionPropContract, 
+    __ParameterizedCalculatedReferencePropContract, 
+    __ParameterizedCalculatedValuePropContract 
 } from "../prop_internal_types";
-import { DtoBody, DtoKind, DtoType } from "./dto_context";
-import { ScalarLikeMapping } from "./scalar_like";
-import { DefaultTargetMappings, TargetMappings, TargetMembersOf, PropModelOf, WithNullity } from "./utils";
+import { __DtoBody, __DtoKind, __DtoType } from "./dto_context";
+import { __ScalarLikeMapping } from "./scalar_like";
+import { __DefaultTargetMappings, __TargetMappings, __TargetMembersOf, __PropModelOf, __WithNullity } from "./utils";
 
-export type ParameterizedContext<
+export type __ParameterizedContext<
     TModel extends AnyModel,
-    TDtoKind extends DtoKind,
+    TDtoKind extends __DtoKind,
     TMembers
 > = 
     TDtoKind extends "INPUT"
         ? object
-        : ParameterizedContextImpl<
+        : __ParameterizedContextImpl<
             TModel,
             TDtoKind,
             TMembers,
-            ParameterMap<TMembers>
+            __ParameterMap<TMembers>
         >;
 
-interface ParameterizedContextImpl<
+export interface __ParameterizedContextImpl<
     TModel extends AnyModel,
-    TDtoKind extends DtoKind,
+    TDtoKind extends __DtoKind,
     TMembers,
     TParameterMap
 > {
@@ -34,108 +34,108 @@ interface ParameterizedContextImpl<
     >(
         key: TKey,
         parameter: TParameterMap[TKey]
-    ): TMembers[TKey & keyof TMembers] extends ParameterizedCalculatedValuePropContract<any, infer Value, infer Nullity>
-        ? ScalarLikeMapping<
+    ): TMembers[TKey & keyof TMembers] extends __ParameterizedCalculatedValuePropContract<any, infer Value, infer Nullity>
+        ? __ScalarLikeMapping<
             TModel, 
             TDtoKind, 
             TKey & string, 
             Value, 
             Nullity
         >
-    : TMembers[TKey & keyof TMembers] extends ParameterizedCalculatedReferencePropContract<any, any, infer Nullity>
-        ? CalculatedReferenceMapping<
+    : TMembers[TKey & keyof TMembers] extends __ParameterizedCalculatedReferencePropContract<any, any, infer Nullity>
+        ? __CalculatedReferenceMapping<
             TModel, 
             TDtoKind,
             TKey & string,
             TMembers[TKey & keyof TMembers],
-            DefaultTargetMappings<TModel, TDtoKind, TMembers[TKey & keyof TMembers]>,
+            __DefaultTargetMappings<TModel, TDtoKind, TMembers[TKey & keyof TMembers]>,
             Nullity
         >
-    : TMembers[TKey & keyof TMembers] extends ParameterizedCalculatedCollectionPropContract<any, any>
-        ? CalculatedCollectionMapping<
+    : TMembers[TKey & keyof TMembers] extends __ParameterizedCalculatedCollectionPropContract<any, any>
+        ? __CalculatedCollectionMapping<
             TModel, 
             TDtoKind,
             TKey & string,
             TMembers[TKey & keyof TMembers],
-            DefaultTargetMappings<TModel, TDtoKind, TMembers[TKey & keyof TMembers]>
+            __DefaultTargetMappings<TModel, TDtoKind, TMembers[TKey & keyof TMembers]>
         >
     : never;
 }
 
-type ParameterMap<TMembers> = {
+export type __ParameterMap<TMembers> = {
     [
         K in keyof TMembers as 
-            TMembers[K] extends ParameterizedCalculatedValuePropContract<any, any, any>
+            TMembers[K] extends __ParameterizedCalculatedValuePropContract<any, any, any>
                 ? K
-            : TMembers[K] extends ParameterizedCalculatedReferencePropContract<any, any, any>
+            : TMembers[K] extends __ParameterizedCalculatedReferencePropContract<any, any, any>
                 ? K
-            : TMembers[K] extends ParameterizedCalculatedCollectionPropContract<any, any>
+            : TMembers[K] extends __ParameterizedCalculatedCollectionPropContract<any, any>
                 ? K
             : never
-    ]: TMembers[K] extends ParameterizedCalculatedValuePropContract<infer Parameter, any, any>
+    ]: TMembers[K] extends __ParameterizedCalculatedValuePropContract<infer Parameter, any, any>
             ? Parameter
-        : TMembers[K] extends ParameterizedCalculatedReferencePropContract<infer Parameter, any, any>
+        : TMembers[K] extends __ParameterizedCalculatedReferencePropContract<infer Parameter, any, any>
             ? Parameter
-        : TMembers[K] extends ParameterizedCalculatedCollectionPropContract<infer Parameter, any>
+        : TMembers[K] extends __ParameterizedCalculatedCollectionPropContract<infer Parameter, any>
             ? Parameter
         : never
 };
 
-export interface CalculatedReferenceMapping<
+export interface __CalculatedReferenceMapping<
     TModel extends AnyModel,
-    TDtoKind extends DtoKind,
+    TDtoKind extends __DtoKind,
     TKey extends string,
     TMember,
-    TMappings extends TargetMappings<TModel, TMember>,
-    TNullity extends NullityType
+    TMappings extends __TargetMappings<TModel, TMember>,
+    TNullity extends __NullityType
 > {
 
     readonly __mappingType: "CALCULATED_REFERENCE";
     
     as<TAlias extends string>(
         alias: TAlias
-    ): CalculatedReferenceMapping<TModel, TDtoKind, TAlias, TMember, TMappings, TNullity>;
+    ): __CalculatedReferenceMapping<TModel, TDtoKind, TAlias, TMember, TMappings, TNullity>;
 
-    with<const TMappings extends TargetMappings<TModel, TMember>>(
-        body: DtoBody<PropModelOf<TModel, TMember>, TDtoKind, "ENTITY", TargetMembersOf<TMember>, TMappings>
-    ): CalculatedReferenceMapping<TModel, TDtoKind, TKey, TMember, TMappings, TNullity>;
+    with<const TMappings extends __TargetMappings<TModel, TMember>>(
+        body: __DtoBody<__PropModelOf<TModel, TMember>, TDtoKind, "ENTITY", __TargetMembersOf<TMember>, TMappings>
+    ): __CalculatedReferenceMapping<TModel, TDtoKind, TKey, TMember, TMappings, TNullity>;
 }
 
-export interface CalculatedCollectionMapping<
+export interface __CalculatedCollectionMapping<
     TModel extends AnyModel,
-    TDtoKind extends DtoKind,
+    TDtoKind extends __DtoKind,
     TKey extends string,
     TMember,
-    TMappings extends TargetMappings<TModel, TMember>
+    TMappings extends __TargetMappings<TModel, TMember>
 > {
 
     readonly __mappingType: "CALCULATED_COLLECTION";
     
     as<TAlias extends string>(
         alias: TAlias
-    ): CalculatedCollectionMapping<TModel, TDtoKind, TAlias, TMember, TMappings>;
+    ): __CalculatedCollectionMapping<TModel, TDtoKind, TAlias, TMember, TMappings>;
 
-    with<const TMappings extends TargetMappings<TModel, TMember>>(
-        body: DtoBody<PropModelOf<TModel, TMember>, TDtoKind, "ENTITY", TargetMembersOf<TMember>, TMappings>
-    ): CalculatedCollectionMapping<TModel, TDtoKind, TKey, TMember, TMappings>;
+    with<const TMappings extends __TargetMappings<TModel, TMember>>(
+        body: __DtoBody<__PropModelOf<TModel, TMember>, TDtoKind, "ENTITY", __TargetMembersOf<TMember>, TMappings>
+    ): __CalculatedCollectionMapping<TModel, TDtoKind, TKey, TMember, TMappings>;
 }
 
-export type CalculatedReferenceDtoType<TMapping> =
-    TMapping extends CalculatedReferenceMapping<any, infer DtoKind, infer Key, any, infer Mappings, infer Nullity>
+export type __CalculatedReferenceDtoType<TMapping> =
+    TMapping extends __CalculatedReferenceMapping<any, infer DtoKind, infer Key, any, infer Mappings, infer Nullity>
         ? {
-            [K in Key]: WithNullity<
-                DtoType<Mappings>,
+            [K in Key]: __WithNullity<
+                __DtoType<Mappings>,
                 Nullity,
                 DtoKind
             >
         }
         : never;
 
-export type CalculatedCollectionDtoType<TMapping> =
-    TMapping extends CalculatedCollectionMapping<any, any, infer Key, any, infer Mappings>
+export type __CalculatedCollectionDtoType<TMapping> =
+    TMapping extends __CalculatedCollectionMapping<any, any, infer Key, any, infer Mappings>
         ? {
             [K in Key]: ReadonlyArray<
-                DtoType<Mappings>
+                __DtoType<Mappings>
             >
         }
         : never;

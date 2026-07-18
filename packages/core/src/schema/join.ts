@@ -1,13 +1,13 @@
 import { AnyModel } from "./model";
-import { MiddleEntityJoinTargetKeys, MiddleEntityJoinThisKeys, OptionalModelKey } from "./model_internal_types";
-import { AssociationType } from "./prop_internal_types";
+import { __MiddleEntityJoinTargetKeys, __MiddleEntityJoinThisKeys, __OptionalModelKey } from "./model_internal_types";
+import { __AssociationType } from "./prop_internal_types";
 
 export type JoinEntity<
     TMiddleModel extends AnyModel,
     TTargetModel extends AnyModel,
-    TAssociationType extends AssociationType,
-    TJoinThisProp extends MiddleEntityJoinThisKeys<TMiddleModel, TAssociationType>,
-    TJoinTargetProp extends MiddleEntityJoinTargetKeys<TMiddleModel, TTargetModel, TAssociationType> 
+    TAssociationType extends __AssociationType,
+    TJoinThisProp extends __MiddleEntityJoinThisKeys<TMiddleModel, TAssociationType>,
+    TJoinTargetProp extends __MiddleEntityJoinTargetKeys<TMiddleModel, TTargetModel, TAssociationType> 
 > = {
     readonly model: TMiddleModel,
     readonly joinThisProp: TJoinThisProp,
@@ -17,7 +17,7 @@ export type JoinEntity<
 export type JoinTable<
     TModel extends AnyModel, 
     TSourceKeyProp extends string,
-    TTargetKeyProp extends OptionalModelKey<TModel>
+    TTargetKeyProp extends __OptionalModelKey<TModel>
 > =
     {
         readonly name?: string,

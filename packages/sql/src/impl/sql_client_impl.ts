@@ -33,11 +33,11 @@ import {
     FetchRangeOptions,
     FetchPageOptions,
     Page,
-    ModelOf,
     spi,
     dsl,
     err,
-    suppressUnused
+    suppressUnused,
+    __ModelOf
 } from "@ts-grm/core";
 import { MutableRootQueryImpl } from "./mutable_root_query_impl";
 import { AtomRootQueryImpl } from "./atom_root_query_impl";
@@ -78,7 +78,7 @@ export class SqlClientImpl implements SqlClientImplementor {
 
     findOne<V extends View<any, any>>(
         view: V,
-        criteria: Criteria<ModelOf<V>>
+        criteria: Criteria<__ModelOf<V>>
     ): Promise<TypeOf<V>> {
         suppressUnused(view);
         suppressUnused(criteria);
@@ -87,7 +87,7 @@ export class SqlClientImpl implements SqlClientImplementor {
 
     findOneOrNull<V extends View<any, any>>(
         view: V,
-        criteria: Criteria<ModelOf<V>>
+        criteria: Criteria<__ModelOf<V>>
     ): Promise<TypeOf<V>> {
         suppressUnused(view);
         suppressUnused(criteria);
@@ -96,7 +96,7 @@ export class SqlClientImpl implements SqlClientImplementor {
 
     findOneOrUndefined<V extends View<any, any>>(
         view: V,
-        criteria: Criteria<ModelOf<V>>
+        criteria: Criteria<__ModelOf<V>>
     ): Promise<TypeOf<V>> {
         suppressUnused(view);
         suppressUnused(criteria);
@@ -105,7 +105,7 @@ export class SqlClientImpl implements SqlClientImplementor {
 
     findMany<V extends View<any, any>>(
         view: V,
-        criteria: Criteria<ModelOf<V>>
+        criteria: Criteria<__ModelOf<V>>
     ): Promise<Array<TypeOf<V>>> {
         suppressUnused(view);
         suppressUnused(criteria);
@@ -114,7 +114,7 @@ export class SqlClientImpl implements SqlClientImplementor {
 
     findRange<V extends View<any, any>>(
         view: V,
-        criteria: Criteria<ModelOf<V>>,
+        criteria: Criteria<__ModelOf<V>>,
         options: FetchRangeOptions
     ): Promise<Array<TypeOf<V>>> {
         suppressUnused(view);
@@ -125,7 +125,7 @@ export class SqlClientImpl implements SqlClientImplementor {
 
     findPage<V extends View<any, any>>(
         view: V,
-        criteria: Criteria<ModelOf<V>>,
+        criteria: Criteria<__ModelOf<V>>,
         options: FetchPageOptions
     ): Promise<Page<TypeOf<V>>> {
         suppressUnused(view);

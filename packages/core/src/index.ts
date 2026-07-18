@@ -5,6 +5,85 @@ export { dto } from "./schema/dto/api";
 export { err } from "./error";
 
 export * as spi from "./spi";
+
+/**
+ * Why the contents of `index_internal.ts` are re-exported flatly
+ * ------------------------------------------------------------------
+ *
+ * This is a deliberate, if unsatisfying, compromise. Here's the reasoning.
+ *
+ * Our type-level machinery relies on a large set of intermediate types
+ * (model, props, dto, etc.) that are never meant to be used
+ * directly by end users. In an ideal world these would be fully private.
+ * In practice, they *must* be exported from this package, because
+ * TypeScript's declaration emitter needs a stable, importable path to
+ * reference them when printing the public types it derives (e.g. the
+ * inferred shape of a `model(...)` definition). Without such a path,
+ * consumers hit "type is too long to serialize" or "cannot be named
+ * without a reference to X" errors the moment they define a model in a
+ * separate package.
+ *
+ * The obvious fix — hiding these types behind a namespace re-export,
+ * `export * as internal from "./index_internal"` — does not work here.
+ * Once these types are wrapped in a namespace, the declaration emitter
+ * can no longer resolve them as it expands the deeply nested conditional
+ * and mapped types our type gymnastics depend on. In other words: this
+ * kind of namespacing is fine for values a user might occasionally reach
+ * for, but not for types that must remain structurally reachable through
+ * arbitrarily deep type-level computation.
+ *
+ * This is different from the `spi` namespace, which exists for a related
+ * but distinct reason. The `spi` namespace holds symbols that ordinary
+ * users never need, but that `@ts-grm/sql` (a layer built directly on
+ * top of this package) does need. Crucially, none of the `spi` symbols
+ * are intermediate types consumed by our type gymnastics — they're
+ * ordinary values and interfaces used at a fixed, shallow depth. Because
+ * of that, `export * as spi from "..."` works perfectly well for them.
+ *
+ * We did try to give `index_internal`'s types the same isolation as
+ * `spi`, using multiple package.json export entry points (subpath
+ * exports) instead of relying on flat re-exports from the main entry.
+ * That attempt backfired in two ways:
+ *
+ * 1. The subpath-export setup for `index_internal`'s types actively
+ *    conflicted with `spi`'s `export * as` re-export. Type-only exports
+ *    inside `spi` lost their `type` marker somewhere in the bundler's
+ *    chunk-extraction step, silently degrading into value-only exports.
+ *    Every type consumed through `spi` then required an awkward
+ *    `typeof spi.X` workaround just to be used as a type.
+ *
+ * 2. If we instead forced `spi` itself onto the same multi-entry-point
+ *    export strategy (to sidestep the conflict above), its classes ended
+ *    up duplicated across separately bundled entry points. Each entry
+ *    point got its own physically distinct copy of the same class, which
+ *    silently broke every `instanceof` check written against those
+ *    classes — a much worse failure mode than the naming inconvenience
+ *    we were trying to avoid.
+ *
+ * TypeScript's `namespace` keyword would, structurally, solve the
+ * `index_internal` problem well: it keeps deeply-referenced types fully
+ * resolvable while still hiding them behind a namespace member access.
+ * Unfortunately, `namespace` is strongly discouraged in modern
+ * TypeScript in favor of ES modules, and we don't want to build a核心
+ * dependency of this project on a deprecated pattern.
+ *
+ * Given all of the above, the pragmatic choice for now is to re-export
+ * everything from `index_internal.ts` flatly from the main entry point,
+ * with no namespace wrapper of any kind. To keep this from cluttering
+ * autocomplete for end users, every type-gymnastics intermediate type is
+ * prefixed with `__` (e.g. `__PropContract`) as a purely visual signal:
+ * "this is plumbing, not part of the public API." It's not a real
+ * boundary — nothing stops a user from importing these — but it's the
+ * best trade-off available today between correctness (the declaration
+ * emitter must be able to find these types) and developer experience
+ * (users shouldn't be tempted to reach for them).
+ *
+ * This is revisitable. If TypeScript's declaration emitter, or the
+ * bundler ecosystem around it (rollup-plugin-dts and friends), improves
+ * its handling of namespace re-exports combined with deep generic
+ * instantiation, we'd like to revisit this and give `index_internal`'s
+ * types the same clean isolation `spi` already enjoys.
+ */
 export * from "./index_internal";
 
 export { suppressUnused } from "./utils";
@@ -85,6 +164,8 @@ export type  {
     EntityTable,
     BaseTable,
     JoinType,
+    FilterType,
+    FilterContextType,
     LikeMode,
     Expression,
     ExpressionLike,

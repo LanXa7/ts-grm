@@ -9,7 +9,7 @@ import { ModelContract } from "./model_contract";
 import { ShadowAnchor } from "./shadow_anchor";
 import { AssociationEntity } from "./association_entity";
 import { AssociationModelImpl } from "./association_model_impl";
-import { ModelLike } from "@/dsl/table_internal_types";
+import { __ModelLike } from "@/dsl/table_internal_types";
 import { JoinType } from "@/dsl/table";
 
 export interface AbstractTable {
@@ -37,7 +37,7 @@ export interface AbstractTable {
     readonly __prototype: AbstractTable;
 
     join(
-        model: ModelLike,
+        model: __ModelLike,
         options: JoinFilter | {
             readonly joinType?: JoinType,
             readonly filter: JoinFilter
@@ -47,7 +47,7 @@ export interface AbstractTable {
 
 export function createJoinedTable(
     parent: AbstractTable,
-    model: ModelLike,
+    model: __ModelLike,
     options: JoinType | JoinFilter | {
         readonly joinType?: JoinType,
         readonly filter?: JoinFilter

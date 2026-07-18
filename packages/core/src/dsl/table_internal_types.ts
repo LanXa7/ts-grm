@@ -1,33 +1,34 @@
-import { AllModelMembers, DerivedModel, RequiredModelKey } from "@/schema/model_internal_types";
+import { __AllModelMembers, __DerivedModel, __RequiredModelKey } from "@/schema/model_internal_types";
 import { Expression, MakeExpression, MakeType, Predicate } from "./expression";
 import { FilterNever } from "@/utils";
 import { View } from "@/schema/dto/api";
 import { FetchedView } from "./root_query";
 import { BaseQuerySelectMapArgs, BaseModel, BaseQueryMapOf } from "./base_query";
 import { 
-    EmbeddedPropContract, 
-    I64PropContract, 
-    ScalarPropContract, 
-    AssociatedPropContract,
-    EnumSetPropContract,
-    CollectionPropContract, 
-    NullityType, 
-    ReferencePropContract 
+    __EmbeddedPropContract, 
+    __I64PropContract, 
+    __ScalarPropContract, 
+    __AssociatedPropContract,
+    __EnumSetPropContract,
+    __CollectionPropContract, 
+    __NullityType, 
+    __ReferencePropContract 
 } from "@/schema/prop_internal_types";
-import { CombinedNullity } from "@/schema/prop_internal_behavior";
-import { BaseTable, EntityTable, JoinType, Table } from "./table";
-import { AssociationKeys, MakeAssociationModel, MakeAssociationTableMembers } from "./association_internal_types";
+import { __CombinedNullity } from "@/schema/prop_internal_behavior";
+import { BaseTable, EntityTable, FilterType, JoinType } from "./table";
+import { __AssociationKeys, __MakeAssociationModel, __MakeAssociationTableMembers } from "./association_internal_types";
 import { AnyAssociationModel } from "./association";
 import { AnyModel } from "@/schema/model";
+import { __CollectionKeys } from "@/index_internal";
 
-export type TableLike = {
+export type __TableLike = {
 
     __type(): { 
         readonly tableLike: true; 
     };
 };
 
-export type EntityTableLike = {
+export type __EntityTableLike = {
 
     __type(): {
         readonly tableLike: true;
@@ -35,92 +36,92 @@ export type EntityTableLike = {
     };
 };
 
-export type ModelLike = AnyModel | BaseModel<any> | AnyAssociationModel;
+export type __ModelLike = AnyModel | BaseModel<any> | AnyAssociationModel;
 
-export type JoinPolicyType = "NONE" | "REFERENCE" | "ARBITRARY";
+export type __JoinPolicyType = "NONE" | "REFERENCE" | "ARBITRARY";
 
-export type EntityTableMembers<
+export type __EntityTableMembers<
     TModel extends AnyModel, 
     TMembers extends object, 
-    TNullity extends NullityType, 
-    TJoinPolicy extends JoinPolicyType
-> = PrettifyDsl<
-    DslMembers<TModel, TMembers, TNullity, TJoinPolicy>
-    & WeakJoinAction<TModel, TJoinPolicy> 
-    & StaticMembers<TModel, TMembers, TNullity, TJoinPolicy>
+    TNullity extends __NullityType, 
+    TJoinPolicy extends __JoinPolicyType
+> = __PrettifyDsl<
+    __DslMembers<TModel, TMembers, TNullity, TJoinPolicy>
+    & __WeakJoinAction<TModel, TJoinPolicy> 
+    & __StaticEntityTableMembers<TModel, TMembers, TNullity, TJoinPolicy>
 >;
 
-export type DslMembers<
+export type __DslMembers<
     TModel extends AnyModel, 
     TMembers extends object, 
-    TNullity extends NullityType, 
-    TJoinPolicy extends JoinPolicyType
+    TNullity extends __NullityType, 
+    TJoinPolicy extends __JoinPolicyType
 > = 
     FilterNever<{
         [K in keyof TMembers]:
-            TMembers[K] extends ScalarPropContract<infer R, infer Nullity>
-                ? TMembers[K] extends I64PropContract<infer R, infer Nullity>
+            TMembers[K] extends __ScalarPropContract<infer R, infer Nullity>
+                ? TMembers[K] extends __I64PropContract<infer R, infer Nullity>
                     ? Expression<
-                        MakeType<R, CombinedNullity<TNullity, Nullity>>,
+                        MakeType<R, __CombinedNullity<TNullity, Nullity>>,
                         R extends string ? "AS_NUMBER" : ""
                     >
-                : TMembers[K] extends EnumSetPropContract<infer R>
+                : TMembers[K] extends __EnumSetPropContract<infer R>
                     ? Expression<
                         MakeType<R, TNullity>,
                         R extends string ? "AS_ENUM_SET" : ""
                     >
-                : Expression<MakeType<R, CombinedNullity<TNullity, Nullity>>>
-            : TMembers[K] extends EmbeddedPropContract<infer R, infer Nullity, any>
-                ? () => DslMembers<TModel, R, CombinedNullity<TNullity, Nullity>, TJoinPolicy>
+                : Expression<MakeType<R, __CombinedNullity<TNullity, Nullity>>>
+            : TMembers[K] extends __EmbeddedPropContract<infer R, infer Nullity, any>
+                ? () => __DslMembers<TModel, R, __CombinedNullity<TNullity, Nullity>, TJoinPolicy>
             : TJoinPolicy extends "NONE"
                 ? never
-            : TMembers[K] extends ReferencePropContract<infer TargetModel, any, any, any, any, any>
-                ? ReferenceJoinAction<TModel, TargetModel, AllModelMembers<TargetModel>, TJoinPolicy>
-            : TMembers[K] extends CollectionPropContract<infer TargetModel, any, any, any, any>
-                ? CollectionJoinAction<TModel, TargetModel, AllModelMembers<TargetModel>, TJoinPolicy>
+            : TMembers[K] extends __ReferencePropContract<infer TargetModel, any, any, any, any, any>
+                ? __ReferenceJoinAction<TModel, TargetModel, __AllModelMembers<TargetModel>, TJoinPolicy>
+            : TMembers[K] extends __CollectionPropContract<infer TargetModel, any, any, any, any>
+                ? __CollectionJoinAction<TModel, TargetModel, __AllModelMembers<TargetModel>, TJoinPolicy>
             : never
-        } & DslReferenceKeyMembers<TModel, TMembers, TNullity>
+        } & __DslReferenceKeyMembers<TModel, TMembers, TNullity>
     >;
 
-export type DslReferenceKeyMembers<TModel extends AnyModel, TMembers, TNullity extends NullityType> = {
+export type __DslReferenceKeyMembers<TModel extends AnyModel, TMembers, TNullity extends __NullityType> = {
     [
         K in keyof TMembers as
-            TMembers[K] extends ReferencePropContract<infer _, any, "OWNING", false, any, infer TKey>
+            TMembers[K] extends __ReferencePropContract<infer _, any, "OWNING", false, any, infer TKey>
                 ? TKey extends string
-                    ? `${K & string}${Capitalize<RequiredModelKey<TModel, TKey>>}`
+                    ? `${K & string}${Capitalize<__RequiredModelKey<TModel, TKey>>}`
                     : never
                 : never
-    ]: TMembers[K] extends ReferencePropContract<infer TargetModel, infer Nullity, "OWNING", false, any, infer Key>
+    ]: TMembers[K] extends __ReferencePropContract<infer TargetModel, infer Nullity, "OWNING", false, any, infer Key>
         ? Key extends string
-            ? AllModelMembers<TargetModel>[RequiredModelKey<TargetModel, Key>] extends EmbeddedPropContract<infer R, any, any>
-                ? () => DslMembers<TModel, R, CombinedNullity<TNullity, Nullity>, "REFERENCE">
+            ? __AllModelMembers<TargetModel>[__RequiredModelKey<TargetModel, Key>] extends __EmbeddedPropContract<infer R, any, any>
+                ? () => __DslMembers<TModel, R, __CombinedNullity<TNullity, Nullity>, "REFERENCE">
             : MakeExpression<
-                AllModelMembers<TargetModel>[RequiredModelKey<TModel, Key>],
-                CombinedNullity<TNullity, Nullity>
+                __AllModelMembers<TargetModel>[__RequiredModelKey<TModel, Key>],
+                __CombinedNullity<TNullity, Nullity>
             >
             : never
         : never
 };
 
-export type ReferenceJoinAction<
+export type __ReferenceJoinAction<
     TParentModel extends AnyModel, 
     TModel extends AnyModel, 
     TMembers extends object, 
-    TJoinPolicy extends JoinPolicyType
+    TJoinPolicy extends __JoinPolicyType
 > = {
 
-    (): EntityTableMembers<TModel, TMembers, "NONNULL", TJoinPolicy>;
+    (): __EntityTableMembers<TModel, TMembers, "NONNULL", TJoinPolicy>;
     
     <TJoinType extends JoinType>(
         joinType: TJoinType
-    ): EntityTableMembers<
+    ): __EntityTableMembers<
         TModel, 
         TMembers, 
         TJoinType extends "LEFT" ? "NULLABLE" : "NONNULL", 
         TJoinPolicy
     >;
 
-    (filter: FilterType<TParentModel, TModel>): EntityTableMembers<
+    (filter: FilterType<TParentModel, TModel>): __EntityTableMembers<
         TModel, 
         TMembers, 
         "NONNULL", 
@@ -133,7 +134,7 @@ export type ReferenceJoinAction<
             readonly filter?: FilterType<TParentModel, TModel>
             readonly ignoreTargetFilters?: boolean
         }
-    ): EntityTableMembers<
+    ): __EntityTableMembers<
         TModel, 
         TMembers, 
         TJoinType extends "LEFT" ? "NULLABLE" : "NONNULL", 
@@ -141,22 +142,22 @@ export type ReferenceJoinAction<
     >;
 };
 
-export type CollectionJoinAction<
+export type __CollectionJoinAction<
     TParentModel extends AnyModel, 
     TModel extends AnyModel, 
     TMembers extends object, 
-    TJoinPolicy extends JoinPolicyType
+    TJoinPolicy extends __JoinPolicyType
 > = {
 
-    (): TableRiskWrapper<
-        EntityTableMembers<TModel, TMembers, "NONNULL", "ARBITRARY">,
+    (): __TableRiskWrapper<
+        __EntityTableMembers<TModel, TMembers, "NONNULL", "ARBITRARY">,
         TJoinPolicy
     >; 
     
     <TJoinType extends JoinType>(
         joinType: TJoinType
-    ): TableRiskWrapper<
-        EntityTableMembers<
+    ): __TableRiskWrapper<
+        __EntityTableMembers<
             TModel,
             TMembers, 
             TJoinType extends "LEFT" ? "NULLABLE" : "NONNULL",
@@ -165,8 +166,8 @@ export type CollectionJoinAction<
         TJoinPolicy
     >;
 
-    (filter: FilterType<TParentModel, TModel>): TableRiskWrapper<
-        EntityTableMembers<
+    (filter: FilterType<TParentModel, TModel>): __TableRiskWrapper<
+        __EntityTableMembers<
             TModel,
             TMembers, 
             "NONNULL",
@@ -181,8 +182,8 @@ export type CollectionJoinAction<
             readonly filter?: FilterType<TParentModel, TModel>,
             readonly ignoreTargetFilters?: boolean
         }
-    ): TableRiskWrapper<
-        EntityTableMembers<
+    ): __TableRiskWrapper<
+        __EntityTableMembers<
             TModel,
             TMembers, 
             TJoinType extends "LEFT" ? "NULLABLE" : "NONNULL",
@@ -192,14 +193,14 @@ export type CollectionJoinAction<
     >;
 };
 
-export type TableRiskWrapper<T extends TableLike, TJoinPolicy extends JoinPolicyType> = 
+export type __TableRiskWrapper<T extends __TableLike, TJoinPolicy extends __JoinPolicyType> = 
     TJoinPolicy extends "ARBITRARY"
         ? T
         : { $acceptMulti(): T; };
 
-export type WeakJoinAction<
-    TModel extends ModelLike,
-    TJoinPolicy extends JoinPolicyType
+export type __WeakJoinAction<
+    TModel extends __ModelLike,
+    TJoinPolicy extends __JoinPolicyType
 > = 
     TJoinPolicy extends "NONE"
         ? {}
@@ -210,9 +211,9 @@ export type WeakJoinAction<
             >(
                 targetModel: TTargetModel,
                 filter: FilterType<TModel, TTargetModel>
-            ): TableRiskWrapper<EntityTableMembers<
+            ): __TableRiskWrapper<__EntityTableMembers<
                     TTargetModel, 
-                    AllModelMembers<TTargetModel>, 
+                    __AllModelMembers<TTargetModel>, 
                     "NONNULL", 
                     TJoinPolicy
                 >,
@@ -229,10 +230,10 @@ export type WeakJoinAction<
                     readonly filter: FilterType<TModel, TTargetModel>,
                     readonly ignoreTargetFilters?: boolean
                 }
-            ): TableRiskWrapper<
-                EntityTableMembers<
+            ): __TableRiskWrapper<
+                __EntityTableMembers<
                     TTargetModel, 
-                    AllModelMembers<TTargetModel>, 
+                    __AllModelMembers<TTargetModel>, 
                     TJoinType extends "LEFT" ? "NULLABLE" : "NONNULL", 
                     TJoinPolicy
                 >,
@@ -258,18 +259,18 @@ export type WeakJoinAction<
                 }
             ): BaseTable<
                 TJoinType extends "LEFT"
-                    ? NullableBaseQuerySelectMapOf<BaseQueryMapOf<TTargetModel>>
+                    ? __NullableBaseQuerySelectMapOf<BaseQueryMapOf<TTargetModel>>
                     : BaseQueryMapOf<TTargetModel>, 
                 TJoinPolicy
             >;
         };
 
-export interface StaticMembers<
+export interface __StaticEntityTableMembers<
     TModel extends AnyModel,
     TMembers extends object,
-    TNullity extends NullityType, 
-    TJoinPolicy extends JoinPolicyType
-> extends AssociatedAction<TMembers>, AssociationAction<TModel, TJoinPolicy>, CollectionAction<TMembers> { 
+    TNullity extends __NullityType, 
+    TJoinPolicy extends __JoinPolicyType
+> extends __AssociatedAction<TMembers>, __AssociationAction<TModel, TJoinPolicy>, __CollectionAction<TMembers> { 
     __type(): {
         tableLike: true;
         entityTableLike: true;
@@ -284,22 +285,22 @@ export interface StaticMembers<
     >;
 
     is<TDerivedModel extends AnyModel>(
-        derivedModel: DerivedModel<TDerivedModel, TModel>
+        derivedModel: __DerivedModel<TDerivedModel, TModel>
     ): Predicate;
 
     as<TDerivedModel extends AnyModel>(
-        derivedModel: DerivedModel<TDerivedModel, TModel>
-    ): EntityTableMembers<TModel, AllModelMembers<TDerivedModel>, "NULLABLE", TJoinPolicy>;
+        derivedModel: __DerivedModel<TDerivedModel, TModel>
+    ): __EntityTableMembers<TModel, __AllModelMembers<TDerivedModel>, "NULLABLE", TJoinPolicy>;
 }
 
-export interface AssociationAction<TModel extends AnyModel, TJoinPolicy extends JoinPolicyType> {
+export interface __AssociationAction<TModel extends AnyModel, TJoinPolicy extends __JoinPolicyType> {
     
     association<
-        TKey extends AssociationKeys<TModel>
+        TKey extends __AssociationKeys<TModel>
     >(
         key: TKey,
-    ): TableRiskWrapper<
-        MakeAssociationTableMembers<
+    ): __TableRiskWrapper<
+        __MakeAssociationTableMembers<
             TModel,
             TKey,
             "NONNULL"
@@ -308,13 +309,13 @@ export interface AssociationAction<TModel extends AnyModel, TJoinPolicy extends 
     >;
 
     association<
-        TKey extends AssociationKeys<TModel>,
+        TKey extends __AssociationKeys<TModel>,
         TJoinType extends JoinType = "INNER"
     >(
         key: TKey,
         joinType: TJoinType
-    ): TableRiskWrapper<
-        MakeAssociationTableMembers<
+    ): __TableRiskWrapper<
+        __MakeAssociationTableMembers<
             TModel,
             TKey,
             TJoinType extends "LEFT" ? "NULLABLE" : "NONNULL"
@@ -323,12 +324,12 @@ export interface AssociationAction<TModel extends AnyModel, TJoinPolicy extends 
     >;
 
     association<
-        TKey extends AssociationKeys<TModel>
+        TKey extends __AssociationKeys<TModel>
     >(
         key: TKey,
-        filter: FilterType<TModel, MakeAssociationModel<TModel, TKey>>
-    ): TableRiskWrapper<
-        MakeAssociationTableMembers<
+        filter: FilterType<TModel, __MakeAssociationModel<TModel, TKey>>
+    ): __TableRiskWrapper<
+        __MakeAssociationTableMembers<
             TModel,
             TKey,
             "NONNULL"
@@ -337,17 +338,17 @@ export interface AssociationAction<TModel extends AnyModel, TJoinPolicy extends 
     >;
 
     association<
-        TKey extends AssociationKeys<TModel>,
+        TKey extends __AssociationKeys<TModel>,
         TJoinType extends JoinType = "INNER"
     >(
         key: TKey,
         options: {
             readonly joinType?: TJoinType;
-            readonly filter?: FilterType<TModel, MakeAssociationModel<TModel, TKey>>,
+            readonly filter?: FilterType<TModel, __MakeAssociationModel<TModel, TKey>>,
             readonly ignoreTargetFilters?: boolean
         }
-    ): TableRiskWrapper<
-        MakeAssociationTableMembers<
+    ): __TableRiskWrapper<
+        __MakeAssociationTableMembers<
             TModel,
             TKey,
             TJoinType extends "LEFT" ? "NULLABLE" : "NONNULL"
@@ -356,106 +357,81 @@ export interface AssociationAction<TModel extends AnyModel, TJoinPolicy extends 
     >;
 };
 
-export interface AssociatedAction<TModelMembers> {
-    none<TKey extends AssociatedKeys<TModelMembers>>(
+export interface __AssociatedAction<TModelMembers> {
+    none<TKey extends __AssociatedKeys<TModelMembers>>(
         key: TKey,
-        fn?: AssociatedFilter<TModelMembers[TKey]>
+        fn?: __AssociatedFilter<TModelMembers[TKey]>
     ): Predicate;
 
-    some<TKey extends AssociatedKeys<TModelMembers>>(
+    some<TKey extends __AssociatedKeys<TModelMembers>>(
         key: TKey,
-        fn?: AssociatedFilter<TModelMembers[TKey]>
+        fn?: __AssociatedFilter<TModelMembers[TKey]>
     ): Predicate;
 
-    noneIf<TKey extends AssociatedKeys<TModelMembers>>(
+    noneIf<TKey extends __AssociatedKeys<TModelMembers>>(
         key: TKey,
-        fn: AssociatedFilter<TModelMembers[TKey]>
+        fn: __AssociatedFilter<TModelMembers[TKey]>
     ): Predicate | undefined;
 
-    someIf<TKey extends AssociatedKeys<TModelMembers>>(
+    someIf<TKey extends __AssociatedKeys<TModelMembers>>(
         key: TKey,
-        fn: AssociatedFilter<TModelMembers[TKey]>
+        fn: __AssociatedFilter<TModelMembers[TKey]>
     ): Predicate | undefined;
 };
 
-export type AssociatedKeys<TModelMembers> =
+export type __AssociatedKeys<TModelMembers> =
     TModelMembers extends object 
         ? { 
             [K in keyof TModelMembers]: 
-                TModelMembers[K] extends AssociatedPropContract<any, any, any, any, any, any>
+                TModelMembers[K] extends __AssociatedPropContract<any, any, any, any, any, any>
                     ? K
                     : never
         }[keyof TModelMembers] :
         never;
 
-export type AssociatedFilter<TProp> =
-    TProp extends AssociatedPropContract<infer TargetModel, any, any, any, any, any>
+export type __AssociatedFilter<TProp> =
+    TProp extends __AssociatedPropContract<infer TargetModel, any, any, any, any, any>
         ? (
-            table: EntityTableMembers<
+            table: __EntityTableMembers<
                 TargetModel, 
-                AllModelMembers<TargetModel>, 
+                __AllModelMembers<TargetModel>, 
                 "NONNULL", 
                 "ARBITRARY"
             >
         ) => Predicate | undefined
         : never;
 
-export interface CollectionAction<TModelMembers> {
-    every<TKey extends CollectionKeys<TModelMembers>>(
+export interface __CollectionAction<TModelMembers> {
+    every<TKey extends __CollectionKeys<TModelMembers>>(
         key: TKey,
-        fn: AssociatedFilter<TModelMembers[TKey]>
+        fn: __AssociatedFilter<TModelMembers[TKey]>
     ): Predicate | undefined;
 
-    size<TKey extends CollectionKeys<TModelMembers>>(
+    size<TKey extends __CollectionKeys<TModelMembers>>(
         key: TKey,
-        fn?: AssociatedFilter<TModelMembers[TKey]>
+        fn?: __AssociatedFilter<TModelMembers[TKey]>
     ): Expression<number>;
 }
 
-export type CollectionKeys<TModelMembers> =
-    TModelMembers extends object 
-        ? { 
-            [K in keyof TModelMembers]: 
-                TModelMembers[K] extends CollectionPropContract<any, any, any, any, any>
-                    ? K
-                    : never
-        }[keyof TModelMembers] :
-        never;
-
-export interface FilterType<
-    TParentModel extends ModelLike, 
-    TModel extends ModelLike
-> {
-    (ctx: FilterContextType<TParentModel, TModel>): Predicate | undefined;
-}
-
-export interface FilterContextType<
-    TParentModel extends ModelLike, 
-    TModel extends ModelLike
-> {
-    readonly source: Table<TParentModel>;
-    readonly target: Table<TModel>;
-};
-
-export type NullableBaseQuerySelectMapOf<
+export type __NullableBaseQuerySelectMapOf<
     TMap extends BaseQuerySelectMapArgs
 > = {
     readonly [K in keyof TMap]: 
         TMap[K] extends Expression<infer R, infer AsNumber> 
             ? Expression<R | null, AsNumber>
-        : NullableEntityTableOf<TMap[K]>;
+        : __NullableEntityTableOf<TMap[K]>;
 };
 
-export type MakeTableWithJoinPolicy<TEntityTable, TJoinPolicy extends JoinPolicyType = "REFERENCE"> =
+export type __MakeTableWithJoinPolicy<TEntityTable, TJoinPolicy extends __JoinPolicyType = "REFERENCE"> =
     TEntityTable extends EntityTable<infer M extends AnyModel, any>
         ? EntityTable<M, TJoinPolicy>
         : never;
 
-export type NullableEntityTableOf<TEntityTable> =
-    TEntityTable extends EntityTableMembers<infer Model, infer _ extends object, any, infer JoinPolicy extends JoinPolicyType>
-        ? EntityTableMembers<Model, AllModelMembers<Model>, "NULLABLE", JoinPolicy>
+export type __NullableEntityTableOf<TEntityTable> =
+    TEntityTable extends __EntityTableMembers<infer Model, infer _ extends object, any, infer JoinPolicy extends __JoinPolicyType>
+        ? __EntityTableMembers<Model, __AllModelMembers<Model>, "NULLABLE", JoinPolicy>
         : never;
 
-export type PrettifyDsl<T> = {
+export type __PrettifyDsl<T> = {
     readonly [K in keyof T]: T[K];
 };

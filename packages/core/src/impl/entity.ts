@@ -10,7 +10,7 @@ import { ShadowAnchor } from "./shadow_anchor";
 import { Mutable } from "@/utils";
 import { AssociationEntity } from "./association_entity";
 import { DatabaseStrategy } from "./strategy";
-import { Ctor, TableOptions } from "@/schema/model_internal_types";
+import { __Ctor, __TableOptions } from "@/schema/model_internal_types";
 
 export class Entity {
 
@@ -59,7 +59,7 @@ export class Entity {
     constructor(
         readonly name: string, 
         private readonly _idKey: string | undefined, 
-        private readonly _ctor: Ctor, 
+        private readonly _ctor: __Ctor, 
         readonly model: AnyModel,
         private readonly _options: ModelOptions
     ) {
@@ -473,7 +473,7 @@ export class Entity {
     }
 
     private _createTableSettings(
-        options: TableOptions<AnyModel | never> | undefined
+        options: __TableOptions<AnyModel | never> | undefined
     ): TableSettings {
 
         if (this.superEntity != null) {

@@ -1,171 +1,171 @@
 import { FlattenMembers } from "@/utils";
 import { DatabaseIdentifier } from "./database_identifier";
-import { AssociatedPropContract, AssociationType, EmbeddedPropContract, ManyToManyPropContract, ManyToOnePropContract, OneToOnePropContract, ScalarPropContract } from "./prop_internal_types";
+import { __AssociatedPropContract, __AssociationType, __EmbeddedPropContract, __ManyToManyPropContract, __ManyToOnePropContract, __OneToOnePropContract, __ScalarPropContract } from "./prop_internal_types";
 import { AnyModel, DV_ABSTRACT, DV_MODEL_NAME, Model, TB_INHERIT } from "./model";
 
-export type ModelCreator = {
+export type __ModelCreator = {
     
     <
         TName extends string, 
-        TIdKey extends keyof CtorMembers<TCtor> & string,
-        TCtor extends Ctor
+        TIdKey extends keyof __CtorMembers<TCtor> & string,
+        TCtor extends __Ctor
     >(
         name: TName,
         idKey: TIdKey,
         ctor: TCtor,
-        configurator?: (ctx: ModelContext<TCtor, never>) => void
-    ): Model<TName, TIdKey, TCtor, CtorMembers<TCtor>, never>;
+        configurator?: (ctx: __ModelContext<TCtor, never>) => void
+    ): Model<TName, TIdKey, TCtor, __CtorMembers<TCtor>, never>;
 
     extends<
         TSuperModel extends AnyModel
     >(
         superModel: TSuperModel
-    ): InheritanceModelCreator<TSuperModel>;
+    ): __InheritanceModelCreator<TSuperModel>;
 };
 
-export type InheritanceModelCreator<
+export type __InheritanceModelCreator<
     TSuperModel extends AnyModel
 > = {
     
     <
         TName extends string, 
-        TCtor extends Ctor
+        TCtor extends __Ctor
     >(
-        name: OtherString<TName, ModelName<TSuperModel> | ModelSuperNames<TSuperModel>>,
+        name: __OtherString<TName, __ModelName<TSuperModel> | __ModelSuperNames<TSuperModel>>,
         ctor: TCtor,
-        configurator?: (ctx: ModelContext<TCtor, TSuperModel>) => void
+        configurator?: (ctx: __ModelContext<TCtor, TSuperModel>) => void
     ): Model<
         TName, 
-        SuperIdKey<TSuperModel>, 
+        __SuperIdKey<TSuperModel>, 
         TCtor, 
-        MakeAllModelMembers<TCtor, TSuperModel>,
-        ModelName<TSuperModel> | ModelSuperNames<TSuperModel>
+        __MakeAllModelMembers<TCtor, TSuperModel>,
+        __ModelName<TSuperModel> | __ModelSuperNames<TSuperModel>
     >;
 };
 
-export type OtherString<T extends string, X extends string> =
+export type __OtherString<T extends string, X extends string> =
     T extends X
         ? never
         : T;
 
-export interface ModelContext<TCtor extends Ctor, TSuperModel extends AnyModel | never> {
+export interface __ModelContext<TCtor extends __Ctor, TSuperModel extends AnyModel | never> {
     
     __type(): { modelContext: TCtor | true };
 
-    table(options: TableOptions<TSuperModel>): this;
+    table(options: __TableOptions<TSuperModel>): this;
 
-    unique(...paths : UniqueKeys<CtorMembers<TCtor>>[]): this;
+    unique(...paths : __UniqueKeys<__CtorMembers<TCtor>>[]): this;
 }
 
-export type SuperIdKey<TSuperModel extends AnyModel> =
+export type __SuperIdKey<TSuperModel extends AnyModel> =
     TSuperModel extends Model<any, infer IdKey, any, any, any>
         ? IdKey
         : never;
 
-export interface Ctor {
+export interface __Ctor {
     new (): any;
     readonly prototype: {
         readonly [key: string]: any 
     };
 }
 
-export type ModelName<TModel extends AnyModel> =
+export type __ModelName<TModel extends AnyModel> =
     TModel extends Model<infer TName, any, any, any, any>
         ? TName
         : never;
 
-export type ModelIdKey<TModel extends AnyModel> =
+export type __ModelIdKey<TModel extends AnyModel> =
     TModel extends Model<any, infer TId, any, any, any>
         ? TId
         : never;
 
-export type ModelSuperNames<TModel extends AnyModel> =
+export type __ModelSuperNames<TModel extends AnyModel> =
     TModel extends Model<any, any, any, any, infer TSuperNames>
         ? TSuperNames
         : never;
 
-export type ModelCtor<TModel extends AnyModel> =
+export type __ModelCtor<TModel extends AnyModel> =
     TModel extends Model<any, any, infer TCtor, any, any>
         ? TCtor
         : never;
 
-export type DeclaredModelMembers<TModel extends AnyModel> =
+export type __DeclaredModelMembers<TModel extends AnyModel> =
     TModel extends Model<any, any, infer TCtor, any, any>
-        ? CtorMembers<TCtor>
+        ? __CtorMembers<TCtor>
         : never;
 
-export type AllModelMembers<TModel extends AnyModel> =
+export type __AllModelMembers<TModel extends AnyModel> =
     TModel extends Model<any, any, any, infer TAllMembers, any>
         ? TAllMembers
         : never;
 
-export type MakeAllModelMembers<TCtor extends Ctor, TSuperModel extends AnyModel | undefined> =
+export type __MakeAllModelMembers<TCtor extends __Ctor, TSuperModel extends AnyModel | undefined> =
     TSuperModel extends undefined 
-        ? CtorMembers<TCtor>
+        ? __CtorMembers<TCtor>
         : TSuperModel extends Model<any, any, any, infer TAllMembers, any>
-            ? TAllMembers & CtorMembers<TCtor>
+            ? TAllMembers & __CtorMembers<TCtor>
             : never;
 
-export type CtorMembers<TCtor extends Ctor> =
+export type __CtorMembers<TCtor extends __Ctor> =
     TCtor["prototype"];
 
-export type OneToOneMappedByKeys<TModel extends AnyModel> =
+export type __OneToOneMappedByKeys<TModel extends AnyModel> =
     TModel extends Model<any, any, infer TCtor, any, any>
-        ? ExpectedKeysImpl<
-            CtorMembers<TCtor>, 
-            OneToOnePropContract<any, any, "OWNING", any, any, any>
+        ? __ExpectedKeysImpl<
+            __CtorMembers<TCtor>, 
+            __OneToOnePropContract<any, any, "OWNING", any, any, any>
         > & string :
         never;
 
-export type OneToManyMappedByKeys<TModel extends AnyModel> =
+export type __OneToManyMappedByKeys<TModel extends AnyModel> =
     TModel extends Model<any, any, infer TCtor, any, any>
-        ? ExpectedKeysImpl<
-            CtorMembers<TCtor>, 
-            ManyToOnePropContract<any, any, "OWNING", any, any, any>
+        ? __ExpectedKeysImpl<
+            __CtorMembers<TCtor>, 
+            __ManyToOnePropContract<any, any, "OWNING", any, any, any>
         > & string :
         never;
 
-export type ManyToManyMappedByKeys<TModel extends AnyModel> =
+export type __ManyToManyMappedByKeys<TModel extends AnyModel> =
     TModel extends Model<any, any, infer TCtor, any, any>
-        ? ExpectedKeysImpl<
-            CtorMembers<TCtor>, 
-            ManyToManyPropContract<any, "OWNING", any, any, any>
+        ? __ExpectedKeysImpl<
+            __CtorMembers<TCtor>, 
+            __ManyToManyPropContract<any, "OWNING", any, any, any>
         > & string :
         never;
 
-export type MiddleEntityJoinThisKeys<
+export type __MiddleEntityJoinThisKeys<
     TModel extends AnyModel, 
-    TAssociationType extends AssociationType
+    TAssociationType extends __AssociationType
 > =
     TModel extends Model<any, any, infer TCtor, any, any>
-        ? ExpectedKeysImpl<
-            CtorMembers<TCtor>, 
+        ? __ExpectedKeysImpl<
+            __CtorMembers<TCtor>, 
             TAssociationType extends "ONE_TO_ONE"
-                ? OneToOnePropContract<any, any, "OWNING", any, any, any>
+                ? __OneToOnePropContract<any, any, "OWNING", any, any, any>
             : TAssociationType extends "ONE_TO_MANY"
-                ? OneToOnePropContract<any, any, "OWNING", any, any, any>
-            : ManyToOnePropContract<any, any, "OWNING", any, any, any>
+                ? __OneToOnePropContract<any, any, "OWNING", any, any, any>
+            : __ManyToOnePropContract<any, any, "OWNING", any, any, any>
         > & string :
         never;
 
-export type MiddleEntityJoinTargetKeys<
+export type __MiddleEntityJoinTargetKeys<
     TMiddleModel extends AnyModel,
     TTargetModel extends AnyModel,
-    TAssociationType extends AssociationType
+    TAssociationType extends __AssociationType
 > = TMiddleModel extends Model<any, any, infer TCtor, any, any>
-        ? ExpectedKeysImpl<
-            CtorMembers<TCtor>, 
+        ? __ExpectedKeysImpl<
+            __CtorMembers<TCtor>, 
             TAssociationType extends "ONE_TO_ONE"
-                ? OneToOnePropContract<TTargetModel, any, "OWNING", any, any, any>
+                ? __OneToOnePropContract<TTargetModel, any, "OWNING", any, any, any>
             : TAssociationType extends "MANY_TO_ONE"
-                ? OneToOnePropContract<TTargetModel, any, "OWNING", any, any, any>
-            : ManyToOnePropContract<TTargetModel, any, "OWNING", any, any, any>
+                ? __OneToOnePropContract<TTargetModel, any, "OWNING", any, any, any>
+            : __ManyToOnePropContract<TTargetModel, any, "OWNING", any, any, any>
         > & string :
         never;
 
-export type ExpectedKeysImpl<
+export type __ExpectedKeysImpl<
     TModelMembers, 
-    TExpectedProp extends AssociatedPropContract<any, any, "OWNING", any, any, any>
+    TExpectedProp extends __AssociatedPropContract<any, any, "OWNING", any, any, any>
 > = 
     TModelMembers extends object 
         ? { 
@@ -176,25 +176,25 @@ export type ExpectedKeysImpl<
         }[keyof TModelMembers] :
         never;
 
-export type CalculatorSourceKeys<
+export type __CalculatorSourceKeys<
     TModelMembers
 > =
     TModelMembers extends object 
     ? { 
         [K in keyof TModelMembers]: 
-            TModelMembers[K] extends ScalarPropContract<any, any>
+            TModelMembers[K] extends __ScalarPropContract<any, any>
                 ? K
-            : TModelMembers[K] extends EmbeddedPropContract<any, any, any>
+            : TModelMembers[K] extends __EmbeddedPropContract<any, any, any>
                 ? K
             : never
     }[keyof TModelMembers] :
     never;
 
-export type TableOptions<TSuperModel extends AnyModel | never> = 
+export type __TableOptions<TSuperModel extends AnyModel | never> = 
     DatabaseIdentifier<string> | {
         readonly name?: typeof TB_INHERIT
             | DatabaseIdentifier<string>
-            | IdRemappedTable<TSuperModel>;
+            | __IdRemappedTable<TSuperModel>;
         readonly discriminatorValue?: 
             typeof DV_ABSTRACT
             | typeof DV_MODEL_NAME
@@ -206,75 +206,75 @@ export type TableOptions<TSuperModel extends AnyModel | never> =
         };
     };
 
-export type IdRemappedTable<TSuperModel extends AnyModel | never> = 
+export type __IdRemappedTable<TSuperModel extends AnyModel | never> = 
     TSuperModel extends AnyModel
         ? {
             readonly value?: DatabaseIdentifier<string>;
-            readonly idMapping?: AllModelMembers<TSuperModel>[ModelIdKey<TSuperModel>] extends EmbeddedPropContract<any, any, infer R>
+            readonly idMapping?: __AllModelMembers<TSuperModel>[__ModelIdKey<TSuperModel>] extends __EmbeddedPropContract<any, any, infer R>
                 ? { readonly [K in keyof R]: DatabaseIdentifier<string> }
                 : DatabaseIdentifier<string>
         }
         : never;
 
-export type UniqueKeys<TMembers extends object> =
-    UniqueKeysImpl<FlattenMembers<TMembers>>;
+export type __UniqueKeys<TMembers extends object> =
+    __UniqueKeysImpl<FlattenMembers<TMembers>>;
 
-export type UniqueKeysImpl<TFlattenCtorMembers> = 
+export type __UniqueKeysImpl<TFlattenCtorMembers> = 
     TFlattenCtorMembers extends object
         ? { 
             [K in keyof TFlattenCtorMembers]: 
                 TFlattenCtorMembers[K] extends (
-                    ScalarPropContract<any, any> 
-                    | OneToOnePropContract<any, any, "OWNING", false, any, any>
-                    | ManyToOnePropContract<any, any, "OWNING", false, any, any>
+                    __ScalarPropContract<any, any> 
+                    | __OneToOnePropContract<any, any, "OWNING", false, any, any>
+                    | __ManyToOnePropContract<any, any, "OWNING", false, any, any>
                 )
                     ? K
                     : never
         }[keyof TFlattenCtorMembers]
         : never;
 
-export type OrderedKeys<TModel extends AnyModel> =
-    OrderedKeysImpl<FlattenMembers<AllModelMembers<TModel>>>;
+export type __OrderedKeys<TModel extends AnyModel> =
+    __OrderedKeysImpl<FlattenMembers<__AllModelMembers<TModel>>>;
 
-export type OrderedKeysImpl<TFlattenCtorMembers extends object> = 
+export type __OrderedKeysImpl<TFlattenCtorMembers extends object> = 
     { 
         [K in keyof TFlattenCtorMembers]: 
-            TFlattenCtorMembers[K] extends ScalarPropContract<any, any>
+            TFlattenCtorMembers[K] extends __ScalarPropContract<any, any>
                 ? K
                 : never
     }[keyof TFlattenCtorMembers];
 
-export type OptionalModelKey<TModel extends AnyModel> = 
-    ((keyof AllModelMembers<TModel>) & string) | "";
+export type __OptionalModelKey<TModel extends AnyModel> = 
+    ((keyof __AllModelMembers<TModel>) & string) | "";
 
-export type RequiredModelKey<
+export type __RequiredModelKey<
     TModel extends AnyModel, 
-    TKey extends OptionalModelKey<TModel>
+    TKey extends __OptionalModelKey<TModel>
 > =
     TKey extends ""
-        ? ModelIdKey<TModel> & string
+        ? __ModelIdKey<TModel> & string
         : TKey;
 
-export type Extends<
+export type __Extends<
     TModel1 extends AnyModel,
     TModel2 extends AnyModel
 > =
-    ModelName<TModel1> extends ModelName<TModel2>
+    __ModelName<TModel1> extends __ModelName<TModel2>
         ? true
-        : IsDerivedModelOf<TModel1, TModel2>;
+        : __IsDerivedModelOf<TModel1, TModel2>;
 
-export type IsDerivedModelOf<
+export type __IsDerivedModelOf<
     TModel1 extends AnyModel,
     TModel2 extends AnyModel
-> = ModelSuperNames<TModel1> extends never
+> = __ModelSuperNames<TModel1> extends never
             ? false
-            : ModelName<TModel2> extends ModelSuperNames<TModel1>
+            : __ModelName<TModel2> extends __ModelSuperNames<TModel1>
                 ? true
                 : false;
 
-export type DerivedModel<
+export type __DerivedModel<
     TDerivedModel extends AnyModel,
     TSuperModel extends AnyModel
-> = IsDerivedModelOf<TDerivedModel, TSuperModel> extends true
+> = __IsDerivedModelOf<TDerivedModel, TSuperModel> extends true
     ? TDerivedModel :
     never;

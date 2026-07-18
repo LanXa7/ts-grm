@@ -1,52 +1,52 @@
 import { AnyModel } from "../model";
-import { AllModelMembers, RequiredModelKey } from "../model_internal_types";
-import { TargetKeyOf } from "../prop_internal_types";
-import { EmbeddedPropContract, ReferencePropContract } from "../prop_internal_types";
-import { AllScalarsMapping, MemberType } from "./all_scalars";
-import { DtoBody, DtoKind, DtoMapping, DtoType } from "./dto_context";
-import { TargetMappings, PropModelOf, WithNullity } from "./utils";
+import { __AllModelMembers, __RequiredModelKey } from "../model_internal_types";
+import { __TargetKeyOf } from "../prop_internal_types";
+import { __EmbeddedPropContract, __ReferencePropContract } from "../prop_internal_types";
+import { __AllScalarsMapping, __MemberType } from "./all_scalars";
+import { __DtoBody, __DtoKind, __DtoMapping, __DtoType } from "./dto_context";
+import { __TargetMappings, __PropModelOf, __WithNullity } from "./utils";
 
-export type ReferenceKeyContext<
+export type __ReferenceKeyContext<
     TModel extends AnyModel,
-    TDtoKind extends DtoKind,
+    TDtoKind extends __DtoKind,
     TMembers
 > = {
     [
         K in keyof TMembers as 
-            ReferenceKeyName<K, TMembers[K]>
-    ]: TargetKeyPropOf<TModel, TMembers[K]> extends EmbeddedPropContract<any, any, any>
-        ? EmbeddedReferenceKeyMapping<
+            __ReferenceKeyName<K, TMembers[K]>
+    ]: __TargetKeyPropOf<TModel, TMembers[K]> extends __EmbeddedPropContract<any, any, any>
+        ? __EmbeddedReferenceKeyMapping<
             TModel, 
             TDtoKind, 
-            ReferenceKeyName<K, TMembers[K]>, 
+            __ReferenceKeyName<K, TMembers[K]>, 
             TMembers[K],
-            [AllScalarsMapping<TModel, TDtoKind, TargetKeyMembersOf<TModel, TMembers[K]>, never>]
+            [__AllScalarsMapping<TModel, TDtoKind, __TargetKeyMembersOf<TModel, TMembers[K]>, never>]
         >
-        : ScalarReferenceKeyMapping<
+        : __ScalarReferenceKeyMapping<
             TModel, 
             TDtoKind, 
-            ReferenceKeyName<K, TMembers[K]>, 
+            __ReferenceKeyName<K, TMembers[K]>, 
             TMembers[K]
         >
 }
 
-type ReferenceKeyName<TKey, TMember> =
-    TMember extends ReferencePropContract<infer TargetModel, any, any, any, any, infer TargetKey>
-        ? `${TKey & string}${Capitalize<RequiredModelKey<TargetModel, TargetKey>>}`
+export type __ReferenceKeyName<TKey, TMember> =
+    TMember extends __ReferencePropContract<infer TargetModel, any, any, any, any, infer TargetKey>
+        ? `${TKey & string}${Capitalize<__RequiredModelKey<TargetModel, TargetKey>>}`
         : never;
 
-export type ReferenceKeyMapping<
+export type __ReferenceKeyMapping<
     TModel extends AnyModel, 
-    TDtoKind extends DtoKind,
+    TDtoKind extends __DtoKind,
     TKey extends string, 
     TMember
 > =
-    ScalarReferenceKeyMapping<TModel, TDtoKind, TKey, TMember>
-    | EmbeddedReferenceKeyMapping<TModel, TDtoKind, TKey, TMember, any>;
+    __ScalarReferenceKeyMapping<TModel, TDtoKind, TKey, TMember>
+    | __EmbeddedReferenceKeyMapping<TModel, TDtoKind, TKey, TMember, any>;
 
-export interface ScalarReferenceKeyMapping<
+export interface __ScalarReferenceKeyMapping<
     TModel extends AnyModel, 
-    TDtoKind extends DtoKind,
+    TDtoKind extends __DtoKind,
     TKey extends string, 
     TMember
 > {
@@ -59,15 +59,15 @@ export interface ScalarReferenceKeyMapping<
     
     as<TAlias extends string>(
         alias: TAlias
-    ): ScalarReferenceKeyMapping<TModel, TDtoKind, TAlias, TMember>;
+    ): __ScalarReferenceKeyMapping<TModel, TDtoKind, TAlias, TMember>;
 }
 
-export interface EmbeddedReferenceKeyMapping<
+export interface __EmbeddedReferenceKeyMapping<
     TModel extends AnyModel, 
-    TDtoKind extends DtoKind,
+    TDtoKind extends __DtoKind,
     TKey extends string, 
     TMember,
-    TMappings extends ReadonlyArray<DtoMapping<any>>
+    TMappings extends ReadonlyArray<__DtoMapping<any>>
 > {
 
     readonly __mappingType: "REFERENCE_KEY";
@@ -78,44 +78,44 @@ export interface EmbeddedReferenceKeyMapping<
     
     as<TAlias extends string>(
         alias: TAlias
-    ): EmbeddedReferenceKeyMapping<TModel, TDtoKind, TAlias, TMember, TMappings>;
+    ): __EmbeddedReferenceKeyMapping<TModel, TDtoKind, TAlias, TMember, TMappings>;
 
     with<
-        const TMappings extends TargetMappings<TModel, TMember>
+        const TMappings extends __TargetMappings<TModel, TMember>
     >(
-        body: DtoBody<
-            PropModelOf<TModel, TMember>, 
+        body: __DtoBody<
+            __PropModelOf<TModel, TMember>, 
             TDtoKind, 
             "EMBEDDABLE", 
-            TargetKeyMembersOf<TModel, TMember>,
+            __TargetKeyMembersOf<TModel, TMember>,
             TMappings
         >
-    ): EmbeddedReferenceKeyMapping<TModel, TDtoKind, TKey, TMember, TMappings>;
+    ): __EmbeddedReferenceKeyMapping<TModel, TDtoKind, TKey, TMember, TMappings>;
 }
 
-type TargetKeyPropOf<
+export type __TargetKeyPropOf<
     TModel extends AnyModel,
     TMember
 > =
-    AllModelMembers<
-        PropModelOf<TModel, TMember>
-    >[RequiredModelKey<PropModelOf<TModel, TMember>, TargetKeyOf<TMember>>];
+    __AllModelMembers<
+        __PropModelOf<TModel, TMember>
+    >[__RequiredModelKey<__PropModelOf<TModel, TMember>, __TargetKeyOf<TMember>>];
 
-type TargetKeyMembersOf<
+export type __TargetKeyMembersOf<
     TModel extends AnyModel,
     TMember
 > =
-    TargetKeyPropOf<TModel, TMember> extends EmbeddedPropContract<infer Props, any, any>
+    __TargetKeyPropOf<TModel, TMember> extends __EmbeddedPropContract<infer Props, any, any>
         ? Props
         : never;
 
-export type ReferenceKeyDtoType<TMapping> =
-    TMapping extends ScalarReferenceKeyMapping<any, infer DtoKind, infer Key, infer Member>
+export type __ReferenceKeyDtoType<TMapping> =
+    TMapping extends __ScalarReferenceKeyMapping<any, infer DtoKind, infer Key, infer Member>
         ? {
-            [K in Key]: Member extends ReferencePropContract<infer TargetModel, infer Nullity, any, any, any, infer TargetKey>
-                ? WithNullity<
-                    MemberType<
-                        AllModelMembers<TargetModel>[RequiredModelKey<TargetModel, TargetKey>], 
+            [K in Key]: Member extends __ReferencePropContract<infer TargetModel, infer Nullity, any, any, any, infer TargetKey>
+                ? __WithNullity<
+                    __MemberType<
+                        __AllModelMembers<TargetModel>[__RequiredModelKey<TargetModel, TargetKey>], 
                         DtoKind
                     >,
                     Nullity,
@@ -123,11 +123,11 @@ export type ReferenceKeyDtoType<TMapping> =
                 >
                 : never
         }
-    : TMapping extends EmbeddedReferenceKeyMapping<any, infer DtoKind, infer Key, infer Member, infer Mappings>
+    : TMapping extends __EmbeddedReferenceKeyMapping<any, infer DtoKind, infer Key, infer Member, infer Mappings>
         ? {
-            [K in Key]: Member extends ReferencePropContract<any, infer Nullity, any, any, any, any>
-                ? WithNullity<
-                    DtoType<Mappings>,
+            [K in Key]: Member extends __ReferencePropContract<any, infer Nullity, any, any, any, any>
+                ? __WithNullity<
+                    __DtoType<Mappings>,
                     Nullity,
                     DtoKind
                 >

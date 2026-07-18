@@ -7,7 +7,7 @@ import { BaseQueryImplementor } from "@/impl/base_query_implementor";
 import { QueryContract } from "@/impl/ast";
 import { ArgumentError } from "@/error/common";
 import { AnyAssociationModel } from "./association";
-import { EntityTableLike } from "./table_internal_types";
+import { __EntityTableLike } from "./table_internal_types";
 
 export function derivedModel<TQuery extends BaseQuery<any>>(
     query: TQuery,
@@ -127,7 +127,7 @@ export type BaseQueryProjection<TSelections extends BaseQuerySelectMapArgs> = {
 };
 
 export type BaseQuerySelectMapArgs = {
-    readonly [key: string]: ExpressionLike | EntityTableLike;
+    readonly [key: string]: ExpressionLike | __EntityTableLike;
 };
 
 export type BaseQueryMapOf<T> =

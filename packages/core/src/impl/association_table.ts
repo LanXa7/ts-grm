@@ -9,7 +9,7 @@ import { AssociationEntity, AssociationProp } from "./association_entity";
 import { CodeWriter } from "./code_writer";
 import { createTableProp } from "./ast/prop_expr";
 import { makeErr } from "@/error/util";
-import { ModelLike } from "@/dsl/table_internal_types";
+import { __ModelLike } from "@/dsl/table_internal_types";
 import { JoinType } from "@/dsl/table";
 
 export class AbstractAssociationTable implements AbstractTable {
@@ -163,7 +163,7 @@ export class AbstractAssociationTable implements AbstractTable {
     }
 
     join(
-        model: ModelLike,
+        model: __ModelLike,
         options: JoinFilter | {
             readonly joinType?: JoinType,
             readonly filter: JoinFilter,

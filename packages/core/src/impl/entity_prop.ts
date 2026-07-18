@@ -1,4 +1,4 @@
-import { AssociationType, PropContract } from "@/schema/prop_internal_types";
+import { __AssociationType, __PropContract } from "@/schema/prop_internal_types";
 import { Entity } from "./entity";
 import { PropError } from "@/error/metadata_error";
 import { AnyModelImpl, ModelImpl } from "./model_impl";
@@ -14,7 +14,7 @@ import { CalculationStrategy } from "./calculation_strategy";
 import { acceptsNullOrUndefined } from "./util";
 import { ScalarProvider, ScalarType } from "@/schema/scalar";
 import { View } from "@/schema/dto/api";
-import { JoinColumnData, Prop, PropData } from "@/schema/prop_internal_behavior";
+import { __JoinColumnData, __Prop, __PropData } from "@/schema/prop_internal_behavior";
 
 export class EntityProp {
 
@@ -26,7 +26,7 @@ export class EntityProp {
 
     private _scalarType: ScalarType<any> | undefined = undefined;
 
-    readonly associationType: AssociationType | undefined = undefined;
+    readonly associationType: __AssociationType | undefined = undefined;
 
     private _span: number | undefined = undefined;
 
@@ -100,7 +100,7 @@ export class EntityProp {
     constructor(
         readonly declaringEntity: Entity,
         readonly name: string,
-        private readonly _data: PropData,
+        private readonly _data: __PropData,
         readonly parentProp: EntityProp | undefined
     ) {
         this.validateData();
@@ -747,11 +747,11 @@ export class EntityProp {
     }
 
     private _createProps(
-        props: Record<string, PropContract<any, any>>
+        props: Record<string, __PropContract<any, any>>
     ): ReadonlyMap<string, EntityProp> {
         const resultMap = new Map<string, EntityProp>();
         for (const key in props) {
-            const prop = props[key] as Prop<any, any>;
+            const prop = props[key] as __Prop<any, any>;
             if (prop == null) {
                 continue;
             }
@@ -1181,11 +1181,11 @@ export class EntityProp {
                 }" must be "${this.targetEntity!.name}"`
             );
         }
-        const joinThisAssociationType: AssociationType = 
+        const joinThisAssociationType: __AssociationType = 
             this.associationType === "ONE_TO_MANY" || this.associationType === "ONE_TO_ONE"
                 ? "ONE_TO_ONE"
                 : "MANY_TO_ONE";
-        const joinTargetAssociationType: AssociationType = 
+        const joinTargetAssociationType: __AssociationType = 
             this.associationType === "MANY_TO_ONE" || this.associationType === "ONE_TO_ONE"
                 ? "ONE_TO_ONE"
                 : "MANY_TO_ONE";
@@ -1234,7 +1234,7 @@ export class EntityProp {
     }
 
     private _collectJoinColumns(
-        joinColumns: ReadonlyArray<JoinColumnData> | undefined,
+        joinColumns: ReadonlyArray<__JoinColumnData> | undefined,
         joinColumnsName: string,
         targetKeyProp: EntityProp,
         columns: Array<Column>
@@ -1285,7 +1285,7 @@ export class EntityProp {
             return;
         }
 
-        const joinColumnMap = new Map<string, JoinColumnData>();
+        const joinColumnMap = new Map<string, __JoinColumnData>();
         for (const joinColumn of joinColumns) {
             if (joinColumn.columnName === "") {
                 throw new PropError(

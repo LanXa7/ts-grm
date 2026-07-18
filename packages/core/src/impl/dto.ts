@@ -1,7 +1,7 @@
 import { EntityProp } from "./entity_prop";
 import { EntityPropOrder } from "./entity_prop_order";
 import { Entity } from "./entity";
-import { AssociationType } from "@/schema/prop_internal_types";
+import { __AssociationType } from "@/schema/prop_internal_types";
 import { AbstractEntityTable } from "./entity_table";
 import { Predicate } from "@/dsl/expression";
 import { ReferenceFetchType } from "@/schema/dto/api";
@@ -70,7 +70,7 @@ export class InverseFetchProp {
         return undefined;
     }
 
-    get associationType(): AssociationType | undefined {
+    get associationType(): __AssociationType | undefined {
         const associationType = this.prop.associationType;
         switch (associationType) {
             case "ONE_TO_MANY":

@@ -25,7 +25,7 @@ import { capitalize } from "./util";
 import { getQueryFactory } from "./ast/query_factory";
 import { exists, notExists } from "@/dsl/sub_query";
 import { count } from "@/dsl/aggregate";
-import { ModelLike } from "@/dsl/table_internal_types";
+import { __ModelLike } from "@/dsl/table_internal_types";
 import { JoinType } from "@/dsl/table";
 import { View } from "@/schema/dto/api";
 import { associationModel } from "@/dsl/association";
@@ -130,7 +130,7 @@ export abstract class AbstractEntityTable implements AbstractTable {
         return this;
     }
 
-    join(model: ModelLike, options: JoinFilter | {
+    join(model: __ModelLike, options: JoinFilter | {
         readonly joinType?: JoinType,
         readonly filter: JoinFilter
     }) {

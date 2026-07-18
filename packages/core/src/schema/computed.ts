@@ -1,10 +1,10 @@
 import { EntityTable } from "@/dsl/table";
 import { Expression } from "@/dsl/expression";
 import { SqlClient } from "@/dsl/sql_client";
-import { AllModelMembers, CalculatorSourceKeys, ModelIdKey } from "./model_internal_types";
+import { __AllModelMembers, __CalculatorSourceKeys, __ModelIdKey } from "./model_internal_types";
 import { View } from "./dto/api";
 import { StandardSchemaV1 } from "@standard-schema/spec";
-import { MemberType } from "./dto/all_scalars";
+import { __MemberType } from "./dto/all_scalars";
 import { AnyModel } from "./model";
 
 export class TsFormula<TValue> {
@@ -76,14 +76,14 @@ export abstract class Calculator {
     static valueOf<
         TSourceModel extends AnyModel,
         TValueType extends StandardSchemaV1,
-        TSourceKeyProp extends CalculatorSourceKeys<TSourceModel> & string = ModelIdKey<TSourceModel>
+        TSourceKeyProp extends __CalculatorSourceKeys<TSourceModel> & string = __ModelIdKey<TSourceModel>
     >(
         options: {
             readonly sourceModel: () => TSourceModel,
             readonly sourceKeyProp?: TSourceKeyProp,
             readonly valueType: StandardSchemaV1,
             readonly fn: ValueCalculatorFn<
-                MemberType<AllModelMembers<TSourceModel>[TSourceKeyProp], "NULL_VIEW">, 
+                __MemberType<__AllModelMembers<TSourceModel>[TSourceKeyProp], "NULL_VIEW">, 
                 StandardSchemaV1.InferOutput<TValueType>
             >
         }
@@ -100,7 +100,7 @@ export abstract class Calculator {
         TParameterType extends StandardSchemaV1,
         TSourceModel extends AnyModel,
         TValueType extends StandardSchemaV1,
-        TSourceKeyProp extends CalculatorSourceKeys<TSourceModel> & string = ModelIdKey<TSourceModel>
+        TSourceKeyProp extends __CalculatorSourceKeys<TSourceModel> & string = __ModelIdKey<TSourceModel>
     >(
         options: {
             readonly parameterType: TParameterType,
@@ -109,7 +109,7 @@ export abstract class Calculator {
             readonly valueType: StandardSchemaV1,
             readonly fn: ParameterizedValueCalculatorFn<
                 StandardSchemaV1.InferOutput<TParameterType>,
-                MemberType<AllModelMembers<TSourceModel>[TSourceKeyProp], "NULL_VIEW">, 
+                __MemberType<__AllModelMembers<TSourceModel>[TSourceKeyProp], "NULL_VIEW">, 
                 StandardSchemaV1.InferOutput<TValueType>
             >
         }
@@ -126,14 +126,14 @@ export abstract class Calculator {
     static targetOf<
         TSourceModel extends AnyModel,
         TTargetModel extends AnyModel,
-        TSourceKeyProp extends keyof CalculatorSourceKeys<TSourceModel> & string = ModelIdKey<TSourceModel>
+        TSourceKeyProp extends keyof __CalculatorSourceKeys<TSourceModel> & string = __ModelIdKey<TSourceModel>
     >(
         options: {
             readonly sourceModel: () => TSourceModel,
             readonly sourceKeyProp?: TSourceKeyProp,
             readonly targetModel: () => TTargetModel,
             readonly fn: TargetCalculatorFn<
-                MemberType<AllModelMembers<TSourceModel>[TSourceKeyProp], "NULL_VIEW">, 
+                __MemberType<__AllModelMembers<TSourceModel>[TSourceKeyProp], "NULL_VIEW">, 
                 TTargetModel
             >
         }
@@ -150,7 +150,7 @@ export abstract class Calculator {
         TParameterType extends StandardSchemaV1,
         TSourceModel extends AnyModel,
         TTargetModel extends AnyModel,
-        TSourceKeyProp extends keyof CalculatorSourceKeys<TSourceModel> & string = ModelIdKey<TSourceModel>
+        TSourceKeyProp extends keyof __CalculatorSourceKeys<TSourceModel> & string = __ModelIdKey<TSourceModel>
     >(
         options: {
             readonly parameterType: TParameterType,
@@ -159,7 +159,7 @@ export abstract class Calculator {
             readonly targetModel: () => TTargetModel,
             readonly fn: ParameterizedTargetCalculatorFn<
                 StandardSchemaV1.InferOutput<TParameterType>,
-                MemberType<AllModelMembers<TSourceModel>[TSourceKeyProp], "NULL_VIEW">, 
+                __MemberType<__AllModelMembers<TSourceModel>[TSourceKeyProp], "NULL_VIEW">, 
                 TTargetModel
             >
         }

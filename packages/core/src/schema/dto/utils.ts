@@ -1,51 +1,51 @@
 import { AnyModel } from "../model";
-import { AllModelMembers } from "../model_internal_types";
-import { AssociatedLikePropContract, EmbeddedPropContract, NullityType } from "../prop_internal_types";
-import { AllScalarsMapping } from "./all_scalars";
-import { DtoMapping, DtoKind } from "./dto_context";
+import { __AllModelMembers } from "../model_internal_types";
+import { __AssociatedLikePropContract, __EmbeddedPropContract, __NullityType } from "../prop_internal_types";
+import { __AllScalarsMapping } from "./all_scalars";
+import { __DtoMapping, __DtoKind } from "./dto_context";
 
-export type PropModelOf<
+export type __PropModelOf<
     TModel extends AnyModel, 
     TMember
 > =
-    TMember extends EmbeddedPropContract<any, any, any>
+    TMember extends __EmbeddedPropContract<any, any, any>
         ? TModel
-    : TMember extends AssociatedLikePropContract<infer TargetModel, any>
+    : TMember extends __AssociatedLikePropContract<infer TargetModel, any>
         ? TargetModel
     : never;
 
-export type TargetMembersOf<
+export type __TargetMembersOf<
     TMember
 > =
-    TMember extends EmbeddedPropContract<infer NestedProps, any, any>
+    TMember extends __EmbeddedPropContract<infer NestedProps, any, any>
         ? NestedProps
-    : TMember extends AssociatedLikePropContract<infer TargetModel, any>
-        ? AllModelMembers<TargetModel>
+    : TMember extends __AssociatedLikePropContract<infer TargetModel, any>
+        ? __AllModelMembers<TargetModel>
     : never;
 
-export type TargetContextKindOf<
+export type __TargetContextKindOf<
     TMember
 > =
-    TMember extends EmbeddedPropContract<any, any, any>
+    TMember extends __EmbeddedPropContract<any, any, any>
         ? "EMBEDDABLE"
-    : TMember extends AssociatedLikePropContract<any, any>
+    : TMember extends __AssociatedLikePropContract<any, any>
         ? "ENTITY"
     : never;
 
-export type TargetMappings<
+export type __TargetMappings<
     TModel extends AnyModel, 
     TMember
-> = ReadonlyArray<DtoMapping<PropModelOf<TModel, TMember>>>;
+> = ReadonlyArray<__DtoMapping<__PropModelOf<TModel, TMember>>>;
 
-export type DefaultTargetMappings<
+export type __DefaultTargetMappings<
     TModel extends AnyModel, 
-    TDtoKind extends DtoKind,
+    TDtoKind extends __DtoKind,
     TMember
 > = [ 
-    AllScalarsMapping<PropModelOf<TModel, TMember>, TDtoKind, TargetMembersOf<TMember>, never> 
+    __AllScalarsMapping<__PropModelOf<TModel, TMember>, TDtoKind, __TargetMembersOf<TMember>, never> 
 ];
 
-export type WithNullity<T, TNullity extends NullityType, TDtoKind extends DtoKind> =
+export type __WithNullity<T, TNullity extends __NullityType, TDtoKind extends __DtoKind> =
     TNullity extends "NULLABLE"
         ? TDtoKind extends "NULL_VIEW"
             ? T | null
@@ -60,6 +60,6 @@ export type WithNullity<T, TNullity extends NullityType, TDtoKind extends DtoKin
         : T
     : T;
 
-export type SelfMappings<
+export type __SelfMappings<
     TModel extends AnyModel, 
-> = ReadonlyArray<DtoMapping<TModel>>;
+> = ReadonlyArray<__DtoMapping<TModel>>;

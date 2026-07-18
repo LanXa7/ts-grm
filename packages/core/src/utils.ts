@@ -1,5 +1,5 @@
-import { FollowNullity, FollowPrefix } from "./schema/prop_internal_behavior";
-import { EmbeddedPropContract } from "./schema/prop_internal_types";
+import { __FollowNullity, __FollowPrefix } from "./schema/prop_internal_behavior";
+import { __EmbeddedPropContract } from "./schema/prop_internal_types";
 
 export type Prettify<T> = 
     T extends Array<infer U>
@@ -21,22 +21,22 @@ export type FlattenMembers<
     TMembers extends object
 > = {
     [K in keyof TMembers
-        as TMembers[K] extends EmbeddedPropContract<any, any, any>
+        as TMembers[K] extends __EmbeddedPropContract<any, any, any>
             ? never
             : K
     ]: TMembers[K]
 } & UnionToIntersection<
     FlattenUnion<{
         [K in keyof TMembers
-            as TMembers[K] extends EmbeddedPropContract<any, any, any>
+            as TMembers[K] extends __EmbeddedPropContract<any, any, any>
                 ? K
                 : never
         ]: 
-            TMembers[K] extends EmbeddedPropContract<any, infer Nullity, infer FlattenProps>
+            TMembers[K] extends __EmbeddedPropContract<any, infer Nullity, infer FlattenProps>
                 ? {
                     [DK in keyof FlattenProps as 
-                        FollowPrefix<DK & string, K & string>
-                    ]: FollowNullity<FlattenProps[DK], Nullity>
+                        __FollowPrefix<DK & string, K & string>
+                    ]: __FollowNullity<FlattenProps[DK], Nullity>
                 }
                 : never
     }>
