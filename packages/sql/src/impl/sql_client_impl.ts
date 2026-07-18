@@ -36,6 +36,7 @@ import {
     ModelOf,
     spi,
     dsl,
+    err,
     suppressUnused
 } from "@ts-grm/core";
 import { MutableRootQueryImpl } from "./mutable_root_query_impl";
