@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { AUTHOR, BOOK, BOOK_STORE, ORDER, TAG } from "../model/model";
-import { SIMPLE_BOOK_VIEW, sql } from "./utils";
-import { expectCode, newSqlRecord } from "../utils";
+import { SIMPLE_BOOK_VIEW } from "./utils";
+import { newSqlRecord } from "../utils";
 import { FilterManager } from "@/cfg";
 import { newSqlClient } from "@/sql_client";
 import { useSqliteClientWithData } from "../data_utils";

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { SIMPLE_AUTHOR_VIEW, SIMPLE_BOOK_VIEW, sql } from "./utils";
+import { SIMPLE_AUTHOR_VIEW, SIMPLE_BOOK_VIEW } from "./utils";
 import { dsl } from "@ts-grm/core";
 import { AUTHOR, BOOK, ORDER } from "../model/model";
 import { newSqlRecord } from "../utils";
