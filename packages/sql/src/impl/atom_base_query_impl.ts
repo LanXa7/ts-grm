@@ -71,6 +71,10 @@ implements
         return "ATOM";
     }
 
+    get isDistinct(): boolean {
+        return this.options.distinct;
+    }
+
     get tables(): ReadonlyArray<spi.AbstractTable> {
         return this.mutableQuery.tables;
     }

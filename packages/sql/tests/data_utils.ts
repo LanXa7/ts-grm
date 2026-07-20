@@ -139,6 +139,17 @@ insert into ORDER_TAG_MAPPING(order_x, order_y_a, order_y_b, tag_low, tag_high) 
     (2, 1, 2, 1, 1),
     (2, 1, 2, 1, 2);
 
+insert into COMMENT(ID, NAME, TEXT) values
+    (1, 'Delayed', 'Delyaed, delive faster'),
+    (2, 'Aborted', 'Aborted, come back'),
+    (3, 'Changed', 'Changed, please notify');
+
+insert into ORDER_COMMENT_MAPPING(order_x, order_y_a, order_y_b, COMMENT_ID) values
+    (1, 1, 1, 1),
+    (1, 1, 1, 3),
+    (2, 1, 1, 1),
+    (2, 1, 1, 3);
+
 insert into TREE_NODE(
     ID, TYPE, NAME, PARENT_NODE_ID
 ) values
@@ -269,13 +280,13 @@ insert into COURSE(ID, NAME) values
     (3, 'Workplace Communication and Presentation'),
     (4, 'Introduction to Artificial Intelligence');
 
-insert into LEARNING_LINK(STUDENT_ID, COURSE_ID) values
-    (1, 2),
-    (1, 3),
-    (2, 4),
-    (2, 1),
-    (3, 2),
-    (3, 3),
-    (4, 4),
-    (4, 1);
+insert into LEARNING_LINK(STUDENT_ID, COURSE_ID, SCORE) values
+    (1, 2, NULL),
+    (1, 3, NULL),
+    (2, 4, NULL),
+    (2, 1, NULL),
+    (3, 2, 78),
+    (3, 3, NULL),
+    (4, 4, NULL),
+    (4, 1, NULL);
 `;

@@ -16,6 +16,8 @@ export interface AtomQueryContract extends Node {
 
     readonly kind: "ATOM";
 
+    readonly isDistinct: boolean;
+
     readonly tables: ReadonlyArray<AbstractTable>;
 
     readonly wherePred: AbstractPred | undefined;

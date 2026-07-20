@@ -49,6 +49,10 @@ export class AtomTupleSubQueryImpl extends AbstractTupleSubQueryImpl implements 
         return "ATOM";
     }
 
+    get isDistinct(): boolean {
+        return this.options.distinct;
+    }
+
     get tables(): ReadonlyArray<spi.AbstractTable> {
         return this.mutableQuery.tables;
     }
@@ -117,6 +121,10 @@ export class AtomExprSubQueryImpl extends AbstractExprSubQueryImpl implements sp
 
     get kind(): "ATOM" {
         return "ATOM";
+    }
+
+    get isDistinct(): boolean {
+        return this.options.distinct;
     }
 
     get tables(): ReadonlyArray<spi.AbstractTable> {
@@ -189,6 +197,10 @@ export class AtomNumSubQueryImpl extends AbstractNumSubQueryImpl implements spi.
         return "ATOM";
     }
 
+    get isDistinct(): boolean {
+        return this.options.distinct;
+    }
+
     get tables(): ReadonlyArray<spi.AbstractTable> {
         return this.mutableQuery.tables;
     }
@@ -259,6 +271,10 @@ export class AtomStrSubQueryImpl extends AbstractStrSubQueryImpl implements spi.
         return "ATOM";
     }
 
+    get isDistinct(): boolean {
+        return this.options.distinct;
+    }
+
     get tables(): ReadonlyArray<spi.AbstractTable> {
         return this.mutableQuery.tables;
     }
@@ -307,6 +323,10 @@ export class AtomDtSubQueryImpl extends AbstractDtSubQueryImpl implements spi.At
 
     get kind(): "ATOM" {
         return "ATOM";
+    }
+
+    get isDistinct(): boolean {
+        return this.options.distinct;
     }
 
     distinct(): AtomDtSubQueryImpl {

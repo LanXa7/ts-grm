@@ -129,6 +129,9 @@ export class FragmentGenGenVisitor extends spi.AbstractVisitor {
         
         {
             this._compositeStack.current.add("select ");
+            if (query.isDistinct) {
+                this._compositeStack.current.add("distinct ");
+            }
             using _ = this._compositeStack.with(new Scope("COMMA"));
             this._visitProjection(query.projection);
         }
