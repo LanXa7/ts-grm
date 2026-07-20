@@ -1117,8 +1117,7 @@ describe.sequential("QuerySqlTest", () => {
             const baseBook = store.join(
                 baseBookModel,
                 ctx => dsl.and(
-                    // TODO
-                    ctx.source.id.eq(ctx.target.book.storeId.asNonNull()),
+                    ctx.source.id.eq(ctx.target.book.storeId),
                     ctx.target.rank.eq(1)
                 )
             );

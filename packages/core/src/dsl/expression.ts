@@ -16,14 +16,14 @@ export type Expression<
 > = 
     NonNull<T> extends string
         ? TAs extends "AS_NUMBER"
-            ? NumExpression<T & Nullable<string>>
+            ? NumExpression<T & Nullish<string>>
         : TAs extends "AS_ENUM_SET"
-            ? EnumSetExpression<T & Nullable<string>>
-        : StrExpression<T & Nullable<string>>
+            ? EnumSetExpression<T & Nullish<string>>
+        : StrExpression<T & Nullish<string>>
     : NonNull<T> extends Date
-        ? DateExpression<T & Nullable<Date>>
+        ? DateExpression<T & Nullish<Date>>
     : NonNull<T> extends number
-        ? NumExpression<T & Nullable<number>>
+        ? NumExpression<T & Nullish<number>>
     : AnyExpression<T>;
 
 export type AnyExpression<T, TAs extends AsBound<T> = ""> = 
@@ -32,17 +32,17 @@ export type AnyExpression<T, TAs extends AsBound<T> = ""> =
 export type CmpExpression<T, TAs extends AsBound<T> = ""> = 
     CmpExpressionItf<T, TAs> & NullableMethods<T, TAs>;
 
-export type StrExpression<T extends Nullable<string>> = 
+export type StrExpression<T extends Nullish<string>> = 
     StrExpressionItf<T> & NullableMethods<T, "">;
 
-export type NumExpression<T extends Nullable<string | number>> = 
+export type NumExpression<T extends Nullish<string | number>> = 
     NumExpressionItf<T> 
     & NullableMethods<T, NonNull<T> extends string ? "AS_NUMBER" : "">;
 
-export type EnumSetExpression<T extends Nullable<string>> = 
+export type EnumSetExpression<T extends Nullish<string>> = 
     EnumSetExpressionItf<T> & NullableMethods<T, "">;
 
-export type DateExpression<T extends Nullable<Date>> = 
+export type DateExpression<T extends Nullish<Date>> = 
     DateExpressionItf<T> & NullableMethods<T, "">;
 
 export type AsBound<T> = T extends string ? "AS_NUMBER" | "AS_ENUM_SET" | "" : "";
@@ -51,21 +51,17 @@ export type Predicate = AnyExpression<boolean>;
 
 export type NonNull<T> = Exclude<T, null | undefined>;
 
-export type Nullable<T> = T | null | undefined;
+export type Nullable<T> = T | null;
+
+export type Nullish<T> = T | null | undefined;
 
 export type RHSType<T, TAs extends AsBound<T>> =
     NonNull<T> | AnyExpression<NonNull<T>, TAs> | AnyExpression<Nullable<T>, TAs> 
         | (
             TAs extends "AS_NUMBER"
                 ? number 
-                    | AnyExpression<NonNull<number>, any> 
-                    | AnyExpression<Nullable<number>, any>
-                : never
-        )
-        | (
-            T extends number
-                ? AnyExpression<NonNull<string>, "AS_NUMBER">
-                    | AnyExpression<Nullable<string>, "AS_NUMBER">
+                    | AnyExpression<NonNull<string>, any> 
+                    | AnyExpression<Nullable<string>, any>
                 : never
         );
 
@@ -84,7 +80,7 @@ export type NonNullRHSType<T, TAs extends AsBound<T>> =
 
 export type CoalesceArgs<T> =
     [
-        ...AnyExpression<Nullable<T>>[],
+        ...AnyExpression<Nullish<T>>[],
         ...([] | [NonNull<T>] | [AnyExpression<NonNull<T>>])
     ];
 
@@ -104,8 +100,8 @@ export type CoalesceDataType<T, TArgs extends any[]> =
         : T;
 
 export type MergeNullableType<
-    T1 extends Nullable<string | number>, 
-    T2 extends Nullable<string | number>
+    T1 extends Nullish<string | number>, 
+    T2 extends Nullish<string | number>
 > =
     string extends T1 | T2
         ? Exclude<T1 | T2, number> 
@@ -146,19 +142,19 @@ export type MakeExpression<TProp, TNullity extends __NullityType> =
     : never;
 
 export function and(
-    ...predicates: ReadonlyArray<Nullable<AnyExpression<boolean>>>
+    ...predicates: ReadonlyArray<Nullish<AnyExpression<boolean>>>
 ): AnyExpression<boolean> | undefined {
     return CompoundPred.of("AND", predicates) as AnyExpression<boolean> | undefined;
 }
 
 export function or(
-    ...predicates: ReadonlyArray<Nullable<AnyExpression<boolean>>>
+    ...predicates: ReadonlyArray<Nullish<AnyExpression<boolean>>>
 ): AnyExpression<boolean> | undefined {
     return CompoundPred.of("OR", predicates) as AnyExpression<boolean> | undefined;
 }
 
 export function not(
-    ...predicates: ReadonlyArray<Nullable<AnyExpression<boolean>>>
+    ...predicates: ReadonlyArray<Nullish<AnyExpression<boolean>>>
 ): AnyExpression<boolean> | undefined {
     return CompoundPred.of("AND", predicates)?.negative() as AnyExpression<boolean> | undefined;
 }
@@ -245,11 +241,11 @@ export interface AnyExpressionItf<T, TAs extends AsBound<T>> {
     ): AnyExpression<boolean>;
     
     eqIf(
-        value: Nullable<T>
+        value: Nullish<T>
     ): AnyExpression<boolean> | undefined;
     
     neIf(
-        value: Nullable<T>
+        value: Nullish<T>
     ): AnyExpression<boolean> | undefined;
 
     inIf(
@@ -294,28 +290,28 @@ export interface CmpExpressionItf<T, TAs extends AsBound<T>> extends AnyExpressi
     ): AnyExpression<boolean>;
     
     ltIf(
-        value: Nullable<T>
+        value: Nullish<T>
     ): AnyExpression<boolean> | undefined;
     
     lteIf(
-        value: Nullable<T>
+        value: Nullish<T>
     ): AnyExpression<boolean> | undefined;
     
     gtIf(
-        value: Nullable<T>
+        value: Nullish<T>
     ): AnyExpression<boolean> | undefined;
     
     gteIf(
-        value: Nullable<T>
+        value: Nullish<T>
     ): AnyExpression<boolean> | undefined;
 
     betweenIf(
-        min: Nullable<T>,
-        max: Nullable<T>
+        min: Nullish<T>,
+        max: Nullish<T>
     ): AnyExpression<boolean> | undefined;
 }
 
-export interface StrExpressionItf<T extends Nullable<string>> extends CmpExpressionItf<T, ""> {
+export interface StrExpressionItf<T extends Nullish<string>> extends CmpExpressionItf<T, ""> {
 
     __type(): {
         readonly selectionLike: true;
@@ -338,12 +334,12 @@ export interface StrExpressionItf<T extends Nullable<string>> extends CmpExpress
     ): AnyExpression<boolean> | undefined;
 
     likeIf(
-        value: Nullable<string>, 
+        value: Nullish<string>, 
         mode?: LikeMode
     ): AnyExpression<boolean> | undefined;
 
     ilikeIf(
-        value: Nullable<string>, 
+        value: Nullish<string>, 
         mode?: LikeMode
     ): AnyExpression<boolean> | undefined;
 
@@ -358,12 +354,12 @@ export interface StrExpressionItf<T extends Nullable<string>> extends CmpExpress
     ): AnyExpression<boolean> | undefined;
 
     notLikeIf(
-        value: Nullable<string>, 
+        value: Nullish<string>, 
         mode?: LikeMode
     ): AnyExpression<boolean> | undefined;
 
     notIlikeIf(
-        value: Nullable<string>, 
+        value: Nullish<string>, 
         mode?: LikeMode
     ): AnyExpression<boolean> | undefined;
 
@@ -410,7 +406,7 @@ export interface StrExpressionItf<T extends Nullable<string>> extends CmpExpress
     ): StrExpression<T>;
 }
 
-export interface NumExpressionItf<T extends Nullable<string | number>> extends CmpExpressionItf<T, T extends string ? "AS_NUMBER" : ""> {
+export interface NumExpressionItf<T extends Nullish<string | number>> extends CmpExpressionItf<T, T extends string ? "AS_NUMBER" : ""> {
 
     __type(): {
         readonly selectionLike: true;
@@ -424,28 +420,28 @@ export interface NumExpressionItf<T extends Nullable<string | number>> extends C
 
     unaryMinus(): NumExpression<T>;
 
-    plus<X extends Nullable<string | number>>(
+    plus<X extends Nullish<string | number>>(
         value: NonNull<X> | NumExpression<X>
     ): NumExpression<MergeNullableType<T, X>>;
 
-    minus<X extends Nullable<string | number>>(
+    minus<X extends Nullish<string | number>>(
         value: NonNull<X> | NumExpression<X>
     ): NumExpression<MergeNullableType<T, X>>;
 
-    times<X extends Nullable<string | number>>(
+    times<X extends Nullish<string | number>>(
         value: NonNull<X> | NumExpression<X>
     ): NumExpression<MergeNullableType<T, X>>;
 
-    div<X extends Nullable<string | number>>(
+    div<X extends Nullish<string | number>>(
         value: NonNull<X> | NumExpression<X>
     ): NumExpression<MergeNullableType<T, X>>;
 
-    rem<X extends Nullable<string | number>>(
+    rem<X extends Nullish<string | number>>(
         value: NonNull<X> | NumExpression<X>
     ): NumExpression<MergeNullableType<T, X>>;
 }
 
-export interface EnumSetExpressionItf<T extends Nullable<string>> extends AnyExpressionItf<T, ""> {
+export interface EnumSetExpressionItf<T extends Nullish<string>> extends AnyExpressionItf<T, ""> {
 
     __type(): {
         readonly selectionLike: true;
@@ -466,7 +462,7 @@ export interface EnumSetExpressionItf<T extends Nullable<string>> extends AnyExp
     notContainsAll(...values: AtLeastOne<T>): Predicate;
 }
 
-export interface DateExpressionItf<T extends Nullable<Date>> extends CmpExpressionItf<T, ""> {
+export interface DateExpressionItf<T extends Nullish<Date>> extends CmpExpressionItf<T, ""> {
 
     __type(): {
         readonly selectionLike: true;
