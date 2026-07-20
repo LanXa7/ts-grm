@@ -208,38 +208,46 @@ describe.sequential("InheritanceBaseQuerySqlTest", () => {
         }).fetchList();
         sqlRecord.assert({
             sql: `
+            select 
+                tb_1_.c1,
+                tb_2_.NAME,
+                tb_2_.EDITION,
+                tb_2_.PRICE,
+                tb_1_.c2,
+                tb_1_.c3
+            from (
                 select 
-                    tb_1_.c1,
-                    tb_2_.NAME,
-                    tb_2_.EDITION,
-                    tb_2_.PRICE,
-                    tb_1_.c5,
-                    tb_1_.c6
-                from (
-                    select 
-                        tb_3_.PB_ID c1,
-                        tb_3_.NAME c2,
-                        tb_3_.EDITION c3,
-                        tb_3_.PRICE c4,
-                        tb_3_.WIDTH c5,
-                        tb_3_.HEIGHT c6,
-                        row_number() over(partition by tb_4_.STORE_ID order by tb_4_.PRICE desc) c7
-                    from PAPER_BOOK tb_3_
-                    inner join BOOK tb_4_ on 
-                        tb_3_.PB_ID = tb_4_.ID
-                ) tb_1_
-                inner join BOOK tb_2_ on 
-                    tb_1_.c1 = tb_2_.ID
-                where 
-                    tb_1_.c7 = ?
+                    tb_3_.PB_ID c1,
+                    tb_3_.WIDTH c2,
+                    tb_3_.HEIGHT c3,
+                    row_number() over(partition by tb_4_.STORE_ID order by tb_4_.PRICE desc) c4
+                from PAPER_BOOK tb_3_
+                inner join BOOK tb_4_ on 
+                    tb_3_.PB_ID = tb_4_.ID
+            ) tb_1_
+            inner join BOOK tb_2_ on 
+                tb_1_.c1 = tb_2_.ID
+            where 
+                tb_1_.c4 = ?
             `,
             args: [1],
             purpose: "query"
         });
-        console.log(JSON.stringify(rows))
+        expect(rows).toEqual([
+            {
+                "id": 9,
+                "name": "YugabyteDB: The Definitive Guide",
+                "edition": 3,
+                "price": 89.99,
+                "size": {
+                    "width": 145,
+                    "height": 210
+                }
+            }
+        ]);
     });
 
-    it("superPropsOfMultipleTables", async () => {
+    it("derivedPropsOfMultipleTables", async () => {
         const baseBookModel = dsl.derivedModel(
             dsl.baseQuery(BOOK, (q, book) => {
                 return q.select({

@@ -109,16 +109,15 @@ export class PreVisitor extends spi.AbstractVisitor {
     }
 
     visitFetchedView(view: spi.FetchedViewContract): void {
-        const shadow = this._toRealTable(view.table).shadow;
         for (const field of view.view.mapper.fields) {
             if (field.columnIndex == null) {
                 continue;
             }
-
             const realTable = this._toRealTable(view.table.__to(field.prop.declaringEntity));
             if (!field.prop.isEntityProp) {
                 continue;
             }
+            const shadow = realTable.shadow;
             const entityProp = field.prop as spi.EntityProp;
             if (entityProp.sqlFormulaFn != null) {
                 realTable.sqlFormulaExpr(entityProp).accept(this);

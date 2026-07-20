@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { SIMPLE_BOOK_VIEW, sql } from "./utils";
+import { SIMPLE_BOOK_VIEW } from "./utils";
 import { AUTHOR, BOOK, ORDER, ORDER_ITEM } from "../model/model";
 import { dsl } from "@ts-grm/core";
-import { expectCode, newSqlRecord } from "../utils";
+import { newSqlRecord } from "../utils";
 import { useSqliteClientWithData } from "../data_utils";
 
 describe("SubQueryTest", () => {
