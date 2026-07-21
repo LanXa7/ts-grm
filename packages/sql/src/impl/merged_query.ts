@@ -58,6 +58,10 @@ export class MergedRootQueryImpl<
         throw new Error();
     }
 
+    fetchCount(): Promise<number> {
+        throw new Error();
+    }
+
     constructor(
         readonly kind: spi.MergedQueryKind,
         readonly queries: ReadonlyArray<spi.QueryContract>

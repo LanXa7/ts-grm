@@ -1,6 +1,6 @@
-import { spi, ExpressionOrder, AtomRootQuery, RootQueryProjection, RowTypeOf, suppressUnused, err, FetchOptions, FetchRangeOptions, FetchPageOptions, Page } from "@ts-grm/core";
+import { spi, ExpressionOrder, AtomRootQuery, RootQueryProjection, RowTypeOf, suppressUnused, err, FetchOptions, FetchRangeOptions, FetchPageOptions, Page, dsl } from "@ts-grm/core";
 import { MutableRootQueryImpl } from "./mutable_root_query_impl";
-import { AbstractRootQueryProjection } from "./query_projection";
+import { AbstractRootQueryProjection, ValRootQueryProjection } from "./query_projection";
 import { executeQuery } from "./query_executor";
 
 export class AtomRootQueryImpl<TProjection extends RootQueryProjection<any>> 
@@ -10,7 +10,7 @@ implements AtomRootQuery<TProjection>, spi.AtomQueryContract {
 
     constructor(
         readonly mutableQuery: MutableRootQueryImpl,
-        private _projection: AbstractRootQueryProjection<any>,
+        private readonly _projection: AbstractRootQueryProjection<any>,
         options: spi.AtomQueryOptions | undefined
     ) {
         this.options = options ?? spi.defaultAtomQueryOptions;
@@ -55,7 +55,7 @@ implements AtomRootQuery<TProjection>, spi.AtomQueryContract {
         options?: FetchOptions<TNullAsUndefined>
     ): Promise<Array<RowTypeOf<TProjection, TNullAsUndefined>>> {
         suppressUnused(options);
-        return await executeQuery(this) as Array<RowTypeOf<TProjection, TNullAsUndefined>>;
+        return await executeQuery(this, undefined) as Array<RowTypeOf<TProjection, TNullAsUndefined>>;
     }
 
     async fetchRange<
@@ -107,6 +107,11 @@ implements AtomRootQuery<TProjection>, spi.AtomQueryContract {
         }
     }
 
+    async fetchCount(): Promise<number> {
+        const rows = await executeQuery(this, "COUNT");
+        return rows[0]!;
+    }
+
     get kind(): "ATOM" {
         return "ATOM";
     }
@@ -149,5 +154,41 @@ implements AtomRootQuery<TProjection>, spi.AtomQueryContract {
 
     accept(visitor: spi.Visitor): void {
         visitor.visitAtomQuery(this);
+    }
+
+    toCount(): AtomRootQueryImpl<any> | undefined {
+        if (this.mutableQuery.groupByExprs != null) {
+            return undefined;
+        }
+        switch (this.projection.kind) {
+            case "ROOT_SINGLE":
+                if (this.projection.selection instanceof spi.AggregateExpr) {
+                    return undefined;
+                }
+                break;
+            case "ROOT_ARRAY":
+                for (const selection of this.projection.selections) {
+                    if (selection instanceof spi.AggregateExpr) {
+                        return undefined;
+                    }
+                }
+                break;
+            case "ROOT_MAP":
+                for (const key in this.projection.selections) {
+                    if (this.projection.selections[key] instanceof spi.AggregateExpr) {
+                        return undefined;
+                    }
+                }
+                break;
+        }
+        return new AtomRootQueryImpl(
+            this.mutableQuery,
+            new ValRootQueryProjection(dsl.count()),
+            {
+                distinct: false,
+                limit: -1,
+                offset: 0
+            }
+        );
     }
 }

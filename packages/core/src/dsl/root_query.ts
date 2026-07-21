@@ -78,6 +78,8 @@ export interface RootQuery<TProjection extends RootQueryProjection<any>> {
         RowTypeOf<TProjection, TNullAsUndefined> 
         | TNullAsUndefined extends true ? undefined : null
     >;
+
+    fetchCount(): Promise<number>;
 }
 
 export type FetchOptions<TNullAsUndefined extends boolean> = {

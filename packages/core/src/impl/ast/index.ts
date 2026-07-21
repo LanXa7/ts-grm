@@ -5,6 +5,7 @@ export { AbstractStrExpr } from "./str_expr";
 export { AbstractEsExpr } from "./es_expr";
 export { AbstractDtExpr } from "./dt_expr";
 export { AbstractPred } from "./pred";
+export { AggregateExpr } from "./aggregate_expr";
 export type { Node } from "./node";
 export type { DtDiffExpr, DtPlusExpr } from "./dt_expr";
 export type { BinaryNumExpr, UnaryMinusExpr } from "./num_expr";
@@ -26,7 +27,6 @@ export type { IsPred } from "./is_pred";
 export type { ValueExprContract } from "./literal";
 export type { PropExprContract } from "./prop_expr";
 export type { CoalesceExprContract } from "./coalesce_expr";
-export type { AggregateExpr } from "./aggregate_expr";
 export type { 
     ConcatExpr, 
     LeftExpr, 

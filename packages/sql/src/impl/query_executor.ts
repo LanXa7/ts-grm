@@ -21,7 +21,7 @@ import {
 } from "@ts-grm/core";
 import { MergedRootQueryImpl } from "./merged_query";
 import { AtomRootQueryImpl } from "./atom_root_query_impl";
-import { Composite } from "@/sql/fragment";
+import { Composite, Scope } from "@/sql/fragment";
 import { SqlBuilder } from "@/sql/sql_builder";
 import { DataRow, DataRowReader, DataRows } from "./data_row_reader";
 import { SqlClientImplementor } from "@/sql_client";
@@ -38,13 +38,14 @@ export function usingExplicitPurpose<R>(
 }
 
 export async function executeQuery<TProjection extends RootQueryProjection<any>>(
-    query: RootQuery<TProjection>
+    query: RootQuery<TProjection>,
+    options: ExecuteQueryOptions | undefined
 ): Promise<ReadonlyArray<any>> {
     const contract = query as any as spi.QueryContract;
     const sqlClient = contract.kind === "ATOM"
         ? (query as AtomRootQueryImpl<TProjection>).mutableQuery.sqlClient
         : (query as any as MergedRootQueryImpl<TProjection>).sqlClient;
-    const [sql, args] = buildStatement(sqlClient, query);
+    const [sql, args] = buildStatement(sqlClient, query, options);
     const transactionManager = sqlClient.driver.transactionManager;
     return transactionManager.executeReadonly(async () => {
         const dataRows = await sqlClient.executor.executeStatement(
@@ -55,7 +56,13 @@ export async function executeQuery<TProjection extends RootQueryProjection<any>>
         const dataRowReader = DataRowReader.of(dataRows);
         switch (contract.projection.kind) {
             case "ROOT_SINGLE":
-                return await readColumn(sqlClient, contract.projection.selection, dataRowReader);
+                return await readColumn(
+                    sqlClient, 
+                    options === "COUNT"
+                        ? dsl.count() as RootQuerySelection<any>
+                        : contract.projection.selection, 
+                    dataRowReader
+                );
             case "ROOT_ARRAY":
                 return await readColumnArray(sqlClient, contract.projection.selections, dataRowReader);
             default:
@@ -63,6 +70,12 @@ export async function executeQuery<TProjection extends RootQueryProjection<any>>
         }
     });
 }
+
+export type ExecuteQueryOptions =
+    "COUNT" | {
+        readonly limit: number;
+        readonly offset: number;
+    };
 
 async function readColumn(
     sqlClient: SqlClientImplementor,
@@ -113,14 +126,41 @@ async function readColumnArray(
 
 function buildStatement(
     sqlClient: SqlClientImplementor,
-    query: RootQuery<any>
+    query: RootQuery<any>,
+    options: ExecuteQueryOptions | undefined
 ): [string, ReadonlyArray<any>] {
-    const composite = Composite.of(query, sqlClient, undefined);
+    const composite = buildAst(sqlClient, query, options);
     const builder = SqlBuilder.of(sqlClient);
     composite.into(builder);
     const [sql, argumentMap] = builder.build();
     const args = Array.from(argumentMap.values());
     return [sql, args];
+}
+
+function buildAst(
+    sqlClient: SqlClientImplementor,
+    query: RootQuery<any>,
+    options: ExecuteQueryOptions | undefined
+): Composite {
+    if (options === "COUNT") {
+        if (query instanceof AtomRootQueryImpl) {
+            const countQuery = query.toCount();
+            if (countQuery != null) {
+                return Composite.of(countQuery, sqlClient, undefined);
+            }
+        }
+        const composite = new Composite();
+        composite.add("select ");
+        composite.add(new Scope("INDENT").add("count(1)"));
+        composite.add("from ");
+        composite.add(
+            new Scope("SUB_QUERY").add(
+                Composite.of(query, sqlClient, undefined)
+            )
+        );
+        return composite;
+    }
+    return Composite.of(query, sqlClient, undefined);
 }
 
 async function readDtos(
@@ -513,7 +553,7 @@ class AssociationResolver {
             const query = isRecursive
                 ? this._createRecursiveQuery(dependencies, view)
                 : this._createQuery(dependencies, view);
-            const [sql, args] = buildStatement(this._sqlClient, query);
+            const [sql, args] = buildStatement(this._sqlClient, query, undefined);
             const dataRows = await this._sqlClient.executor.executeStatement(sql, args, {
                 kind: isRecursive 
                     ? (this._byTargetKey ? "LOAD_RECURSIVE_TREE_KEY" : "LOAD_RECURSIVE_TREE")
@@ -580,7 +620,7 @@ class AssociationResolver {
             q.where(expressionsToAst(sourceExprs).in(...dependencies));
             return q.select(...selections);
         });
-        const [sql, args] = buildStatement(this._sqlClient, query);
+        const [sql, args] = buildStatement(this._sqlClient, query, undefined);
         const dataRows = await this._sqlClient.executor.executeStatement(sql, args, {
             kind: "LOAD_ASSOCIATION",
             prop: this._unresolvedField.prop as spi.EntityProp
@@ -789,7 +829,7 @@ class AssociationResolver {
             const selections = [...idExprArr, target.fetch(view)] as any as AtLeastTwo<SelectionLike>;
             return q.select(...selections);
         });
-        const [sql, args] = buildStatement(this._sqlClient, query);
+        const [sql, args] = buildStatement(this._sqlClient, query, undefined);
         const dataRows = await this._sqlClient.executor.executeStatement(sql, args, {
             kind: "LOAD_RECURSIVE_TREE_NODE",
             prop: this._unresolvedField.prop as spi.EntityProp

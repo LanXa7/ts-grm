@@ -29,12 +29,14 @@ export function max(
     expr: Expression<number, "">
 ): Expression<number | null, "">;
 
-export function max(
-    expr: Expression<string, "AS_NUMBER">
-): Expression<string | null, "AS_NUMBER">;
+export function max<
+    TAs extends "" | "AS_NUMBER"
+>(
+    expr: Expression<string, TAs>
+): Expression<string | null, TAs>;
 
 export function max(
-    expr: Expression<number, ""> | Expression<string, "AS_NUMBER">
+    expr: Expression<number, ""> | Expression<string, any>
 ): any {
     return new AggregateExpr("MAX", expr as any as AbstractExpr<any>);
 }
@@ -43,12 +45,14 @@ export function min(
     expr: Expression<number, "">
 ): Expression<number | null, "">;
 
-export function min(
-    expr: Expression<string, "AS_NUMBER">
-): Expression<string | null, "AS_NUMBER">;
+export function min<
+    TAs extends "" | "AS_NUMBER"
+>(
+    expr: Expression<string, TAs>
+): Expression<string | null, TAs>;
 
 export function min(
-    expr: Expression<number, ""> | Expression<string, "AS_NUMBER">
+    expr: Expression<number, ""> | Expression<string, any>
 ): any {
     return new AggregateExpr("MIN", expr as any as AbstractExpr<any>);
 }
