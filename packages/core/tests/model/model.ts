@@ -15,7 +15,7 @@ const BOOK_STORE_NEWEST_BOOK_CALCULATOR = Calculator.targetOf({
                     dsl.subQuery(BOOK, (q, book) => {
                         q.where(book.storeId.in(...ctx.keys));
                         q.groupBy(book.name);
-                        return q.select(book.name, dsl.max(book.edition).asNonNull());
+                        return q.select(book.name, dsl.max(book.edition));
                     })
                 )
             );

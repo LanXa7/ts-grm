@@ -85,7 +85,7 @@ describe("SubQueryTest", () => {
                         q.groupBy(book.name);
                         return q.select(
                             book.name,
-                            dsl.max(book.edition).asNonNull()
+                            dsl.max(book.edition)
                         );
                     })
                 )

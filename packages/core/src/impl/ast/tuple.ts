@@ -1,6 +1,6 @@
 import { ExpressionLike, Predicate } from "@/dsl/expression";
 import { TupleSubQuery } from "@/dsl/sub_query";
-import { ExprTuple, ExprTupleMatchable } from "@/dsl/tuple";
+import { ExprTuple, ExprTupleMatchable, NullitylessExpressions } from "@/dsl/tuple";
 import { AtLeastTwo } from "@/dsl/utils";
 import { Node } from "./node";
 import { AbstractPred } from "./pred";
@@ -37,7 +37,7 @@ export class ExprTupleImpl<
         ) as Predicate;
     }
 
-    inSubQuery(subQuery: TupleSubQuery<TExpressions>): Predicate {
+    inSubQuery(subQuery: TupleSubQuery<NullitylessExpressions<TExpressions>>): Predicate {
         return new TupleInSubQueryPred(
             this,
             subQuery as any,
@@ -53,7 +53,7 @@ export class ExprTupleImpl<
         ) as Predicate;
     }
 
-    notInSubQuery(subQuery: TupleSubQuery<TExpressions>): Predicate {
+    notInSubQuery(subQuery: TupleSubQuery<NullitylessExpressions<TExpressions>>): Predicate {
         return new TupleInSubQueryPred(
             this,
             subQuery as any,
