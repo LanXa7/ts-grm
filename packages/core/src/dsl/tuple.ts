@@ -32,7 +32,7 @@ export type ExprTupleMatchable<TExpressions extends ReadonlyArray<ExpressionLike
     ExprTuple<TExpressions> 
     | {
         readonly [K in keyof TExpressions]: 
-            TExpressions[K] extends Expression<infer T>
-            ? NonNullable<T> | Expression<NonNullable<T>>
+            TExpressions[K] extends Expression<infer T, infer As>
+            ? NonNullable<T> | Expression<NonNullable<T>, As>
             : never
     };

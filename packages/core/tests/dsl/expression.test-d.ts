@@ -3,15 +3,15 @@ import { expectTypeOf, it, describe } from "vitest";
 
 describe("ExpressionTest", () => {
 
-    function undefinedNumExpr(): Expression<number | undefined> {
+    function undefinedNumExpr(): Expression<number | undefined, ""> {
         throw new Error();
     }
 
-    function nullOrUndefinedNumber(): Expression<number | null | undefined> {
+    function nullOrUndefinedNumber(): Expression<number | null | undefined, ""> {
         throw new Error();
     }
 
-    function nonNullNumExpr(): Expression<number> {
+    function nonNullNumExpr(): Expression<number, ""> {
         throw new Error();
     }
 
@@ -35,27 +35,27 @@ describe("ExpressionTest", () => {
         expectTypeOf<typeof c>().toEqualTypeOf<Expression<string, "AS_NUMBER">>();
 
         const d = undefinedNumExpr().plus(nonNullNumExpr());
-        expectTypeOf<typeof d>().toEqualTypeOf<Expression<number | undefined>>();
+        expectTypeOf<typeof d>().toEqualTypeOf<Expression<number | undefined, "">>();
 
         const e = nonNullNumExpr().plus(undefinedNumExpr());
-        expectTypeOf<typeof e>().toEqualTypeOf<Expression<number | undefined>>();
+        expectTypeOf<typeof e>().toEqualTypeOf<Expression<number | undefined, "">>();
 
         const f = nonNullNumExpr().plus(nonNullNumExpr());
-        expectTypeOf<typeof f>().toEqualTypeOf<Expression<number>>();
+        expectTypeOf<typeof f>().toEqualTypeOf<Expression<number, "">>();
 
         const g = nonNullNumExpr().plus(nullOrUndefinedNumber());
-        expectTypeOf<typeof g>().toEqualTypeOf<Expression<number | null | undefined>>();
+        expectTypeOf<typeof g>().toEqualTypeOf<Expression<number | null | undefined, "">>();
     });
 
     it("TestCoalesc", () => {
         
         const a = undefinedNumExpr().coalesce(undefinedNumExpr(), nonNullNumExpr());
-        expectTypeOf<typeof a>().toEqualTypeOf<Expression<number>>();
+        expectTypeOf<typeof a>().toEqualTypeOf<Expression<number, "">>();
 
         const b = undefinedNumExpr().coalesce(undefinedNumExpr(), nullOrUndefinedNumber());
-        expectTypeOf<typeof b>().toEqualTypeOf<Expression<number | null | undefined>>();
+        expectTypeOf<typeof b>().toEqualTypeOf<Expression<number | null | undefined, "">>();
 
         const c = undefinedNumExpr().coalesce(undefinedNumExpr(), 3);
-        expectTypeOf<typeof c>().toEqualTypeOf<Expression<number>>();
+        expectTypeOf<typeof c>().toEqualTypeOf<Expression<number, "">>();
     });
 });

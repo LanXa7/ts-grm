@@ -29,7 +29,7 @@ export interface QueryFactory {
             ? AtomExpressionSubQuery<T>
             : AtomTupleSubQuery<T>
         : TProjection extends void
-            ? AtomExpressionSubQuery<Expression<number>>
+            ? AtomExpressionSubQuery<Expression<number, "">>
         : never;
         
     createAtomBaseQuery<

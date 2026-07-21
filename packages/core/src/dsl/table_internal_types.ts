@@ -63,14 +63,14 @@ export type __DslMembers<
                 ? TMembers[K] extends __I64PropContract<infer R, infer Nullity>
                     ? Expression<
                         MakeType<R, __CombinedNullity<TNullity, Nullity>>,
-                        R extends string ? "AS_NUMBER" : ""
+                        NonNullable<R> extends string ? "AS_NUMBER" : ""
                     >
                 : TMembers[K] extends __EnumSetPropContract<infer R>
                     ? Expression<
                         MakeType<R, TNullity>,
                         R extends string ? "AS_ENUM_SET" : ""
                     >
-                : Expression<MakeType<R, __CombinedNullity<TNullity, Nullity>>>
+                : Expression<MakeType<R, __CombinedNullity<TNullity, Nullity>>, "">
             : TMembers[K] extends __EmbeddedPropContract<infer R, infer Nullity, any>
                 ? () => __DslMembers<TModel, R, __CombinedNullity<TNullity, Nullity>, TJoinPolicy>
             : TJoinPolicy extends "NONE"
@@ -410,7 +410,7 @@ export interface __CollectionAction<TModelMembers> {
     size<TKey extends __CollectionKeys<TModelMembers>>(
         key: TKey,
         fn?: __AssociatedFilter<TModelMembers[TKey]>
-    ): Expression<number>;
+    ): Expression<number, "">;
 }
 
 export type __NullableBaseQuerySelectMapOf<

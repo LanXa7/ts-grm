@@ -201,7 +201,7 @@ export class CompoundPred extends AbstractPred {
         return new CompoundPred(newOp, newPreds);
     }
 
-    static of(op: CompoundOp, exprs: ReadonlyArray<Expression<boolean> | null | undefined>): AbstractPred | undefined {
+    static of(op: CompoundOp, exprs: ReadonlyArray<Expression<boolean, ""> | null | undefined>): AbstractPred | undefined {
         if (exprs == null) {
             return undefined;
         }

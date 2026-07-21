@@ -25,7 +25,7 @@ export function subQuery<
         ? AtomExpressionSubQuery<T>
         : AtomTupleSubQuery<T>
     : TProjection extends void
-        ? AtomExpressionSubQuery<Expression<number>>
+        ? AtomExpressionSubQuery<Expression<number, "">>
     : never {
     return getQueryFactory().createAtomSubQuery(...args);
 }

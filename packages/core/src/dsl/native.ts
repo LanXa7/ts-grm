@@ -15,7 +15,7 @@ export type NativeNumCreator = {
     (
         strings: TemplateStringsArray, 
         ...values: ReadonlyArray<NativeValueType>
-    ): Expression<number>;
+    ): Expression<number, "">;
 
     asString(
         strings: TemplateStringsArray, 
@@ -29,7 +29,7 @@ function num(
 ) {
     return new NativeNumExpr<number>(
         collectNativeParts(strings, ...values)
-    ) as any as Expression<number>;
+    ) as any as Expression<number, "">;
 }
 
 function numAsString(
@@ -38,7 +38,7 @@ function numAsString(
 ) {
     return new NativeNumExpr<string>(
         collectNativeParts(strings, ...values)
-    ) as any as Expression<string>;
+    ) as any as Expression<string, "">;
 }
 
 (num as any).asString = numAsString;
@@ -49,16 +49,16 @@ function str(
 ) {
     return new NativeStrExpr(
         collectNativeParts(strings, ...values)
-    ) as any as Expression<string>;
+    ) as any as Expression<string, "">;
 }
 
 function date(
     strings: TemplateStringsArray, 
     ...values: ReadonlyArray<NativeValueType>
-): Expression<Date> {
+): Expression<Date, ""> {
     return new NativeDtExpr(
         collectNativeParts(strings, ...values)
-    ) as any as Expression<Date>;
+    ) as any as Expression<Date, "">;
 }
 
 export const native = {

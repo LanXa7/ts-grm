@@ -44,6 +44,7 @@ import {
     __TsFormulaPropContract 
 } from "./prop_internal_types";
 import { AnyModel } from "./model";
+import { AsBound } from "@/dsl/expression";
 
 export class __Prop<T, TNullity extends __NullityType> 
 implements __PropContract<T, TNullity> {
@@ -982,7 +983,7 @@ export type __FormulaData = {
     readonly formula: TsFormula<any>;
 } | {
     readonly kind: "SQL";
-    readonly formula: SqlFormula<any>;
+    readonly formula: SqlFormula<any, any>;
 };
 
 export type __CalculatorKind = 
@@ -1258,8 +1259,11 @@ export type __FormulaCreator = {
         IsNull<R> extends true ? "NULLABLE" : "NONNULL"
     >;
 
-    sql<R>(
-        formula: SqlFormula<R>
+    sql<
+        R,
+        TAs extends AsBound<R>
+    >(
+        formula: SqlFormula<R, TAs>
     ): __SqlFormulaProp<
         NonNullable<R>,
         IsNull<R> extends true ? "NULLABLE" : "NONNULL"
@@ -1591,8 +1595,11 @@ export function __formulaCreator(): __FormulaCreator {
         });
     }
 
-    function sql<R>(
-        formula: SqlFormula<R>
+    function sql<
+        R,
+        TAs extends AsBound<R>
+    >(
+        formula: SqlFormula<R, TAs>
     ): __SqlFormulaProp<
         NonNullable<R>,
         IsNull<R> extends true ? "NULLABLE" : "NONNULL"

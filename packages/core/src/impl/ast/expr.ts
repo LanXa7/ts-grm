@@ -12,14 +12,16 @@ import { ExpressionSubQuery } from "@/dsl/sub_query";
 export abstract class AbstractExpr<T> extends AbstractSelection implements Node {
 
     __type(): {
-        selectionLike: true;
-        expressionLike: true;
-        expression: [T, any] | true;
+        readonly selectionLike: true;
+        readonly expressionLike: true;
+        readonly expression: true;
+        readonly anyExpression: true;
     } {
         return {
             selectionLike: true,
             expressionLike: true,
-            expression: true
+            expression: true,
+            anyExpression: true
         };
     }
 
@@ -217,15 +219,17 @@ export abstract class AbstractExpr<T> extends AbstractSelection implements Node 
 export abstract class AbstractCmpExpr<T> extends AbstractExpr<T> {
 
     __type(): { 
-        selectionLike: true;
-        expressionLike: true;
-        expression: [T, any] | true;
-        cmpExpression: T | true;
+        readonly selectionLike: true;
+        readonly expressionLike: true;
+        readonly expression: true;
+        readonly anyExpression: true;
+        readonly cmpExpression: true;
     } {
         return {
             selectionLike: true,
             expressionLike: true,
             expression: true,
+            anyExpression: true,
             cmpExpression: true
         };
     }

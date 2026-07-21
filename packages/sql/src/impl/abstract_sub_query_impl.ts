@@ -38,16 +38,18 @@ export abstract class AbstractTupleSubQueryImpl {
 export abstract class AbstractExprSubQueryImpl extends spi.AbstractExpr<any> {
 
     __type(): {
-        selectionLike: true;
-        expressionLike: true;
-        expression: [any, any] | true;
-        subQueryLike: true;
-        expressionSubQuery: true;
+        readonly selectionLike: true;
+        readonly expressionLike: true;
+        readonly expression: true;
+        readonly anyExpression: true;
+        readonly subQueryLike: true;
+        readonly expressionSubQuery: true;
     } {
         return {
             selectionLike: true,
             expressionLike: true,
             expression: true,
+            anyExpression: true,
             subQueryLike: true,
             expressionSubQuery: true
         };
@@ -73,18 +75,20 @@ export abstract class AbstractExprSubQueryImpl extends spi.AbstractExpr<any> {
 export abstract class AbstractNumSubQueryImpl extends spi.AbstractNumExpr<any> {
 
     __type(): {
-        selectionLike: true;
-        expressionLike: true;
-        expression: [any, any] | true;
-        cmpExpression: true;
-        numExpression: true;
-        subQueryLike: true;
-        expressionSubQuery: true;
+        readonly selectionLike: true;
+        readonly expressionLike: true;
+        readonly expression: true;
+        readonly anyExpression: true;
+        readonly cmpExpression: true;
+        readonly numExpression: true;
+        readonly subQueryLike: true;
+        readonly expressionSubQuery: true;
     } {
         return {
             selectionLike: true,
             expressionLike: true,
             expression: true,
+            anyExpression: true,
             cmpExpression: true,
             numExpression: true,
             subQueryLike: true,
@@ -112,18 +116,20 @@ export abstract class AbstractNumSubQueryImpl extends spi.AbstractNumExpr<any> {
 export abstract class AbstractStrSubQueryImpl extends spi.AbstractStrExpr {
 
     __type(): {
-        selectionLike: true;
-        expressionLike: true;
-        expression: [any, any] | true;
-        cmpExpression: true;
-        strExpression: true;
-        subQueryLike: true;
-        expressionSubQuery: true;
+        readonly selectionLike: true;
+        readonly expressionLike: true;
+        readonly expression: true;
+        readonly anyExpression: true;
+        readonly cmpExpression: true;
+        readonly strExpression: true;
+        readonly subQueryLike: true;
+        readonly expressionSubQuery: true;
     } {
         return {
             selectionLike: true,
             expressionLike: true,
             expression: true,
+            anyExpression: true,
             cmpExpression: true,
             strExpression: true,
             subQueryLike: true,
@@ -151,18 +157,20 @@ export abstract class AbstractStrSubQueryImpl extends spi.AbstractStrExpr {
 export abstract class AbstractDtSubQueryImpl extends spi.AbstractDtExpr {
 
     __type(): {
-        selectionLike: true;
-        expressionLike: true;
-        expression: [any, any] | true;
-        cmpExpression: true;
-        dtExpression: true;
-        subQueryLike: true;
-        expressionSubQuery: true;
+        readonly selectionLike: true;
+        readonly expressionLike: true;
+        readonly expression: true;
+        readonly anyExpression: true;
+        readonly cmpExpression: true;
+        readonly dtExpression: true;
+        readonly subQueryLike: true;
+        readonly expressionSubQuery: true;
     } {
         return {
             selectionLike: true,
             expressionLike: true,
             expression: true,
+            anyExpression: true,
             cmpExpression: true,
             dtExpression: true,
             subQueryLike: true,

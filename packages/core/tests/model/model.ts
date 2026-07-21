@@ -100,7 +100,7 @@ export const ONLINE_BOOK_STORE = model.extends(BOOK_STORE)(
     })
 );
 
-const BOOK_AUTHOR_COUNT_FORMULA: SqlFormula<number> = 
+const BOOK_AUTHOR_COUNT_FORMULA: SqlFormula<number, ""> = 
     SqlFormula.of({
         valueType: z.number(),
         sourceModel: () => BOOK,
