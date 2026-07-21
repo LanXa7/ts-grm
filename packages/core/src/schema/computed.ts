@@ -34,7 +34,7 @@ export type TsFormulaFn<
     TValue
 > = (data: TBaseShape) => TValue;
 
-export class SqlFormula<TValue, TAs extends AsBound<TValue>> {
+export class SqlFormula<TValue, TAs extends AsBound<TValue> = ""> {
 
     private constructor(
         readonly valueType: StandardSchemaV1,
