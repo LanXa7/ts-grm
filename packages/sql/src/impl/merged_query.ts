@@ -3,7 +3,8 @@ import { AbstractBaseQueryImpl } from "./abstract_base_query_impl";
 import { AbstractDtSubQueryImpl, AbstractExprSubQueryImpl, AbstractNumSubQueryImpl, AbstractStrSubQueryImpl, AbstractTupleSubQueryImpl } from "./abstract_sub_query_impl";
 import { SqlClientImplementor } from "@/sql_client";
 import { AtomRootQueryImpl } from "./atom_root_query_impl";
-import { executeQuery } from "./query_executor";
+import { executeQuery } from "./query_executor/execute_query";
+import { exeuctePageQuery, finalRangeOptions } from "./query_executor/execute_page_query";
 
 export class MergedRootQueryImpl<
     TProjection extends RootQueryProjection<any>
@@ -29,8 +30,7 @@ export class MergedRootQueryImpl<
     >(
         options: FetchRangeOptions & FetchOptions<TNullAsUndefined>
     ): Promise<Array<RowTypeOf<TProjection, TNullAsUndefined>>> {
-        suppressUnused(options);
-        throw new Error();
+        return await executeQuery(this, finalRangeOptions(options, undefined)) as Array<RowTypeOf<TProjection, TNullAsUndefined>>;
     }
 
     async fetchPage<
@@ -38,8 +38,7 @@ export class MergedRootQueryImpl<
     >(
         options: FetchPageOptions & FetchOptions<TNullAsUndefined>
     ): Promise<Page<RowTypeOf<TProjection, TNullAsUndefined>>> {
-        suppressUnused(options);
-        throw new Error();
+        return exeuctePageQuery(this, options);
     }
 
     fetchRequired<TNullAsUndefined extends boolean = false>(

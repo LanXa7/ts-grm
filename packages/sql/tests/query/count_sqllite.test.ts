@@ -13,6 +13,7 @@ describe.sequential("CountSqliteTest", () => {
     it("countOnSingleQuery", async () => {
         const count = await sqlClient.createQuery(BOOK, (q, book) => {
             q.where(book.edition.eq(3));
+            q.orderBy(book.name); // order will be ignored in count mode
             return q.select(
                 book.fetch(
                     dto.view(BOOK, c => [

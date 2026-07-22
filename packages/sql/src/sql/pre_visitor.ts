@@ -31,7 +31,9 @@ export class PreVisitor extends spi.AbstractVisitor {
         const projection = query.projection;
         switch (projection.kind) {
             case "ROOT_SINGLE":
-                (projection.selection as any as spi.Node).accept(this);
+                if (!query.options.countMode) {
+                    (projection.selection as any as spi.Node).accept(this);
+                }
                 break;
             case "ROOT_ARRAY":
                 for (const selection of projection.selections) {

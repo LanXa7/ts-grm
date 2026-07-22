@@ -70,13 +70,15 @@ export type ProjectionContract = {
     args: { readonly [key: string]: ExpressionLike | __TableLike; }
 };
 
-export type AtomQueryOptions = {
+export interface AtomQueryOptions {
+    readonly countMode: boolean;
     readonly distinct: boolean;
     readonly limit: number;
     readonly offset: number;
 };
 
 export const defaultAtomQueryOptions: AtomQueryOptions = {
+    countMode: false,
     distinct: false,
     limit: -1,
     offset: 0

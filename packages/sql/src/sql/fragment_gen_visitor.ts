@@ -133,7 +133,11 @@ export class FragmentGenGenVisitor extends spi.AbstractVisitor {
                 this._compositeStack.current.add("distinct ");
             }
             using _ = this._compositeStack.with(new Scope("COMMA"));
-            this._visitProjection(query.projection);
+            if (query.options.countMode) {
+                this._compositeStack.current.add("count(1)");
+            } else {
+                this._visitProjection(query.projection);
+            }
         }
 
         {
@@ -182,7 +186,7 @@ export class FragmentGenGenVisitor extends spi.AbstractVisitor {
         }
 
         const orders = query.orders;
-        if (orders.length !== 0) {
+        if (orders.length !== 0 && !query.options.countMode) {
             this._compositeStack.current.add("\norder by ");
             using _ = this._compositeStack.with(new Scope("COMMA"));
             const current = this._compositeStack.current;
