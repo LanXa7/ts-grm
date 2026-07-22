@@ -1275,4 +1275,76 @@ describe.sequential("QuerySqlTest", () => {
             ]
         ]);
     });
+
+    it("except", async() => {
+        const view = dto.view(BOOK, c => [
+            c.name,
+            c.store.with(c => [c.name]),
+            c.authors.with(c => [c.name])
+        ]);
+        const rows = await dsl.except(
+            sqlClient.createQuery(BOOK, (q, book) => {
+                q.where(book.edition.eq(3));
+                return q.select(book.fetch(view));
+            }),
+            sqlClient.createQuery(BOOK, (q, book) => {
+                q.where(book.name.ilike("graphql"));
+                return q.select(book.fetch(view));
+            })
+        ).fetchList();
+        sqlRecord.assert(
+            {
+                sql: `
+                    select 
+                        tb_1_.NAME,
+                        tb_1_.STORE_ID,
+                        tb_1_.ID
+                    from BOOK tb_1_
+                    where 
+                        tb_1_.EDITION = ?
+                    except
+                    select 
+                        tb_2_.NAME,
+                        tb_2_.STORE_ID,
+                        tb_2_.ID
+                    from BOOK tb_2_
+                    where 
+                        lower(tb_2_.NAME) like ?
+                `,
+                args: [3, "%graphql%"],
+                purpose: "query"
+            },
+            {
+                sql: `
+                    select 
+                        tb_1_.ID,
+                        tb_1_.NAME
+                    from BOOK_STORE tb_1_
+                    where 
+                        tb_1_.ID = ?
+                `,
+                args: [1],
+                purpose: "loadAssociation(Book.store)"
+            },
+            {
+                sql: `
+                    select 
+                        tb_2_.book_id,
+                        tb_1_.FIRST_NAME,
+                        tb_1_.LAST_NAME
+                    from AUTHOR tb_1_
+                    inner join book_author_mapping tb_2_ on 
+                        tb_1_.ID = tb_2_.author_id
+                    where 
+                        tb_2_.book_id in(?, ?)
+                    order by 
+                        tb_1_.FIRST_NAME asc,
+                        tb_1_.LAST_NAME asc
+                `,
+                args: [6, 9],
+                purpose: "loadAssociation(Book.authors)"
+            }
+        );
+        console.log(JSON.stringify(rows));
+    });
 });

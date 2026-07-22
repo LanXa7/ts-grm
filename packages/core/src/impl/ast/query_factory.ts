@@ -68,7 +68,7 @@ export interface QueryFactory {
     ): BaseQuery<TProjection>;
 }
 
-export type MergedQueryKind = "UNION" | "UNION_ALL" | "MINUS" | "INTERSECT";
+export type MergedQueryKind = "UNION" | "UNION_ALL" | "EXCEPT" | "EXCEPT_ALL" | "INTERSECT" | "INTERSECT_ALL";
 
 let queryFactory: QueryFactory | undefined = undefined;
 

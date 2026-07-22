@@ -1,7 +1,7 @@
 import { count, sum, min, max, avg } from "./aggregate";
 import { and, constant, not, or } from "./expression";
 import { all, any, exists, notExists, subQuery } from "./sub_query";
-import { unionAll, union, minus, intersect } from "./merged_query";
+import { unionAll, union, except, exceptAll, intersect, intersectAll } from "./merged_query";
 import { native } from "./native";
 import { baseQuery, cteModel, derivedModel } from "./base_query";
 import { associationModel } from "./association";
@@ -72,8 +72,10 @@ export const dsl = {
     notExists,
     unionAll,
     union,
-    minus,
+    except,
+    exceptAll,
     intersect,
+    intersectAll,
     baseQuery,
     derivedModel,
     cteModel,

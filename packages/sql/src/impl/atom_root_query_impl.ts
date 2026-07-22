@@ -1,7 +1,7 @@
 import { spi, ExpressionOrder, AtomRootQuery, RootQueryProjection, RowTypeOf, suppressUnused, err, FetchOptions, FetchRangeOptions, FetchPageOptions, Page, dsl } from "@ts-grm/core";
 import { MutableRootQueryImpl } from "./mutable_root_query_impl";
 import { AbstractRootQueryProjection, ValRootQueryProjection } from "./query_projection";
-import { executeQuery } from "./query_executor";
+import { executeQuery, ExecuteQueryOptions, fetchPageImpl } from "./query_executor";
 
 export class AtomRootQueryImpl<TProjection extends RootQueryProjection<any>> 
 implements AtomRootQuery<TProjection>, spi.AtomQueryContract {
@@ -63,8 +63,7 @@ implements AtomRootQuery<TProjection>, spi.AtomQueryContract {
     >(
         options: FetchRangeOptions & FetchOptions<TNullAsUndefined>
     ): Promise<Array<RowTypeOf<TProjection, TNullAsUndefined>>> {
-        suppressUnused(options);
-        throw new Error();
+        return await executeQuery(this, this._executeQueryOptions(options)) as Array<RowTypeOf<TProjection, TNullAsUndefined>>;
     }
 
     async fetchPage<
@@ -72,8 +71,7 @@ implements AtomRootQuery<TProjection>, spi.AtomQueryContract {
     >(
         options: FetchPageOptions & FetchOptions<TNullAsUndefined>
     ): Promise<Page<RowTypeOf<TProjection, TNullAsUndefined>>> {
-        suppressUnused(options);
-        throw new Error();
+        return fetchPageImpl(this, options);
     }
 
     async fetchRequired<TNullAsUndefined extends boolean = false>(
@@ -190,5 +188,25 @@ implements AtomRootQuery<TProjection>, spi.AtomQueryContract {
                 offset: 0
             }
         );
+    }
+
+    private _executeQueryOptions(
+        options: FetchRangeOptions | undefined
+    ): ExecuteQueryOptions | undefined {
+        const limitArgs = options?.limit ?? -1;
+        const offsetArgs = options?.offset ?? 0;
+        const limitProp = this.options.limit;
+        const offsetProp = this.options.offset;
+        if (limitArgs !== -1 && limitProp !== -1) {
+            throw new err.StateError(`Conflict configuration: limit is configured in both query and fetch options`);
+        }
+        if (offsetArgs !== 0 && offsetProp !== 0) {
+            throw new err.StateError(`Conflict configuration: offset is configured in both query and fetch options`);
+        }
+        const limit = limitArgs !== -1 ? limitArgs : limitProp;
+        const offset = offsetArgs !== 0 ? offsetArgs : offsetProp;
+        return limit === -1 && offset === 0
+            ? undefined
+            : { limit, offset };
     }
 }

@@ -3,6 +3,7 @@ import { AbstractBaseQueryImpl } from "./abstract_base_query_impl";
 import { AbstractDtSubQueryImpl, AbstractExprSubQueryImpl, AbstractNumSubQueryImpl, AbstractStrSubQueryImpl, AbstractTupleSubQueryImpl } from "./abstract_sub_query_impl";
 import { SqlClientImplementor } from "@/sql_client";
 import { AtomRootQueryImpl } from "./atom_root_query_impl";
+import { executeQuery } from "./query_executor";
 
 export class MergedRootQueryImpl<
     TProjection extends RootQueryProjection<any>
@@ -16,11 +17,11 @@ export class MergedRootQueryImpl<
         return "ROOT";
     }
     
-    fetchList<TNullAsUndefined extends boolean = false>(
+    async fetchList<TNullAsUndefined extends boolean = false>(
         options?: FetchOptions<TNullAsUndefined>
     ): Promise<Array<RowTypeOf<TProjection, TNullAsUndefined>>> {
         suppressUnused(options);
-        throw new Error();
+        return await executeQuery(this, undefined) as Array<RowTypeOf<TProjection, TNullAsUndefined>>;
     }
 
     async fetchRange<
@@ -58,8 +59,9 @@ export class MergedRootQueryImpl<
         throw new Error();
     }
 
-    fetchCount(): Promise<number> {
-        throw new Error();
+    async fetchCount(): Promise<number> {
+        const rows = await executeQuery(this, "COUNT");
+        return rows[0];
     }
 
     constructor(

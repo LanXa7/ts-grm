@@ -17,11 +17,15 @@ import {
     BaseModel,
     BaseQuerySelectMapArgs,
     spi,
-    __EntityTableLike
+    __EntityTableLike,
+    FetchRangeOptions,
+    FetchOptions,
+    FetchPageOptions,
+    Page,
 } from "@ts-grm/core";
 import { MergedRootQueryImpl } from "./merged_query";
 import { AtomRootQueryImpl } from "./atom_root_query_impl";
-import { Composite, Scope } from "@/sql/fragment";
+import { Composite, Scope, Value } from "@/sql/fragment";
 import { SqlBuilder } from "@/sql/sql_builder";
 import { DataRow, DataRowReader, DataRows } from "./data_row_reader";
 import { SqlClientImplementor } from "@/sql_client";
@@ -72,10 +76,7 @@ export async function executeQuery<TProjection extends RootQueryProjection<any>>
 }
 
 export type ExecuteQueryOptions =
-    "COUNT" | {
-        readonly limit: number;
-        readonly offset: number;
-    };
+    "COUNT" | FetchRangeOptions;
 
 async function readColumn(
     sqlClient: SqlClientImplementor,
@@ -159,6 +160,17 @@ function buildAst(
             )
         );
         return composite;
+    }
+    if (options != null) {
+        if (query instanceof AtomRootQueryImpl) {
+            const composite = new Composite();
+            composite.add(Composite.of(query, sqlClient, undefined));
+            composite.add("\nlimit ").add(new Value(options.limit));
+            if (options.offset != null) {
+                composite.add("\noffset ").add(new Value(options.offset));
+            }
+            return composite;
+        }
     }
     return Composite.of(query, sqlClient, undefined);
 }
@@ -1277,3 +1289,49 @@ export function capitalize(str: string): string {
     const rest = str.slice(firstChar.length);
     return firstChar.toUpperCase() + rest;
 }
+
+
+export async function fetchPageImpl(
+    query: RootQuery<any>,
+    options: FetchPageOptions & FetchOptions<any>
+): Promise<Page<any>> {
+    const pageNo = options.pageNo ?? 1;
+    if (pageNo < 1) {
+        throw new err.ArgumentError(`options.pageNo must be greater than or equal to 1, but it is ${pageNo}`);
+    }
+    const pageSize = options.pageSize;
+    if (pageSize < 1) {
+        throw new err.ArgumentError(`options.pageNo must be greater than or equal to 1, but it is ${pageSize}`);
+    }
+    const count = await query.fetchCount();
+    if (count === 0) {
+        return {...EMPTY_PAGE, pageNo};
+    }
+    const pageCount = Math.round((count + pageSize - 1) / pageSize);
+    const actualPageNo = pageNo < pageCount ? pageNo : pageCount;
+    const rangeOptions: FetchRangeOptions & FetchOptions<boolean> = {
+        limit: pageSize,
+        offset: actualPageNo === 0 
+            ? undefined : 
+            (actualPageNo - 1) * pageSize,
+        nullAsUndefined: options.nullAsUndefined
+    };
+    const rows = await query.fetchRange(rangeOptions);
+    return {
+        totalRowCount: count,
+        totalPageCount: pageCount,
+        pageNo: actualPageNo,
+        isFirstPage: actualPageNo === 1,
+        isLastPage: actualPageNo === pageCount,
+        rows
+    };
+}
+
+const EMPTY_PAGE: Page<any> = {
+    totalRowCount: 0,
+    totalPageCount: 0,
+    pageNo: 1,
+    isFirstPage: false,
+    isLastPage: false,
+    rows: []
+};

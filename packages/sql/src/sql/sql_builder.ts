@@ -42,6 +42,10 @@ export class SqlBuilder {
         )
     }
 
+    get isEmpty(): boolean {
+        return this._parts.length === 0;
+    }
+
     get pretty(): boolean {
         return this._pretty;
     }

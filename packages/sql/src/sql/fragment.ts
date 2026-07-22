@@ -93,8 +93,11 @@ export class Scope extends Composite {
                 case "UNION_ALL":
                     this.add(Separator.UNION_ALL);
                     break;
-                case "MINUS":
-                    this.add(Separator.MINUS);
+                case "EXCEPT":
+                    this.add(Separator.EXCEPT);
+                    break;
+                case "EXCEPT_ALL":
+                    this.add(Separator.EXCEPT_ALL);
                     break;
                 case "INTERSECT":
                     this.add(Separator.INTERSECT);
@@ -115,7 +118,7 @@ export class Scope extends Composite {
             builder.sql("(");
             this._renderChildren(builder);
             builder.sql(")");
-        } else if (builder.pretty) {
+        } else if (builder.pretty && !builder.isEmpty) {
             if (this._kind === "VALUES" || this._kind === "SUB_QUERY") {
                 builder.sql("(\n");
                 this._renderChildren(builder);
@@ -146,8 +149,10 @@ export class Scope extends Composite {
             switch (this._kind) {
                 case "UNION":
                 case "UNION_ALL":
-                case "MINUS":
+                case "EXCEPT":
+                case "EXCEPT_ALL":
                 case "INTERSECT":
+                case "INTERSECT_ALL":
                 case "NO_INDENT_PAREN":
                     indent = false;
                     break;
@@ -190,8 +195,10 @@ export type ScopeKind =
     | "OR" 
     | "UNION" 
     | "UNION_ALL" 
-    | "MINUS" 
+    | "EXCEPT"
+    | "EXCEPT_ALL" 
     | "INTERSECT"
+    | "INTERSECT_ALL"
     | "NO_INDENT_PAREN";
 
 export class Separator extends Fragment {
@@ -206,9 +213,13 @@ export class Separator extends Fragment {
 
     static UNION_ALL = new Separator("\nunion all\n");
 
-    static MINUS = new Separator("\nminus\n");
+    static EXCEPT = new Separator("\nexcept\n");
+
+    static EXCEPT_ALL = new Separator("\nexcept all\n");
 
     static INTERSECT = new Separator("\nintersect\n");
+
+    static INTERSECT_ALL = new Separator("\nintersect all\n");
 
     private constructor(
         readonly text: string

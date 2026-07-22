@@ -2,50 +2,9 @@ import { RootQuery, RootQueryProjection } from "./root_query";
 import { ExpressionSubQuery, TupleSubQuery } from "./sub_query";
 import { BaseQuery } from "./base_query";
 import { AtLeastOne } from "./utils";
-import { getQueryFactory } from "@/impl/ast/query_factory";
+import { getQueryFactory, MergedQueryKind } from "@/impl/ast/query_factory";
 import { StateError } from "@/error/common";
 
-export function unionAll<
-    TProjection extends RootQueryProjection<any>
->(
-    ...queries: AtLeastOne<RootQuery<TProjection>>
-): RootQuery<TProjection>;
-
-export function unionAll<TProjection>(
-    ...queries: AtLeastOne<ExpressionSubQuery<TProjection>>
-): ExpressionSubQuery<TProjection>;
-
-export function unionAll<TProjection>(
-    ...queries: AtLeastOne<TupleSubQuery<TProjection>>
-): TupleSubQuery<TProjection>;
-
-export function unionAll<TProjection>(
-    ...queries: AtLeastOne<BaseQuery<TProjection>>
-): BaseQuery<TProjection>;
-
-export function unionAll(
-    ...queries: any[]
-): any {
-    const query = queries[0];
-    if (queries.length === 1) {
-        return query;
-    }
-    const type = query.__type();
-    const queryFactory = getQueryFactory();
-    if (type.rootQuery) {
-        return queryFactory.createMergedRootQuery("UNION_ALL", queries);
-    }
-    if (type.expressionSubQuery) {
-        return queryFactory.createMergedExpressionSubQuery("UNION_ALL", queries);
-    }
-    if (type.tupleSubQuery) {
-        return queryFactory.createMergedTupleSubQuery("UNION_ALL", queries);
-    }
-    if (type.baseQuery) {
-        return queryFactory.createMergedBaseQuery("UNION_ALL", queries);
-    }
-    throw new StateError("Illegal arguments");
-}
 
 export function union<
     TProjection extends RootQueryProjection<any>
@@ -68,68 +27,84 @@ export function union<TProjection>(
 export function union(
     ...queries: any[]
 ): any {
-    const query = queries[0];
-    if (queries.length === 1) {
-        return query;
-    }
-    const type = query.__type();
-    const queryFactory = getQueryFactory();
-    if (type.rootQuery) {
-        return queryFactory.createMergedRootQuery("UNION", queries);
-    }
-    if (type.expressionSubQuery) {
-        return queryFactory.createMergedExpressionSubQuery("UNION", queries);
-    }
-    if (type.tupleSubQuery) {
-        return queryFactory.createMergedTupleSubQuery("UNION", queries);
-    }
-    if (type.baseQuery) {
-        return queryFactory.createMergedBaseQuery("UNION", queries);
-    }
-    throw new StateError("Illegal arguments");
+    return merge("UNION", queries);
 }
 
-export function minus<
+
+export function unionAll<
     TProjection extends RootQueryProjection<any>
 >(
     ...queries: AtLeastOne<RootQuery<TProjection>>
 ): RootQuery<TProjection>;
 
-export function minus<TProjection>(
+export function unionAll<TProjection>(
     ...queries: AtLeastOne<ExpressionSubQuery<TProjection>>
 ): ExpressionSubQuery<TProjection>;
 
-export function minus<TProjection>(
+export function unionAll<TProjection>(
     ...queries: AtLeastOne<TupleSubQuery<TProjection>>
 ): TupleSubQuery<TProjection>;
 
-export function minus<TProjection>(
+export function unionAll<TProjection>(
     ...queries: AtLeastOne<BaseQuery<TProjection>>
 ): BaseQuery<TProjection>;
 
-export function minus(
+export function unionAll(
     ...queries: any[]
 ): any {
-    const query = queries[0];
-    if (queries.length === 1) {
-        return query;
-    }
-    const type = query.__type();
-    const queryFactory = getQueryFactory();
-    if (type.rootQuery) {
-        return queryFactory.createMergedRootQuery("MINUS", queries);
-    }
-    if (type.expressionSubQuery) {
-        return queryFactory.createMergedExpressionSubQuery("MINUS", queries);
-    }
-    if (type.tupleSubQuery) {
-        return queryFactory.createMergedTupleSubQuery("MINUS", queries);
-    }
-    if (type.baseQuery) {
-        return queryFactory.createMergedBaseQuery("MINUS", queries);
-    }
-    throw new StateError("Illegal arguments");
+    return merge("UNION_ALL", queries);
 }
+
+
+export function except<
+    TProjection extends RootQueryProjection<any>
+>(
+    ...queries: AtLeastOne<RootQuery<TProjection>>
+): RootQuery<TProjection>;
+
+export function except<TProjection>(
+    ...queries: AtLeastOne<ExpressionSubQuery<TProjection>>
+): ExpressionSubQuery<TProjection>;
+
+export function except<TProjection>(
+    ...queries: AtLeastOne<TupleSubQuery<TProjection>>
+): TupleSubQuery<TProjection>;
+
+export function except<TProjection>(
+    ...queries: AtLeastOne<BaseQuery<TProjection>>
+): BaseQuery<TProjection>;
+
+export function except(
+    ...queries: any[]
+): any {
+    return merge("EXCEPT", queries);
+}
+
+
+export function exceptAll<
+    TProjection extends RootQueryProjection<any>
+>(
+    ...queries: AtLeastOne<RootQuery<TProjection>>
+): RootQuery<TProjection>;
+
+export function exceptAll<TProjection>(
+    ...queries: AtLeastOne<ExpressionSubQuery<TProjection>>
+): ExpressionSubQuery<TProjection>;
+
+export function exceptAll<TProjection>(
+    ...queries: AtLeastOne<TupleSubQuery<TProjection>>
+): TupleSubQuery<TProjection>;
+
+export function exceptAll<TProjection>(
+    ...queries: AtLeastOne<BaseQuery<TProjection>>
+): BaseQuery<TProjection>;
+
+export function exceptAll(
+    ...queries: any[]
+): any {
+    return merge("EXCEPT_ALL", queries);
+}
+
 
 export function intersect<
     TProjection extends RootQueryProjection<any>
@@ -152,6 +127,39 @@ export function intersect<TProjection>(
 export function intersect(
     ...queries: any[]
 ): any {
+    return merge("INTERSECT", queries);
+}
+
+
+export function intersectAll<
+    TProjection extends RootQueryProjection<any>
+>(
+    ...queries: AtLeastOne<RootQuery<TProjection>>
+): RootQuery<TProjection>;
+
+export function intersectAll<TProjection>(
+    ...queries: AtLeastOne<ExpressionSubQuery<TProjection>>
+): ExpressionSubQuery<TProjection>;
+
+export function intersectAll<TProjection>(
+    ...queries: AtLeastOne<TupleSubQuery<TProjection>>
+): TupleSubQuery<TProjection>;
+
+export function intersectAll<TProjection>(
+    ...queries: AtLeastOne<BaseQuery<TProjection>>
+): BaseQuery<TProjection>;
+
+export function intersectAll(
+    ...queries: any[]
+): any {
+    return merge("INTERSECT_ALL", queries);
+}
+
+
+function merge(
+    kind: MergedQueryKind,
+    queries: any[]
+): any {
     const query = queries[0];
     if (queries.length === 1) {
         return query;
@@ -159,16 +167,16 @@ export function intersect(
     const type = query.__type();
     const queryFactory = getQueryFactory();
     if (type.rootQuery) {
-        return queryFactory.createMergedRootQuery("INTERSECT", queries);
+        return queryFactory.createMergedRootQuery(kind, queries);
     }
     if (type.expressionSubQuery) {
-        return queryFactory.createMergedExpressionSubQuery("INTERSECT", queries);
+        return queryFactory.createMergedExpressionSubQuery(kind, queries);
     }
     if (type.tupleSubQuery) {
-        return queryFactory.createMergedTupleSubQuery("INTERSECT", queries);
+        return queryFactory.createMergedTupleSubQuery(kind, queries);
     }
     if (type.baseQuery) {
-        return queryFactory.createMergedBaseQuery("INTERSECT", queries);
+        return queryFactory.createMergedBaseQuery(kind, queries);
     }
     throw new StateError("Illegal arguments");
 }
