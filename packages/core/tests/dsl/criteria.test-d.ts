@@ -1,8 +1,9 @@
 import { SqlClient } from "@/dsl/sql_client";
-import { test } from "vitest";
-import { BOOK } from "../model/model";
+import { describe, it } from "vitest";
+import { BOOK, ELECTRONIC_BOOK, PAPER_BOOK } from "../model/model";
 import { expectTypeOf } from "vitest";
 import { dto } from "@/index";
+import { criteria } from "@/dsl/criteria";
 
 function sqlClient(): SqlClient {
     throw new Error("Not implemented");
@@ -12,28 +13,59 @@ const SIMPLE_BOOK_VIEW = dto.view(BOOK, c => [
     c.$allScalars.exclude("price")
 ]);
 
-test("TestCriteria", async () => {
-    const view = await sqlClient().findOne(SIMPLE_BOOK_VIEW, {
-        $or: [
-            { name: { $icontains: "graphql" } },
-            { name: { $icontains: "typescript"} }
-        ],
-        price: { $gte: 10, $lteIf: undefined },
-        store: { $isNull: false },
-        authors: { 
-            $none: {
-                name: {
-                    $or: {
-                        firstName: "unkonwn",
-                        lastName: "unkown"
+describe("TestCriteria", () => {
+
+    it("simple", async () => {
+        const row = await sqlClient().findOne(SIMPLE_BOOK_VIEW, {
+            $or: [
+                { name: { $icontains: "graphql" } },
+                { name: { $icontains: "typescript"} }
+            ],
+            price: { $gte: 10, $lteIf: undefined },
+            store: { $isNull: false },
+            authors: { 
+                $none: {
+                    name: {
+                        $or: {
+                            firstName: "unkonwn",
+                            lastName: "unkown"
+                        }
                     }
                 }
             }
-        }
+        });
+        expectTypeOf<typeof row>().toEqualTypeOf<{
+            id: number;
+            name: string;
+            edition: number;
+        }>();
     });
-    expectTypeOf<typeof view>().toEqualTypeOf<{
-        id: number;
-        name: string;
-        edition: number;
-    }>();
+
+    it("instanceOf", async () => {
+        const row = await sqlClient().findOne(SIMPLE_BOOK_VIEW, {
+            $or: [
+                {
+                    $instanceOf: criteria.instanceOf(BOOK, PAPER_BOOK, {
+                        size: {
+                            width: {
+                                $gt: 200
+                            }
+                        }
+                    })
+                },
+                {
+                    $instanceOf: criteria.instanceOf(BOOK, ELECTRONIC_BOOK, {
+                        address: {
+                            $startsWith: "https://"
+                        }
+                    })
+                }
+            ]
+        });
+        expectTypeOf<typeof row>().toEqualTypeOf<{
+            id: number;
+            name: string;
+            edition: number;
+        }>();
+    });
 });
