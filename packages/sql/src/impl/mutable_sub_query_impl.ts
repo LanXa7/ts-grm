@@ -27,6 +27,20 @@ implements MutableSubQuery {
     ): SubQueryProjection<TExpression, "EXPRESSION">;
 
     select(...args: any[]): SubQueryProjection<any, any> {
-        return AbstractSubQueryProjection.of(args);
+        return AbstractSubQueryProjection.of(args, false);
+    }
+
+    selectDistinct<
+            const TExpressions extends SubQuerySelectArrArgs,
+    >(
+        ...expressions: TExpressions
+    ): SubQueryProjection<TExpressions, "TUPLE">;
+
+    selectDistinct<TExpression extends ExpressionLike>(
+        expression: TExpression
+    ): SubQueryProjection<TExpression, "EXPRESSION">;
+
+    selectDistinct(...args: any[]): SubQueryProjection<any, any> {
+        return AbstractSubQueryProjection.of(args, true);
     }
 }

@@ -68,6 +68,12 @@ export interface MutableBaseQuery {
     >(
         selectionMap: TSelectionMap
     ): BaseQueryProjection<TSelectionMap>;
+
+    selectDistinct<
+        const TSelectionMap extends BaseQuerySelectMapArgs
+    >(
+        selectionMap: TSelectionMap
+    ): BaseQueryProjection<TSelectionMap>;
 }
 
 export interface RecursiveMutableBaseQuery<TProjection> 

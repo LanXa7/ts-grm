@@ -1,7 +1,6 @@
 import { 
     spi,
     AtomBaseQuery, 
-    BaseQuery, 
     BaseQueryMapOf, 
     ExpressionOrder, 
 } from "@ts-grm/core";
@@ -36,7 +35,7 @@ implements
         return { baseQuery: true, atomBaseQuery: true };
     }
 
-    distinct(): BaseQuery<TProjection> {
+    distinct(): AtomBaseQuery<TProjection> {
         return new AtomBaseQueryImpl(
             this.mutableQuery,
             this.recursivePred,

@@ -44,6 +44,28 @@ export interface MutableRootQuery {
         [K in keyof TSelections]: 
             TSelections[K] extends RootQuerySelection<infer U> ? RootQuerySelection<U> : never
     }, "MAP">;
+
+    selectDistinct<TSelection extends SelectionLike>(
+        selection: TSelection
+    ) : RootQueryProjection<TSelection, "ONE">;
+
+    selectDistinct<
+        const TSelections extends RootQuerySelectArrArgs
+    >(
+        ...selections: TSelections
+    ): RootQueryProjection<{
+        [K in keyof TSelections]: 
+            TSelections[K] extends RootQuerySelection<infer U> ? RootQuerySelection<U> : never
+    }, "ARRAY">;
+
+    selectDistinct<
+        const TSelections extends RootQuerySelectMapArgs
+    >(
+        selections: TSelections
+    ): RootQueryProjection<{
+        [K in keyof TSelections]: 
+            TSelections[K] extends RootQuerySelection<infer U> ? RootQuerySelection<U> : never
+    }, "MAP">;
 }
 
 export interface RootQuery<TProjection extends RootQueryProjection<any>> {

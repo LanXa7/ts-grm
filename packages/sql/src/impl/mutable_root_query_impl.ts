@@ -41,6 +41,32 @@ implements MutableRootQuery {
     ) : RootQueryProjection<TSelection, "ONE">;
 
     select(...arr: any[]): any {
-        return AbstractRootQueryProjection.of(arr);
+        return AbstractRootQueryProjection.of(arr, false);
+    }
+
+    selectDistinct<
+        const TSelections extends RootQuerySelectArrArgs
+    >(
+        ...selections: TSelections
+    ): RootQueryProjection<{
+        [K in keyof TSelections]: 
+            TSelections[K] extends RootQuerySelection<infer U> ? RootQuerySelection<U> : never
+    }, "ARRAY">;
+
+    selectDistinct<
+        const TSelections extends RootQuerySelectMapArgs
+    >(
+        selections: TSelections
+    ): RootQueryProjection<{
+        [K in keyof TSelections]: 
+            TSelections[K] extends RootQuerySelection<infer U> ? RootQuerySelection<U> : never
+    }, "MAP">;
+
+    selectDistinct<TSelection extends RootQuerySelection<any>>(
+        selection: TSelection
+    ) : RootQueryProjection<TSelection, "ONE">;
+
+    selectDistinct(...arr: any[]): any {
+        return AbstractRootQueryProjection.of(arr, true);
     }
 }

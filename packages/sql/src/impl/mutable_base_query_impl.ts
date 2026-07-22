@@ -19,6 +19,14 @@ export class MutableBaseQueryImpl extends AbstractMutableQuery implements Mutabl
     >(
         selectionMap: TSelectionMap
     ): BaseQueryProjection<TSelectionMap> {
-        return new MapBaseQueryProjection(selectionMap);
+        return new MapBaseQueryProjection(selectionMap, false);
+    }
+
+    selectDistinct<
+        const TSelectionMap extends BaseQuerySelectMapArgs
+    >(
+        selectionMap: TSelectionMap
+    ): BaseQueryProjection<TSelectionMap> {
+        return new MapBaseQueryProjection(selectionMap, true);
     }
 }

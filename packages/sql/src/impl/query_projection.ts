@@ -2,24 +2,26 @@ import { BaseQuerySelectMapArgs, ExpressionLike, RootQueryProjection, RootQueryS
 
 export abstract class AbstractQueryProjection {
     abstract readonly kind: string;
+    abstract readonly distinct: boolean;
 }
 
 export abstract class AbstractRootQueryProjection<T, TKind = "ONE" | "ARRAY" | "MAP"> 
+extends AbstractQueryProjection
 implements RootQueryProjection<T, TKind> {
 
     __type(): {selectedProjection: [T, TKind] | true; } {
         return { selectedProjection: true };
     }
 
-    static of(arr: any[]): AbstractRootQueryProjection<any, any> {
+    static of(arr: any[], distinct: boolean): AbstractRootQueryProjection<any, any> {
         if (arr.length > 1) {
-            return new ArrRootQueryProjection(arr as ReadonlyArray<RootQuerySelection<any>>);
+            return new ArrRootQueryProjection(arr as ReadonlyArray<RootQuerySelection<any>>, distinct);
         }
         const arg = arr[0];
         if (arg instanceof spi.AbstractSelection) {
-            return new ValRootQueryProjection(arg as RootQuerySelection<any>);
+            return new ValRootQueryProjection(arg as RootQuerySelection<any>, distinct);
         }
-        return new MapRootQueryProjection(arg as { readonly [key:string]: RootQuerySelection<any> });
+        return new MapRootQueryProjection(arg as { readonly [key:string]: RootQuerySelection<any> }, distinct);
     }
 }
 
@@ -30,7 +32,8 @@ export class ValRootQueryProjection<T> extends AbstractRootQueryProjection<T, "O
     }
 
     constructor(
-        readonly selection: RootQuerySelection<T>
+        readonly selection: RootQuerySelection<T>,
+        readonly distinct: boolean
     ) {
         super();
     }
@@ -43,7 +46,8 @@ export class ArrRootQueryProjection<T> extends AbstractRootQueryProjection<T, "A
     }
 
     constructor(
-        readonly selections: ReadonlyArray<RootQuerySelection<any>>
+        readonly selections: ReadonlyArray<RootQuerySelection<any>>,
+        readonly distinct: boolean
     ) {
         super();
     }
@@ -56,7 +60,8 @@ export class MapRootQueryProjection<T> extends AbstractRootQueryProjection<T, "M
     }
 
     constructor(
-        readonly selections: { readonly [key: string]: RootQuerySelection<any> }
+        readonly selections: { readonly [key: string]: RootQuerySelection<any> },
+        readonly distinct: boolean
     ) {
         super();
     }
@@ -70,11 +75,11 @@ implements SubQueryProjection<T, TKind> {
         return { subQueryProjection: true };
     }
 
-    static of(arr: any): AbstractSubQueryProjection<any, any> {
+    static of(arr: any, distinct: boolean): AbstractSubQueryProjection<any, any> {
         if (arr.length > 1) {
-            return new TupleSubQueryProjection(arr as ReadonlyArray<ExpressionLike>);
+            return new TupleSubQueryProjection(arr as ReadonlyArray<ExpressionLike>, distinct);
         }
-        return new ExpressionSubQueryProjection(arr[0] as ExpressionLike);
+        return new ExpressionSubQueryProjection(arr[0] as ExpressionLike, distinct);
     }
 }
 
@@ -85,7 +90,8 @@ export class ExpressionSubQueryProjection<T extends ExpressionLike> extends Abst
     }
 
     constructor(
-        readonly selection: T
+        readonly selection: T,
+        readonly distinct: boolean
     ) {
         super();
     }
@@ -98,7 +104,8 @@ export class TupleSubQueryProjection<T extends ReadonlyArray<ExpressionLike>> ex
     }
 
     constructor(
-        readonly selections: T
+        readonly selections: T,
+        readonly distinct: boolean
     ) {
         super();
     }
@@ -114,7 +121,10 @@ export class MapBaseQueryProjection<T extends BaseQuerySelectMapArgs> extends Ab
         return "BASE";
     }
 
-    constructor(readonly args: T) {
+    constructor(
+        readonly args: T,
+        readonly distinct: boolean
+    ) {
         super();
     }
 }

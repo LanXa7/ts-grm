@@ -83,6 +83,16 @@ export interface MutableSubQuery {
     select<TExpression extends ExpressionLike>(
         expression: TExpression
     ): SubQueryProjection<TExpression, "EXPRESSION">;
+
+    selectDistinct<
+        const TExpressions extends SubQuerySelectArrArgs,
+    >(
+        ...expressions: TExpressions
+    ): SubQueryProjection<TExpressions, "TUPLE">;
+
+    selectDistinct<TExpression extends ExpressionLike>(
+        expression: TExpression
+    ): SubQueryProjection<TExpression, "EXPRESSION">;
 }
 
 export type SubQueryLike = {

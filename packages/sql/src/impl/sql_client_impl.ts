@@ -153,7 +153,11 @@ export class SqlClientImpl implements SqlClientImplementor {
         const fnArgs: Array<any> = [ mutableQuery, ...tables ];
         const fn = args[args.length - 1] as Function;
         const projection = fn.apply(undefined, fnArgs) as AbstractRootQueryProjection<any>;
-        return new AtomRootQueryImpl<TProjection>(mutableQuery, projection, undefined);
+        const query = new AtomRootQueryImpl<TProjection>(mutableQuery, projection, undefined);
+        if (projection.distinct) {
+            return query.distinct();
+        }
+        return query;
     }
 
     isDirectAssociatedKey(
@@ -286,24 +290,29 @@ class QueryFactoryImpl implements spi.QueryFactory {
         if (projection == null) {
             return new AtomNumSubQueryImpl(
                 mutableQuery, 
-                new ExpressionSubQueryProjection(dsl.constant(1) as Expression<any>), 
+                new ExpressionSubQueryProjection(dsl.constant(1) as Expression<any>, false), 
                 undefined
             ) as any;
         }
+        let query: any;
         if (projection.kind === "SUB_ARRAY") {
-            return new AtomTupleSubQueryImpl(mutableQuery, projection, undefined) as any;
+            query = new AtomTupleSubQueryImpl(mutableQuery, projection, undefined) as any;
+        } else {
+            const selection = (projection as ExpressionSubQueryProjection<any>).selection;
+            if (selection instanceof spi.AbstractDtExpr) {
+                query = new AtomDtSubQueryImpl(mutableQuery, projection, undefined) as any;
+            } else if (selection instanceof spi.AbstractStrExpr) {
+                query = new AtomStrSubQueryImpl(mutableQuery, projection, undefined) as any;
+            } else if (selection instanceof spi.AbstractNumExpr) {
+                query = new AtomNumSubQueryImpl(mutableQuery, projection, undefined) as any;
+            } else {
+                query = new AtomExprSubQueryImpl(mutableQuery, projection, undefined) as any;
+            }
         }
-        const selection = (projection as ExpressionSubQueryProjection<any>).selection;
-        if (selection instanceof spi.AbstractDtExpr) {
-            return new AtomDtSubQueryImpl(mutableQuery, projection, undefined) as any;
+        if (projection.distinct) {
+            return query.distinct();
         }
-        if (selection instanceof spi.AbstractStrExpr) {
-            return new AtomStrSubQueryImpl(mutableQuery, projection, undefined) as any;
-        }
-        if (selection instanceof spi.AbstractNumExpr) {
-            return new AtomNumSubQueryImpl(mutableQuery, projection, undefined) as any;
-        }
-        return new AtomExprSubQueryImpl(mutableQuery, projection, undefined) as any;
+        return query;
     }
         
     createAtomBaseQuery<
@@ -325,7 +334,11 @@ class QueryFactoryImpl implements spi.QueryFactory {
         const fnArgs: Array<any> = [ mutableQuery, ...tables ];
         const fn = args[args.length - 1] as Function;
         const projection = fn.apply(undefined, fnArgs) as MapBaseQueryProjection<BaseQueryMapOf<TProjection>>;
-        return new AtomBaseQueryImpl(mutableQuery, undefined, projection, undefined);
+        const query = new AtomBaseQueryImpl(mutableQuery, undefined, projection, undefined);
+        if (projection.distinct) {
+            return query.distinct();
+        }
+        return query;
     }
 
     createMergedRootQuery<TProjection extends RootQueryProjection<any>>(
