@@ -46,14 +46,14 @@ export interface __CriteriaInstanceOfBinding<
     TSuperMdel extends AnyModel,
     TDrivedModel extends AnyModel
 > {
-    __sueprModel?: TSuperMdel;
-    __derivedModel?: TDrivedModel;
+    readonly __sueprModel: TSuperMdel;
+    readonly __derivedModel: TDrivedModel;
 }
 
 export type __CriteriaMember<TProp, TNullity extends __NullityType> =
     TProp extends __PropContract<any, infer Nullity>
         ? Nullity extends "NULLABLE"
-            ? { $isNull: boolean } | __NonNullCriteriaMember<TProp, TNullity>
+            ? { readonly $isNull: boolean } | __NonNullCriteriaMember<TProp, TNullity>
             : __NonNullCriteriaMember<TProp, TNullity>
         : never;
 
@@ -82,29 +82,46 @@ export type __CriteriaScalarType<TProp> =
     : never;
 
 export type __CriteriaReferenceType<TProp> = 
-    __CriteriaTarget<TProp> 
-    | { $some: __CriteriaTarget<TProp>; }
-    | { $none: __CriteriaTarget<TProp>; }
-    | { $exists: boolean } & __CriteriaTarget<TProp>;
+    __CriteriaXOR<
+        __CriteriaTarget<TProp>,
+        { 
+            readonly $some?: __CriteriaTarget<TProp>;
+            readonly $none?: __CriteriaTarget<TProp>;
+        }
+    >;
 
 export type __CriteriaCollectionType<TProp> =
-    __CriteriaTarget<TProp> 
-    | { $some: __CriteriaTarget<TProp>; }
-    | { $none: __CriteriaTarget<TProp>; }
-    | { $all: __CriteriaTarget<TProp> }
-    | { $exists: boolean } & __CriteriaTarget<TProp>
-    | { $size: number | __CriteriaCmpJson<number> } & __CriteriaTarget<TProp>;
+    __CriteriaXOR<
+        __CriteriaTarget<TProp>,
+        { 
+            readonly $some?: __CriteriaTarget<TProp>;
+            readonly $none?: __CriteriaTarget<TProp>;
+            readonly $every?: __CriteriaTarget<TProp>;
+        }
+    >;
 
 export type __CriteriaTarget<TProp> =
-    TProp extends __CollectionPropContract<infer TargetModel, any, any, any, any>
+    TProp extends __ReferencePropContract<infer TargetModel, any, any, any, any, any>
         ? Criteria<TargetModel>
-        : never;
+    : TProp extends __CollectionPropContract<infer TargetModel, any, any, any, any>
+        ? Criteria<TargetModel>
+    : never;
+
+type __CriteriaXOR<T, U> = 
+    (__CriteriaWithout<T, U> & U) | (__CriteriaWithout<U, T> & T);
+
+type __CriteriaWithout<T, U> = 
+    { [P in Exclude<keyof T, keyof U>]?: never };
 
 export interface __CriteriaAnyJson<T> {
     $eq?: T;
     $ne?: T;
+    $in?: ReadonlyArray<T>;
+    $nin?: ReadonlyArray<T>;
     $eqIf?: T | null | undefined;
     $neIf?: T | null | undefined;
+    $inIf?: ReadonlyArray<T> | null | undefined;
+    $ninIf?: ReadonlyArray<T> | null | undefined;
 }
 
 export interface __CriteriaCmpJson<T> extends __CriteriaAnyJson<T> {
@@ -112,16 +129,12 @@ export interface __CriteriaCmpJson<T> extends __CriteriaAnyJson<T> {
     $lte?: T;
     $gt?: T;
     $gte?: T;
-    $between?: [T, T];
-    $in?: T[];
-    $nin?: T[];
+    $between?: readonly [T, T];
     $ltIf?: T | null | undefined;
     $lteIf?: T | null | undefined;
     $gtIf?: T | null | undefined;
     $gteIf?: T | null | undefined;
-    $betweenIf?: [T | null | undefined, T | null | undefined];
-    $inIf?: T[] | null | undefined;
-    $ninIf?: T[] | null | undefined;
+    $betweenIf?: readonly [T | null | undefined, T | null | undefined];    
 }
 
 export interface __CriteriaStrJson extends __CriteriaCmpJson<string> {

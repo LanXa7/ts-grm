@@ -22,7 +22,11 @@ describe("TestCriteria", () => {
                 { name: { $icontains: "typescript"} }
             ],
             price: { $gte: 10, $lteIf: undefined },
-            store: { $isNull: false },
+            store: { 
+                $none: {
+                    version: 1
+                },
+            },
             authors: { 
                 $none: {
                     name: {
