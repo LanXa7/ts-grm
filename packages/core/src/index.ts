@@ -1,4 +1,4 @@
-export { dsl } from "./dsl";
+export { dsl, criteria } from "./dsl";
 export { model } from "./schema/model";
 export { prop } from "./schema/prop";
 export { dto } from "./schema/dto/api";
@@ -173,3 +173,4 @@ export type  {
     RowTypeOf,
     SelectionLike
 } from "./dsl";
+

@@ -27,6 +27,9 @@ describe("TestCriteria", () => {
                     version: 1
                 },
             },
+            storeId: { 
+                $ne: 9
+            },
             authors: { 
                 $none: {
                     name: {

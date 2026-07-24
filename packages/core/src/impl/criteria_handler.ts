@@ -105,9 +105,9 @@ class CriteriaHandlerImpl implements CriteriaHandler<AnyModel> {
                     const binding = data as __CriteriaInstanceOfBinding<any, any>;
                     predicate = this._predicateCombiner(
                         predicate, 
-                        criteriaHandler(Entity.of(binding.__derivedModel), false).toPredicate(
-                            (ast as AbstractEntityTable).as(binding.__derivedModel), 
-                            data
+                        criteriaHandler(Entity.of(binding.derivedModel), false).toPredicate(
+                            (ast as AbstractEntityTable).as(binding.derivedModel), 
+                            binding.criteria
                         )
                     );
                     break;
@@ -185,10 +185,10 @@ function createMemberHandler(
         }
     }
     if (prop.props != null) {
-        return new EmbeddedMemberHandler(predicateCombinder, prop);
+        return new EmbeddedMemberHandler(dsl.and, prop);
     }
     if (prop.targetEntity != null) {
-        return new AssociationMemberHandler(predicateCombinder, prop);
+        return new AssociationMemberHandler(dsl.and, prop);
     }
     return undefined;
 }
@@ -278,7 +278,7 @@ class EmbeddedMemberHandler extends MemberHandler {
                         );
                     }
                     predicates.push(
-                        handler.toPredicate(undefined, ast, value)
+                        handler.toPredicate(undefined, ast, data)
                     );
                     break;
             }

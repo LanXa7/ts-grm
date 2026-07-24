@@ -1,5 +1,5 @@
 import { AnyModel } from "@/schema/model";
-import { __AllModelMembers, __DeclaredModelMembers, __DerivedModel } from "@/schema/model_internal_types";
+import { __AllModelMembers, __DeclaredModelMembers, __DerivedModel, __RequiredModelKey } from "@/schema/model_internal_types";
 import { __CombinedNullity } from "@/schema/prop_internal_behavior";
 import { 
     __CollectionPropContract, 
@@ -17,14 +17,32 @@ export type __CriteriaMembers<
     TOptinalModel extends AnyModel | "",
     TMembers, 
     TNullity extends __NullityType
+> = 
+    __CriteriaDirectMembers<TMembers, TNullity>
+    & __CriteriaReferenceKeyMembers<TMembers>
+    & __CriteraStaticMembers<TOptinalModel, TMembers, TNullity>
+    & __CriteriaInstanceOf<TOptinalModel>;
+
+export type __CriteriaDirectMembers<
+    TMembers, 
+    TNullity extends __NullityType
 > = { 
     [
         K in keyof TMembers as 
             __CriteriaMemberKey<TMembers, K>
     ]?: __CriteriaMember<TMembers[K], TNullity>; 
-}
-& __CriteraStaticMembers<TOptinalModel, TMembers, TNullity>
-& __CriteriaInstanceOf<TOptinalModel>;
+};
+
+export type __CriteriaReferenceKeyMembers<
+    TMembers
+> = { 
+    [
+        K in keyof TMembers as 
+            TMembers[K] extends __ReferencePropContract<infer TargetModel, any, "OWNING", false, any, infer TargetKey>
+                ? `${K & string}${Capitalize<__RequiredModelKey<TargetModel, TargetKey>>}`
+                : never
+    ]?: __CriteriaReferenceKeyMember<TMembers[K]>; 
+};
 
 export type __CriteriaMemberKey<
     TMembers,
@@ -64,8 +82,9 @@ export interface __CriteriaInstanceOfBinding<
     TSuperMdel extends AnyModel,
     TDrivedModel extends AnyModel
 > {
-    readonly __sueprModel: TSuperMdel;
-    readonly __derivedModel: TDrivedModel;
+    readonly superModel: TSuperMdel;
+    readonly derivedModel: TDrivedModel;
+    readonly criteria: __CriteriaMembers<TDrivedModel, __DeclaredModelMembers<TDrivedModel>, "NONNULL">;
 }
 
 export type __CriteriaMember<TProp, TNullity extends __NullityType> =
@@ -85,6 +104,21 @@ export type __NonNullCriteriaMember<TProp, TNullity extends __NullityType> =
     : TProp extends __CollectionPropContract<any, any, any, any, any>
         ? __CriteriaCollectionType<TProp>
     : never;
+
+export type __CriteriaReferenceKeyMember<TProp> =
+    TProp extends __ReferencePropContract<infer TargetModel, infer Nullity, "OWNING", false, any, infer TargetKey>
+        ? Nullity extends "NULLABLE"
+            ? { readonly $isNull: boolean } | __NonNullCriteriaReferenceKeyMember<TargetModel, TargetKey>
+            : __NonNullCriteriaReferenceKeyMember<TargetModel, TargetKey>
+        : never;
+
+export type __NonNullCriteriaReferenceKeyMember<
+    TTargetModel extends AnyModel, 
+    TTargetKey extends string
+> =
+    __CriteriaScalarType<
+        __AllModelMembers<TTargetModel>[__RequiredModelKey<TTargetModel, TTargetKey>]
+    >;
 
 export type __CriteriaScalarType<TProp> =
     TProp extends __I64PropContract<any, any>
