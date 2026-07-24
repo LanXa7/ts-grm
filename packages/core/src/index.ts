@@ -87,7 +87,7 @@ export { ExpressionOrder } from "./dsl";
 export type { OrderNullsType, ModelOrder } from "./schema/order";
 export type { 
     Model,
-    AnyModel,
+    AnyModel
 } from "./schema/model";
 export { TB_INHERIT, DV_ABSTRACT, DV_MODEL_NAME } from "./schema/model";
 export type { 
@@ -123,6 +123,9 @@ export type  {
     Isolation,
     TransactionOptions,
     Schema,
+    FindManyOptions,
+    FindRangeOptions,
+    FindPageOptions,
     Criteria, 
     AtLeastOne,
     AtLeastTwo,

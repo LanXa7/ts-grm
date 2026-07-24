@@ -5,6 +5,7 @@ import { SqlClientImplementor } from "@/sql_client";
 import { AtomRootQueryImpl } from "./atom_root_query_impl";
 import { executeQuery } from "./query_executor/execute_query";
 import { exeuctePageQuery, finalRangeOptions } from "./query_executor/execute_page_query";
+import { NoDataError, TooManyDataError } from "@/error/data_error";
 
 export class MergedRootQueryImpl<
     TProjection extends RootQueryProjection<any>
@@ -41,21 +42,41 @@ export class MergedRootQueryImpl<
         return exeuctePageQuery(this, options);
     }
 
-    fetchRequired<TNullAsUndefined extends boolean = false>(
+    async fetchRequired<TNullAsUndefined extends boolean = false>(
         options?: FetchOptions<TNullAsUndefined>
     ): Promise<RowTypeOf<TProjection, TNullAsUndefined>> {
-        suppressUnused(options);
-        throw new Error();
+        const rows = await this.fetchRange({
+            ...options,
+            limit: 2
+        });
+        switch (rows.length) {
+            case 0:
+                throw new NoDataError(`"fetchRequired" does not accpet empty result set`);
+            case 1:
+                return rows[0] as any;
+            default:
+                throw new TooManyDataError(`"fetchRequired" does not accpet multiple rows`);
+        }
     }
 
-    fetchOptional<TNullAsUndefined extends boolean = false>(
+    async fetchOptional<TNullAsUndefined extends boolean = false>(
         options?: FetchOptions<TNullAsUndefined>
     ): Promise<
         RowTypeOf<TProjection, TNullAsUndefined> 
         | TNullAsUndefined extends true ? undefined : null
     > {
-        suppressUnused(options);
-        throw new Error();
+        const rows = await this.fetchRange({
+            ...options,
+            limit: 2
+        });
+        switch (rows.length) {
+            case 0:
+                return ((options?.nullAsUndefined ?? false) ? undefined : null) as any;
+            case 1:
+                return rows[0] as any;
+            default:
+                throw new TooManyDataError(`"fetchRequired" does not accpet multiple rows`);
+        }
     }
 
     async fetchCount(): Promise<number> {

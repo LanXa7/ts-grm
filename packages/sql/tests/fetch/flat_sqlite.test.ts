@@ -33,8 +33,9 @@ describe.sequential("FlatTest", () => {
                     from BOOK tb_1_
                     where 
                         tb_1_.ID = ?
+                    limit ?
                 `,
-                args: [9],
+                args: [9, 2],
                 purpose: "query"
             },
             {
@@ -155,8 +156,9 @@ describe.sequential("FlatTest", () => {
                     from TREE_NODE tb_1_
                     where 
                         tb_1_.NAME = ?
+                    limit ?
                 `,
-                args: ["Coca Cola"],
+                args: ["Coca Cola", 2],
                 purpose: "query"
             },
             {

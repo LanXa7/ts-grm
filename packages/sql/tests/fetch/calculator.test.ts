@@ -122,8 +122,9 @@ describe.sequential("CalculatorTest", async() => {
                     from BOOK_STORE tb_1_
                     where 
                         tb_1_.ID = ?
+                    limit ?
                 `,
-                args: [1],
+                args: [1, 2],
                 purpose: "query"
             },
             {

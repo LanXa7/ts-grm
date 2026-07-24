@@ -48,9 +48,8 @@ describe.sequential("PageSqliteTest", () => {
                     order by 
                         tb_1_.NAME asc
                     limit ?
-                    offset ?
                 `,
-                args: [3, 3, 0],
+                args: [3, 3],
                 purpose: "query"
             },
             {
@@ -324,9 +323,8 @@ describe.sequential("PageSqliteTest", () => {
                             lower(tb_2_.NAME) like ?
                     )
                     limit ?
-                    offset ?
                 `,
-                args: [3, "%typescript%", 2, 0],
+                args: [3, "%typescript%", 2],
                 purpose: "query"
             },
             {

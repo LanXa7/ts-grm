@@ -113,8 +113,9 @@ describe.sequential("RecursiveTest", () => {
                     from TREE_NODE tb_1_
                     where 
                         tb_1_.ID = ?
+                    limit ?
                 `,
-                args: [1],
+                args: [1, 2],
                 purpose: "query"
             },
             {
@@ -279,8 +280,9 @@ describe.sequential("RecursiveTest", () => {
                     from TREE_NODE tb_1_
                     where 
                         tb_1_.ID = ?
+                    limit ?
                 `,
-                args: [10],
+                args: [10, 2],
                 purpose: "query"
             },
             {
@@ -410,8 +412,9 @@ describe.sequential("RecursiveTest", () => {
                     from TREE_NODE tb_1_
                     where 
                         tb_1_.ID = ?
+                    limit ?
                 `,
-                args: [1],
+                args: [1, 2],
                 purpose: "query"
             },
             {
@@ -505,8 +508,9 @@ describe.sequential("RecursiveTest", () => {
                     from LIBRARY tb_1_
                     where 
                         tb_1_.ID = ?
+                    limit ?
                 `,
-                args: [41],
+                args: [41, 2],
                 purpose: "query"
             },
             {
@@ -936,8 +940,9 @@ describe.sequential("RecursiveTest", () => {
                     from LIBRARY tb_1_
                     where 
                         tb_1_.ID = ?
+                    limit ?
                 `,
-                args: [3],
+                args: [3, 2],
                 purpose: "query"
             },
             {
@@ -1167,8 +1172,9 @@ describe.sequential("RecursiveTest", () => {
                     from LIBRARY tb_1_
                     where 
                         tb_1_.ID = ?
+                    limit ?
                 `,
-                args: [12],
+                args: [12, 2],
                 purpose: "query"
             },
             {

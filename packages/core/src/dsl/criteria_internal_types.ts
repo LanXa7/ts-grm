@@ -8,7 +8,8 @@ import {
     __EmbeddedPropContract, 
     __I64PropContract, 
     __PropContract, 
-    __ScalarPropContract 
+    __ScalarPropContract, 
+    __AssociatedPropContract
 } from "@/schema/prop_internal_types";
 import { Criteria } from "./criteria";
 
@@ -16,9 +17,26 @@ export type __CriteriaMembers<
     TOptinalModel extends AnyModel | "",
     TMembers, 
     TNullity extends __NullityType
-> = { [K in keyof TMembers]?: __CriteriaMember<TMembers[K], TNullity>; }
+> = { 
+    [
+        K in keyof TMembers as 
+            __CriteriaMemberKey<TMembers, K>
+    ]?: __CriteriaMember<TMembers[K], TNullity>; 
+}
 & __CriteraStaticMembers<TOptinalModel, TMembers, TNullity>
 & __CriteriaInstanceOf<TOptinalModel>;
+
+export type __CriteriaMemberKey<
+    TMembers,
+    TKey extends keyof TMembers
+> = 
+    TMembers[TKey] extends __ScalarPropContract<any, any>
+        ? TKey
+    : TMembers[TKey] extends __EmbeddedPropContract<any, any, any>
+        ? TKey
+    : TMembers[TKey] extends __AssociatedPropContract<any, any, any, any, any, any>
+        ? TKey
+    : never;
 
 export interface __CriteraStaticMembers<
     TOptinalModel extends AnyModel | "",
@@ -84,21 +102,25 @@ export type __CriteriaScalarType<TProp> =
 export type __CriteriaReferenceType<TProp> = 
     __CriteriaXOR<
         __CriteriaTarget<TProp>,
-        { 
-            readonly $some?: __CriteriaTarget<TProp>;
-            readonly $none?: __CriteriaTarget<TProp>;
-        }
+        __CriteriaAssociationActions<TProp>
     >;
 
 export type __CriteriaCollectionType<TProp> =
     __CriteriaXOR<
         __CriteriaTarget<TProp>,
-        { 
-            readonly $some?: __CriteriaTarget<TProp>;
-            readonly $none?: __CriteriaTarget<TProp>;
-            readonly $every?: __CriteriaTarget<TProp>;
-        }
+        __CriteriaCollectionActions<TProp>
     >;
+
+export interface __CriteriaAssociationActions<TProp> {
+    readonly $some?: __CriteriaTarget<TProp>;
+    readonly $none?: __CriteriaTarget<TProp>;
+    readonly $someIf?: __CriteriaTarget<TProp>;
+    readonly $noneIf?: __CriteriaTarget<TProp>;
+}
+
+export interface __CriteriaCollectionActions<TProp> extends __CriteriaAssociationActions<TProp> {
+    readonly $every?: __CriteriaTarget<TProp>;
+}
 
 export type __CriteriaTarget<TProp> =
     TProp extends __ReferencePropContract<infer TargetModel, any, any, any, any, any>

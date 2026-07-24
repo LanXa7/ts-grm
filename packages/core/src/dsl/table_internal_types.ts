@@ -20,6 +20,7 @@ import { __AssociationKeys, __MakeAssociationModel, __MakeAssociationTableMember
 import { AnyAssociationModel } from "./association";
 import { AnyModel } from "@/schema/model";
 import { __CollectionKeys } from "@/index_internal";
+import { Criteria } from "./criteria";
 
 export type __TableLike = {
 
@@ -270,7 +271,7 @@ export interface __StaticEntityTableMembers<
     TMembers extends object,
     TNullity extends __NullityType, 
     TJoinPolicy extends __JoinPolicyType
-> extends __AssociatedAction<TMembers>, __AssociationAction<TModel, TJoinPolicy>, __CollectionAction<TMembers> { 
+> extends __AssociationAction<TModel, TJoinPolicy>, __AssociationExistenceAction<TMembers>, __CollectionExistenceAction<TMembers> { 
     __type(): {
         tableLike: true;
         entityTableLike: true;
@@ -291,6 +292,10 @@ export interface __StaticEntityTableMembers<
     as<TDerivedModel extends AnyModel>(
         derivedModel: __DerivedModel<TDerivedModel, TModel>
     ): __EntityTableMembers<TModel, __AllModelMembers<TDerivedModel>, "NULLABLE", TJoinPolicy>;
+
+    match(
+        criteria: Criteria<TModel>
+    ): Predicate | undefined;
 }
 
 export interface __AssociationAction<TModel extends AnyModel, TJoinPolicy extends __JoinPolicyType> {
@@ -357,7 +362,7 @@ export interface __AssociationAction<TModel extends AnyModel, TJoinPolicy extend
     >;
 };
 
-export interface __AssociatedAction<TModelMembers> {
+export interface __AssociationExistenceAction<TModelMembers> {
     none<TKey extends __AssociatedKeys<TModelMembers>>(
         key: TKey,
         fn?: __AssociatedFilter<TModelMembers[TKey]>
@@ -401,7 +406,7 @@ export type __AssociatedFilter<TProp> =
         ) => Predicate | undefined
         : never;
 
-export interface __CollectionAction<TModelMembers> {
+export interface __CollectionExistenceAction<TModelMembers> {
     every<TKey extends __CollectionKeys<TModelMembers>>(
         key: TKey,
         fn: __AssociatedFilter<TModelMembers[TKey]>

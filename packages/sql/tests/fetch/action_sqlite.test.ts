@@ -241,8 +241,9 @@ describe.sequential("ActionSqliteTest", () => {
                     from TREE_NODE tb_1_
                     where 
                         tb_1_.PARENT_NODE_ID is null
+                    limit ?
                 `,
-                args: [],
+                args: [2],
                 purpose: "query"
             },
             {
@@ -327,8 +328,9 @@ describe.sequential("ActionSqliteTest", () => {
                     from BOOK_STORE tb_1_
                     where 
                         tb_1_.ID = ?
+                    limit ?
                 `,
-                args: [2],
+                args: [2, 2],
                 purpose: "query"
             },
             {
@@ -394,8 +396,9 @@ describe.sequential("ActionSqliteTest", () => {
                     from TREE_NODE tb_1_
                     where 
                         tb_1_.PARENT_NODE_ID is null
+                    limit ?
                 `,
-                args: [],
+                args: [2],
                 purpose: "query"
             },
             {
@@ -804,8 +807,9 @@ describe.sequential("ActionSqliteTest", () => {
                     from TREE_NODE tb_1_
                     where 
                         tb_1_.PARENT_NODE_ID is null
+                    limit ?
                 `,
-                args: [],
+                args: [2],
                 purpose: "query"
             },
             {
@@ -996,8 +1000,9 @@ describe.sequential("ActionSqliteTest", () => {
                     from LIBRARY tb_1_
                     where 
                         tb_1_.ID = ?
+                    limit ?
                 `,
-                args: [41],
+                args: [41, 2],
                 purpose: "query"
             },
             {

@@ -30,6 +30,8 @@ import { JoinType } from "@/dsl/table";
 import { View } from "@/schema/dto/api";
 import { associationModel } from "@/dsl/association";
 import { BaseQuerySelectMapArgs } from "@/dsl/base_query";
+import { Criteria } from "@/dsl";
+import { criteriaHandlerOf } from "./criteria_handler";
 
 export abstract class AbstractEntityTable implements AbstractTable {
 
@@ -154,6 +156,10 @@ export abstract class AbstractEntityTable implements AbstractTable {
 
     as(derivedModel: AnyModel): AbstractEntityTable {
         return this.__to(Entity.of(derivedModel));
+    }
+
+    match(criteria: Criteria<any>): Predicate | undefined {
+        return criteriaHandlerOf(this.__entity.model).toPredicate(this, criteria);
     }
 
     association(

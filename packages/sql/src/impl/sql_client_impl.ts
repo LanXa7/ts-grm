@@ -36,8 +36,9 @@ import {
     spi,
     dsl,
     err,
-    suppressUnused,
-    __ModelOf
+    __ModelOf,
+    FindManyOptions,
+    FetchedView
 } from "@ts-grm/core";
 import { MutableRootQueryImpl } from "./mutable_root_query_impl";
 import { AtomRootQueryImpl } from "./atom_root_query_impl";
@@ -51,6 +52,8 @@ import { AtomDtSubQueryImpl, AtomNumSubQueryImpl, AtomStrSubQueryImpl, AtomExprS
 import { TableDef } from "./schema_def";
 import { createSchema } from "./schema_creator";
 import { Executor } from "@/transaction/executor";
+import { toExpressionOrders } from "./expression_orders";
+import { NoDataError, TooManyDataError } from "@/error/data_error";
 
 export class SqlClientImpl implements SqlClientImplementor {
 
@@ -76,62 +79,101 @@ export class SqlClientImpl implements SqlClientImplementor {
         };
     }
 
-    findOne<V extends View<any, any>>(
+    async findOne<V extends View<any, any>>(
         view: V,
         criteria: Criteria<__ModelOf<V>>
     ): Promise<TypeOf<V>> {
-        suppressUnused(view);
-        suppressUnused(criteria);
-        throw new Error();
+        const q = this.createQuery(view.mapper.entity.model, (q, table) => {
+            q.where(table.match(criteria));
+            return q.select(table.fetch(view));
+        });
+        const rows = await q.fetchRange({
+            limit: 2
+        });
+        switch (rows.length) {
+            case 0:
+                throw new NoDataError(`"fetchOne" does not accpet empty result set`);
+            case 1:
+                return rows[0] as any;
+            default:
+                throw new TooManyDataError(`"fetchOne" does not accpet multiple rows`);
+        }
     }
 
-    findOneOrNull<V extends View<any, any>>(
+    async findOneOrNull<
+        V extends View<any, any>
+    >(
         view: V,
         criteria: Criteria<__ModelOf<V>>
-    ): Promise<TypeOf<V>> {
-        suppressUnused(view);
-        suppressUnused(criteria);
-        throw new Error();
+    ): Promise<TypeOf<V> | null> {
+        const q = this.createQuery(view.mapper.entity.model, (q, table) => {
+            q.where(table.match(criteria));
+            return q.select(table.fetch(view));
+        });
+        const rows = await q.fetchRange({
+            limit: 2
+        });
+        switch (rows.length) {
+            case 0:
+                return null;
+            case 1:
+                return rows[0] as any;
+            default:
+                throw new TooManyDataError(`"fetchOneOrNull" does not accpet multiple rows`);
+        }
     }
 
-    findOneOrUndefined<V extends View<any, any>>(
+    async findOneOrUndefined<
+        V extends View<any, any>
+    >(
         view: V,
         criteria: Criteria<__ModelOf<V>>
-    ): Promise<TypeOf<V>> {
-        suppressUnused(view);
-        suppressUnused(criteria);
-        throw new Error();
+    ): Promise<TypeOf<V> | undefined> {
+        const q = this.createQuery(view.mapper.entity.model, (q, table) => {
+            q.where(table.match(criteria));
+            return q.select(table.fetch(view));
+        });
+        const rows = await q.fetchRange({
+            limit: 2
+        });
+        switch (rows.length) {
+            case 0:
+                return undefined;
+            case 1:
+                return rows[0] as any;
+            default:
+                throw new TooManyDataError(`"fetchOneOrUndefined" does not accpet multiple rows`);
+        }
     }
 
     findMany<V extends View<any, any>>(
         view: V,
-        criteria: Criteria<__ModelOf<V>>
+        options: FindManyOptions<__ModelOf<V>>
     ): Promise<Array<TypeOf<V>>> {
-        suppressUnused(view);
-        suppressUnused(criteria);
-        throw new Error();
+        const q = this._createFindQuery(view, options);
+        return q.fetchList();
     }
 
     findRange<V extends View<any, any>>(
         view: V,
-        criteria: Criteria<__ModelOf<V>>,
-        options: FetchRangeOptions
+        options: FindManyOptions<__ModelOf<V>> & FetchRangeOptions
     ): Promise<Array<TypeOf<V>>> {
-        suppressUnused(view);
-        suppressUnused(criteria);
-        suppressUnused(options);
-        throw new Error();
+        const q = this._createFindQuery(view, options as FindManyOptions<__ModelOf<V>>);
+        return q.fetchRange({
+            limit: options.limit,
+            offset: options.offset
+        });
     }
 
     findPage<V extends View<any, any>>(
         view: V,
-        criteria: Criteria<__ModelOf<V>>,
-        options: FetchPageOptions
+        options: FindManyOptions<__ModelOf<V>> & FetchPageOptions
     ): Promise<Page<TypeOf<V>>> {
-        suppressUnused(view);
-        suppressUnused(criteria);
-        suppressUnused(options);
-        throw new Error();
+        const q = this._createFindQuery(view, options as FindManyOptions<__ModelOf<V>>);
+        return q.fetchPage({
+            pageSize: options.pageSize,
+            pageNo: options.pageNo
+        });
     }
 
     createQuery<
@@ -257,6 +299,25 @@ export class SqlClientImpl implements SqlClientImplementor {
 
     get executor(): Executor {
         return this.options.executorCreator(this.driver.transactionManager.defaultExecutor);
+    }
+
+    private _createFindQuery<
+        V extends View<any, any>
+    >(
+        view: V,
+        options: FindManyOptions<__ModelOf<V>>
+    ): RootQuery<RootQueryProjection<FetchedView<__ModelOf<V>, any>, "ONE">> {
+        return this.createQuery(view.mapper.entity.model, (q, table) => {
+            const criteria = options.criteria;
+            if (criteria != null) {
+                q.where(table.match(criteria));
+            }
+            const orders = options.orders;
+            if (orders != null) {
+                q.orderBy(...toExpressionOrders(table as any, orders as any));
+            }
+            return q.select(table.fetch(view));
+        }) as any;
     }
 }
 

@@ -46,8 +46,9 @@ describe.sequential("FoldSqliteTest", () => {
                     from BOOK tb_1_
                     where 
                         tb_1_.ID = ?
+                    limit ?
                 `,
-                args: [9],
+                args: [9, 2],
                 purpose: "query"
             },
             {
@@ -156,8 +157,9 @@ describe.sequential("FoldSqliteTest", () => {
                     from BOOK tb_1_
                     where 
                         tb_1_.ID = ?
+                    limit ?
                 `,
-                args: [9],
+                args: [9, 2],
                 purpose: "query"
             },
             {

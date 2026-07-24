@@ -3,6 +3,7 @@ import { MutableRootQueryImpl } from "./mutable_root_query_impl";
 import { AbstractRootQueryProjection } from "./query_projection";
 import { executeQuery } from "./query_executor/execute_query";
 import { exeuctePageQuery, finalRangeOptions } from "./query_executor/execute_page_query";
+import { NoDataError, TooManyDataError } from "@/error/data_error";
 
 export class AtomRootQueryImpl<TProjection extends RootQueryProjection<any>> 
 implements AtomRootQuery<TProjection>, spi.AtomQueryContract {
@@ -78,14 +79,17 @@ implements AtomRootQuery<TProjection>, spi.AtomQueryContract {
     async fetchRequired<TNullAsUndefined extends boolean = false>(
         options?: FetchOptions<TNullAsUndefined>
     ): Promise<RowTypeOf<TProjection, TNullAsUndefined>> {
-        const rows = await this.fetchList(options);
+        const rows = await this.fetchRange({
+            ...options,
+            limit: 2
+        });
         switch (rows.length) {
             case 0:
-                throw new err.StateError(`"fetchRequired" does not accpet empty result set`);
+                throw new NoDataError(`"fetchRequired" does not accpet empty result set`);
             case 1:
                 return rows[0] as any;
             default:
-                throw new err.StateError(`"fetchRequired" does not accpet multiple rows`);
+                throw new TooManyDataError(`"fetchRequired" does not accpet multiple rows`);
         }
     }
 
@@ -95,14 +99,17 @@ implements AtomRootQuery<TProjection>, spi.AtomQueryContract {
         RowTypeOf<TProjection, TNullAsUndefined> 
         | TNullAsUndefined extends true ? undefined : null
     > {
-        const rows = await this.fetchList(options);
+        const rows = await this.fetchRange({
+            ...options,
+            limit: 2
+        });
         switch (rows.length) {
             case 0:
                 return ((options?.nullAsUndefined ?? false) ? undefined : null) as any;
             case 1:
                 return rows[0] as any;
             default:
-                throw new err.StateError(`"fetchOptional" does not accpet multiple rows`);
+                throw new TooManyDataError(`"fetchRequired" does not accpet multiple rows`);
         }
     }
 

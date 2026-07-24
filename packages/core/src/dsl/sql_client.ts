@@ -5,9 +5,10 @@ import { Table } from "./table";
 import { Criteria } from "./criteria";
 import { AnyModel } from "@/schema/model";
 import { AnyAssociationModel } from "./association";
-import { FetchPageOptions, FetchRangeOptions, Page } from "./page";
+import { Page } from "./page";
 import { TypeOf, View } from "@/schema/dto/api";
 import { __ModelOf } from "@/schema/dto/internal_types";
+import { ModelOrder } from "@/schema/order";
 
 export interface SqlClient {
 
@@ -18,31 +19,33 @@ export interface SqlClient {
         criteria: Criteria<__ModelOf<V>>
     ): Promise<TypeOf<V>>;
 
-    findOneOrNull<V extends View<any, any>>(
+    findOneOrNull<
+        V extends View<any, any>
+    >(
         view: V,
         criteria: Criteria<__ModelOf<V>>
     ): Promise<TypeOf<V> | null>;
 
-    findOneOrUndefined<V extends View<any, any>>(
+    findOneOrUndefined<
+        V extends View<any, any>
+    >(
         view: V,
         criteria: Criteria<__ModelOf<V>>
     ): Promise<TypeOf<V> | undefined>;
 
     findMany<V extends View<any, any>>(
         view: V,
-        criteria: Criteria<__ModelOf<V>>
+        options: FindManyOptions<__ModelOf<V>>
     ): Promise<Array<TypeOf<V>>>;
 
     findRange<V extends View<any, any>>(
         view: V,
-        criteria: Criteria<__ModelOf<V>>,
-        options: FetchRangeOptions
+        options: FindRangeOptions<__ModelOf<V>>
     ): Promise<Array<TypeOf<V>>>;
 
     findPage<V extends View<any, any>>(
         view: V,
-        criteria: Criteria<__ModelOf<V>>,
-        options: FetchPageOptions
+        options: FindPageOptions<__ModelOf<V>>
     ): Promise<Page<TypeOf<V>>>;
 
     createQuery<
@@ -115,4 +118,25 @@ export interface Schema {
     execute(): Promise<void>;
 
     toString(): string;
+}
+
+export interface FindManyOptions<TModel extends AnyModel> {
+
+    readonly criteria?: Criteria<TModel>;
+
+    readonly orders?: ModelOrder<TModel> | ReadonlyArray<ModelOrder<TModel>>;
+}
+
+export interface FindRangeOptions<TModel extends AnyModel> extends FindManyOptions<TModel> {
+
+    readonly limit: number;
+
+    readonly offset?: number;
+}
+
+export interface FindPageOptions<TModel extends AnyModel> extends FindManyOptions<TModel> {
+
+    readonly pageSize: number;
+
+    readonly pageNode?: number;
 }

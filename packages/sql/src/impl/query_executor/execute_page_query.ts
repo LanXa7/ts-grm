@@ -63,5 +63,8 @@ export function finalRangeOptions(
     const offset = offsetArgs !== 0 ? offsetArgs : offsetProp;
     return limit === -1 && offset === 0
         ? undefined
-        : { limit, offset };
+        : { 
+            limit, 
+            offset: offset !== 0 ? offset : undefined
+        };
 }

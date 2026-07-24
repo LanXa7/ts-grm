@@ -5,11 +5,12 @@ import { AnyModel } from "@/schema/model";
 import { AbstractEntityTable } from "./entity_table";
 import { __CriteriaInstanceOfBinding } from "@/index_internal";
 import { suppressUnused } from "@/utils";
+import { StateError } from "@/error/common";
 
 export interface CriteriaHandler<TModel extends AnyModel> {
 
     toPredicate(
-        table: AbstractEntityTable,
+        ast: any,
         criteria: Criteria<TModel>
     ): Predicate | undefined;
 }
@@ -48,15 +49,34 @@ class CriteriaHandlerImpl implements CriteriaHandler<AnyModel> {
 
     private readonly _predicateCombiner: PredicateCombiner;
 
+    private readonly _memberHandlerMap: ReadonlyMap<string, MemberHandler>;
+
     constructor(
         private readonly _source: Entity | EntityProp,
         or: boolean
     ) {
         this._predicateCombiner = or ? dsl.or : dsl.and;
+        const map = new Map<string, MemberHandler>();
+        if (_source instanceof Entity) {
+            for (const prop of _source.allPropMap.values()) {
+                const handler = createMemberHandler(this._predicateCombiner, prop);
+                if (handler != null) {
+                    map.set(prop.name, handler);
+                }
+            }
+        } else {
+            for (const prop of _source.props!.values()) {
+                const handler = createMemberHandler(this._predicateCombiner, prop);
+                if (handler != null) {
+                    map.set(prop.name, handler);
+                }
+            }
+        }
+        this._memberHandlerMap = map;
     }
 
     toPredicate(
-        table: AbstractEntityTable,
+        ast: any,
         criteria: Criteria<AnyModel>
     ): Predicate | undefined {
         let predicate: Predicate | undefined = undefined;
@@ -66,19 +86,19 @@ class CriteriaHandlerImpl implements CriteriaHandler<AnyModel> {
                 case "$and":
                     predicate = this._predicateCombiner(
                         predicate, 
-                        this._as(false)._subPredicate(table, data)
+                        this._as(false)._subPredicate(ast, data)
                     );
                     break;
                 case "$or":
                     predicate = this._predicateCombiner(
                         predicate, 
-                        this._as(true)._subPredicate(table, data)
+                        this._as(true)._subPredicate(ast, data)
                     );    
                     break;
                 case "$not":
                     predicate = this._predicateCombiner(
                         predicate, 
-                        dsl.not(this._as(false)._subPredicate(table, data))
+                        dsl.not(this._as(false)._subPredicate(ast, data))
                     );
                     break;
                 case "$instanceOf":
@@ -86,9 +106,27 @@ class CriteriaHandlerImpl implements CriteriaHandler<AnyModel> {
                     predicate = this._predicateCombiner(
                         predicate, 
                         criteriaHandler(Entity.of(binding.__derivedModel), false).toPredicate(
-                            table.as(binding.__derivedModel), 
+                            (ast as AbstractEntityTable).as(binding.__derivedModel), 
                             data
                         )
+                    );
+                    break;
+                default:
+                    const handler = this._memberHandlerMap.get(key);
+                    if (handler == null) {
+                        throw new StateError(
+                            `Illegal criteria, there is no property "${
+                                key
+                            }" under the ${
+                                this._source instanceof Entity
+                                    ? `entity "${this._source.name}"`
+                                    : `embedded property "${this._source.toString()}"`
+                            }`
+                        );
+                    }
+                    predicate = this._predicateCombiner(
+                        predicate,
+                        handler.toPredicate(undefined, ast, data)
                     );
                     break;
             }
@@ -115,31 +153,52 @@ class CriteriaHandlerImpl implements CriteriaHandler<AnyModel> {
     }
 }
 
-class MemberHandler {
+function createMemberHandler(
+    predicateCombinder: PredicateCombiner,
+    prop: EntityProp,
+): MemberHandler | undefined {
+    if (prop.getTsFormulaFn(false) != null) {
+        return undefined;
+    }
+    if (prop.calculationStrategy != null) {
+        return undefined;
+    }
+    if (prop.scalarType != null) {
+        switch (prop.scalarType.kind) {
+            case "STR":
+                return prop.scalarProvider != null
+                    ? new ScalarMemberHandler(predicateCombinder, prop)
+                    : new StrMemberHandler(predicateCombinder, prop);
+            case "I8":
+            case "I16":
+            case "I32":
+            case "I64":
+            case "F32":
+            case "F64":
+            case "NUM":
+                return prop.scalarProvider != null
+                    ? new CmpMemberHandler(predicateCombinder, prop)
+                    : new StrMemberHandler(predicateCombinder, prop);
+                break;
+            default:
+                return new ScalarMemberHandler(predicateCombinder, prop);
+        }
+    }
+    if (prop.props != null) {
+        return new EmbeddedMemberHandler(predicateCombinder, prop);
+    }
+    if (prop.targetEntity != null) {
+        return new AssociationMemberHandler(predicateCombinder, prop);
+    }
+    return undefined;
+}
+
+abstract class MemberHandler {
 
     constructor(
-        protected readonly predicateCombinder: PredicateCombiner
+        protected readonly predicateCombinder: PredicateCombiner,
+        protected readonly prop: EntityProp
     ) {}
-}
-
-class EmbeddedMemberHandler extends MemberHandler {
-
-    constructor(
-        predicateCombinder: PredicateCombiner
-
-    ) {
-        super(predicateCombinder);
-    }
-}
-
-class ScalarMemberHandler extends MemberHandler {
-
-    constructor(
-        predicateCombinder: PredicateCombiner,
-        protected readonly name: string
-    ) {
-        super(predicateCombinder);
-    }
 
     toPredicate(
         prevPredicate: Predicate | undefined,
@@ -153,38 +212,191 @@ class ScalarMemberHandler extends MemberHandler {
             this.addPridicates(arr, ast, value);
             return this.predicateCombinder(...arr);
         }
-        return ast[this.name].eq(value);
+        return ast[this.prop.name].eq(value);
     }
 
-    protected addPridicates(
+    protected abstract addPridicates(
         predicates: Array<Predicate>,
+        ast: any,
+        value: any
+    ): void;
+}
+
+class EmbeddedMemberHandler extends MemberHandler {
+
+    private readonly _memberHandlerMap: ReadonlyMap<string, MemberHandler>;
+
+    constructor(
+        predicateCombinder: PredicateCombiner,
+        prop: EntityProp
+    ) {
+        super(predicateCombinder, prop);
+        const map = new Map<string, MemberHandler>();
+        for (const subProp of prop.props!.values()) {
+            const handler = createMemberHandler(predicateCombinder, subProp);
+            if (handler != null) {
+                map.set(subProp.name, handler);
+            }
+        }
+        this._memberHandlerMap = map;
+    }
+
+    protected override addPridicates(
+        predicates: Array<Predicate | undefined>, 
+        ast: any, 
+        value: any
+    ): void {
+        for (const key in value) { 
+            const data = value[key] as any;
+            switch (key) {
+                case "$and":
+                    predicates.push(
+                        criteriaHandler(this.prop, false).toPredicate(ast, data)
+                    );
+                    break;
+                case "$or":
+                    predicates.push(
+                        criteriaHandler(this.prop, true).toPredicate(ast, data)
+                    );
+                    break;
+                case "$not":
+                    predicates.push(
+                        dsl.not(
+                            criteriaHandler(this.prop, false).toPredicate(ast, data)
+                        )
+                    );
+                    break;
+                default:
+                    const handler = this._memberHandlerMap.get(key);
+                    if (handler == null) {
+                        throw new StateError(
+                            `Illegal criteria, there is no sub property "${
+                                key
+                            }" under the embedded property "${
+                                this.prop.toString()
+                            }"`
+                        );
+                    }
+                    predicates.push(
+                        handler.toPredicate(undefined, ast, value)
+                    );
+                    break;
+            }
+        }
+    }
+}
+
+class AssociationMemberHandler extends MemberHandler {
+
+    constructor(
+        predicateCombinder: PredicateCombiner,
+        prop: EntityProp
+    ) {
+        super(predicateCombinder, prop);
+    }
+
+    protected override addPridicates(
+        predicates: Array<Predicate | undefined>,
+        ast: any,
+        value: any
+    ): void {
+        const targetEntity = this.prop.targetEntity!;
+        const targetHandler = criteriaHandler(targetEntity, false);
+        let explicit = false;
+        if (value.$some != null) {
+            explicit = true;
+            predicates.push(
+                ast.some(
+                    this.prop.name, 
+                    (targetAst: any) => targetHandler.toPredicate(targetAst, value.$some)
+                )
+            );
+        }
+        if (value.$someIf != null) {
+            explicit = true;
+            predicates.push(
+                ast.someIf(
+                    this.prop.name, 
+                    (targetAst: any) => targetHandler.toPredicate(targetAst, value.$someIf)
+                )
+            );
+        }
+        if (value.$none != null) {
+            explicit = true;
+            predicates.push(
+                ast.none(
+                    this.prop.name, 
+                    (targetAst: any) => targetHandler.toPredicate(targetAst, value.$none)
+                )
+            );
+        }
+        if (value.$noneIf != null) {
+            explicit = true;
+            predicates.push(
+                ast.noneIf(
+                    this.prop.name, 
+                    (targetAst: any) => targetHandler.toPredicate(targetAst, value.$noneIf)
+                )
+            );
+        }
+        if (value.$every != null) {
+            explicit = true;
+            predicates.push(
+                ast.every(
+                    this.prop.name, 
+                    (targetAst: any) => targetHandler.toPredicate(targetAst, value.$every)
+                )
+            );
+        }
+        if (!explicit) {
+            predicates.push(
+                ast.some(
+                    this.prop.name, 
+                    (targetAst: any) => targetHandler.toPredicate(targetAst, value)
+                )
+            );
+        }
+    }
+}
+
+class ScalarMemberHandler extends MemberHandler {
+
+    constructor(
+        predicateCombinder: PredicateCombiner,
+        prop: EntityProp
+    ) {
+        super(predicateCombinder, prop);
+    }
+
+    protected override addPridicates(
+        predicates: Array<Predicate | undefined>,
         ast: any,
         value: any
     ) {
         if (hasOwn(value, "$eq")) {
-            predicates.push(ast[this.name].eq(value.$eq));
+            predicates.push(astOf(ast, this.prop).eq(value.$eq));
         }
         if (hasOwn(value, "$ne")) {
-            predicates.push(ast[this.name].ne(value.$ne));
+            predicates.push(astOf(ast, this.prop).ne(value.$ne));
         }
         if (hasOwn(value, "$in")) {
-            predicates.push(ast[this.name].in(value.$in));
+            predicates.push(astOf(ast, this.prop).in(value.$in));
         }
         if (hasOwn(value, "$nin")) {
-            predicates.push(ast[this.name].nin(value.$nin));
+            predicates.push(astOf(ast, this.prop).nin(value.$nin));
         }
 
         if (hasOwn(value, "$eqIf")) {
-            predicates.push(ast[this.name].eqIf(value.$eqIf));
+            predicates.push(astOf(ast, this.prop).eqIf(value.$eqIf));
         }
         if (hasOwn(value, "$neIf")) {
-            predicates.push(ast[this.name].neIf(value.$neIf));
+            predicates.push(astOf(ast, this.prop).neIf(value.$neIf));
         }
         if (hasOwn(value, "$inIf")) {
-            predicates.push(ast[this.name].inIf(value.$inIf));
+            predicates.push(astOf(ast, this.prop).inIf(value.$inIf));
         }
         if (hasOwn(value, "$ninIf")) {
-            predicates.push(ast[this.name].ninIf(value.$ninIf));
+            predicates.push(astOf(ast, this.prop).ninIf(value.$ninIf));
         }
     }
 }
@@ -193,125 +405,146 @@ class CmpMemberHandler extends ScalarMemberHandler {
 
     constructor(
         predicateCombinder: PredicateCombiner,
-        name: string
+        prop: EntityProp
     ) {
-        super(predicateCombinder, name);
+        super(predicateCombinder, prop);
     }
 
     protected override addPridicates(
-        predicates: Array<Predicate>,
+        predicates: Array<Predicate | undefined>,
         ast: any,
         value: any
     ) {
         super.addPridicates(predicates, ast, value);
 
         if (hasOwn(value, "$lt")) {
-            predicates.push(ast[this.name].lt(value.$lt));
+            predicates.push(astOf(ast, this.prop).lt(value.$lt));
         }
         if (hasOwn(value, "$lte")) {
-            predicates.push(ast[this.name].lte(value.$lte));
+            predicates.push(astOf(ast, this.prop).lte(value.$lte));
         }
         if (hasOwn(value, "$gt")) {
-            predicates.push(ast[this.name].gt(value.$gt));
+            predicates.push(astOf(ast, this.prop).gt(value.$gt));
         }
         if (hasOwn(value, "$gte")) {
-            predicates.push(ast[this.name].gte(value.$gte));
+            predicates.push(astOf(ast, this.prop).gte(value.$gte));
         }
         if (hasOwn(value, "$between")) {
-            predicates.push(ast[this.name].between(value.$between[0], value.$between[1]));
+            predicates.push(astOf(ast, this.prop).between(value.$between[0], value.$between[1]));
         }
 
         if (hasOwn(value, "$ltIf")) {
-            predicates.push(ast[this.name].ltIf(value.$ltIf));
+            predicates.push(astOf(ast, this.prop).ltIf(value.$ltIf));
         }
         if (hasOwn(value, "$lteIf")) {
-            predicates.push(ast[this.name].lteIf(value.$lteIf));
+            predicates.push(astOf(ast, this.prop).lteIf(value.$lteIf));
         }
         if (hasOwn(value, "$gtIf")) {
-            predicates.push(ast[this.name].gtIf(value.$gtIf));
+            predicates.push(astOf(ast, this.prop).gtIf(value.$gtIf));
         }
         if (hasOwn(value, "$gteIf")) {
-            predicates.push(ast[this.name].gteIf(value.$gteIf));
+            predicates.push(astOf(ast, this.prop).gteIf(value.$gteIf));
         }
         if (hasOwn(value, "$betweenIf")) {
-            predicates.push(ast[this.name].betweenIf(value.$betweenIf[0], value.$betweenIf[1]));
+            predicates.push(astOf(ast, this.prop).betweenIf(value.$betweenIf[0], value.$betweenIf[1]));
         }
     }
 }
 
-class StrMemberHandelr extends CmpMemberHandler {
+class StrMemberHandler extends CmpMemberHandler {
 
     constructor(
         predicateCombinder: PredicateCombiner,
-        name: string
+        prop: EntityProp
     ) {
-        super(predicateCombinder, name);
+        super(predicateCombinder, prop);
     }
 
     protected override addPridicates(
-        predicates: Array<Predicate>,
+        predicates: Array<Predicate | undefined>,
         ast: any,
         value: any
     ) {
         super.addPridicates(predicates, ast, value);
-        
+
         if (hasOwn(value, "$startsWith")) {
-            predicates.push(ast[this.name].like(value.$startsWith, "STARTS_WITH"));
+            predicates.push(astOf(ast, this.prop).like(value.$startsWith, "STARTS_WITH"));
         }
         if (hasOwn(value, "$endsWith")) {
-            predicates.push(ast[this.name].like(value.$endsWith, "ENDS_WITH"));
+            predicates.push(astOf(ast, this.prop).like(value.$endsWith, "ENDS_WITH"));
         }
         if (hasOwn(value, "$contains")) {
-            predicates.push(ast[this.name].like(value.$contains));
+            predicates.push(astOf(ast, this.prop).like(value.$contains));
         }
         if (hasOwn(value, "$regex")) {
-            predicates.push(ast[this.name].regexp(value.$regex));
+            predicates.push(astOf(ast, this.prop).regexp(value.$regex));
         }
 
         if (hasOwn(value, "$istartsWith")) {
-            predicates.push(ast[this.name].ilike(value.$istartsWith, "STARTS_WITH"));
+            predicates.push(astOf(ast, this.prop).ilike(value.$istartsWith, "STARTS_WITH"));
         }
         if (hasOwn(value, "$iendsWith")) {
-            predicates.push(ast[this.name].ilike(value.$iendsWith, "ENDS_WITH"));
+            predicates.push(astOf(ast, this.prop).ilike(value.$iendsWith, "ENDS_WITH"));
         }
         if (hasOwn(value, "$icontains")) {
-            predicates.push(ast[this.name].ilike(value.$icontains));
+            predicates.push(astOf(ast, this.prop).ilike(value.$icontains));
         }
         if (hasOwn(value, "$iregex")) {
-            predicates.push(ast[this.name].iregexp(value.$iregex));
+            predicates.push(astOf(ast, this.prop).iregexp(value.$iregex));
         }
 
         if (hasOwn(value, "$startsWithIf")) {
-            predicates.push(ast[this.name].likeIf(value.$startsWithIf, "STARTS_WITH"));
+            predicates.push(astOf(ast, this.prop).likeIf(value.$startsWithIf, "STARTS_WITH"));
         }
         if (hasOwn(value, "$endsWithIf")) {
-            predicates.push(ast[this.name].likeIf(value.$endsWithIf, "ENDS_WITH"));
+            predicates.push(astOf(ast, this.prop).likeIf(value.$endsWithIf, "ENDS_WITH"));
         }
         if (hasOwn(value, "$containsIf")) {
-            predicates.push(ast[this.name].likeIf(value.$containsIf));
+            predicates.push(astOf(ast, this.prop).likeIf(value.$containsIf));
         }
         if (hasOwn(value, "$regexIf")) {
-            predicates.push(ast[this.name].regexpIf(value.$regexIf));
+            predicates.push(astOf(ast, this.prop).regexpIf(value.$regexIf));
         }
 
         if (hasOwn(value, "$istartsWithIf")) {
-            predicates.push(ast[this.name].ilikeIf(value.$istartsWithIf, "STARTS_WITH"));
+            predicates.push(astOf(ast, this.prop).ilikeIf(value.$istartsWithIf, "STARTS_WITH"));
         }
         if (hasOwn(value, "$iendsWithIf")) {
-            predicates.push(ast[this.name].ilikeIf(value.$iendsWithIf, "ENDS_WITH"));
+            predicates.push(astOf(ast, this.prop).ilikeIf(value.$iendsWithIf, "ENDS_WITH"));
         }
         if (hasOwn(value, "$icontainsIf")) {
-            predicates.push(ast[this.name].ilikeIf(value.$icontainsIf));
+            predicates.push(astOf(ast, this.prop).ilikeIf(value.$icontainsIf));
         }
         if (hasOwn(value, "$iregexIf")) {
-            predicates.push(ast[this.name].iregexpIf(value.$iregexIf));
+            predicates.push(astOf(ast, this.prop).iregexpIf(value.$iregexIf));
         }
     }
 }
 
 suppressUnused(EmbeddedMemberHandler);
-suppressUnused(StrMemberHandelr);
+suppressUnused(StrMemberHandler);
 
 function hasOwn(o: object, k: string): boolean {
     return Object.prototype.hasOwnProperty.call(o, k);
+}
+
+function astOf(
+    ast: any,
+    prop: EntityProp
+): any {
+    const parentProp = prop.parentProp;
+    return parentProp != null
+        ? parentAstOf(ast, parentProp)[prop.name]
+        : ast[prop.name];
+}
+
+function parentAstOf(
+    ast: any, 
+    prop: EntityProp
+): any {
+    const parentProp = prop.parentProp;
+    if (parentProp != null) {
+        return parentAstOf(ast, parentProp)[prop.name]();
+    }
+    return ast[prop.name]();
 }
