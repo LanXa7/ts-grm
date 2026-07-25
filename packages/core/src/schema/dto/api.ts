@@ -4,7 +4,7 @@ import { __DtoBody, __DtoMapping, __DtoType } from "./dto_context";
 import { __AllModelMembers } from "../model_internal_types";
 import { createDto, newDtoContext } from "@/impl/dto_context";
 import { Entity } from "@/impl/entity";
-import { Prettify } from "@/utils";
+import { __Prettify } from "@/auxiliary_types";
 import { __ViewCreator } from "@/schema/dto/internal_types";
 
 export class View<TModel extends AnyModel, T> {
@@ -44,7 +44,7 @@ function newView<
     fn: __DtoBody<TModel, "NULL_VIEW", "ENTITY", __AllModelMembers<TModel>, TMappings>
 ): View<
     TModel, 
-    Prettify<__DtoType<TMappings>>
+    __Prettify<__DtoType<TMappings>>
 > {
     const entity = Entity.of(model);
     const ctx = newDtoContext(entity, false) as any;
@@ -63,7 +63,7 @@ function newViewByNullAsUndefined<
     fn: __DtoBody<TModel, "UNDEFINED_VIEW", "ENTITY", __AllModelMembers<TModel>, TMappings>
 ): View<
     TModel, 
-    Prettify<__DtoType<TMappings>>
+    __Prettify<__DtoType<TMappings>>
 > {
     const entity = Entity.of(model);
     const ctx = newDtoContext(entity, false) as any;

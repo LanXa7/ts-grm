@@ -1,23 +1,16 @@
 import { __FollowNullity, __FollowPrefix } from "./schema/prop_internal_behavior";
 import { __EmbeddedPropContract } from "./schema/prop_internal_types";
 
-export type Prettify<T> = 
+export type __Prettify<T> = 
     T extends Array<infer U>
-        ? Prettify<U>[]
+        ? __Prettify<U>[]
     : T extends object
         ? { 
-            -readonly [K in keyof T]: Prettify<T[K]> 
+            -readonly [K in keyof T]: __Prettify<T[K]> 
         }
     : T;
 
-export type FilterNever<T> = 
-    T extends object
-        ? {
-            [K in keyof T as T[K] extends never ? never : K]: T[K]
-        }
-        : never;
-
-export type FlattenMembers<
+export type __FlattenMembers<
     TMembers extends object
 > = {
     [K in keyof TMembers
@@ -25,8 +18,8 @@ export type FlattenMembers<
             ? never
             : K
     ]: TMembers[K]
-} & UnionToIntersection<
-    FlattenUnion<{
+} & __UnionToIntersection<
+    __FlattenUnion<{
         [K in keyof TMembers
             as TMembers[K] extends __EmbeddedPropContract<any, any, any>
                 ? K
@@ -42,20 +35,20 @@ export type FlattenMembers<
     }>
 >;
 
-type FlattenUnion<T> =
+type __FlattenUnion<T> =
     T[keyof T];
 
-export type UnionToIntersection<U> = 
+export type __UnionToIntersection<U> = 
     (U extends any ? (k: U) => void : never) extends (k: infer I) => void 
         ? I 
         : never;
 
-export type CompilationError<T extends string> =
+export type __CompilationError<T extends string> =
     `\u274C ts-grm: ${T}`;
 
-export type Mutable<T> = 
+export type __Mutable<T> = 
     T extends object
-        ? { -readonly [P in keyof T]: Mutable<T[P]> }
+        ? { -readonly [P in keyof T]: __Mutable<T[P]> }
         : T;
 
 export function suppressUnused(_x: any) {}

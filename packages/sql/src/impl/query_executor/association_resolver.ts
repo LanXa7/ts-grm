@@ -1,5 +1,22 @@
 import { SqlClientImplementor } from "@/sql_client";
-import { AnyModel, AtLeastTwo, BaseModel, dsl, EntityTable, err, Expression, ExpressionLike, ExpressionOrder, Predicate, RootQuery, RootQuerySelectArrArgs, SelectionLike, spi, View } from "@ts-grm/core";
+import { 
+    spi,
+    dsl,
+    err,
+    AnyModel, 
+    AtLeastTwo, 
+    BaseModel,  
+    EntityTable, 
+    Expression, 
+    ExpressionLike, 
+    ExpressionOrder, 
+    NumExpression, 
+    Predicate, 
+    RootQuery, 
+    RootQuerySelectArrArgs, 
+    SelectionLike, 
+    View 
+} from "@ts-grm/core";
 import { RecursiveContext } from "./recursive_context";
 import { AssociationBinding } from "./data";
 import { DataRowReader } from "../data_row_reader";
@@ -105,7 +122,7 @@ class AssociationResolver {
 
     private _dependencyArr(
         targetTable: any
-    ): ReadonlyArray<Expression<any, any>> {
+    ): ReadonlyArray<Expression<any>> {
         const entityTable = targetTable as any as spi.AbstractEntityTable;
         if (this._unresolvedField.prop.referenceKeyProp != null) {
             const keyProps = this._unresolvedField.prop.targetKeyProp!.scalarProps!;
@@ -119,7 +136,7 @@ class AssociationResolver {
 
     private _keyExprArr(
         targetTable: any
-    ): ReadonlyArray<Expression<any, any>> {
+    ): ReadonlyArray<Expression<any>> {
         let keyProps: ReadonlyArray<spi.EntityProp>;
         if (this._unresolvedField.prop.referenceKeyProp != null) {
             keyProps = this._unresolvedField.prop.referenceKeyProp.scalarProps!;
@@ -150,9 +167,9 @@ class AssociationResolver {
 
     private _orderExprArr(
         targetTable: any
-    ): ReadonlyArray<Expression<any, any>> {
+    ): ReadonlyArray<Expression<any>> {
         const entityTable = targetTable as any as spi.AbstractEntityTable;
-        const arr: Array<Expression<any, any>> = [];
+        const arr: Array<Expression<any>> = [];
         const orders = this._unresolvedField.orders;
         if (orders != null) {
             for (const order of orders) {
@@ -194,7 +211,7 @@ class AssociationResolver {
             }
             orders.push(
                 new ExpressionOrder(
-                    item as Expression<any, any>,
+                    item as Expression<any>,
                     order.desc,
                     order.nulls
                 )
@@ -551,7 +568,7 @@ class AssociationResolver {
                     }
                     const prevExpressions = keyProps.map((keyProp, index) => 
                         this._byTargetKey
-                            ? prev[`_${this._keySpan + index}`] as Expression<any, any>
+                            ? prev[`_${this._keySpan + index}`] as Expression<any>
                             : (prev.target as any as spi.AbstractEntityTable).__expression(keyProp)
                     );
                     return expressionsToAst(dependencyArr).eq(expressionsToAst(prevExpressions)) as Predicate;
@@ -570,7 +587,7 @@ class AssociationResolver {
                             this._byTargetKey
                                 ? this._orderExprArr(target)
                                 : undefined,
-                            { depth: (q.prev.depth as Expression<number>).plus(dsl.constant(1)) }
+                            { depth: (q.prev.depth as NumExpression<number>).plus(dsl.constant(1)) }
                         )
                     );
                 }
@@ -670,7 +687,7 @@ class AssociationResolver {
     }
 
     private _rankExpr(
-        dependencyArr: ReadonlyArray<Expression<any, any>>,
+        dependencyArr: ReadonlyArray<Expression<any>>,
         orders: ReadonlyArray<ExpressionOrder>
     ): Expression<number> {
         if (orders.length === 0) {

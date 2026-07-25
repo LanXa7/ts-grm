@@ -17,7 +17,6 @@ import {
     MutableSubQuery,
     ExpressionSubQuery,
     TupleSubQuery,
-    Expression,
     BaseQueryProjection,
     SubQueryProjection,
     BaseQueryMapOf,
@@ -38,7 +37,8 @@ import {
     err,
     __ModelOf,
     FindManyOptions,
-    FetchedView
+    FetchedView,
+    NumExpression
 } from "@ts-grm/core";
 import { MutableRootQueryImpl } from "./mutable_root_query_impl";
 import { AtomRootQueryImpl } from "./atom_root_query_impl";
@@ -341,7 +341,7 @@ class QueryFactoryImpl implements spi.QueryFactory {
             ? AtomExpressionSubQuery<T>
             : AtomTupleSubQuery<T>
         : TProjection extends void
-            ? AtomExpressionSubQuery<Expression<number>>
+            ? AtomExpressionSubQuery<NumExpression<number>>
         : never {
         const tables = toTables(args);
         const mutableQuery = new MutableSubQueryImpl(tables);
@@ -351,7 +351,7 @@ class QueryFactoryImpl implements spi.QueryFactory {
         if (projection == null) {
             return new AtomNumSubQueryImpl(
                 mutableQuery, 
-                new ExpressionSubQueryProjection(dsl.constant(1) as Expression<any>, false), 
+                new ExpressionSubQueryProjection(dsl.constant(1), false), 
                 undefined
             ) as any;
         }

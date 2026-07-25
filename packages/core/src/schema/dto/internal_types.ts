@@ -1,4 +1,4 @@
-import { Prettify } from "@/utils";
+import { __Prettify } from "@/auxiliary_types";
 import { AnyModel } from "../model";
 import { __AllModelMembers } from "../model_internal_types";
 import { View } from "./api";
@@ -32,7 +32,7 @@ export type __ViewCreator = {
         fn: __DtoBody<TModel, "NULL_VIEW", "ENTITY", __AllModelMembers<TModel>, TMappings>
     ): View<
         TModel, 
-        Prettify<__DtoType<TMappings>>
+        __Prettify<__DtoType<TMappings>>
     >;
 
     nullAsUndefined<
@@ -45,7 +45,7 @@ export type __ViewCreator = {
         fn: __DtoBody<TModel, "UNDEFINED_VIEW", "ENTITY", __AllModelMembers<TModel>, TMappings>
     ): View<
         TModel, 
-        Prettify<__DtoType<TMappings>>
+        __Prettify<__DtoType<TMappings>>
     >;
 };
 

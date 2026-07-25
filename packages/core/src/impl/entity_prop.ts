@@ -82,7 +82,7 @@ export class EntityProp {
 
     private _tsFormulaResolved = false;
 
-    private _sqlFormulaFn: SqlFormulaFn<AnyModel, any, any> | undefined = undefined;
+    private _sqlFormulaFn: SqlFormulaFn<AnyModel, any> | undefined = undefined;
 
     private _sqlFormulaResolved = false;
 
@@ -496,7 +496,7 @@ export class EntityProp {
         return dependencies;
     }
 
-    get sqlFormulaFn(): SqlFormulaFn<AnyModel, any, any> | undefined {
+    get sqlFormulaFn(): SqlFormulaFn<AnyModel, any> | undefined {
         if (this._sqlFormulaResolved) {
             return this._sqlFormulaFn;
         }

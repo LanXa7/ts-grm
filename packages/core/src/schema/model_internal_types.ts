@@ -1,4 +1,4 @@
-import { FlattenMembers } from "@/utils";
+import { __FlattenMembers } from "@/auxiliary_types";
 import { DatabaseIdentifier } from "./database_identifier";
 import { __AssociatedPropContract, __AssociationType, __EmbeddedPropContract, __ManyToManyPropContract, __ManyToOnePropContract, __OneToOnePropContract, __ScalarPropContract } from "./prop_internal_types";
 import { AnyModel, DV_ABSTRACT, DV_MODEL_NAME, Model, TB_INHERIT } from "./model";
@@ -182,7 +182,7 @@ export type __CalculatorSourceKeys<
     TModelMembers extends object 
     ? { 
         [K in keyof TModelMembers]: 
-            TModelMembers[K] extends __ScalarPropContract<any, any>
+            TModelMembers[K] extends __ScalarPropContract<any, any, any>
                 ? K
             : TModelMembers[K] extends __EmbeddedPropContract<any, any, any>
                 ? K
@@ -217,14 +217,14 @@ export type __IdRemappedTable<TSuperModel extends AnyModel | never> =
         : never;
 
 export type __UniqueKeys<TMembers extends object> =
-    __UniqueKeysImpl<FlattenMembers<TMembers>>;
+    __UniqueKeysImpl<__FlattenMembers<TMembers>>;
 
 export type __UniqueKeysImpl<TFlattenCtorMembers> = 
     TFlattenCtorMembers extends object
         ? { 
             [K in keyof TFlattenCtorMembers]: 
                 TFlattenCtorMembers[K] extends (
-                    __ScalarPropContract<any, any> 
+                    __ScalarPropContract<any, any, any> 
                     | __OneToOnePropContract<any, any, "OWNING", false, any, any>
                     | __ManyToOnePropContract<any, any, "OWNING", false, any, any>
                 )
@@ -234,12 +234,12 @@ export type __UniqueKeysImpl<TFlattenCtorMembers> =
         : never;
 
 export type __OrderedKeys<TModel extends AnyModel> =
-    __OrderedKeysImpl<FlattenMembers<__AllModelMembers<TModel>>>;
+    __OrderedKeysImpl<__FlattenMembers<__AllModelMembers<TModel>>>;
 
 export type __OrderedKeysImpl<TFlattenCtorMembers extends object> = 
     { 
         [K in keyof TFlattenCtorMembers]: 
-            TFlattenCtorMembers[K] extends __ScalarPropContract<any, any>
+            TFlattenCtorMembers[K] extends __ScalarPropContract<any, any, any>
                 ? K
                 : never
     }[keyof TFlattenCtorMembers];

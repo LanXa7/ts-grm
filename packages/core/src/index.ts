@@ -82,7 +82,7 @@ export * as spi from "./spi";
  */
 export * from "./index_internal";
 
-export { suppressUnused } from "./utils";
+export { suppressUnused } from "./auxiliary_types";
 export { ExpressionOrder } from "./dsl";
 export type { OrderNullsType, ModelOrder } from "./schema/order";
 export type { 
@@ -165,11 +165,22 @@ export type  {
     JoinType,
     FilterType,
     FilterContextType,
-    LikeMode,
-    Expression,
-    ExpressionLike,
-    ExprTuple,
     Predicate,
+    LikeMode, 
+    ExpressionLike, 
+    Expression, 
+    CmpExpression,
+    NumExpression,
+    StrExpression,
+    DateExpression,
+    EnumSetExpression,
+    ExprContract,
+    CmpExprContract,
+    NumExprContract,
+    StrExprContract,
+    DateExprContract,
+    EnumSetExprContract,
+    ExprTuple,
     RowTypeOf,
     SelectionLike
 } from "./dsl";

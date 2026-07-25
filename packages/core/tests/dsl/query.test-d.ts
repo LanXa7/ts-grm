@@ -1,5 +1,5 @@
 import { dsl } from "@/dsl";
-import { Expression } from "@/dsl/expression";
+import { NumExpression, StrExpression } from "@/dsl/expression";
 import { SqlClient } from "@/dsl/sql_client";
 import { TupleSubQuery } from "../../src/dsl/sub_query";
 import { tuple } from "../../src/dsl/tuple";
@@ -232,8 +232,8 @@ describe("QueryTest", () => {
         )
         expectTypeOf<typeof sq>().toEqualTypeOf<
             TupleSubQuery<readonly [
-                Expression<string, "">, 
-                Expression<number, "">
+                StrExpression<string>, 
+                NumExpression<number>
             ]>
         >();
     });

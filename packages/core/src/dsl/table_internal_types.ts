@@ -1,6 +1,5 @@
 import { __AllModelMembers, __DerivedModel, __RequiredModelKey } from "@/schema/model_internal_types";
-import { Expression, MakeExpression, MakeType, Predicate } from "./expression";
-import { FilterNever } from "@/utils";
+import { DateExpression, Expression, NumExpression, Predicate, StrExpression, EnumSetExpression, CmpExpression } from "./expression";
 import { View } from "@/schema/dto/api";
 import { FetchedView } from "./root_query";
 import { BaseQuerySelectMapArgs, BaseModel, BaseQueryMapOf } from "./base_query";
@@ -58,31 +57,56 @@ export type __DslMembers<
     TNullity extends __NullityType, 
     TJoinPolicy extends __JoinPolicyType
 > = 
-    FilterNever<{
-        [K in keyof TMembers]:
-            TMembers[K] extends __ScalarPropContract<infer R, infer Nullity>
-                ? TMembers[K] extends __I64PropContract<infer R, infer Nullity>
-                    ? Expression<
-                        MakeType<R, __CombinedNullity<TNullity, Nullity>>,
-                        NonNullable<R> extends string ? "AS_NUMBER" : ""
-                    >
-                : TMembers[K] extends __EnumSetPropContract<infer R>
-                    ? Expression<
-                        MakeType<R, TNullity>,
-                        R extends string ? "AS_ENUM_SET" : ""
-                    >
-                : Expression<MakeType<R, __CombinedNullity<TNullity, Nullity>>, "">
-            : TMembers[K] extends __EmbeddedPropContract<infer R, infer Nullity, any>
-                ? () => __DslMembers<TModel, R, __CombinedNullity<TNullity, Nullity>, TJoinPolicy>
+    { 
+        [K in keyof TMembers as
+            TMembers[K] extends __ScalarPropContract<any, any, any>
+                ? K
+            : TMembers[K] extends __EmbeddedPropContract<any, any, any> 
+                ? K
             : TJoinPolicy extends "NONE"
                 ? never
-            : TMembers[K] extends __ReferencePropContract<infer TargetModel, any, any, any, any, any>
-                ? __ReferenceJoinAction<TModel, TargetModel, __AllModelMembers<TargetModel>, TJoinPolicy>
-            : TMembers[K] extends __CollectionPropContract<infer TargetModel, any, any, any, any>
-                ? __CollectionJoinAction<TModel, TargetModel, __AllModelMembers<TargetModel>, TJoinPolicy>
+            : TMembers[K] extends __ReferencePropContract<any, any, any, any, any, any>
+                ? K
+            : TMembers[K] extends __CollectionPropContract<any, any, any, any, any>
+                ? K
             : never
-        } & __DslReferenceKeyMembers<TModel, TMembers, TNullity>
-    >;
+        ]: TMembers[K] extends __ScalarPropContract<any, any, any>
+            ? __MakeExpression<TNullity, TMembers[K]>
+        : TMembers[K] extends __EmbeddedPropContract<infer R, infer Nullity, any>
+            ? () => __DslMembers<TModel, R, __CombinedNullity<TNullity, Nullity>, TJoinPolicy>
+        : TJoinPolicy extends "NONE"
+            ? never
+        : TMembers[K] extends __ReferencePropContract<infer TargetModel, any, any, any, any, any>
+            ? __ReferenceJoinAction<TModel, TargetModel, __AllModelMembers<TargetModel>, TJoinPolicy>
+        : TMembers[K] extends __CollectionPropContract<infer TargetModel, any, any, any, any>
+            ? __CollectionJoinAction<TModel, TargetModel, __AllModelMembers<TargetModel>, TJoinPolicy>
+        : never
+    } & __DslReferenceKeyMembers<TModel, TMembers, TNullity>;
+
+export type __MakeExpression<
+    TNullity extends __NullityType, 
+    TProp
+> =
+    TProp extends __ScalarPropContract<infer R, infer Nullity, infer Customized>
+        ? TProp extends __I64PropContract<infer R, any>
+            ? NumExpression<__MakeType<R, __CombinedNullity<TNullity, Nullity>>>
+        : TProp extends __EnumSetPropContract<infer R>
+            ? EnumSetExpression<__MakeType<R, __CombinedNullity<TNullity, Nullity>>>
+        : Customized extends true
+            ? Expression<__MakeType<R, __CombinedNullity<TNullity, Nullity>>>
+        : R extends Date
+            ? DateExpression<__MakeType<R, __CombinedNullity<TNullity, Nullity>>>
+        : R extends string
+            ? StrExpression<__MakeType<R, __CombinedNullity<TNullity, Nullity>>>
+        : R extends number
+            ? NumExpression<__MakeType<R, __CombinedNullity<TNullity, Nullity>>>
+        : Expression<__MakeType<R, __CombinedNullity<TNullity, Nullity>>>
+    : never;
+
+export type __MakeType<T, TNullity extends __NullityType> =
+    TNullity extends "NONNULL"
+        ? T
+        : T | null;
 
 export type __DslReferenceKeyMembers<TModel extends AnyModel, TMembers, TNullity extends __NullityType> = {
     [
@@ -96,9 +120,9 @@ export type __DslReferenceKeyMembers<TModel extends AnyModel, TMembers, TNullity
         ? Key extends string
             ? __AllModelMembers<TargetModel>[__RequiredModelKey<TargetModel, Key>] extends __EmbeddedPropContract<infer R, any, any>
                 ? () => __DslMembers<TModel, R, __CombinedNullity<TNullity, Nullity>, "REFERENCE">
-            : MakeExpression<
-                __AllModelMembers<TargetModel>[__RequiredModelKey<TModel, Key>],
-                __CombinedNullity<TNullity, Nullity>
+            : __MakeExpression<
+                __CombinedNullity<TNullity, Nullity>,
+                __AllModelMembers<TargetModel>[__RequiredModelKey<TModel, Key>]
             >
             : never
         : never
@@ -415,15 +439,25 @@ export interface __CollectionExistenceAction<TModelMembers> {
     size<TKey extends __CollectionKeys<TModelMembers>>(
         key: TKey,
         fn?: __AssociatedFilter<TModelMembers[TKey]>
-    ): Expression<number, "">;
+    ): NumExpression<number>;
 }
 
 export type __NullableBaseQuerySelectMapOf<
     TMap extends BaseQuerySelectMapArgs
 > = {
     readonly [K in keyof TMap]: 
-        TMap[K] extends Expression<infer R, infer AsNumber> 
-            ? Expression<R | null, AsNumber>
+        TMap[K] extends EnumSetExpression<infer T>
+            ? EnumSetExpression<T | null>
+        : TMap[K] extends DateExpression<infer T>
+            ? DateExpression<T | null>
+        : TMap[K] extends StrExpression<infer T>
+            ? StrExpression<T | null>
+        : TMap[K] extends NumExpression<infer T>
+            ? NumExpression<T | null>
+        : TMap[K] extends CmpExpression<infer T>
+            ? CmpExpression<T | null>
+        : TMap[K] extends Expression<infer T> 
+            ? Expression<T | null>
         : __NullableEntityTableOf<TMap[K]>;
 };
 

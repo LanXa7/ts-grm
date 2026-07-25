@@ -36,7 +36,7 @@ export interface __AllScalarsMapping<
 type __ScalarKeys<TMembers> = 
     keyof {
         [K in keyof TMembers as 
-            TMembers[K] extends __ScalarPropContract<any, any>
+            TMembers[K] extends __ScalarPropContract<any, any, any>
                 ? K
             : TMembers[K] extends __EmbeddedPropContract<any, any, any>
                 ? K
@@ -61,7 +61,7 @@ export type __MemberType<
     TMember, 
     TDtoKind extends __DtoKind
 > =
-    TMember extends __ScalarPropContract<infer R, infer Nullity>
+    TMember extends __ScalarPropContract<infer R, infer Nullity, any>
         ? __WithNullity<R, Nullity, TDtoKind>
     : TMember extends __EmbeddedPropContract<infer NestedProps, infer Nullity, any>
         ? __WithNullity<

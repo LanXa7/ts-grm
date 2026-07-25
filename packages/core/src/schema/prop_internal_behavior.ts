@@ -13,7 +13,15 @@ import {
 import { CascadeType, JoinTable, JoinColumns, JoinEntity } from "./join";
 import { ArgumentError } from "@/error/common";
 import { IsNull } from "@/dsl/utils";
-import { Calculator, ParameterizedTargetCalculator, ParameterizedValueCalculator, SqlFormula, TargetCalculator, TsFormula, ValueCalculator } from "./computed";
+import { 
+    Calculator, 
+    ParameterizedTargetCalculator, 
+    ParameterizedValueCalculator, 
+    SqlFormula, 
+    TargetCalculator, 
+    TsFormula, 
+    ValueCalculator 
+} from "./computed";
 import { StandardSchemaV1 } from "@standard-schema/spec"; 
 import { scalars, ScalarProvider, ScalarType, EnumSetProvider } from "./scalar";
 import { 
@@ -44,7 +52,6 @@ import {
     __TsFormulaPropContract 
 } from "./prop_internal_types";
 import { AnyModel } from "./model";
-import { AsBound } from "@/dsl/expression";
 
 export class __Prop<T, TNullity extends __NullityType> 
 implements __PropContract<T, TNullity> {
@@ -59,12 +66,16 @@ implements __PropContract<T, TNullity> {
 }
 
 export class __ScalarProp<
-    T, TNullity extends __NullityType = "NONNULL"
-> extends __Prop<T, TNullity> implements __ScalarPropContract<T, TNullity> {
+    T, 
+    TNullity extends __NullityType = "NONNULL",
+    TCustomized extends boolean = false
+> extends __Prop<T, TNullity> implements __ScalarPropContract<T, TNullity, TCustomized> {
 
     readonly __scalarLikeProp = true;
 
     readonly __scalarProp = true;
+
+    declare readonly __customized?: TCustomized;
 
     constructor(data: __PropData) {
         super(data);
@@ -104,7 +115,7 @@ export class __I64Prop<
 
 export class __EnumSetProp<
     TEnum extends string
-> extends __ScalarProp<ReadonlyArray<TEnum>, "NONNULL"> implements __EnumSetPropContract<TEnum> {
+> extends __ScalarProp<ReadonlyArray<TEnum>, "NONNULL", true> implements __EnumSetPropContract<TEnum> {
 
     readonly __enumSetProp = true;
 }
@@ -132,8 +143,8 @@ export type __FollowPrefix<TKey extends string, TParentKey extends string> =
     `${TParentKey}.${TKey}`;
 
 export type __FollowNullity<TProp, TParentNullity extends __NullityType> =
-    TProp extends __ScalarPropContract<infer T, infer Nullity>
-        ? __ScalarProp<T, __CombinedNullity<TParentNullity, Nullity>>
+    TProp extends __ScalarPropContract<infer T, infer Nullity, infer Customized>
+        ? __ScalarProp<T, __CombinedNullity<TParentNullity, Nullity>, Customized>
         : never;
 
 export abstract class __AssociatedProp<
@@ -859,13 +870,13 @@ export type __ScalarPropCreator = {
     
     <TValueType extends StandardSchemaV1>(
         provider: ScalarProvider<TValueType, any>
-    ): __ScalarProp<StandardSchemaV1.InferOutput<TValueType>>;
+    ): __ScalarProp<StandardSchemaV1.InferOutput<TValueType>, "NONNULL", true>;
 }
 
 export function __scalarPropCreator(): __ScalarPropCreator {
     function impl(
         provider: ScalarProvider<any, any>
-    ): __ScalarProp<any> {
+    ): __ScalarProp<any, "NONNULL", true> {
         if (provider instanceof EnumSetProvider) {
             return new __EnumSetProp({...__EMPTY_PROP_DEFINITION_DATA, scalarType: provider.sqlType, scalarProvider: provider as any});
         }
@@ -878,15 +889,15 @@ export type __EnumCreator = {
 
     <const TValues extends ReadonlyArray<string>>(
         ...values: TValues
-    ): __ScalarProp<TValues[number]>;
+    ): __ScalarProp<TValues[number], "NONNULL", true>;
 
     <TMap extends { readonly [key: string]: string; }>(
         map: TMap
-    ): __ScalarProp<keyof TMap>;
+    ): __ScalarProp<keyof TMap, "NONNULL", true>;
 
     <TMap extends { readonly [key: string]: number; }>(
         map: TMap
-    ): __ScalarProp<keyof TMap>;
+    ): __ScalarProp<keyof TMap, "NONNULL", true>;
 }
 
 export function __enumCreator(): __EnumCreator {
@@ -983,7 +994,7 @@ export type __FormulaData = {
     readonly formula: TsFormula<any>;
 } | {
     readonly kind: "SQL";
-    readonly formula: SqlFormula<any, any>;
+    readonly formula: SqlFormula<any>;
 };
 
 export type __CalculatorKind = 
@@ -1259,11 +1270,8 @@ export type __FormulaCreator = {
         IsNull<R> extends true ? "NULLABLE" : "NONNULL"
     >;
 
-    sql<
-        R,
-        TAs extends AsBound<R>
-    >(
-        formula: SqlFormula<R, TAs>
+    sql<R>(
+        formula: SqlFormula<R>
     ): __SqlFormulaProp<
         NonNullable<R>,
         IsNull<R> extends true ? "NULLABLE" : "NONNULL"
@@ -1595,11 +1603,8 @@ export function __formulaCreator(): __FormulaCreator {
         });
     }
 
-    function sql<
-        R,
-        TAs extends AsBound<R>
-    >(
-        formula: SqlFormula<R, TAs>
+    function sql<R>(
+        formula: SqlFormula<R>
     ): __SqlFormulaProp<
         NonNullable<R>,
         IsNull<R> extends true ? "NULLABLE" : "NONNULL"

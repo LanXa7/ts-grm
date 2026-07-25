@@ -7,7 +7,7 @@ import { capitalize } from "./util";
 import { AbstractEntityTable, createEntityTableClass, EntityTableCtor, JoinOperation } from "./entity_table";
 import { ArgumentError, StateError } from "@/error/common";
 import { ShadowAnchor } from "./shadow_anchor";
-import { Mutable } from "@/utils";
+import { __Mutable } from "@/auxiliary_types";
 import { AssociationEntity } from "./association_entity";
 import { DatabaseStrategy } from "./strategy";
 import { __Ctor, __TableOptions } from "@/schema/model_internal_types";
@@ -493,7 +493,7 @@ export class Entity {
             }
         }
         
-        const settings: Mutable<TableSettings> = {
+        const settings: __Mutable<TableSettings> = {
             superSettings: this.superEntity?.tableSettings,
             explicitName: undefined,
             sharedTable: false,

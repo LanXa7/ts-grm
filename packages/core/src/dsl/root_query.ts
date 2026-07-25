@@ -156,7 +156,7 @@ export interface FetchedView<TModel extends AnyModel, X> extends SelectionLike {
 };
 
 export type RootQuerySelection<T> =
-    Expression<T, any> |
+    Expression<T> |
     FetchedView<any, T>;
 
 export type RowTypeOf<TPojection extends RootQueryProjection<any>, TNullAsUndefined extends boolean> =
@@ -171,7 +171,7 @@ export type RowTypeOf<TPojection extends RootQueryProjection<any>, TNullAsUndefi
 type SelectedTypeOf<TSelection, TNullAsUndefined extends boolean> =
     TSelection extends FetchedView<any, infer R>
         ? NullAsUndefinedType<R, TNullAsUndefined>
-    : TSelection extends Expression<infer R, any>
+    : TSelection extends Expression<infer R>
         ? NullAsUndefinedType<R, TNullAsUndefined>
     : never;
 

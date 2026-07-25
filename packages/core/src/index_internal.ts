@@ -4,4 +4,6 @@ export * from "@/schema/prop_internal_behavior";
 export * from "@/schema/dto/internal_types";
 export * from "@/dsl/association_internal_types";
 export * from "@/dsl/table_internal_types";
+export * from "@/dsl/expression_internal_types";
 export * from "@/dsl/criteria_internal_types";
+export type * from "@/auxiliary_types";

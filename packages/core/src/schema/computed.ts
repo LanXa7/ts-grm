@@ -1,5 +1,5 @@
 import { EntityTable } from "@/dsl/table";
-import { AsBound, Expression } from "@/dsl/expression";
+import { Expression } from "@/dsl/expression";
 import { SqlClient } from "@/dsl/sql_client";
 import { __AllModelMembers, __CalculatorSourceKeys, __ModelIdKey } from "./model_internal_types";
 import { View } from "./dto/api";
@@ -34,26 +34,25 @@ export type TsFormulaFn<
     TValue
 > = (data: TBaseShape) => TValue;
 
-export class SqlFormula<TValue, TAs extends AsBound<TValue> = ""> {
+export class SqlFormula<TValue> {
 
     private constructor(
         readonly valueType: StandardSchemaV1,
         readonly sourceModel: () => AnyModel,
-        readonly fn: SqlFormulaFn<AnyModel, TValue, TAs>
+        readonly fn: SqlFormulaFn<AnyModel, TValue>
     ) {
     }
 
     static of<
         TValueType extends StandardSchemaV1,
-        TAs extends AsBound<StandardSchemaV1.InferOutput<TValueType>>,
         TSourceModel extends AnyModel, 
     >(
         options: {
             readonly valueType: TValueType,
             readonly sourceModel: () => TSourceModel,
-            readonly fn: SqlFormulaFn<TSourceModel, StandardSchemaV1.InferOutput<TValueType>, TAs>
+            readonly fn: SqlFormulaFn<TSourceModel, StandardSchemaV1.InferOutput<TValueType>>
         }
-    ): SqlFormula<StandardSchemaV1.InferOutput<TValueType>, TAs> {
+    ): SqlFormula<StandardSchemaV1.InferOutput<TValueType>> {
         return new SqlFormula(
             options.valueType,
             options.sourceModel,
@@ -62,8 +61,8 @@ export class SqlFormula<TValue, TAs extends AsBound<TValue> = ""> {
     }
 }
 
-export type SqlFormulaFn<TSourceModel extends AnyModel, TValue, TAs extends AsBound<TValue>> =
-    (table: EntityTable<TSourceModel, "NONE">) => Expression<TValue, TAs>;
+export type SqlFormulaFn<TSourceModel extends AnyModel, TValue> =
+    (table: EntityTable<TSourceModel, "NONE">) => Expression<TValue>;
 
 export abstract class Calculator {
 

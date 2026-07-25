@@ -1,4 +1,4 @@
-import { Expression, ExpressionLike, Predicate, TypedExpressionItf } from "./expression"
+import { Expression, ExpressionLike, Predicate } from "./expression"
 import { TupleSubQuery } from "./sub_query";
 import { AtLeastTwo } from "./utils";
 import { ExprTupleImpl } from "@/impl/ast/tuple";
@@ -42,15 +42,15 @@ export type ExprTupleMatchable<TExpressions extends ReadonlyArray<ExpressionLike
     >
     | {
         readonly [K in keyof TExpressions]: 
-            TExpressions[K] extends Expression<infer T, infer As>
-            ? NonNullable<T> | Expression<NonNullable<T>, As>
+            TExpressions[K] extends Expression<infer T>
+            ? NonNullable<T> | Expression<NonNullable<T>>
             : never
     };
 
 export type NullitylessExpressions<TExpressions> =
     {
         readonly [K in keyof TExpressions]: 
-            TExpressions[K] extends TypedExpressionItf<infer T, infer As>
-                ? TypedExpressionItf<T, As>
+            TExpressions[K] extends Expression<infer T>
+                ? Expression<NonNullable<T>> | Expression<T | null>
                 : TExpressions[K];
     }

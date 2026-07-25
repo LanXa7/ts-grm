@@ -1,86 +1,109 @@
 import { __CombinedNullity } from "@/schema/prop_internal_behavior";
-import { CompilationError } from "@/utils"
-import { ExpressionSubQuery } from "./sub_query";
-import { AtLeastOne, ExpressionOrder, IsNull } from "./utils";
+import { __CompilationError } from "@/auxiliary_types"
+import { AtLeastOne, IsNull } from "./utils";
 import { AbstractStrExpr, ConcatExpr } from "@/impl/ast/str_expr";
 import { ArgumentError } from "@/error/common";
 import { getInternalFactory } from "@/impl/ast/internal_factory";
-import { OrderNullsType } from "@/schema/order";
 import { CompoundPred } from "@/impl/ast/pred";
 import { ConstantExpr } from "@/impl/ast/constant";
 import { __I64PropContract, __NullityType, __ScalarPropContract } from "@/schema/prop_internal_types";
+import { 
+    __ExpressionItf, 
+    __CmpExpressionItf, 
+    __NumExpressionItf, 
+    __StrExpressionItf, 
+    __DateExpressionItf, 
+    __EnumSetExpressionItf, 
+    __NullableMethodsItf, 
+    __CmpNullableMethodsItf, 
+    __NumNullableMethodsItf, 
+    __StrNullableMethodsItf, 
+    __DateNullableMethodsItf, 
+    __EnumSetNullableMethodsItf
+} from "./expression_internal_types";
 
-export type Expression<
-    T, 
-    TAs extends AsBound<T> = ""
-> = 
-    NonNullable<T> extends string
-        ? TAs extends "AS_NUMBER"
-            ? NumExpression<T & Nullish<string>>
-        : TAs extends "AS_ENUM_SET"
-            ? EnumSetExpression<T & Nullish<string>>
-        : StrExpression<T & Nullish<string>>
-    : NonNullable<T> extends Date
-        ? DateExpression<T & Nullish<Date>>
-    : NonNullable<T> extends number
-        ? NumExpression<T & Nullish<number>>
-    : AnyExpression<T>;
+export type Expression<T> = 
+    __ExpressionItf<T> & (
+        IsNull<T> extends true
+            ? __NullableMethodsItf<T>
+            : object
+    );
 
-export type AnyExpression<T, TAs extends AsBound<T> = ""> = 
-    AnyExpressionItf<T, TAs> & NullableMethods<T, TAs>;
-
-export type CmpExpression<T, TAs extends AsBound<T> = ""> = 
-    CmpExpressionItf<T, TAs> & NullableMethods<T, TAs>;
+export type CmpExpression<T> = 
+    __CmpExpressionItf<T> & (
+        IsNull<T> extends true
+            ? __CmpNullableMethodsItf<T>
+            : object
+    );
 
 export type StrExpression<T extends Nullish<string>> = 
-    StrExpressionItf<T> & NullableMethods<T, "">;
+    __StrExpressionItf<T> & (
+        IsNull<T> extends true
+            ? __StrNullableMethodsItf<T>
+            : object
+    );
 
 export type NumExpression<T extends Nullish<string | number>> = 
-    NumExpressionItf<T> 
-    & NullableMethods<T, NonNullable<T> extends string ? "AS_NUMBER" : "">;
-
-export type EnumSetExpression<T extends Nullish<string>> = 
-    EnumSetExpressionItf<T> & NullableMethods<T, "">;
+    __NumExpressionItf<T> & (
+        IsNull<T> extends true
+            ? __NumNullableMethodsItf<T>
+            : object
+    );
 
 export type DateExpression<T extends Nullish<Date>> = 
-    DateExpressionItf<T> & NullableMethods<T, "">;
+    __DateExpressionItf<T> & (
+        IsNull<T> extends true
+            ? __DateNullableMethodsItf<T>
+            : object
+    );
 
-export type AsBound<T> = T extends string ? "AS_NUMBER" | "AS_ENUM_SET" | "" : "";
+export type EnumSetExpression<T extends Nullish<string>> = 
+    __EnumSetExpressionItf<T> & (
+        IsNull<T> extends true
+            ? __EnumSetNullableMethodsItf<T>
+            : object
+    );
 
-export type Predicate = AnyExpression<boolean>;
+export type ExprContract<T> = 
+    Expression<NonNullable<T>> | Expression<T | null>
+
+export type CmpExprContract<T> = 
+    [T] extends [NonNullable<T>]  
+        ? CmpExpression<T> | CmpExpression<T | null>
+        : never;
+
+export type StrExprContract = 
+    StrExpression<string> | StrExpression<string | null>;
+
+export type NumExprContract<T extends string | number> = 
+    NumExpression<T> | NumExpression<T | null>;
+
+export type DateExprContract = 
+    DateExpression<Date> | DateExpression<Date | null>;
+
+export type EnumSetExprContract = 
+    EnumSetExpression<string> | EnumSetExpression<string | null>;
+
+export type Predicate = Expression<boolean>;
 
 export type Nullish<T> = T | null | undefined;
 
-export type RHSType<T, TAs extends AsBound<T>> =
-    NonNullable<T> 
-    | TypedExpressionItf<T, TAs> 
-    | (
-        TAs extends "AS_NUMBER"
-            ? number | TypedExpressionItf<number, "">
-            : never
-    );
-
-export type NonNullRHSType<T, TAs extends AsBound<T>> =
-    NonNullable<T> 
-    | AnyExpression<NonNullable<T>, TAs> 
-    | (
-        TAs extends "AS_NUMBER"
-            ? number | AnyExpression<NonNullable<number>, "">
-            : never
-    );
-
 export type CoalesceArgs<T> =
     [
-        ...AnyExpression<Nullish<T>>[],
-        ...([] | [NonNullable<T>] | [AnyExpression<NonNullable<T>>])
+        ...ReadonlyArray<
+            Expression<NonNullable<T> | null>
+            | Expression<NonNullable<T> | undefined>
+            | Expression<NonNullable<T> | null | undefined>
+        >,
+        ...([] | [NonNullable<T>] | [Expression<NonNullable<T>>])
     ];
 
 export type CoalesceDataType<T, TArgs extends any[]> =
     TArgs extends [...any[], infer TLast]
-        ? TLast extends Expression<infer R, any>
+        ? TLast extends Expression<infer R>
             ? (
                 IsNull<R> extends true
-                    ? T | R
+                    ? NonNullable<T> | NonNullable<R> | null
                     : NonNullable<T>
             )
             : (
@@ -89,14 +112,6 @@ export type CoalesceDataType<T, TArgs extends any[]> =
                     : NonNullable<T>
             )
         : T;
-
-export type MergeNullableType<
-    T1 extends Nullish<string | number>, 
-    T2 extends Nullish<string | number>
-> =
-    string extends T1 | T2
-        ? Exclude<T1 | T2, number> 
-        : T1 | T2;
 
 export type LikeMode = "CONTAINS" | "STARTS_WITH" | "ENDS_WITH" | "EXACT";
 
@@ -115,40 +130,22 @@ export type TimeUnit =
     | "DECADES"
     | "CENTURIES";
 
-export type MakeType<T, TNullity extends __NullityType> =
-    TNullity extends "NONNULL"
-        ? T
-        : T | null;
-
-export type MakeExpression<TProp, TNullity extends __NullityType> =
-    TProp extends __I64PropContract<infer R, infer Nullity>
-        ? Expression<
-            MakeType<R, __CombinedNullity<Nullity, TNullity>>, 
-            NonNullable<R> extends string ? "AS_NUMBER" : ""
-        >
-    : TProp extends __ScalarPropContract<infer R, infer Nullity>
-        ? Expression<
-            MakeType<R, __CombinedNullity<Nullity, TNullity>>,
-            ""
-        >
-    : never;
-
 export function and(
-    ...predicates: ReadonlyArray<Nullish<AnyExpression<boolean>>>
-): AnyExpression<boolean> | undefined {
-    return CompoundPred.of("AND", predicates) as AnyExpression<boolean> | undefined;
+    ...predicates: ReadonlyArray<Nullish<Predicate>>
+): Predicate | undefined {
+    return CompoundPred.of("AND", predicates) as Predicate | undefined;
 }
 
 export function or(
-    ...predicates: ReadonlyArray<Nullish<AnyExpression<boolean>>>
-): AnyExpression<boolean> | undefined {
-    return CompoundPred.of("OR", predicates) as AnyExpression<boolean> | undefined;
+    ...predicates: ReadonlyArray<Nullish<Predicate>>
+): Predicate | undefined {
+    return CompoundPred.of("OR", predicates) as Predicate | undefined;
 }
 
 export function not(
-    ...predicates: ReadonlyArray<Nullish<AnyExpression<boolean>>>
-): AnyExpression<boolean> | undefined {
-    return CompoundPred.of("AND", predicates)?.negative() as AnyExpression<boolean> | undefined;
+    ...predicates: ReadonlyArray<Nullish<Predicate>>
+): Predicate | undefined {
+    return CompoundPred.of("AND", predicates)?.negative() as Predicate | undefined;
 }
 
 export type ExpressionLike = {
@@ -159,8 +156,8 @@ export type ExpressionLike = {
 
 export function constant(
     value: number
-): Expression<number, ""> {
-    return new ConstantExpr(value) as any as Expression<number, "">;
+): NumExpression<number> {
+    return new ConstantExpr(value) as any;
 }
 
 export function concat(
@@ -179,7 +176,7 @@ export function concat(
 }
 
 export type SubqueryError = 
-    CompilationError<`Cannot directly use subqueries in 'IN' expressions.
+    __CompilationError<`Cannot directly use subqueries in 'IN' expressions.
 Either use the 'inSubQuery()' function for collection operations;
 or use 'asValue()' to convert the subquery into a single value before using it.`>;
 
@@ -189,333 +186,3 @@ export type HasSubqueryInArray<Arr extends any[]> =
             ? true 
             : HasSubqueryInArray<Rest>
         : false;
-
-export interface TypedExpressionItf<T, TAs extends AsBound<T>> {
-
-    __type(): {
-        readonly selectionLike: true;
-        readonly expressionLike: true;
-        readonly expression: true;
-        readonly __t?: NonNullable<T>;
-        readonly __as?: TAs;
-    };
-}
-
-export interface AnyExpressionItf<T, TAs extends AsBound<T>> extends TypedExpressionItf<T, TAs> {
-    
-    __type(): {
-        readonly selectionLike: true;
-        readonly expressionLike: true;
-        readonly expression: true;
-        readonly anyExpression: true;
-        readonly __t?: NonNullable<T>;
-        readonly __as?: TAs;
-        readonly __anyT?: T;
-    };
-
-    asc(nulls?: OrderNullsType): ExpressionOrder;
-
-    desc(nulls?: OrderNullsType): ExpressionOrder;
-
-    eq(
-        value: RHSType<T, TAs>
-    ): AnyExpression<boolean>;
-    
-    ne(
-        value: RHSType<T, TAs>
-    ): AnyExpression<boolean>;
-
-    in<Values extends NonNullRHSType<T, TAs>[]>(
-        ...values: HasSubqueryInArray<Values> extends true 
-            ? [SubqueryError]
-            : Values
-    ): AnyExpression<boolean>;
-
-    inSubQuery(
-        subQuery: ExpressionSubQuery<Expression<NonNullable<T>, TAs>>
-    ): AnyExpression<boolean>;
-
-    notIn<Values extends NonNullRHSType<T, TAs>[]>(
-        ...values: HasSubqueryInArray<Values> extends true 
-            ? [SubqueryError]
-            : Values
-    ): AnyExpression<boolean>;
-
-    notInSubQuery(
-        subQuery: ExpressionSubQuery<Expression<NonNullable<T>, TAs>>
-    ): AnyExpression<boolean>;
-    
-    eqIf(
-        value: Nullish<T>
-    ): AnyExpression<boolean> | undefined;
-    
-    neIf(
-        value: Nullish<T>
-    ): AnyExpression<boolean> | undefined;
-
-    inIf(
-        values: NonNullable<T>[] | null | undefined
-    ): AnyExpression<boolean> | undefined;
-
-    notInIf(
-        values: NonNullable<T>[] | null | undefined
-    ): AnyExpression<boolean> | undefined;
-}
-
-export interface CmpExpressionItf<T, TAs extends AsBound<T>> extends AnyExpressionItf<T, TAs> {
-    
-    __type(): {
-        readonly selectionLike: true;
-        readonly expressionLike: true;
-        readonly expression: true;
-        readonly anyExpression: true;
-        readonly cmpExpression: true;
-        readonly __t?: NonNullable<T>;
-        readonly __anyT?: T;
-        readonly __as?: TAs;
-    };
-    
-    lt(
-        value: RHSType<T, TAs>
-    ): AnyExpression<boolean>;
-    
-    lte(
-        value: RHSType<T, TAs>
-    ): AnyExpression<boolean>;
-    
-    gt(
-        value: RHSType<T, TAs>
-    ): AnyExpression<boolean>;
-    
-    gte(
-        value: RHSType<T, TAs>
-    ): AnyExpression<boolean>;
-
-    between(
-        min: RHSType<T, TAs>,
-        max: RHSType<T, TAs>
-    ): AnyExpression<boolean>;
-    
-    ltIf(
-        value: Nullish<T>
-    ): AnyExpression<boolean> | undefined;
-    
-    lteIf(
-        value: Nullish<T>
-    ): AnyExpression<boolean> | undefined;
-    
-    gtIf(
-        value: Nullish<T>
-    ): AnyExpression<boolean> | undefined;
-    
-    gteIf(
-        value: Nullish<T>
-    ): AnyExpression<boolean> | undefined;
-
-    betweenIf(
-        min: Nullish<T>,
-        max: Nullish<T>
-    ): AnyExpression<boolean> | undefined;
-}
-
-export interface StrExpressionItf<T extends Nullish<string>> extends CmpExpressionItf<T, ""> {
-
-    __type(): {
-        readonly selectionLike: true;
-        readonly expressionLike: true;
-        readonly expression: true;
-        readonly anyExpression: true;
-        readonly cmpExpression: true;
-        readonly strExpression: true;
-        readonly __t?: NonNullable<T>;
-        readonly __anyT?: T;
-        readonly __as?: "";
-    };
-
-    like(
-        value: string, 
-        mode?: LikeMode
-    ): AnyExpression<boolean> | undefined;
-
-    ilike(
-        value: string, 
-        mode?: LikeMode
-    ): AnyExpression<boolean> | undefined;
-
-    likeIf(
-        value: Nullish<string>, 
-        mode?: LikeMode
-    ): AnyExpression<boolean> | undefined;
-
-    ilikeIf(
-        value: Nullish<string>, 
-        mode?: LikeMode
-    ): AnyExpression<boolean> | undefined;
-
-    notLike(
-        value: string, 
-        mode?: LikeMode
-    ): AnyExpression<boolean> | undefined;
-
-    notIlike(
-        value: string, 
-        mode?: LikeMode
-    ): AnyExpression<boolean> | undefined;
-
-    notLikeIf(
-        value: Nullish<string>, 
-        mode?: LikeMode
-    ): AnyExpression<boolean> | undefined;
-
-    notIlikeIf(
-        value: Nullish<string>, 
-        mode?: LikeMode
-    ): AnyExpression<boolean> | undefined;
-
-    lower(): StrExpression<T>;
-
-    upper(): StrExpression<T>;
-
-    trim(): StrExpression<T>;
-
-    ltrim(): StrExpression<T>;
-
-    length(): NumExpression<number>;
-
-    reverse(): StrExpression<T>;
-
-    replace(oldStr: string, newStr: string): StrExpression<T>;
-
-    lpad(
-        length: number | NumExpression<number>, 
-        pad?: string
-    ): StrExpression<T>;
-
-    rpad(
-        length: number | NumExpression<number>, 
-        pad?: string
-    ): StrExpression<T>;
-
-    left(
-        length: number | NumExpression<number>
-    ): StrExpression<T>;
-
-    right(
-        length: number | NumExpression<number>
-    ): StrExpression<T>;
-
-    position(
-        substr: string, 
-        start?: number | NumExpression<number>
-    ): StrExpression<T>;
-
-    substring(
-        start: number | NumExpression<number>,
-        length?: number | NumExpression<number>
-    ): StrExpression<T>;
-}
-
-export interface NumExpressionItf<T extends Nullish<string | number>> extends CmpExpressionItf<T, T extends string ? "AS_NUMBER" : ""> {
-
-    __type(): {
-        readonly selectionLike: true;
-        readonly expressionLike: true;
-        readonly expression: true;
-        readonly anyExpression: true;
-        readonly cmpExpression: true;
-        readonly numExpression: true;
-        readonly __t?: NonNullable<T>;
-        readonly __anyT?: T;
-        readonly __as?: NonNullable<T> extends string ? "AS_NUMBER" : "";
-    };
-
-    unaryMinus(): NumExpression<T>;
-
-    plus<X extends Nullish<string | number>>(
-        value: NonNullable<X> | NumExpression<X>
-    ): NumExpression<MergeNullableType<T, X>>;
-
-    minus<X extends Nullish<string | number>>(
-        value: NonNullable<X> | NumExpression<X>
-    ): NumExpression<MergeNullableType<T, X>>;
-
-    times<X extends Nullish<string | number>>(
-        value: NonNullable<X> | NumExpression<X>
-    ): NumExpression<MergeNullableType<T, X>>;
-
-    div<X extends Nullish<string | number>>(
-        value: NonNullable<X> | NumExpression<X>
-    ): NumExpression<MergeNullableType<T, X>>;
-
-    rem<X extends Nullish<string | number>>(
-        value: NonNullable<X> | NumExpression<X>
-    ): NumExpression<MergeNullableType<T, X>>;
-}
-
-export interface EnumSetExpressionItf<T extends Nullish<string>> extends AnyExpressionItf<T, ""> {
-
-    __type(): {
-        readonly selectionLike: true;
-        readonly expressionLike: true;
-        readonly expression: true;
-        readonly anyExpression: true;
-        readonly cmpExpression: true;
-        readonly enumSetExpression: true;
-        readonly __t?: NonNullable<T>;
-        readonly __anyT?: T;
-        readonly __as?: "";
-    };
-    
-    containsAny(...values: AtLeastOne<T>): Predicate;
-
-    notContainsAny(...values: AtLeastOne<T>): Predicate;
-
-    containsAll(...values: AtLeastOne<T>): Predicate;
-
-    notContainsAll(...values: AtLeastOne<T>): Predicate;
-}
-
-export interface DateExpressionItf<T extends Nullish<Date>> extends CmpExpressionItf<T, ""> {
-
-    __type(): {
-        readonly selectionLike: true;
-        readonly expressionLike: true;
-        readonly expression: true;
-        readonly anyExpression: true;
-        readonly cmpExpression: true;
-        readonly dateExpression: true;
-        readonly __t?: NonNullable<T>;
-        readonly __anyT?: T;
-        readonly __as?: "";
-    };
-    
-    plus(
-        value: number | Expression<number, "">, 
-        timeUnit: TimeUnit
-    ): DateExpression<T>;
-
-    minus(
-        value: number | Expression<number, "">, 
-        timeUnit: TimeUnit
-    ): DateExpression<T>;
-
-    diff(
-        value: Date | DateExpression<any>, 
-        timeUnit: TimeUnit
-    ): NumExpression<number>;
-}
-
-export type NullableMethods<T, TAs extends AsBound<T>> =
-    IsNull<T> extends true
-        ? { 
-            isNull(): AnyExpression<boolean>;
-
-            isNotNull(): AnyExpression<boolean>;
-
-            coalesce<TArgs extends CoalesceArgs<T>>(
-                ...exprs: TArgs
-            ): Expression<CoalesceDataType<T, TArgs>, TAs & AsBound<CoalesceDataType<T, TArgs>>>;
-
-            asNonNull(): Expression<NonNullable<T>, TAs>;
-        }
-        : object;

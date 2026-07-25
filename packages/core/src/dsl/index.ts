@@ -64,7 +64,23 @@ export type {
     FilterType,
     FilterContextType
 } from "./table";
-export type { LikeMode, Expression, ExpressionLike, Predicate } from "./expression";
+export type { 
+    Predicate,
+    LikeMode, 
+    ExpressionLike, 
+    Expression, 
+    CmpExpression,
+    NumExpression,
+    StrExpression,
+    DateExpression,
+    EnumSetExpression,
+    ExprContract,
+    CmpExprContract,
+    NumExprContract,
+    StrExprContract,
+    DateExprContract,
+    EnumSetExprContract
+} from "./expression";
 
 export const dsl = {
     subQuery,

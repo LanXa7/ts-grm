@@ -1,4 +1,4 @@
-import { Expression } from "@/dsl/expression";
+import { Predicate } from "@/dsl/expression";
 import { AbstractExpr } from "./expr";
 import { Visitor } from "./visitor";
 import { QueryContract } from "./query";
@@ -201,7 +201,7 @@ export class CompoundPred extends AbstractPred {
         return new CompoundPred(newOp, newPreds);
     }
 
-    static of(op: CompoundOp, exprs: ReadonlyArray<Expression<boolean, ""> | null | undefined>): AbstractPred | undefined {
+    static of(op: CompoundOp, exprs: ReadonlyArray<Predicate | null | undefined>): AbstractPred | undefined {
         if (exprs == null) {
             return undefined;
         }

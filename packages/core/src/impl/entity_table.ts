@@ -403,7 +403,7 @@ export abstract class AbstractEntityTable implements AbstractTable {
         const exprOrTuple = targetTable.__inverseAssociatedKey(this.__entity.model, prop.name);
         const thisKeyProp = prop.thisKeyProp ?? this.__entity.idProp;
         if (thisKeyProp.props == null) {
-            return (exprOrTuple as Expression<any, any>).eq((this as any)[thisKeyProp.name]);
+            return (exprOrTuple as Expression<any>).eq((this as any)[thisKeyProp.name]);
         }
         const ast = (this as any)[thisKeyProp.name]();
         return (exprOrTuple as ExprTuple<any>).eq(
@@ -554,7 +554,7 @@ export abstract class AbstractEntityTable implements AbstractTable {
     __inverseAssociatedKeyArr(
         parentModel: AnyModel,
         toThisPropName: string
-    ): ReadonlyArray<Expression<any, any>> {
+    ): ReadonlyArray<Expression<any>> {
         return this._inverseAssociatedKey(parentModel, toThisPropName, "ARRAY");
     }
 
@@ -652,7 +652,7 @@ export abstract class AbstractEntityTable implements AbstractTable {
         }
     }
 
-    __expression(prop: EntityProp): Expression<any, any> {
+    __expression(prop: EntityProp): Expression<any> {
         if (prop.props != null) {
             throw new ArgumentError(`The property "${prop.toString()}" is not scalar property`);
         }
@@ -679,11 +679,11 @@ export abstract class AbstractEntityTable implements AbstractTable {
         return toTuple(arr as any);
     }
 
-    static expandExprArr(ast: any, prop: EntityProp): Expression<any, any>[] {
+    static expandExprArr(ast: any, prop: EntityProp): Expression<any>[] {
         if (prop.props == null) {
-            return [ast as Expression<any, any>];
+            return [ast as Expression<any>];
         }
-        const arr: Array<Expression<any, any>> = [];
+        const arr: Array<Expression<any>> = [];
         for (const subProp of prop.flattenScalarProps.values()) {
             const parts = subProp.subPath.split('.');
             const size = parts.length;
@@ -695,7 +695,7 @@ export abstract class AbstractEntityTable implements AbstractTable {
                     prev = prev[parts[i]!]();
                 }
             }
-            arr.push(prev as Expression<any, any>);
+            arr.push(prev as Expression<any>);
         }
         return arr;
     }

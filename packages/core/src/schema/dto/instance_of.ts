@@ -1,4 +1,4 @@
-import { UnionToIntersection } from "@/utils";
+import { __UnionToIntersection } from "@/auxiliary_types";
 import { __DeclaredModelMembers, __DerivedModel, __ModelName, __ModelSuperNames } from "../model_internal_types";
 import { __DtoBody, __DtoKind, __DtoMapping, __DtoType } from "./dto_context";
 import { __SelfMappings } from "./utils";
@@ -78,7 +78,7 @@ export type __SuperFields<
     TPrevData,
     TTypeNames extends string
 > = [TPrevData] extends [{ __typename: string }]
-    ? UnionToIntersection<
+    ? __UnionToIntersection<
         __ExtractSuperFields<TPrevData, TTypeNames>
     >
     : TPrevData;

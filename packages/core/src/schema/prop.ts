@@ -1,4 +1,4 @@
-import { FlattenMembers } from "@/utils";
+import { __FlattenMembers } from "@/auxiliary_types";
 import { StandardSchemaV1 } from "@standard-schema/spec"; 
 import { scalars, ScalarType } from "./scalar";
 import { __calculatedCreator, __EmbeddedProp, __EMPTY_PROP_DEFINITION_DATA, __enumCreator, __enumSetCreator, __formulaCreator, __I64Prop, __m2mCreator, __m2oCreator, __o2mCreator, __o2oCreator, __ScalarProp, __scalarPropCreator, __StrProp } from "./prop_internal_behavior";
@@ -50,19 +50,19 @@ export const prop = {
 
     json<TValueType extends StandardSchemaV1>(
         valueType: TValueType
-    ): __ScalarProp<StandardSchemaV1.InferOutput<TValueType>> {
+    ): __ScalarProp<StandardSchemaV1.InferOutput<TValueType>, "NONNULL", true> {
         return this.scalar(scalars.jsonProvider(valueType));
     },
 
     jsonb<TValueType extends StandardSchemaV1>(
         valueType: TValueType
-    ): __ScalarProp<StandardSchemaV1.InferOutput<TValueType>> {
+    ): __ScalarProp<StandardSchemaV1.InferOutput<TValueType>, "NONNULL", true> {
         return this.scalar(scalars.jsonbProvider(valueType));
     },
 
     embedded<TProps extends Record<string, __EmbeddedMember>>(
         props: TProps
-    ): __EmbeddedProp<TProps, "NONNULL", FlattenMembers<TProps>> {
+    ): __EmbeddedProp<TProps, "NONNULL", __FlattenMembers<TProps>> {
         return new __EmbeddedProp({...__EMPTY_PROP_DEFINITION_DATA, props});
     },
 

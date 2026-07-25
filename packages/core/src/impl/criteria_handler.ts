@@ -4,7 +4,7 @@ import { EntityProp } from "./entity_prop";
 import { AnyModel } from "@/schema/model";
 import { AbstractEntityTable } from "./entity_table";
 import { __CriteriaInstanceOfBinding } from "@/index_internal";
-import { suppressUnused } from "@/utils";
+import { suppressUnused } from "@/auxiliary_types";
 import { StateError } from "@/error/common";
 
 export interface CriteriaHandler<TModel extends AnyModel> {

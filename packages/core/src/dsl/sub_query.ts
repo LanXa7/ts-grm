@@ -1,5 +1,5 @@
 import { AnyModel } from "@/schema/model";
-import { Expression, ExpressionLike, Predicate } from "./expression";
+import { ExpressionLike, NumExpression, Predicate } from "./expression";
 import { AtLeastOne, AtLeastTwo, ExpressionOrder } from "./utils";
 import { getQueryFactory } from "@/impl/ast/query_factory";
 import { ExistsPred, subQueryExpr } from "@/impl/ast/sub_query_expr";
@@ -25,7 +25,7 @@ export function subQuery<
         ? AtomExpressionSubQuery<T>
         : AtomTupleSubQuery<T>
     : TProjection extends void
-        ? AtomExpressionSubQuery<Expression<number, "">>
+        ? AtomExpressionSubQuery<NumExpression<number>>
     : never {
     return getQueryFactory().createAtomSubQuery(...args);
 }

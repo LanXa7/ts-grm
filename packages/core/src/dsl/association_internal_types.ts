@@ -1,6 +1,5 @@
 import { __AllModelMembers, __RequiredModelKey } from "@/schema/model_internal_types";
-import { __EntityTableMembers, __JoinPolicyType } from "./table_internal_types";
-import { MakeExpression } from "./expression";
+import { __EntityTableMembers, __JoinPolicyType, __MakeExpression } from "./table_internal_types";
 import { __AssociatedPropContract, __EmbeddedPropContract, __NullityType, __ReferencePropContract } from "@/schema/prop_internal_types";
 import { __CombinedNullity } from "@/schema/prop_internal_behavior";
 import { AssociationModel } from "./association";
@@ -125,4 +124,4 @@ export type __AssociationKeyType<
                 __CombinedNullity<TNullity, Nullity>
             >
         }
-        : MakeExpression<TMembers[TKey], TNullity>;
+        : __MakeExpression<TNullity, TMembers[TKey]>;

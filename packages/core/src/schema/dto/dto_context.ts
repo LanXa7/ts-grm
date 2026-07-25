@@ -1,4 +1,4 @@
-import { UnionToIntersection } from "@/utils";
+import { __UnionToIntersection } from "@/auxiliary_types";
 import { AnyModel } from "../model";
 import { __AllScalarsContext, __AllScalarsDtoType, __AllScalarsMapping } from "./all_scalars";
 import { __AssociatedKeysContext, __AssociatedKeysDtoType, __AssociatedKeysMapping } from "./associated_keys";
@@ -81,7 +81,7 @@ export type __DtoType<
 > = 
     ApplyRecursiveMappings<
         __ApplyInstanceOfMappings<
-            UnionToIntersection<{
+            __UnionToIntersection<{
                 [K in keyof TMappings]: __DtoMappingType<TMappings[K]>
             }[number]>,
             TMappings
