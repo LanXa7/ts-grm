@@ -215,7 +215,29 @@ export class SqlClientImpl implements SqlClientImplementor {
         if (expr.table.__joinOperation!.isTargetFilterIgnored) {
             return true;
         }
-        if (expr.table.__entity != null && this.getFilters(expr.table.__entity).length != 0) {
+        if (expr.table.__entity != null && this.getFilters(expr.table.__entity).length !== 0) {
+            return false;
+        }
+        return true;
+    }
+
+    isDirectAssociatedField(
+        field: spi.DtoMapperField
+    ): boolean {
+        const subMapper = field.subMapper;
+        if (subMapper == null) {
+            return true;
+        }
+        for (const childField of subMapper.fields) {
+            const childProp = childField.prop.asEntityProp;
+            if (childProp == null) {
+                return false;
+            }
+            if (field.prop.targetKeyProp !== childProp.rootProp) {
+                return false;
+            }
+        }
+        if (this.getFilters(field.prop.targetEntity!).length !== 0) {
             return false;
         }
         return true;

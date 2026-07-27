@@ -3,6 +3,7 @@ import { Stack } from "./stack";
 import { JoinMergeScope } from "./join_merge_scope";
 import { RealTable } from "./real_table";
 import { SqlClientImplementor } from "@/sql_client";
+import { LambdaJoinFetchVisitor } from "@/impl/query_executor/join_fetch_visitor";
 
 export class PreVisitor extends spi.AbstractVisitor {
 
@@ -110,24 +111,42 @@ export class PreVisitor extends spi.AbstractVisitor {
         }
     }
 
-    visitFetchedView(view: spi.FetchedViewContract): void {
-        for (const field of view.view.mapper.fields) {
-            if (field.columnIndex == null) {
-                continue;
+    visitFetchedView(fetchedView: spi.FetchedViewContract): void {
+        let table: spi.AbstractEntityTable = fetchedView.table;
+        const joinFetchVisitor = new LambdaJoinFetchVisitor(this._sqlClient, {
+            enter: field => {
+                const prop = field.prop.asEntityProp;
+                if (prop == null) {
+                    return undefined;
+                }
+                const oldTable = table;
+                table = (table as any)[prop.name](prop.nullable ? "LEFT" : "INNER");
+                return oldTable;
+            },
+            leave: (_field, _depth, oldTable) => {
+                if (oldTable != null) {
+                    table = oldTable;
+                }
+            },
+            visitField: (field, _) => {
+                if (field.columnIndex == null) {
+                    return;
+                }
+                const realTable = this._toRealTable(table.__to(field.prop.declaringEntity));
+                if (!field.prop.isEntityProp) {
+                    return;
+                }
+                const shadow = realTable.shadow;
+                const entityProp = field.prop as spi.EntityProp;
+                if (entityProp.sqlFormulaFn != null) {
+                    realTable.sqlFormulaExpr(entityProp).accept(this);
+                } else if (shadow != null) {
+                    const column = entityProp.toStorage(this._strategy) as spi.Column;
+                    shadow.baseQueryMetadata.alias(table.__anchor!.exportedName, column.name);
+                }
             }
-            const realTable = this._toRealTable(view.table.__to(field.prop.declaringEntity));
-            if (!field.prop.isEntityProp) {
-                continue;
-            }
-            const shadow = realTable.shadow;
-            const entityProp = field.prop as spi.EntityProp;
-            if (entityProp.sqlFormulaFn != null) {
-                realTable.sqlFormulaExpr(entityProp).accept(this);
-            } else if (shadow != null) {
-                const column = entityProp.toStorage(this._strategy) as spi.Column;
-                shadow.baseQueryMetadata.alias(view.table.__anchor!.exportedName, column.name);
-            }
-        }
+        });
+        joinFetchVisitor.visit(fetchedView.view.mapper);
     }
 
     visitShadowExpr(expr: spi.ShadowExprContract): void {

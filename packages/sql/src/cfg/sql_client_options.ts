@@ -2,13 +2,15 @@ import { EntityManager, spi } from "@ts-grm/core";
 import { FilterManager } from "./filter";
 import { Executor } from "@/transaction/executor";
 
-export type SqlClientOptions = {
+export interface SqlClientOptions {
     
     readonly strategy: spi.DatabaseNamingStrategy;
 
     readonly defaultBatchSize: number;
 
     readonly defaultListBatchSize: number;
+
+    readonly maxJoinFetchDepth: number;
 
     readonly sqlLogger: SqlLogger;
 

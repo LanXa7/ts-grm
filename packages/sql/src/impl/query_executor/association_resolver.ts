@@ -27,11 +27,15 @@ import { resolveCalculators, resolveTsFormulas } from "./calculator_resolver";
 export async function resolveAssociations(
     sqlClient: SqlClientImplementor,
     mapper: spi.DtoMapper,
+    joinFetchFieldMap: ReadonlyMap<spi.DtoMapperField, any> | undefined,
     sourceRows: ReadonlyArray<spi.DtoRow>,
     recursiveContext: RecursiveContext | undefined
 ): Promise<void> {
     for (const unresolvedField of mapper.unresolvedFields) {
         if (unresolvedField.prop.isEntityProp && (unresolvedField.prop as spi.EntityProp).calculationStrategy != null) {
+            continue;
+        }
+        if (joinFetchFieldMap != null && joinFetchFieldMap.has(unresolvedField)) {
             continue;
         }
         if (unresolvedField.subMapper != null || recursiveContext != null) {
@@ -331,6 +335,7 @@ class AssociationResolver {
             await resolveAssociations(
                 this._sqlClient, 
                 this._targetMapper, 
+                undefined,
                 targetRows, 
                 recursiveContext?.toDeeperContext()
             );
@@ -347,34 +352,7 @@ class AssociationResolver {
         dependencies: ReadonlyArray<any>
     ): Promise<RecursiveContext | undefined> {
         const [keyRowReader, valueRowReader, recursiveContext] = await this._createRowReaders(dependencies);
-        const sourceDtoRowReader = this._sourceDtoRowReader;
-        const targetDtoRowReader = this._targetDtoRowReader;
-        while (keyRowReader.next()) {
-            const key = keyRowReader.get(0, this._keySpan);
-            const binding = this._bindingMap.get(sourceDtoRowReader.dependencyHash(this._unresolvedField.index, key))
-            if (binding == null) {
-                continue;
-            }
-            const row = this._byTargetKey 
-                ? valueRowReader.get(0, this._targetKeySpan)
-                : targetDtoRowReader.read(binding.sourceRows, valueRowReader);
-            if (this._byTargetKey) {
-                let map = binding.targetIdMap;
-                if (map == null) {
-                    binding.targetIdMap = map = new Map();
-                }
-                map.set(hashOf(row), row);
-            } else if (binding.targetData == null) {
-                binding.targetData = row;
-            } else if (!this._isCollection) {
-                // Do nothing
-            } else if (!Array.isArray(binding.targetData)) {
-                binding.targetData = [binding.targetData as spi.DtoRow, row];
-            } else {
-                binding.targetData.push(row);
-            }
-        }
-        return recursiveContext;
+        return this._readRows(keyRowReader, valueRowReader, recursiveContext);
     }
 
     private async _createRowReaders(
@@ -420,6 +398,41 @@ class AssociationResolver {
         }
         const valueRowReader = keyRowReader.offset(this._keySpan);
         return [keyRowReader, valueRowReader, recursiveContext];
+    }
+
+    private _readRows(
+        keyRowReader: DataRowReader,
+        valueRowReader: DataRowReader,
+        recursiveContext: RecursiveContext | undefined
+    ): RecursiveContext | undefined {
+        const sourceDtoRowReader = this._sourceDtoRowReader;
+        const targetDtoRowReader = this._targetDtoRowReader;
+        while (keyRowReader.next()) {
+            const key = keyRowReader.get(0, this._keySpan);
+            const binding = this._bindingMap.get(sourceDtoRowReader.dependencyHash(this._unresolvedField.index, key))
+            if (binding == null) {
+                continue;
+            }
+            const row = this._byTargetKey 
+                ? valueRowReader.get(0, this._targetKeySpan)
+                : targetDtoRowReader.read(binding.sourceRows, valueRowReader);
+            if (this._byTargetKey) {
+                let map = binding.targetIdMap;
+                if (map == null) {
+                    binding.targetIdMap = map = new Map();
+                }
+                map.set(hashOf(row), row);
+            } else if (binding.targetData == null) {
+                binding.targetData = row;
+            } else if (!this._isCollection) {
+                // Do nothing
+            } else if (!Array.isArray(binding.targetData)) {
+                binding.targetData = [binding.targetData as spi.DtoRow, row];
+            } else {
+                binding.targetData.push(row);
+            }
+        }
+        return recursiveContext;
     }
 
     private async _createOptimizedRowReaders(

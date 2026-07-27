@@ -22,7 +22,7 @@ export type TypeOf<TView> =
         : never;
 
 export type ReferenceFetchType = 
-    "LOAD" | "JOIN";
+    "LOAD" | "JOIN_UNPAGED_ONLY";
 
 export const dto = {
     view: viewCreator()

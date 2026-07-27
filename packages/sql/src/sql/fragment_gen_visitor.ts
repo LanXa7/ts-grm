@@ -8,6 +8,7 @@ import { SqlClientImplementor } from "@/sql_client";
 import { BaseQueryMetadata } from "./base_query_metadata";
 import { TableFragmentCreator } from "./table_fragment_creator";
 import { addTypeMatch } from "./utils";
+import { LambdaJoinFetchVisitor } from "@/impl/query_executor/join_fetch_visitor";
 
 export class FragmentGenGenVisitor extends spi.AbstractVisitor {
 
@@ -409,27 +410,44 @@ export class FragmentGenGenVisitor extends spi.AbstractVisitor {
     }
 
     visitFetchedView(fetchedView: spi.FetchedViewContract): void {
-        const table = fetchedView.table;
-        for (const field of fetchedView.view.mapper.fields) {
-            if (field.columnIndex == null) {
-                continue;
-            }
-            this._compositeStack.current.separator();
-            const prop = field.prop;
-            const realTable = this._toRealTable(table.__to(prop.declaringEntity));
-            if (!prop.isEntityProp) {
-                const columnName = table.__entity.tableSettings.discriminator!.name;
-                this._compositeStack.current.add(this._createColumn(realTable, columnName));
-            } else {
-                const entityProp = prop as spi.EntityProp;
-                if (entityProp.sqlFormulaFn != null) {
-                    realTable.sqlFormulaExpr(entityProp).accept(this);
+        let table = fetchedView.table;
+        const joinFetchVisitor = new LambdaJoinFetchVisitor(this.sqlClient, {
+            enter: field => {
+                const prop = field.prop.asEntityProp;
+                if (prop == null) {
+                    return undefined;
+                }
+                const oldTable = table;
+                table = (table as any)[prop.name](prop.nullable ? "LEFT" : "INNER");
+                return oldTable;
+            },
+            leave: (_field, _depth, oldTable) => {
+                if (oldTable != null) {
+                    table = oldTable;
+                }
+            },
+            visitField: field => {
+                if (field.columnIndex == null) {
+                    return;
+                }
+                this._compositeStack.current.separator();
+                const prop = field.prop;
+                const realTable = this._toRealTable(table.__to(prop.declaringEntity));
+                if (!prop.isEntityProp) {
+                    const columnName = table.__entity.tableSettings.discriminator!.name;
+                    this._compositeStack.current.add(this._createColumn(realTable, columnName));
                 } else {
-                    const column = entityProp.toStorage(this._strategy) as spi.Column;
-                    this._compositeStack.current.add(this._createColumn(realTable, column.name));
+                    const entityProp = prop as spi.EntityProp;
+                    if (entityProp.sqlFormulaFn != null) {
+                        realTable.sqlFormulaExpr(entityProp).accept(this);
+                    } else {
+                        const column = entityProp.toStorage(this._strategy) as spi.Column;
+                        this._compositeStack.current.add(this._createColumn(realTable, column.name));
+                    }
                 }
             }
-        }
+        });
+        joinFetchVisitor.visit(fetchedView.view.mapper);
     }
 
     visitPropExpr(expr: spi.PropExprContract): void {

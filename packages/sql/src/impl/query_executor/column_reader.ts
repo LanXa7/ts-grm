@@ -3,6 +3,7 @@ import { RootQuerySelection, spi } from "@ts-grm/core";
 import { DataRowReader } from "../data_row_reader";
 import { resolveAssociations } from "./association_resolver";
 import { resolveCalculators, resolveTsFormulas } from "./calculator_resolver";
+import { LambdaJoinFetchVisitor } from "./join_fetch_visitor";
 
 export async function readColumn(
     sqlClient: SqlClientImplementor,
@@ -59,15 +60,78 @@ async function readDtos(
     const dtoRows: Array<spi.DtoRow> = [];
     const dtos: Array<any> = [];
     const dtoRowReader = mapper.dtoRowReader;
+    const jfFieldMap = joinFetchFieldMap(sqlClient, mapper);
+    const joinFetchExecutor = new JoinFetchExecutor(jfFieldMap);
+    const joinFetchReader = dataRowReader.offset(mapper.span);
     while (dataRowReader.next()) {
         const dtoRow = dtoRowReader.read(undefined, dataRowReader);
         dtoRows.push(dtoRow);
         dtos.push(dtoRow.dto);
+        joinFetchExecutor.execute(dtoRow, joinFetchReader);
     }
     if (dtoRows.length !== 0) {
-        await resolveAssociations(sqlClient, mapper, dtoRows, undefined);
+        await resolveAssociations(sqlClient, mapper, jfFieldMap, dtoRows, undefined);
         resolveTsFormulas(mapper, dtoRows);
         await resolveCalculators(sqlClient, mapper, dtoRows);
     }
     return dtos;
+}
+
+function joinFetchFieldMap(
+    sqlClient: SqlClientImplementor,
+    mapper: spi.DtoMapper
+) {
+    const joinFetchFields = new Map<spi.DtoMapperField, number>();
+    const joinFetchVisitor = new LambdaJoinFetchVisitor(sqlClient, {
+        enter: (field, depth) => {
+            joinFetchFields.set(field, depth);
+            return undefined;
+        },
+        leave: (_field, _depth, _enterValue) => {}
+    });
+    joinFetchVisitor.visit(mapper);
+    return joinFetchFields;
+}
+
+class JoinFetchExecutor {
+
+    constructor(
+        private readonly _joinFetchFields: Map<spi.DtoMapperField, number>
+    ) {}
+
+    execute(parent: spi.DtoRow, dataRowReader: DataRowReader) {
+        if (parent.dto == null) {
+            return;
+        }
+        for (const [field, depth] of this._joinFetchFields.entries()) {
+            if (depth === 0) {
+                this._execute(field, parent, dataRowReader);
+            }
+        }
+    }
+
+    private _execute(
+        field: spi.DtoMapperField, 
+        parent: spi.DtoRow,
+        dataRowReader: DataRowReader
+    ): DataRowReader {
+        const dtoRow = field.subMapper!.dtoRowReader.read(
+            [parent], 
+            dataRowReader
+        );
+        parent.reader.resolve(field.index, parent, dtoRow.dto);
+        const nextDataRowReader = dataRowReader.offset(field.subMapper!.span);
+        let deeperDataRowReader = nextDataRowReader;
+        for (const subField of field.subMapper!.fields) {
+            if (!this._joinFetchFields.has(subField)) {    
+                continue;
+            }
+            deeperDataRowReader = this._execute(
+                subField, 
+                dtoRow, 
+                deeperDataRowReader
+            );
+        }
+        return nextDataRowReader;
+    }
 }

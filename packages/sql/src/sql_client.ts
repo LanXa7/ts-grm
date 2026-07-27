@@ -38,6 +38,18 @@ export function newSqlClient(
             `"options.defaultListBatchSize" cannot be greator than "options.defaultBatchSize" when both of them are specified`
         );
     }
+    if (options.maxJoinFetchDepth != null) {
+        if (options.maxJoinFetchDepth < 0) {
+            throw new err.ArgumentError(
+                `"options.maxJoinFetchDepth" cannot be less thatn 0`
+            );  
+        }
+        if (options.maxJoinFetchDepth > 10) {
+            throw new err.ArgumentError(
+                `"options.maxJoinFetchDepth" cannot be greater thatn 10`
+            );  
+        }
+    }
     return new SqlClientImpl(driver, finalOptions);
 }
 
@@ -49,6 +61,10 @@ export interface SqlClientImplementor extends SqlClient {
 
     isDirectAssociatedKey(
         expr: spi.PropExprContract
+    ): boolean;
+
+    isDirectAssociatedField(
+        field: spi.DtoMapperField
     ): boolean;
 
     getFilters(
@@ -65,6 +81,7 @@ function createDefaultOptions(): SqlClientOptions {
         strategy: spi.UPPER_SNAKE_CASE_DATABASE_NAMING_STRATEGY,
         defaultBatchSize: 128,
         defaultListBatchSize: 16,
+        maxJoinFetchDepth: 5,
         sqlLogger: {
             pretty: false,
             parameter: "PLACEHOLDER"

@@ -1,0 +1,189 @@
+import { dto } from "@ts-grm/core";
+import { describe, expect, it } from "vitest";
+import { BOOK, TREE_NODE } from "../model/model";
+import { newSqlRecord } from "../utils";
+import { useSqliteClientWithData } from "../data_utils";
+
+describe("JoinFetchTest", () => {
+
+    const sqlRecord = newSqlRecord();
+
+    const sqlClient = useSqliteClientWithData(sqlRecord);
+
+    it("simple", async() => {
+        const view = dto.view(BOOK, c => [
+            c.id,
+            c.name,
+            c.store.fetch("JOIN_UNPAGED_ONLY").with(c => [
+                c.id,
+                c.name
+            ])
+        ]);
+        const rows = await sqlClient.createQuery(BOOK, (q, book) => {
+            q.where(book.edition.eq(3));
+            q.orderBy(book.name);
+            return q.select(book.fetch(view));
+        }).fetchList();
+        sqlRecord.assert({
+            sql: `
+                select 
+                    tb_1_.ID,
+                    tb_1_.NAME,
+                    tb_1_.STORE_ID,
+                    tb_2_.ID,
+                    tb_2_.NAME
+                from BOOK tb_1_
+                left join BOOK_STORE tb_2_ on 
+                    tb_1_.STORE_ID = tb_2_.ID
+                where 
+                    tb_1_.EDITION = ?
+                order by 
+                    tb_1_.NAME asc
+            `,
+            args: [3],
+            purpose: "query"
+        });
+        expect(rows).toEqual([
+            {
+                "id": 6,
+                "name": "Effective TypeScript",
+                "store": {
+                    "id": 1,
+                    "name": "O'REILLY"
+                }
+            },
+            {
+                "id": 12,
+                "name": "GraphQL in Action",
+                "store": {
+                    "id": 2,
+                    "name": "MANNING"
+                }
+            },
+            {
+                "id": 3,
+                "name": "Learning GraphQL",
+                "store": {
+                    "id": 1,
+                    "name": "O'REILLY"
+                }
+            },
+            {
+                "id": 9,
+                "name": "YugabyteDB: The Definitive Guide",
+                "store": {
+                    "id": 1,
+                    "name": "O'REILLY"
+                }
+            }
+        ]);
+    });
+
+    it("flat", async() => {
+        const view = dto.view(BOOK, c => [
+            c.id,
+            c.name,
+            c.$flat("store").fetch("JOIN_UNPAGED_ONLY").with(c => [
+                c.id,
+                c.name
+            ])
+        ]);
+        const rows = await sqlClient.createQuery(BOOK, (q, book) => {
+            q.where(book.edition.eq(3));
+            q.orderBy(book.name);
+            return q.select(book.fetch(view));
+        }).fetchList();
+        sqlRecord.assert({
+            sql: `
+                select 
+                    tb_1_.ID,
+                    tb_1_.NAME,
+                    tb_1_.STORE_ID,
+                    tb_2_.ID,
+                    tb_2_.NAME
+                from BOOK tb_1_
+                left join BOOK_STORE tb_2_ on 
+                    tb_1_.STORE_ID = tb_2_.ID
+                where 
+                    tb_1_.EDITION = ?
+                order by 
+                    tb_1_.NAME asc
+            `,
+            args: [3],
+            purpose: "query"
+        });
+        expect(rows).toEqual([
+            {
+                "id": 6,
+                "name": "Effective TypeScript",
+                "storeId": 1,
+                "storeName": "O'REILLY"
+            },
+            {
+                "id": 12,
+                "name": "GraphQL in Action",
+                "storeId": 2,
+                "storeName": "MANNING"
+            },
+            {
+                "id": 3,
+                "name": "Learning GraphQL",
+                "storeId": 1,
+                "storeName": "O'REILLY"
+            },
+            {
+                "id": 9,
+                "name": "YugabyteDB: The Definitive Guide",
+                "storeId": 1,
+                "storeName": "O'REILLY"
+            }
+        ]);
+    });
+
+    it("multipleLayerFlat", async() => {
+        const view = dto.view(TREE_NODE, c => [
+            c.$allScalars,
+            c.$flat("parentNode").fetch("JOIN_UNPAGED_ONLY").prefix("parent").with(c => [
+                c.$allScalars,
+                c.$flat("parentNode").fetch("JOIN_UNPAGED_ONLY").prefix("grand")
+            ])
+        ]);
+        const row = await sqlClient.createQuery(TREE_NODE, (q, treeNode) => {
+            q.where(treeNode.name.eq("Coca Cola"));
+            return q.select(
+                treeNode.fetch(view)
+            );
+        }).fetchRequired();
+        sqlRecord.assert({
+            sql: `
+                select 
+                    tb_1_.ID,
+                    tb_1_.NAME,
+                    tb_1_.PARENT_NODE_ID,
+                    tb_2_.ID,
+                    tb_2_.NAME,
+                    tb_2_.PARENT_NODE_ID,
+                    tb_3_.ID,
+                    tb_3_.NAME
+                from TREE_NODE tb_1_
+                left join TREE_NODE tb_2_ on 
+                    tb_1_.PARENT_NODE_ID = tb_2_.ID
+                left join TREE_NODE tb_3_ on 
+                    tb_2_.PARENT_NODE_ID = tb_3_.ID
+                where 
+                    tb_1_.NAME = ?
+                limit ?
+            `,
+            args: ["Coca Cola", 2],
+            purpose: "query"
+        });
+        expect(row).toEqual({
+            "id": 4,
+            "name": "Coca Cola",
+            "parentId": 3,
+            "parentName": "Drinks",
+            "parentGrandId": 2,
+            "parentGrandName": "Food"
+        });
+    });
+});
