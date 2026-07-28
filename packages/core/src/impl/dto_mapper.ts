@@ -37,6 +37,8 @@ export class DtoMapper {
 
     private _hash: string | undefined = undefined;
 
+    private _hasDirectJoinFetches: boolean | undefined = undefined;
+
     constructor(
         readonly entity: Entity,
         readonly nullAsUndefined: boolean,
@@ -124,6 +126,21 @@ export class DtoMapper {
         }
         return hash;
     }
+
+    get hasDirectJoinFetches(): boolean {
+        let has = this._hasDirectJoinFetches;
+        if (has == null) {
+            has = false;
+            for (const field of this.fields) {
+                if (field.fetchType != null && field.fetchType !== "LOAD") {
+                    has = true;
+                    break;
+                }
+            }
+            this._hasDirectJoinFetches = has;
+        }
+        return has;
+    }
 }
 
 export type DtoMapperField = {
@@ -158,7 +175,7 @@ export type DtoMapperField = {
 
     readonly isDependent: boolean;
 
-    readonly columnIndex: number | string | undefined;
+    readonly columnIndex: number | undefined;
 
     readonly optimizable: boolean;
 }
@@ -386,7 +403,7 @@ class Mapper {
             const field = fields[i]!;
             if (!usedArr[i]) {
                 indexDelta--;
-                if (typeof field.columnIndex === "number") {
+                if (field.columnIndex != null) {
                     columnIndexDelta--;
                 }
                 for (let next = i + 1; next < fields.length; next++) {
@@ -399,7 +416,7 @@ class Mapper {
                 ...field,
                 recursiveDepth: undefined,
                 index: field.index + indexDelta,
-                columnIndex: typeof field.columnIndex === "number" 
+                columnIndex: field.columnIndex != null
                     ? field.columnIndex + columnIndexDelta 
                     : undefined,
                 dependencies: field.dependencies?.map(i => i + (dependencyDeltaMap.get(i) ?? 0))
@@ -508,6 +525,10 @@ class MapperField {
                 ? parts[0]!
                 : parts;
         });
+        const subMapper = this.subMapper?.toDtoMapper();
+        if (subMapper != null) {
+            this._validateFetchType(subMapper);
+        }
         return {
             index: this.index,
             downcastTo: this.downcastTo,
@@ -516,7 +537,7 @@ class MapperField {
             bridgeProp: this.bridgeProp,
             nullable: this.nullable,
             paths,
-            subMapper: this.subMapper?.toDtoMapper(),
+            subMapper,
             fetchType: this.fetchType,
             predicateFn: this.predicateFn,
             orders: this.orders,
@@ -568,6 +589,35 @@ class MapperField {
             return typedNameProp.columName != null;
         }
         return true;
+    }
+
+    private _validateFetchType(subMapper: DtoMapper) {
+        if (this.fetchType == null || this.fetchType === "LOAD") {
+            return;
+        }
+        const prop = this.prop.asEntityProp;
+        if (prop == null || !prop.nullable) {
+            return;
+        }
+        for (const deeperField of subMapper.fields) {
+            if (deeperField.downcastTo != null) {
+                continue;
+            }
+            if (deeperField.columnIndex == null) {
+                continue;
+            }
+            const deeperProp = deeperField.prop.asEntityProp;
+            if (deeperProp != null && !deeperProp.nullable) {
+                return;
+            }
+        }
+        throw new StateError(
+            `Illegal fetch for nullable association "${
+                prop.toString()
+            }", the reference fetch type is "${
+                this.fetchType
+            }" so that at least one non-null and non-derived property is required in associated DTO`
+        );
     }
 }
 

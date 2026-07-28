@@ -23,11 +23,12 @@ import { DataRowReader } from "../data_row_reader";
 import { buildStatement } from "./sql_gen";
 import { baseQuerySelectionMapArgs, capitalize, expressionsToAst, filterSourceRows, hashOf } from "./util";
 import { resolveCalculators, resolveTsFormulas } from "./calculator_resolver";
+import { JoinFetchData } from "./column_reader";
 
 export async function resolveAssociations(
     sqlClient: SqlClientImplementor,
     mapper: spi.DtoMapper,
-    joinFetchFieldMap: ReadonlyMap<spi.DtoMapperField, any> | undefined,
+    joinFetchMap: ReadonlyMap<spi.DtoMapperField, JoinFetchData> | undefined,
     sourceRows: ReadonlyArray<spi.DtoRow>,
     recursiveContext: RecursiveContext | undefined
 ): Promise<void> {
@@ -35,10 +36,18 @@ export async function resolveAssociations(
         if (unresolvedField.prop.isEntityProp && (unresolvedField.prop as spi.EntityProp).calculationStrategy != null) {
             continue;
         }
-        if (joinFetchFieldMap != null && joinFetchFieldMap.has(unresolvedField)) {
-            continue;
-        }
-        if (unresolvedField.subMapper != null || recursiveContext != null) {
+        const joinFetchData = joinFetchMap?.get(unresolvedField);
+        if (joinFetchData != null) {
+            if (joinFetchData.dtoRows.length != 0) {
+                resolveTargets(
+                    sqlClient, 
+                    unresolvedField.subMapper!, 
+                    joinFetchData.dtoRows, 
+                    joinFetchMap,
+                    recursiveContext
+                );
+            }
+        } else if (unresolvedField.subMapper != null || recursiveContext != null) {
             const filteredSourceRows = filterSourceRows(sourceRows, unresolvedField);
             if (filteredSourceRows.length !== 0) {
                 await new AssociationResolver(
@@ -331,26 +340,21 @@ class AssociationResolver {
                 );
             }
         }
-        if (targetRows.length !== 0) {
-            await resolveAssociations(
-                this._sqlClient, 
-                this._targetMapper, 
-                undefined,
-                targetRows, 
-                recursiveContext?.toDeeperContext()
-            );
-            resolveTsFormulas(this._targetMapper, targetRows);
-            await resolveCalculators(
-                this._sqlClient, 
-                this._targetMapper, 
-                targetRows
-            );
-        }
+        await resolveTargets(
+            this._sqlClient, 
+            this._targetMapper, 
+            targetRows, 
+            undefined, 
+            recursiveContext
+        );
     }
 
     private async _resolveBatch(
         dependencies: ReadonlyArray<any>
     ): Promise<RecursiveContext | undefined> {
+        if (dependencies.length == 0) {
+            return undefined;
+        }
         const [keyRowReader, valueRowReader, recursiveContext] = await this._createRowReaders(dependencies);
         return this._readRows(keyRowReader, valueRowReader, recursiveContext);
     }
@@ -754,5 +758,29 @@ class AssociationResolver {
                 );
             })
         ) as TBaseModel;
+    }
+}
+
+async function resolveTargets(
+    sqlClient: SqlClientImplementor,
+    targetMapper: spi.DtoMapper,
+    targetRows: ReadonlyArray<spi.DtoRow>,
+    joinFetchMap: ReadonlyMap<spi.DtoMapperField, JoinFetchData> | undefined,
+    recursiveContext: RecursiveContext | undefined
+) {
+    if (targetRows.length !== 0) {
+        await resolveAssociations(
+            sqlClient, 
+            targetMapper, 
+            joinFetchMap,
+            targetRows, 
+            recursiveContext?.toDeeperContext()
+        );
+        resolveTsFormulas(targetMapper, targetRows);
+        await resolveCalculators(
+            sqlClient, 
+            targetMapper, 
+            targetRows
+        );
     }
 }

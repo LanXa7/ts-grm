@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { BOOK, TREE_NODE } from "../model/model";
 import { newSqlRecord } from "../utils";
 import { useSqliteClientWithData } from "../data_utils";
+import { newSqlClient } from "@/sql_client";
 
 describe("JoinFetchTest", () => {
 
@@ -185,5 +186,163 @@ describe("JoinFetchTest", () => {
             "parentGrandId": 2,
             "parentGrandName": "Food"
         });
+    });
+
+    it("nullable", async () => {
+        const view = dto.view(TREE_NODE, c => [
+            c.$allScalars,
+            c.parentNode.fetch("JOIN_UNPAGED_ONLY").with(c => [
+                c.$allScalars,
+                c.parentNode.fetch("JOIN_UNPAGED_ONLY")
+            ])
+        ]);
+        const row = await sqlClient.createQuery(TREE_NODE, (q, treeNode) => {
+            q.where(treeNode.name.eq("Food"));
+            return q.select(
+                treeNode.fetch(view)
+            );
+        }).fetchRequired();
+        sqlRecord.assert({
+            sql: `
+                select 
+                    tb_1_.ID,
+                    tb_1_.NAME,
+                    tb_1_.PARENT_NODE_ID,
+                    tb_2_.ID,
+                    tb_2_.NAME,
+                    tb_2_.PARENT_NODE_ID,
+                    tb_3_.ID,
+                    tb_3_.NAME
+                from TREE_NODE tb_1_
+                left join TREE_NODE tb_2_ on 
+                    tb_1_.PARENT_NODE_ID = tb_2_.ID
+                left join TREE_NODE tb_3_ on 
+                    tb_2_.PARENT_NODE_ID = tb_3_.ID
+                where 
+                    tb_1_.NAME = ?
+                limit ?
+            `,
+            args: ["Food", 2],
+            purpose: "query"
+        });
+        expect(row).toEqual({
+            "id": 2,
+            "name": "Food",
+            "parentNode": {
+                "id": 1,
+                "name": "Home",
+                "parentNode": null
+            }
+        });
+    });
+
+    it("explicitMixed", async() => {
+        const view = dto.view(TREE_NODE, c => [
+            c.$allScalars,
+            c.parentNode.fetch("JOIN_UNPAGED_ONLY").with(c => [
+                c.$allScalars,
+                c.parentNode.fetch("JOIN_UNPAGED_ONLY").with(c => [
+                    c.$allScalars,
+                    c.parentNode.with(c => [
+                        c.$allScalars,
+                        c.parentNode.with(c => [
+                            c.$allScalars
+                        ])
+                    ])
+                ])
+            ])
+        ]);
+        const row = await sqlClient.createQuery(TREE_NODE, (q, treeNode) => {
+            q.where(treeNode.name.eq("Coca Cola"));
+            return q.select(
+                treeNode.fetch(view)
+            );
+        }).fetchRequired();
+        sqlRecord.assert(
+            {
+                sql: `
+                    select 
+                        tb_1_.ID,
+                        tb_1_.NAME,
+                        tb_1_.PARENT_NODE_ID,
+                        tb_2_.ID,
+                        tb_2_.NAME,
+                        tb_2_.PARENT_NODE_ID,
+                        tb_3_.ID,
+                        tb_3_.NAME,
+                        tb_3_.PARENT_NODE_ID
+                    from TREE_NODE tb_1_
+                    left join TREE_NODE tb_2_ on 
+                        tb_1_.PARENT_NODE_ID = tb_2_.ID
+                    left join TREE_NODE tb_3_ on 
+                        tb_2_.PARENT_NODE_ID = tb_3_.ID
+                    where 
+                        tb_1_.NAME = ?
+                    limit ?
+                `,
+                args: ["Coca Cola", 2],
+                purpose: "query"
+            },
+            {
+                sql: `
+                    select 
+                        tb_1_.ID,
+                        tb_1_.ID,
+                        tb_1_.NAME,
+                        tb_1_.PARENT_NODE_ID
+                    from TREE_NODE tb_1_
+                    where 
+                        tb_1_.ID = ?
+                `,
+                args: [1],
+                purpose: "loadAssociation(TreeNode.parentNode)"
+            }
+        );
+        expect(row).toEqual({
+            "id": 4,
+            "name": "Coca Cola",
+            "parentNode": {
+                "id": 3,
+                "name": "Drinks",
+                "parentNode": {
+                    "id": 2,
+                    "name": "Food",
+                    "parentNode": {
+                        "id": 1,
+                        "name": "Home",
+                        "parentNode": null
+                    }
+                }
+            }
+        });
+    });
+
+    it("implicitMixed", async () => {
+        const view = dto.view(TREE_NODE, c => [
+            c.$allScalars,
+            c.$flat("parentNode").fetch("JOIN_UNPAGED_ONLY").prefix("parent").with(c => [
+                c.$allScalars,
+                c.$flat("parentNode").fetch("JOIN_UNPAGED_ONLY").prefix("parent").with(c => [
+                    c.$allScalars,
+                    c.$flat("parentNode").fetch("JOIN_UNPAGED_ONLY").prefix("parent").with(c => [
+                        c.$allScalars,
+                        c.$flat("parentNode").fetch("JOIN_UNPAGED_ONLY").prefix("parent").with(c => [
+                            c.$allScalars
+                        ])
+                    ])
+                ])
+            ])
+        ]);
+        console.log(view.mapper.dtoRowReader.constructor.toString())
+        const row = await newSqlClient(sqlClient, {
+            maxJoinFetchDepth: 2
+        }).createQuery(TREE_NODE, (q, treeNode) => {
+            q.where(treeNode.name.eq("Coca Cola"));
+            return q.select(
+                treeNode.fetch(view)
+            );
+        }).fetchRequired();
+        sqlRecord.log();
+        console.log(JSON.stringify(row));
     });
 });

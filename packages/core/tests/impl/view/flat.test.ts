@@ -507,4 +507,24 @@ describe("FlatTest", () => {
             parentGrandName: "Food"
         });
     });
+
+    it("flatChain", () => {
+        const view = dto.view(TREE_NODE, c => [
+            c.$allScalars,
+            c.$flat("parentNode").fetch("JOIN_UNPAGED_ONLY").prefix("parent").with(c => [
+                c.$allScalars,
+                c.$flat("parentNode").fetch("JOIN_UNPAGED_ONLY").prefix("parent").with(c => [
+                    c.$allScalars,
+                    c.$flat("parentNode").fetch("JOIN_UNPAGED_ONLY").prefix("parent").with(c => [
+                        c.$allScalars,
+                        c.$flat("parentNode").fetch("JOIN_UNPAGED_ONLY").prefix("parent").with(c => [
+                            c.$allScalars
+                        ])
+                    ])
+                ])
+            ])
+        ]);
+        console.log(JSON.stringify(mapperJson(view.mapper)));
+        console.log(view.mapper.dtoRowReader.constructor.toString());
+    });
 });
