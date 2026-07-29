@@ -138,5 +138,5 @@ export interface FindPageOptions<TModel extends AnyModel> extends FindManyOption
 
     readonly pageSize: number;
 
-    readonly pageNode?: number;
+    readonly pageNo?: number;
 }

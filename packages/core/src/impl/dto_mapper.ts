@@ -37,7 +37,7 @@ export class DtoMapper {
 
     private _hash: string | undefined = undefined;
 
-    private _hasDirectJoinFetches: boolean | undefined = undefined;
+    private _joinFetchFields: ReadonlyArray<DtoMapperField> | undefined;
 
     constructor(
         readonly entity: Entity,
@@ -127,19 +127,13 @@ export class DtoMapper {
         return hash;
     }
 
-    get hasDirectJoinFetches(): boolean {
-        let has = this._hasDirectJoinFetches;
-        if (has == null) {
-            has = false;
-            for (const field of this.fields) {
-                if (field.fetchType != null && field.fetchType !== "LOAD") {
-                    has = true;
-                    break;
-                }
-            }
-            this._hasDirectJoinFetches = has;
+    get joinFetchFields(): ReadonlyArray<DtoMapperField> {
+        let jfFields = this._joinFetchFields;
+        if (jfFields == null) {
+            this._joinFetchFields = jfFields = 
+                this.fields.filter(field => field.fetchType != null && field.fetchType !== "LOAD");
         }
-        return has;
+        return jfFields;
     }
 }
 

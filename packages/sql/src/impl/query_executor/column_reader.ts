@@ -93,7 +93,7 @@ async function readDtos(
     const dtos: Array<any> = [];
     const dtoRowReader = mapper.dtoRowReader;
     const jfMap = joinFetchMap(sqlClient, mapper);
-    const joinFetchExecutor = mapper.hasDirectJoinFetches
+    const joinFetchExecutor = mapper.joinFetchFields.length !== 0
         ? new JoinFetchExecutor(jfMap)
         : undefined;
     const joinFetchReader = dataRowReader.offset(mapper.span);

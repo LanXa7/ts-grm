@@ -88,8 +88,9 @@ function validateFetchTypeImpl(
     selection: RootQuerySelection<any>
 ) {
     if (selection instanceof spi.FetchedViewImpl) {
-        if (selection.view.mapper.hasDirectJoinFetches) {
-            throw new IllegalPaginationError();
+        const joinFetchFields = selection.view.mapper.joinFetchFields;
+        if (joinFetchFields.length !== 0) {
+            throw new IllegalPaginationError(joinFetchFields);
         }
     }
 }

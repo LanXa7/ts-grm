@@ -333,7 +333,6 @@ describe("JoinFetchTest", () => {
                 ])
             ])
         ]);
-        console.log(view.mapper.dtoRowReader.constructor.toString())
         const row = await newSqlClient(sqlClient, {
             maxJoinFetchDepth: 2
         }).createQuery(TREE_NODE, (q, treeNode) => {
@@ -342,7 +341,75 @@ describe("JoinFetchTest", () => {
                 treeNode.fetch(view)
             );
         }).fetchRequired();
-        sqlRecord.log();
-        console.log(JSON.stringify(row));
+        sqlRecord.assert(
+            {
+                sql: `
+                    select 
+                        tb_1_.ID,
+                        tb_1_.NAME,
+                        tb_1_.PARENT_NODE_ID,
+                        tb_2_.ID,
+                        tb_2_.NAME,
+                        tb_2_.PARENT_NODE_ID,
+                        tb_3_.ID,
+                        tb_3_.NAME,
+                        tb_3_.PARENT_NODE_ID
+                    from TREE_NODE tb_1_
+                    left join TREE_NODE tb_2_ on 
+                        tb_1_.PARENT_NODE_ID = tb_2_.ID
+                    left join TREE_NODE tb_3_ on 
+                        tb_2_.PARENT_NODE_ID = tb_3_.ID
+                    where 
+                        tb_1_.NAME = ?
+                    limit ?
+                `,
+                args: ["Coca Cola", 2],
+                purpose: "query"
+            },
+            {
+                sql: `
+                    select 
+                        tb_1_.ID,
+                        tb_1_.ID,
+                        tb_1_.NAME,
+                        tb_1_.PARENT_NODE_ID,
+                        tb_2_.ID,
+                        tb_2_.NAME
+                    from TREE_NODE tb_1_
+                    left join TREE_NODE tb_2_ on 
+                        tb_1_.PARENT_NODE_ID = tb_2_.ID
+                    where 
+                        tb_1_.ID = ?
+                `,
+                args: [1],
+                purpose: "loadAssociation(TreeNode.parentNode)"
+            }
+        );
+        expect(row).toEqual({
+            "id": 4,
+            "name": "Coca Cola",
+            "parentId": 3,
+            "parentName": "Drinks",
+            "parentParentId": 2,
+            "parentParentName": "Food",
+            "parentParentParentId": 1,
+            "parentParentParentName": "Home",
+            "parentParentParentParentId": null,
+            "parentParentParentParentName": null
+        });
+    });
+
+    it("illegalPagination", async() => {
+        const view = dto.view(BOOK, c => [
+            c.$allScalars,
+            c.store.fetch("JOIN_UNPAGED_ONLY")
+        ]);
+        expect(async () => {
+            await sqlClient.findPage(view, {pageNo: 2, pageSize: 2})
+        }).rejects.toThrowError(
+            "Unable to execute pagination query: the selected DTOs contain association properties " + 
+            "with fetchType \"JOIN_UNPAGED_ONLY\" (Book.store), " + 
+            "which are not supported in paginated queries."
+        );
     });
 });

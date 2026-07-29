@@ -4,7 +4,7 @@ import { CodeWriter } from "./code_writer";
 import { DataReader } from "./data_reader";
 import { FetchProp } from "./dto";
 import { DtoMapper,DtoMapperField } from "./dto_mapper";
-import { buildShape, isEmptyShape, Shape } from "./shape";
+import { buildShape, isEmptyShape, Shape, ShapeMember } from "./shape";
 import { ArgumentError } from "@/error/common";
 
 export type DtoRow = {
@@ -180,7 +180,7 @@ function writeDtoDeclaration(
         .code("dto = ")
         .scope("CURLY_BRACKETS", () => {
             for (const key in shape) {
-                if (key !== "__implicit") {
+                if (key !== "__implicit" && isExplicitMember(shape[key]!)) {
                     if (downcastTo == null || shape[key]!.downcastTo == null || shape[key]!.downcastTo!.isAssignableFrom(downcastTo)) {
                         writeRootMember(key, shape[key], mapper, writer);
                     }
@@ -188,6 +188,28 @@ function writeDtoDeclaration(
             }
         })
         .newLine(";");
+}
+
+function isExplicitMember(member: ShapeMember): boolean {
+    if (member.columnIndex != null) {
+        return true;
+    }
+    if (member.targetShape == null) {
+        return true;
+    }
+    return isExplicitShape(member.targetShape);
+}
+
+function isExplicitShape(shape: Shape): boolean {
+    for (const key in shape) {
+        if (key === "__implicit") {
+            continue;
+        }
+        if (isExplicitMember(shape[key]!)) {
+            return true;
+        }
+    }
+    return false;
 }
 
 function writieImplicitDeclaration(

@@ -79,7 +79,7 @@ class AllScalarsMapping implements AbstractDtoMapping {
         downcastTo: Entity | undefined
     ): DtoField {
         return {
-            path: prop.name,
+            path: currentPathContext!.finalPath(prop.name),
             downcastTo,
             prop,
             bridgeProp: undefined,
@@ -157,9 +157,10 @@ class FoldMapping implements AbstractDtoMapping {
         const dto = createDto(
             this._context,
             downcastTo,
-            this._body
+            this._body,
+            this._name
         )
-        return transformFields(dto.fields, this._name, undefined);
+        return dto.fields;
     }
 }
 
@@ -225,33 +226,22 @@ class FlatMapping implements AbstractDtoMapping {
         const dto = createDto(
             ctx, 
             downcastTo,
-            this._body
-        );
-        const flatNullable = this._prop.nullable || this._filter != null;
-        if (this._prop.props != null && this._prefix === "" && !flatNullable) {
-            return dto.fields;
-        }
-        const fields = transformFields(
-            dto.fields, 
+            this._body,
             {
-                prefix: this._prefix, 
-                nullable: flatNullable, 
-                reference: this._prop.targetEntity != null
-            },
-            undefined
+                prefix: this._prefix,
+                reference: this._prop.targetEntity != null,
+                nullable: this._prop.nullable || this._filter != null
+            }
         );
         if (this._prop.props != null) {
-            return fields;
+            return dto.fields;
         }
         return {
             path: undefined,
             downcastTo,
             prop: this._prop,
             bridgeProp: undefined,
-            dto: {
-                ...dto,
-                fields
-            },
+            dto,
             fetchType: this._fetchType,
             predicateFn: this._filter,
             orders: undefined,
@@ -393,7 +383,7 @@ class RecursiveMapping implements AbstractDtoMapping {
         downcastTo: Entity | undefined
     ): DtoField {
         const field: DtoField = {
-            path: this._alias,
+            path: currentPathContext!.finalPath(this._alias),
             downcastTo: downcastTo,
             prop: this.prop,
             bridgeProp: undefined,
@@ -462,7 +452,7 @@ class ScalarLikeMapping implements AbstractDtoMapping {
         downcastTo: Entity | undefined
     ): DtoField | ReadonlyArray<DtoField> {
         return {
-            path: this._alias,
+            path: currentPathContext!.finalPath(this._alias),
             downcastTo,
             prop: this._prop,
             bridgeProp: undefined,
@@ -515,7 +505,7 @@ class EmbeddedMapping implements AbstractDtoMapping {
         const ctx = newDtoContext(this._prop, false);
         const dto = createDto(ctx, downcastTo, this._body);
         return {
-            path: this._alias,
+            path: currentPathContext!.finalPath(this._alias),
             downcastTo,
             prop: this._prop,
             bridgeProp: undefined,
@@ -640,7 +630,7 @@ class ReferenceMapping extends AssociationMapping {
     ): DtoField {
         const dto = this._createChildDto(downcastTo);
         return {
-            path: this._alias,
+            path: currentPathContext!.finalPath(this._alias),
             downcastTo,
             prop: this._directProp,
             bridgeProp: this._bridgeProp,
@@ -741,7 +731,7 @@ class CollectionMapping extends AssociationMapping {
     ): DtoField {
         const dto = this._createChildDto(downcastTo);
         return {
-            path: this._alias,
+            path: currentPathContext!.finalPath(this._alias),
             downcastTo,
             prop: this._directProp,
             bridgeProp: this._bridgeProp,
@@ -784,7 +774,7 @@ class ReferenceKeyMapping implements AbstractDtoMapping {
         const ctx = newDtoContext(this._prop, false);
         const dto = this._body != null ? createDto(ctx, undefined, this._body) : undefined;
         return {
-            path: this._alias,
+            path: currentPathContext!.finalPath(this._alias),
             downcastTo,
             prop: this._prop,
             bridgeProp: undefined,
@@ -860,7 +850,7 @@ class CalculatedAssociationMapping implements AbstractDtoMapping {
         const ctx = newDtoContext(this._prop.targetEntity!, false);
         const dto = createDto(ctx, undefined, this._body);
         const field: DtoField = {
-            path: this._alias,
+            path: currentPathContext!.finalPath(this._alias),
             downcastTo,
             prop: this._prop,
             bridgeProp: undefined,
@@ -1208,17 +1198,61 @@ class DtoContextCtorCreator {
     }
 }
 
+class PathContext {
+
+    constructor(
+        readonly parent: PathContext | undefined,
+        readonly op: PathOp | undefined
+    ) {}
+
+    finalPath(path: Path | undefined): Path | undefined {
+        if (path == null || this.op == null) {
+            return path;
+        }
+        const arr = typeof path === "string"
+                ? [path]
+                : [...path];
+        for (let ctx: PathContext | undefined = this; ctx != null && ctx.op != null; ctx = ctx.parent) {
+            const index = arr.findIndex(name => name !== "..");
+            const op = ctx.op;
+            if (typeof op === "string") {
+                arr.splice(index, 0, op);
+            } else {
+                const prefix = op.prefix;
+                if (prefix !== "") {
+                    arr[index] = `${prefix}${capitalize(arr[index]!)}`;
+                }
+                if (op.reference) {
+                    arr.splice(index, 0, "..");
+                }
+            }
+        }
+        if (arr.length === 1) {
+            return arr[0]!;
+        }
+        return arr;
+    }
+}
+
+let currentPathContext: PathContext | undefined = undefined;
+
 export function createDto(
     ctx: AbstractDtoContext,
     downloadTo: Entity | undefined,
-    body: any
-) {
-    const mappings = body(ctx);
-    const factory = new DtoFactory(ctx.$entity, downloadTo);
-    for (const mapping of mappings) {
-        factory.addMapping(mapping as AbstractDtoMapping);
+    body: any,
+    op?: PathOp
+): Dto {
+    currentPathContext = new PathContext(currentPathContext, op);
+    try {
+        const mappings = body(ctx);
+        const factory = new DtoFactory(ctx.$entity, downloadTo);
+        for (const mapping of mappings) {
+            factory.addMapping(mapping as AbstractDtoMapping);
+        }
+        return factory.create();
+    } finally {
+        currentPathContext = currentPathContext.parent;
     }
-    return factory.create();
 }
 
 export class DtoFactory {
@@ -1271,7 +1305,7 @@ export class DtoFactory {
         }
         const entity = this._source;
         const field: DtoField = {
-            path: "__typename",
+            path: currentPathContext!.finalPath("__typename"),
             downcastTo: undefined,
             prop: new TypeNameProp(
                 entity,
@@ -1292,111 +1326,9 @@ export class DtoFactory {
     }
 }
 
-type TransformOp = 
+type PathOp = 
     string | {
         readonly prefix: string;
         readonly nullable: boolean;
         readonly reference: boolean;
     };
-
-function transformFields(
-    fields: ReadonlyArray<DtoField>,
-    op: TransformOp,
-    predicate: ((field: DtoField) => boolean) | undefined
-) {
-    let newFields: Array<DtoField> | undefined = undefined;
-    const size = fields.length;
-    for (let i = 0; i < size; i++) {
-        if (predicate == null || predicate(fields[i]!)) {
-            if (newFields == null) {
-                newFields = [...fields];
-            }
-            newFields[i] = transformField(fields[i]!, op);
-        }
-    }
-    return newFields ?? fields;
-}
-
-function transformField(
-    field: DtoField,
-    op: TransformOp
-): DtoField {
-    let path = 
-        typeof op === "string"
-            ? field.path
-            : replacePathHead(field.path, op.prefix);
-    if (typeof op === "string") {
-        path = addPathHead(path, op);
-    } else if (op.reference) {
-        path = addPathHead(path, "..");
-    }
-    let dto = field.dto;
-    if (dto != null) {
-        const deeperFields = transformFields(
-            dto.fields, 
-            op,
-            deepField => isFlattenReference(deepField)
-        );
-        if (deeperFields !== dto.fields) {
-            dto = {
-                ...dto,
-                fields: deeperFields
-            };
-        }
-    }
-    let nullable = field.nullable;
-    if (typeof op !== "string") {
-        nullable ||= op.nullable;
-    }
-    return {
-        ...field,
-        path,
-        nullable: field.nullable || nullable,
-        dto
-    };
-}
-
-function isFlattenReference(field: DtoField): boolean {
-    return Array.isArray(field.path) 
-        && field.path.length > 1 
-        && field.path[0]! === ".."
-}
-
-function addPathHead(
-    path: Path | undefined, 
-    head: string
-): Path | undefined {
-    if (path == null) {
-        return undefined;
-    }
-    if (typeof path === "string") {
-        return [head, path];
-    }
-    const index = path.findIndex(v => v !== "..");
-    return [
-        ...path.slice(0, index),
-        head,
-        ...path.slice(index)
-    ];
-}
-
-function replacePathHead(
-    path: Path | undefined, 
-    prefix: string
-): Path | undefined {
-    if (path == null) {
-        return undefined;
-    }
-    if (prefix === "") {
-        return path;
-    }
-    if (typeof path === "string") {
-        return `${prefix}${capitalize(path)}`;
-    }
-    const index = path.findIndex(v => v !== "..");
-    return [
-        ...path.slice(0, index),
-        `${prefix}${capitalize(path[index]!)}`,
-        ...path.slice(index + 1)
-    ];
-}

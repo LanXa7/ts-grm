@@ -524,7 +524,438 @@ describe("FlatTest", () => {
                 ])
             ])
         ]);
-        console.log(JSON.stringify(mapperJson(view.mapper)));
-        console.log(view.mapper.dtoRowReader.constructor.toString());
+        expect(mapperJson(view.mapper)).toEqual({
+            "entity": "TreeNode",
+            "fields": [
+                {
+                    "prop": "TreeNode.id",
+                    "paths": ["id"],
+                    "columnIndex": 0
+                },
+                {
+                    "prop": "TreeNode.name",
+                    "paths": ["name"],
+                    "columnIndex": 1
+                },
+                {
+                    "prop": "TreeNode.parentNodeId",
+                    "paths": [],
+                    "isDependent": true,
+                    "columnIndex": 2
+                },
+                {
+                    "prop": "TreeNode.parentNode",
+                    "paths": [],
+                    "subMapper": {
+                        "entity": "TreeNode",
+                        "associatedProp": "TreeNode.parentNode",
+                        "fields": [
+                            {
+                                "prop": "TreeNode.id",
+                                "paths": [
+                                    ["..", "parentId"]
+                                ],
+                                "columnIndex": 0
+                            },
+                            {
+                                "prop": "TreeNode.name",
+                                "paths": [
+                                    ["..", "parentName"]
+                                ],
+                                "columnIndex": 1
+                            },
+                            {
+                                "prop": "TreeNode.parentNodeId",
+                                "paths": [],
+                                "isDependent": true,
+                                "columnIndex": 2
+                            },
+                            {
+                                "prop": "TreeNode.parentNode",
+                                "paths": [],
+                                "subMapper": {
+                                    "entity": "TreeNode",
+                                    "associatedProp": "TreeNode.parentNode",
+                                    "fields": [
+                                        {
+                                            "prop": "TreeNode.id",
+                                            "paths": [
+                                                ["..", "..", "parentParentId"]
+                                            ],
+                                            "columnIndex": 0
+                                        },
+                                        {
+                                            "prop": "TreeNode.name",
+                                            "paths": [
+                                                ["..", "..", "parentParentName"]
+                                            ],
+                                            "columnIndex": 1
+                                        },
+                                        {
+                                            "prop": "TreeNode.parentNodeId",
+                                            "paths": [],
+                                            "isDependent": true,
+                                            "columnIndex": 2
+                                        },
+                                        {
+                                            "prop": "TreeNode.parentNode",
+                                            "paths": [],
+                                            "subMapper": {
+                                                "entity": "TreeNode",
+                                                "associatedProp": "TreeNode.parentNode",
+                                                "fields": [
+                                                    {
+                                                        "prop": "TreeNode.id",
+                                                        "paths": [
+                                                            ["..", "..", "..", "parentParentParentId"]
+                                                        ],
+                                                        "columnIndex": 0
+                                                    },
+                                                    {
+                                                        "prop": "TreeNode.name",
+                                                        "paths": [
+                                                            ["..", "..", "..", "parentParentParentName"]
+                                                        ],
+                                                        "columnIndex": 1
+                                                    },
+                                                    {
+                                                        "prop": "TreeNode.parentNodeId",
+                                                        "paths": [],
+                                                        "isDependent": true,
+                                                        "columnIndex": 2
+                                                    },
+                                                    {
+                                                        "prop": "TreeNode.parentNode",
+                                                        "paths": [],
+                                                        "subMapper": {
+                                                            "entity": "TreeNode",
+                                                            "associatedProp": "TreeNode.parentNode",
+                                                            "fields": [
+                                                                {
+                                                                    "prop": "TreeNode.id",
+                                                                    "paths": [
+                                                                        [
+                                                                            "..",
+                                                                            "..",
+                                                                            "..",
+                                                                            "..",
+                                                                            "parentParentParentParentId"
+                                                                        ]
+                                                                    ],
+                                                                    "columnIndex": 0
+                                                                },
+                                                                {
+                                                                    "prop": "TreeNode.name",
+                                                                    "paths": [
+                                                                        [
+                                                                            "..",
+                                                                            "..",
+                                                                            "..",
+                                                                            "..",
+                                                                            "parentParentParentParentName"
+                                                                        ]
+                                                                    ],
+                                                                    "columnIndex": 1
+                                                                }
+                                                            ]
+                                                        },
+                                                        "dependencies": [2]
+                                                    }
+                                                ]
+                                            },
+                                            "dependencies": [2]
+                                        }
+                                    ]
+                                },
+                                "dependencies": [2]
+                            }
+                        ]
+                    },
+                    "dependencies": [2]
+                }
+            ]
+        });
+        expectCode(view.mapper.dtoRowReader.constructor.toString(), `
+            class ThisClass extends $baseClass {
+                read(parents, reader) {
+                    const dto = {
+                        id: reader.get(0), 
+                        name: reader.get(1), 
+                        parentId: null, 
+                        parentName: null, 
+                        parentParentId: null, 
+                        parentParentName: null, 
+                        parentParentParentId: null, 
+                        parentParentParentName: null, 
+                        parentParentParentParentId: null, 
+                        parentParentParentParentName: null
+                    };
+                    const implicit = {
+                        _2: reader.get(2)
+                    };
+                    return { reader: this, parents, dto, implicit, typeName: undefined };
+                }
+                _parentNode(dto) {
+                    let o = dto.parentNode;
+                    if (o == null) {
+                        dto.parentNode = o = {
+                            parentNode: null
+                        };
+                    }
+                    return o;
+                }
+                _parentNode_parentNode(dto) {
+                    let o = this._parentNode(dto).parentNode;
+                    if (o == null) {
+                        this._parentNode(dto).parentNode = o = {
+                            parentNode: null
+                        };
+                    }
+                    return o;
+                }
+                dependency(unresolvedFieldIndex, row) {
+                    switch (unresolvedFieldIndex) {
+                        case 3:
+                            return row.implicit._2;
+                        default:
+                            throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                    }
+                }
+                dependencyNullable(unresolvedFieldIndex, dependency) {
+                    switch (unresolvedFieldIndex) {
+                        case 3:
+                            return dependency == null;
+                        default:
+                            throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                    }
+                }
+                dependencyHash(unresolvedFieldIndex, dependency) {
+                    switch (unresolvedFieldIndex) {
+                        case 3:
+                            return dependency;
+                        default:
+                            throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                    }
+                }
+                resolve(unresolvedFieldIndex, row, value) {
+                    switch (unresolvedFieldIndex) {
+                        case 3:
+                            break;
+                        default:
+                            throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                    }
+                }
+            }
+        `);
+        const parentMapper = view.mapper.fields.find(f => f.prop.name === "parentNode")!.subMapper!;
+        expectCode(parentMapper.dtoRowReader.constructor.toString(), `
+            class ThisClass extends $baseClass {
+                read(parents, reader) {
+                    const dto = {
+                    };
+                    const implicit = {
+                        _2: reader.get(2)
+                    };
+                    const reader_0 = reader.get(0);
+                    for (const parent of parents) {
+                        parent.dto.parentId = reader_0;
+                    }
+                    const reader_1 = reader.get(1);
+                    for (const parent of parents) {
+                        parent.dto.parentName = reader_1;
+                    }
+                    return { reader: this, parents, dto, implicit, typeName: undefined };
+                }
+                _parentNode(dto) {
+                    let o = dto.parentNode;
+                    if (o == null) {
+                        dto.parentNode = o = {
+                            parentNode: null
+                        };
+                    }
+                    return o;
+                }
+                dependency(unresolvedFieldIndex, row) {
+                    switch (unresolvedFieldIndex) {
+                        case 3:
+                            return row.implicit._2;
+                        default:
+                            throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                    }
+                }
+                dependencyNullable(unresolvedFieldIndex, dependency) {
+                    switch (unresolvedFieldIndex) {
+                        case 3:
+                            return dependency == null;
+                        default:
+                            throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                    }
+                }
+                dependencyHash(unresolvedFieldIndex, dependency) {
+                    switch (unresolvedFieldIndex) {
+                        case 3:
+                            return dependency;
+                        default:
+                            throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                    }
+                }
+                resolve(unresolvedFieldIndex, row, value) {
+                    switch (unresolvedFieldIndex) {
+                        case 3:
+                            break;
+                        default:
+                            throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                    }
+                }
+            }
+        `);
+        const parentParentMapper = parentMapper.fields.find(f => f.prop.name === "parentNode")!.subMapper!;
+        expectCode(parentParentMapper.dtoRowReader.constructor.toString(), `
+            class ThisClass extends $baseClass {
+                read(parents, reader) {
+                    const dto = {
+                    };
+                    const implicit = {
+                        _2: reader.get(2)
+                    };
+                    const reader_0 = reader.get(0);
+                    for (const parent of parents) {
+                        for (const parent2 of parent.parents) {
+                            parent2.dto.parentParentId = reader_0;
+                        }
+                    }
+                    const reader_1 = reader.get(1);
+                    for (const parent of parents) {
+                        for (const parent2 of parent.parents) {
+                            parent2.dto.parentParentName = reader_1;
+                        }
+                    }
+                    return { reader: this, parents, dto, implicit, typeName: undefined };
+                }
+                dependency(unresolvedFieldIndex, row) {
+                    switch (unresolvedFieldIndex) {
+                        case 3:
+                            return row.implicit._2;
+                        default:
+                            throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                    }
+                }
+                dependencyNullable(unresolvedFieldIndex, dependency) {
+                    switch (unresolvedFieldIndex) {
+                        case 3:
+                            return dependency == null;
+                        default:
+                            throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                    }
+                }
+                dependencyHash(unresolvedFieldIndex, dependency) {
+                    switch (unresolvedFieldIndex) {
+                        case 3:
+                            return dependency;
+                        default:
+                            throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                    }
+                }
+                resolve(unresolvedFieldIndex, row, value) {
+                    switch (unresolvedFieldIndex) {
+                        case 3:
+                            break;
+                        default:
+                            throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                    }
+                }
+            }
+        `);
+        const parentParentParentMapper = parentParentMapper.fields.find(f => f.prop.name === "parentNode")!.subMapper!;
+        expect(parentParentParentMapper.dtoRowReader.constructor.toString(), `
+            class ThisClass extends $baseClass {
+                read(parents, reader) {
+                    const dto = {
+                    };
+                    const implicit = {
+                        _2: reader.get(2)
+                    };
+                    const reader_0 = reader.get(0);
+                    for (const parent of parents) {
+                        for (const parent2 of parent.parents) {
+                            for (const parent3 of parent2.parents) {
+                                parent3.dto.parentParentParentId = reader_0;
+                            }
+                        }
+                    }
+                    const reader_1 = reader.get(1);
+                    for (const parent of parents) {
+                        for (const parent2 of parent.parents) {
+                            for (const parent3 of parent2.parents) {
+                                parent3.dto.parentParentParentName = reader_1;
+                            }
+                        }
+                    }
+                    return { reader: this, parents, dto, implicit, typeName: undefined };
+                }
+                dependency(unresolvedFieldIndex, row) {
+                    switch (unresolvedFieldIndex) {
+                        case 3:
+                            return row.implicit._2;
+                        default:
+                            throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                    }
+                }
+                dependencyNullable(unresolvedFieldIndex, dependency) {
+                    switch (unresolvedFieldIndex) {
+                        case 3:
+                            return dependency == null;
+                        default:
+                            throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                    }
+                }
+                dependencyHash(unresolvedFieldIndex, dependency) {
+                    switch (unresolvedFieldIndex) {
+                        case 3:
+                            return dependency;
+                        default:
+                            throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                    }
+                }
+                resolve(unresolvedFieldIndex, row, value) {
+                    switch (unresolvedFieldIndex) {
+                        case 3:
+                            break;
+                        default:
+                            throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                    }
+                }
+            }
+        `);
+        const parentParentParentParentMapper = parentParentParentMapper.fields.find(f => f.prop.name === "parentNode")!.subMapper!;
+        expectCode(parentParentParentParentMapper.dtoRowReader.constructor.toString(), `
+            class ThisClass extends $baseClass {
+                read(parents, reader) {
+                    const dto = {
+                    };
+                    const reader_0 = reader.get(0);
+                    for (const parent of parents) {
+                        for (const parent2 of parent.parents) {
+                            for (const parent3 of parent2.parents) {
+                                for (const parent4 of parent3.parents) {
+                                    parent4.dto.parentParentParentParentId = reader_0;
+                                }
+                            }
+                        }
+                    }
+                    const reader_1 = reader.get(1);
+                    for (const parent of parents) {
+                        for (const parent2 of parent.parents) {
+                            for (const parent3 of parent2.parents) {
+                                for (const parent4 of parent3.parents) {
+                                    parent4.dto.parentParentParentParentName = reader_1;
+                                }
+                            }
+                        }
+                    }
+                    return { reader: this, parents, dto, implicit: undefined, typeName: undefined };
+                }
+            }
+        `);
     });
 });
