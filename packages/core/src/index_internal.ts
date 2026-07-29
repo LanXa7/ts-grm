@@ -6,4 +6,4 @@ export * from "@/dsl/association_internal_types";
 export * from "@/dsl/table_internal_types";
 export * from "@/dsl/expression_internal_types";
 export * from "@/dsl/criteria_internal_types";
-export type * from "@/auxiliary_types";
+export * from "@/auxiliary_types";

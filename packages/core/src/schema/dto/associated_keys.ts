@@ -1,8 +1,10 @@
 import { AnyModel } from "../model";
 import { __AllModelMembers, __RequiredModelKey } from "../model_internal_types";
-import { __CollectionPropContract } from "../prop_internal_types";
-import { __MemberType } from "./all_scalars";
-import { __DtoKind } from "./dto_context";
+import { __CollectionPropContract, __EmbeddedPropContract } from "../prop_internal_types";
+import { __AllScalarsMapping, __MemberType } from "./all_scalars";
+import { __DtoBody, __DtoKind, __DtoMapping, __DtoType } from "./dto_context";
+import { __TargetKeyMembersOf, __TargetKeyPropOf } from "./reference_key";
+import { __PropModelOf, __TargetMappings } from "./utils";
 
 export interface __AssociatedKeysContext<
     TModel extends AnyModel,
@@ -15,12 +17,20 @@ export interface __AssociatedKeysContext<
     >(
         key: TKey, 
         alias: TAlias
-    ): __AssociatedKeysMapping<
-        TModel, 
-        TDtoKind,
-        TAlias, 
-        TMembers[TKey]
-    >;
+    ): __TargetKeyPropOf<TModel, TMembers[TKey]> extends __EmbeddedPropContract<any, any, any>
+        ? __EmbeddedAssociatedKeysMapping<
+            TModel, 
+            TDtoKind,
+            TAlias, 
+            TMembers[TKey],
+            [__AllScalarsMapping<TModel, TDtoKind, __TargetKeyMembersOf<TModel, TMembers[TKey]>, never>]
+        >
+        : __ScalarAssociatedKeysMapping<
+            TModel, 
+            TDtoKind,
+            TAlias, 
+            TMembers[TKey]
+        >;
 }
 
 export type __CollectionKeys<TMembers> = 
@@ -33,22 +43,59 @@ export type __CollectionKeys<TMembers> =
         ]: never
     };
 
-export interface __AssociatedKeysMapping<
+export type __AssociatedKeysMapping<
+    TModel extends AnyModel, 
+    TDtoKind extends __DtoKind,
+    TKey extends string, 
+    TMember
+> =
+    __ScalarAssociatedKeysMapping<TModel, TDtoKind, TKey, TMember>
+    | __EmbeddedAssociatedKeysMapping<TModel, TDtoKind, TKey, TMember, any>;
+
+export interface __ScalarAssociatedKeysMapping<
     TModel extends AnyModel, 
     TDtoKind extends __DtoKind,
     TKey extends string, 
     TMember
 > {
-
     readonly __mappingType: "ASSOCIATED_KEYS";
+    readonly __keyType: "SCALAR";
     readonly __model?: TModel;
     readonly __dtoKind?: TDtoKind;
     readonly __key?: TKey;
     readonly __member?: TMember;
 }
 
+export interface __EmbeddedAssociatedKeysMapping<
+    TModel extends AnyModel, 
+    TDtoKind extends __DtoKind,
+    TKey extends string, 
+    TMember,
+    TMappings extends ReadonlyArray<__DtoMapping<any>>
+> {
+    readonly __mappingType: "ASSOCIATED_KEYS";
+    readonly __keyType: "EMBEDDED";
+    readonly __model?: TModel;
+    readonly __dtoKind?: TDtoKind;
+    readonly __key?: TKey;
+    readonly __member?: TMember;
+    readonly __mappings?: TMappings;
+
+    with<
+        const TMappings extends __TargetMappings<TModel, TMember>
+    >(
+        body: __DtoBody<
+            __PropModelOf<TModel, TMember>, 
+            TDtoKind, 
+            "EMBEDDABLE", 
+            __TargetKeyMembersOf<TModel, TMember>,
+            TMappings
+        >
+    ): __EmbeddedAssociatedKeysMapping<TModel, TDtoKind, TKey, TMember, TMappings>;
+}
+
 export type __AssociatedKeysDtoType<TMapping> = 
-    TMapping extends __AssociatedKeysMapping<any, infer DtoKind, infer Key, infer Member>
+    TMapping extends __ScalarAssociatedKeysMapping<any, infer DtoKind, infer Key, infer Member>
         ? {
             [K in Key]: Member extends __CollectionPropContract<infer TargetModel, any, any, any, infer TargetKey>
                 ? ReadonlyArray<
@@ -59,4 +106,8 @@ export type __AssociatedKeysDtoType<TMapping> =
                 >
                 : never
         }
-        : never;
+    : TMapping extends __EmbeddedAssociatedKeysMapping<any, any, infer Key, any, infer Mappings>
+        ? {
+            [K in Key]: ReadonlyArray<__DtoType<Mappings>>
+        }
+    : never;

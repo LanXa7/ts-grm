@@ -38,4 +38,29 @@ describe("AssociatedKeysTest", () => {
             commentIds: number[];
         }>();
     });
+
+    it("embeddedKeys", () => {
+        const view = dto.view(ORDER, c => [
+            c.id,
+            c.$associatedKeys("tags", "tagIds").with(c => [
+                c.low.as("l"),
+                c.high.as("h")
+            ]),
+            c.$associatedKeys("comments", "commentIds")
+        ]);
+        expectTypeOf<TypeOf<typeof view>>().toEqualTypeOf<{
+            id: {
+                x: number;
+                y: {
+                    a: number;
+                    b: number;
+                };
+            };
+            tagIds: {
+                l: number;
+                h: number;
+            }[];
+            commentIds: number[];
+        }>();
+    });
 });

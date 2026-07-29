@@ -12,6 +12,7 @@ import { capitalize } from "./util";
 import { Path } from "./dto_mapper";
 import { ReferenceFetchType } from "@/schema/dto/api";
 import { AnyModel } from "@/schema/model";
+import { suppressUnused } from "@/index_internal";
 
 export interface AbstractDtoMapping {
 
@@ -754,7 +755,7 @@ class ReferenceKeyMapping implements AbstractDtoMapping {
     constructor(
         private readonly _prop: EntityProp,
         private readonly _alias: string,
-        private readonly _body: DtoBody
+        private readonly _body: DtoBody | undefined
     ) {}
 
     as(alias: string): ReferenceKeyMapping {
@@ -771,8 +772,10 @@ class ReferenceKeyMapping implements AbstractDtoMapping {
     toFields(
         downcastTo: Entity | undefined
     ): DtoField {
-        const ctx = newDtoContext(this._prop, false);
-        const dto = this._body != null ? createDto(ctx, undefined, this._body) : undefined;
+        const dto = 
+            this._body != null 
+                ? createDto(newDtoContext(this._prop, false), undefined, this._body) 
+                : undefined;
         return {
             path: currentPathContext!.finalPath(this._alias),
             downcastTo,
@@ -787,6 +790,30 @@ class ReferenceKeyMapping implements AbstractDtoMapping {
             nullable: this._prop.nullable,
             parameter: undefined
         };
+    }
+}
+
+class AssociatedKeysMapping implements AbstractDtoMapping {
+
+    readonly __mappingType = "COLLECTION";
+
+    constructor(
+        private readonly _prop: EntityProp,
+        private readonly _alias: string,
+        private readonly _body: DtoBody | undefined
+    ) {}
+
+    with(body: DtoBody): AssociatedKeysMapping {
+        if (this._prop.props == null) {
+            throw new StateError(`Cannot set the body of "${this._prop.toString()}" which is not embedded property`)
+        }
+        return new AssociatedKeysMapping(this._prop, this._alias, body);
+    }
+
+    toFields(downcastTo: Entity | undefined): DtoField | ReadonlyArray<DtoField> {
+        suppressUnused(downcastTo);
+        suppressUnused(this._body);
+        throw new Error();
     }
 }
 
@@ -936,6 +963,17 @@ export class AbstractDtoContext {
         return FlatMapping.of(prop);
     }
 
+    $associatedKeys(key: string, alias: string): AssociatedKeysMapping {
+        const prop = this._prop(key);
+        return new AssociatedKeysMapping(
+            prop, 
+            alias, 
+            prop.targetKeyProp!.props != null
+                ? c => [c.$allScalars]
+                : undefined
+        );
+    }
+
     $instanceOf(model: AnyModel, body: DtoBody): InstanceOfMapping {
         const downcastTo = Entity.of(model);
         if (!this.$entity.isAssignableFrom(downcastTo)) {
@@ -1015,7 +1053,7 @@ class DtoContextCtorCreator {
         const writer = new CodeWriter();
         writer.code("return class ThisClass extends $baseClass").code(" ");
         writer.scope("CURLY_BRACKETS", () => {
-            this._writerStaticFields(writer);
+            this._writeStaticFields(writer);
             this._writeConstructor(writer);
             this._writeProps(writer);
         });
@@ -1041,7 +1079,7 @@ class DtoContextCtorCreator {
         );
     }
 
-    private _writerStaticFields(writer: CodeWriter) {
+    private _writeStaticFields(writer: CodeWriter) {
         if (this._source instanceof Entity) {
             for (const prop of this._source.declaredPropMap.values()) {
                 if (this._isVisibleProp(prop)) {
