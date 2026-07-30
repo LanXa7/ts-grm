@@ -13,6 +13,7 @@ import { __DirectContext } from "./direct";
 import { __ApplyInstanceOfMappings, __InstanceOfContext, __InstanceOfMappping } from "./instance_of";
 import { ApplyRecursiveMappings, __RecursiveContext, __RecursiveMapping } from "./recursive";
 import { __CalculatedCollectionDtoType, __CalculatedCollectionMapping, __CalculatedReferenceDtoType, __CalculatedReferenceMapping, __ParameterizedContext } from "./calculator";
+import { __FormulaContext } from "./formula";
 
 export type __DtoContext<
     TModel extends AnyModel,
@@ -40,6 +41,11 @@ export type __DtoContext<
         TContextKind extends "DERIVED_ENTITY"
             ? object
             : __AllScalarsContext<TModel, TDtoKind, TMembers>
+    )
+    & (
+        TContextKind extends "EMBEDDABLE"
+            ? object
+            : __FormulaContext<TModel, TDtoKind, "ENTITY", TMembers>
     );
 
 export type __ContextKind = "ENTITY" | "EMBEDDABLE" | "DERIVED_ENTITY";

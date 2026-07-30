@@ -3,6 +3,7 @@ import { AUTHOR, BOOK, BOOK_STORE } from "../model/model";
 import { dto } from "@ts-grm/core";
 import { newSqlRecord } from "../utils";
 import { useSqliteClientWithData } from "../data_utils";
+import z from "zod";
 
 describe.sequential("TsFormulaTest", () => {
 
@@ -375,6 +376,47 @@ describe.sequential("TsFormulaTest", () => {
                     "YugabyteDB: The Definitive Guide(1)"
                 ]
             }
+        ]);
+    });
+
+    it("dtoLevel", async() => {
+        const view = dto.view(BOOK, c => [
+            c.$formula.ts({
+                alias: "key",
+                valueType: z.string(),
+                dependency: c => [
+                    c.name,
+                    c.edition
+                ],
+                fn: data => `${data.name}(${data.edition})`
+            })
+        ]);
+        const rows = await sqlClient.createQuery(BOOK, (q, book) => {
+            q.where(book.storeId.eq(2));
+            q.orderBy(book.name, book.edition.desc());
+            return q.select(book.fetch(view));
+        }).fetchList();
+        sqlRecord.assert(
+            {
+                sql: `
+                    select 
+                        tb_1_.NAME,
+                        tb_1_.EDITION
+                    from BOOK tb_1_
+                    where 
+                        tb_1_.STORE_ID = ?
+                    order by 
+                        tb_1_.NAME asc,
+                        tb_1_.EDITION desc
+                `,
+                args: [2],
+                purpose: "query"
+            }
+        );
+        expect(rows).toEqual([
+            { "key": "GraphQL in Action(3)" },
+            { "key": "GraphQL in Action(2)" },
+            { "key": "GraphQL in Action(1)" }
         ]);
     });
 });

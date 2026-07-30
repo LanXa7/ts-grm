@@ -433,17 +433,20 @@ export class FragmentGenGenVisitor extends spi.AbstractVisitor {
                 this._compositeStack.current.separator();
                 const prop = field.prop;
                 const realTable = this._toRealTable(table.__to(prop.declaringEntity));
-                if (!prop.isEntityProp) {
+                const sqlFormulaExpr = realTable.sqlFormulaExpr(prop);
+                if (sqlFormulaExpr != null) {
+                    sqlFormulaExpr.accept(this);
+                    return;
+                }
+                if (prop instanceof spi.TypeNameProp) {
                     const columnName = table.__entity.tableSettings.discriminator!.name;
                     this._compositeStack.current.add(this._createColumn(realTable, columnName));
-                } else {
+                    return;
+                }
+                if (prop.isEntityProp) {
                     const entityProp = prop as spi.EntityProp;
-                    if (entityProp.sqlFormulaFn != null) {
-                        realTable.sqlFormulaExpr(entityProp).accept(this);
-                    } else {
-                        const column = entityProp.toStorage(this._strategy) as spi.Column;
-                        this._compositeStack.current.add(this._createColumn(realTable, column.name));
-                    }
+                    const column = entityProp.toStorage(this._strategy) as spi.Column;
+                    this._compositeStack.current.add(this._createColumn(realTable, column.name));
                 }
             }
         });

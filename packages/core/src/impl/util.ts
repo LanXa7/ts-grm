@@ -1,3 +1,5 @@
+import { StateError } from "@/error/common";
+
 export function capitalize(str: string): string {
     if (str.length === 0) {
         return str;
@@ -14,6 +16,12 @@ export function acceptsNullOrUndefined(schema: any): boolean {
     };
     const resNull = standard.validate(null);
     const resUndefined = standard.validate(undefined);
+    if (resNull instanceof Promise || resUndefined instanceof Promise) {
+        throw new StateError(
+            `The StandardSchemaV1 used by model/DTO must support sync validate, not async. ` +
+            `Vendor: ${standard.vendor || 'unknown'}`
+        );
+    }
     const allowsNull = !('issues' in resNull);
     const allowsUndefined = !('issues' in resUndefined);
     return allowsNull || allowsUndefined;

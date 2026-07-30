@@ -1,5 +1,5 @@
 import { StateError } from "@/error/common";
-import { FetchProp } from "./dto";
+import { FetchProp, SqlFormulaProp } from "./dto";
 import { DtoMapper, DtoMapperField } from "./dto_mapper";
 import { EntityProp } from "./entity_prop";
 import { CalculationStrategyKind } from "./calculation_strategy";
@@ -13,7 +13,7 @@ export type Shape = {
 };
 
 export type ShapeMember = {
-    prop: EntityProp | undefined;
+    prop: EntityProp | SqlFormulaProp | undefined;
     downcastTo: Entity | undefined;
     columnIndex: number | string | undefined;
     scalarType: ScalarType<any> | undefined;
@@ -237,9 +237,13 @@ function isColumnIgnored(
 
 function scalaProp(
     field: DtoMapperField
-): EntityProp | undefined {
+): EntityProp | SqlFormulaProp | undefined {
     const prop = field.prop.asEntityProp;
-    return prop?.scalarType != null || prop?.sqlFormulaFn != null ? prop : undefined;
+    return prop?.scalarType != null || prop?.sqlFormulaFn != null 
+        ? prop 
+        : field.prop instanceof SqlFormulaProp
+            ? field.prop
+            : undefined;
 }
 
 let shapeScope: ShapeScope | undefined = undefined;

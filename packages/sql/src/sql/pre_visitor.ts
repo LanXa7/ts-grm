@@ -133,16 +133,19 @@ export class PreVisitor extends spi.AbstractVisitor {
                     return;
                 }
                 const realTable = this._toRealTable(table.__to(field.prop.declaringEntity));
-                if (!field.prop.isEntityProp) {
+                const prop = field.prop;
+                const sqlFormulaExpr = realTable.sqlFormulaExpr(prop);
+                if (sqlFormulaExpr != null) {
+                    sqlFormulaExpr.accept(this);
                     return;
                 }
-                const shadow = realTable.shadow;
-                const entityProp = field.prop as spi.EntityProp;
-                if (entityProp.sqlFormulaFn != null) {
-                    realTable.sqlFormulaExpr(entityProp).accept(this);
-                } else if (shadow != null) {
-                    const column = entityProp.toStorage(this._strategy) as spi.Column;
-                    shadow.baseQueryMetadata.alias(table.__anchor!.exportedName, column.name);
+                if (prop.isEntityProp) {
+                    const shadow = realTable.shadow;
+                    const entityProp = prop as spi.EntityProp;
+                    if (shadow != null) {
+                        const column = entityProp.toStorage(this._strategy) as spi.Column;
+                        shadow.baseQueryMetadata.alias(table.__anchor!.exportedName, column.name);
+                    }
                 }
             }
         });

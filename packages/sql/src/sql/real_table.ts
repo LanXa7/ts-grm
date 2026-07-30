@@ -42,7 +42,7 @@ export class RealTable {
 
     private _children: ReadonlyArray<RealTable> | undefined = undefined;
 
-    private _sqlFormulaMap: Map<spi.EntityProp, spi.AbstractExpr<any>> | undefined;
+    private _sqlFormulaMap: Map<spi.FetchProp, spi.AbstractExpr<any> | false> | undefined;
 
     cteDefinitionFragment: Fragment | undefined = undefined;
 
@@ -279,16 +279,29 @@ export class RealTable {
         return this._filterPred;
     }
 
-    sqlFormulaExpr(prop: spi.EntityProp): spi.AbstractExpr<any> {
+    sqlFormulaExpr(prop: spi.FetchProp): spi.AbstractExpr<any> | undefined {
         let expr = this._sqlFormulaMap?.get(prop);
         if (expr == null) {
-            expr = prop.sqlFormulaFn!(this.symbol as any as EntityTable<AnyModel>) as spi.AbstractExpr<any>;
+            expr = this._sqlFromulaExpr(prop) ?? false;
             let map = this._sqlFormulaMap;
             if (map == null) {
                 this._sqlFormulaMap = map = new Map();
             }
             map.set(prop, expr);
         }
-        return expr;
+        return typeof expr === "boolean" ? undefined : expr;
+    }
+
+    private _sqlFromulaExpr(prop: spi.FetchProp): spi.AbstractExpr<any> | undefined {
+        if (prop instanceof spi.SqlFormulaProp) {
+            return prop.formula.fn(this.symbol as any as EntityTable<AnyModel>) as spi.AbstractExpr<any>;
+        }
+        if (prop.isEntityProp) {
+            const fn = prop.sqlFormulaFn;
+            if (fn != null) {
+                return prop.sqlFormulaFn!(this.symbol as any as EntityTable<AnyModel>) as spi.AbstractExpr<any>;
+            }
+        }
+        return undefined;
     }
 }

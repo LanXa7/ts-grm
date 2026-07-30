@@ -2,7 +2,7 @@ import { Entity } from "./entity";
 import { EntityProp } from "./entity_prop";
 import { CodeWriter } from "./code_writer";
 import { DataReader } from "./data_reader";
-import { FetchProp } from "./dto";
+import { FetchProp, TsFormulaProp } from "./dto";
 import { DtoMapper,DtoMapperField } from "./dto_mapper";
 import { buildShape, isEmptyShape, Shape, ShapeMember } from "./shape";
 import { ArgumentError } from "@/error/common";
@@ -94,9 +94,17 @@ function createDtoRowReaderCreator(mapper: DtoMapper): DtoRowReaderCreator {
                 }
             }
         });
+    const dtoTsFormulaFunMap = new Map<string, any>();
+    for (const field of mapper.fields) {
+        const prop = field.prop;
+        if (prop instanceof TsFormulaProp) {
+            const fn = prop.getOutputFn(mapper.nullAsUndefined);
+            dtoTsFormulaFunMap.set(prop.path, fn);
+        }
+    }
     return new Function(
-        "$baseClass", "$entity", "$argumentError", writer.toString()
-    )(DtoRowReader, mapper.entity, ArgumentError);
+        "$baseClass", "$entity", "$dtoTsFormulaFunMap", "$argumentError", writer.toString()
+    )(DtoRowReader, mapper.entity, dtoTsFormulaFunMap, ArgumentError);
 }
 
 function writeRead(
@@ -579,6 +587,9 @@ function parentName(parentDepth: number): string {
 }
 
 function isTsFormula(prop: FetchProp): boolean {
+    if (prop instanceof TsFormulaProp) {
+        return true;
+    }
     return prop.isEntityProp && (prop as EntityProp).tsFormulaDependencies.length !== 0;
 }
 
@@ -587,7 +598,7 @@ function writeResolveTsFormulas(
     writer: CodeWriter
 ) {
     writer.code("resolveTsFormulas(row) ").scope("CURLY_BRACKETS", () => {
-        const renderedProps = new Set<EntityProp>();
+        const renderedProps = new Set<EntityProp | TsFormulaProp>();
         for (const field of mapper.fields) {
             if (isTsFormula(field.prop)) {
                 writeResolveTsFormula(mapper, field, renderedProps, writer);
@@ -599,13 +610,13 @@ function writeResolveTsFormulas(
 function writeResolveTsFormula(
     mapper: DtoMapper,
     field: DtoMapperField, 
-    renderedProps: Set<EntityProp>,
+    renderedProps: Set<EntityProp | TsFormulaProp>,
     writer: CodeWriter
 ) {
     if (!isTsFormula(field.prop)) {
         return;
     }
-    const prop = field.prop as EntityProp;
+    const prop = field.prop as EntityProp | TsFormulaProp;
     if (renderedProps.has(prop)) {
         return;
     }
@@ -683,11 +694,12 @@ function writeOutputFn(
     nullAsUndefined: boolean,
     writer: CodeWriter
 ) {
-    const prop = field.prop as EntityProp;
+    const prop = field.prop as EntityProp | TsFormulaProp;
     writer
         .code("static ")
         .code(outputFnName(prop))
         .code(" = $entity");
+    
     if (field.downcastTo != null) {
         writer.code(`.findByTypeName('${field.downcastTo.name}')`);
     }
@@ -712,24 +724,28 @@ function writeTsFormulaFn(
     nullAsUndefined: boolean,
     writer: CodeWriter
 ) {
-    const prop = field.prop as EntityProp;
+    const prop = field.prop as EntityProp | TsFormulaProp;
     writer
         .code("static ")
         .code(tsFormulaFnName(prop))
-        .code(" = $entity");
-    if (field.downcastTo != null) {
-        writer.code(`.findByTypeName('${field.downcastTo.name}')`);
+        .code(" = ");
+    if (prop instanceof EntityProp) {
+        writer.code("$entity");
+        if (field.downcastTo != null) {
+            writer.code(`.findByTypeName('${field.downcastTo.name}')`);
+        }
+        writer.code(`.expandedPropMap.get("${prop.path}").getTsFormulaFn(${nullAsUndefined})`);
+    } else {
+        writer.code(`$dtoTsFormulaFunMap.get("${prop.path}")`);
     }
-    writer
-        .code(`.expandedPropMap.get("${prop.path}").getTsFormulaFn(${nullAsUndefined})`)
-        .newLine(";");
+    writer.newLine(";");
 }
 
-function outputFnName(prop: EntityProp): string {
+function outputFnName(prop: EntityProp | TsFormulaProp): string {
     return `__${toScreamingSnakeCase(prop.path)}__OUTPUT_FN`;
 }
 
-function tsFormulaFnName(prop: EntityProp): string {
+function tsFormulaFnName(prop: EntityProp | TsFormulaProp): string {
     return `__${toScreamingSnakeCase(prop.path)}__TS_FORMULA_FN`;
 }
 

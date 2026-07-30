@@ -1,5 +1,5 @@
 import { ArgumentError, StateError } from "@/error/common";
-import { Dto, DtoField, FetchProp, TypeNameProp } from "./dto";
+import { Dto, DtoField, FetchProp, TsFormulaProp, TypeNameProp } from "./dto";
 import { Entity } from "./entity";
 import { EntityProp} from "./entity_prop";
 import { createDtoRowReader, DtoRowReader } from "./row_reader";
@@ -7,7 +7,7 @@ import { makeErr } from "@/error/util";
 import { EntityPropOrder } from "./entity_prop_order";
 import { Predicate } from "@/dsl/expression";
 import { AbstractDtoContext, createDto, newDtoContext } from "./dto_context";
-import { ReferenceFetchType } from "@/schema/dto/api";
+import { ReferenceFetchType, View } from "@/schema/dto/api";
 import { AbstractEntityTable } from "./entity_table";
 
 export function dtoMapper(dto: Dto, nullAsUndefined: boolean): DtoMapper {
@@ -225,29 +225,26 @@ class Mapper {
 
     private _addImplicitFields(field: DtoField) {
         const prop = field.prop;
-        if (prop.isEntityProp) {
-            const entityProp = prop as EntityProp;
-            if (entityProp.tsFormulaDependencyView != null) {
-                const view = entityProp.tsFormulaDependencyView;
-                for (const viewField of view.mapper.fields) {
-                    if (viewField.paths.length === 0) {
-                        continue;
-                    }
-                    let dtoField = toDtoFields(viewField, false)[0]!;
-                    dtoField = {...dtoField, downcastTo: field.downcastTo};
-                    if (viewField.paths.length === 0) {
-                        this._add(dtoField, false);
-                    } else {
-                        for (const path of viewField.paths) {
-                            const newPath = typeof path === "string"
-                                ? [`<implicit:${prop.name}>`, path]
-                                : [`<implicit:${prop.name}>`, ...path];
-                            this._add({...dtoField, path: newPath}, true);
-                        }
+        const view = this._formulaDependencyView(prop);
+        if (view != null) {
+            for (const viewField of view.mapper.fields) {
+                if (viewField.paths.length === 0) {
+                    continue;
+                }
+                let dtoField = toDtoFields(viewField, false)[0]!;
+                dtoField = {...dtoField, downcastTo: field.downcastTo};
+                if (viewField.paths.length === 0) {
+                    this._add(dtoField, false);
+                } else {
+                    for (const path of viewField.paths) {
+                        const newPath = typeof path === "string"
+                            ? [`<implicit:${prop.name}>`, path]
+                            : [`<implicit:${prop.name}>`, ...path];
+                        this._add({...dtoField, path: newPath}, true);
                     }
                 }
-                return;
             }
+            return;
         }
         const referenceKeyProp = prop.referenceKeyProp;
         if (referenceKeyProp != null) {
@@ -256,6 +253,19 @@ class Mapper {
             let keyProp = prop.thisKeyProp ?? prop.declaringEntity!.idProp;
             this._add(dtoField(field.downcastTo, keyProp), false);
         }
+    }
+
+    private _formulaDependencyView(
+        prop: FetchProp
+    ): View<any, any> | undefined {
+        if (prop instanceof EntityProp) {
+            return prop.tsFormulaDependencyView;
+        }
+        if (prop instanceof TsFormulaProp) {
+            const formula = prop.formula;
+            return formula.dependency();
+        }
+        return undefined;
     }
 
     private _addImpl(dtoField: DtoField, mapPath: boolean) {

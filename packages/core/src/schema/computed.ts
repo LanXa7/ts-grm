@@ -17,16 +17,22 @@ export class TsFormula<TValue> {
 
     static of<
         TValueType extends StandardSchemaV1,
-        TData, 
+        TData
     >(
-        options: {
-            readonly valueType: TValueType,
-            readonly dependency: () => View<AnyModel, TData>
-            readonly fn: TsFormulaFn<TData, StandardSchemaV1.InferOutput<TValueType>>;
-        }
+        options: TsFormulaOptions<TValueType, AnyModel, TData>
     ): TsFormula<StandardSchemaV1.InferOutput<TValueType>> {
         return new TsFormula(options.valueType, options.dependency, options.fn as any);
     }
+}
+
+export interface TsFormulaOptions<
+    TValueType extends StandardSchemaV1,
+    TModel extends AnyModel,
+    TData
+> {
+    readonly valueType: TValueType,
+    readonly dependency: () => View<TModel, TData>
+    readonly fn: TsFormulaFn<TData, StandardSchemaV1.InferOutput<TValueType>>;
 }
 
 export type TsFormulaFn<
@@ -47,11 +53,7 @@ export class SqlFormula<TValue> {
         TValueType extends StandardSchemaV1,
         TSourceModel extends AnyModel, 
     >(
-        options: {
-            readonly valueType: TValueType,
-            readonly sourceModel: () => TSourceModel,
-            readonly fn: SqlFormulaFn<TSourceModel, StandardSchemaV1.InferOutput<TValueType>>
-        }
+        options: SqlFormulaOptions<TValueType, TSourceModel>
     ): SqlFormula<StandardSchemaV1.InferOutput<TValueType>> {
         return new SqlFormula(
             options.valueType,
@@ -59,6 +61,15 @@ export class SqlFormula<TValue> {
             options.fn as any
         );
     }
+}
+
+export interface SqlFormulaOptions<
+    TValueType extends StandardSchemaV1,
+    TModel extends AnyModel
+>{
+    readonly valueType: TValueType,
+    readonly sourceModel: () => TModel,
+    readonly fn: SqlFormulaFn<TModel, StandardSchemaV1.InferOutput<TValueType>>
 }
 
 export type SqlFormulaFn<TSourceModel extends AnyModel, TValue> =

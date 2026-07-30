@@ -5,6 +5,8 @@ import { __AssociationType } from "@/schema/prop_internal_types";
 import { AbstractEntityTable } from "./entity_table";
 import { Predicate } from "@/dsl/expression";
 import { ReferenceFetchType } from "@/schema/dto/api";
+import { SqlFormula, TsFormula } from "@/schema/computed";
+import { StateError } from "@/error/common";
 
 export type Dto = {
 
@@ -42,7 +44,7 @@ export type DtoField = {
     readonly parameter: any;
 };
 
-export type FetchProp = EntityProp | InverseFetchProp | TypeNameProp;
+export type FetchProp = EntityProp | InverseFetchProp | TypeNameProp | TsFormulaProp | SqlFormulaProp;
 
 export class InverseFetchProp {
 
@@ -153,6 +155,130 @@ export class TypeNameProp {
 
     toString(): string {
         return `${this.declaringEntity.name}.__typename`;
+    }
+}
+
+export class AbstractFormulaProp {
+
+    constructor(
+        readonly declaringEntity: Entity,
+        readonly name: string
+    ) {
+
+    }
+
+    get subPath(): "" {
+        return "";
+    }
+
+    get isEntityProp(): false {
+        return false;
+    }
+
+    get asEntityProp(): undefined {
+        return undefined;
+    }
+
+    get targetEntity(): undefined {
+        return undefined;
+    }
+
+    get referenceKeyProp(): undefined {
+        return undefined;
+    }
+
+    get thisKeyProp(): undefined {
+        return undefined;
+    }
+
+    get targetKeyProp(): undefined {
+        return undefined;
+    }
+
+    get associationType(): undefined {
+        return undefined;
+    }
+
+    getOutputFn(
+        _nullAsUndefined: boolean
+    ): ((data: any) => any) | undefined {
+        return undefined;
+    }
+
+    getInputFn(): undefined {
+        return undefined;
+    }
+
+    toString(): string {
+        return `${this.declaringEntity.name}.$formula(${this.name})`;
+    }
+}
+
+export class TsFormulaProp extends AbstractFormulaProp {
+
+    private _tsFormulaDependencies: ReadonlyArray<EntityProp> | undefined = undefined;
+
+    constructor(
+        declaringEntity: Entity,
+        name: string,
+        readonly formula: TsFormula<any>
+    ) {
+        super(declaringEntity, name);
+    }
+
+    get path(): string {
+        return this.name;
+    }
+
+    get tsFormulaDependencies(): ReadonlyArray<EntityProp> {
+        return this._getFormulaDependencies(new Set());
+    }
+
+    override getOutputFn(
+        nullAsUndefined: boolean
+    ): (data: any) => any {
+        const fn = this.formula.fn;
+        return data => {
+            const result = fn(data);
+            return result != null  
+                ? result
+                : nullAsUndefined 
+                    ? undefined
+                    : null;
+        };
+    }
+
+    private _getFormulaDependencies(
+        usedDependencies: Set<EntityProp>
+    ): ReadonlyArray<EntityProp> {
+        let dependencies = this._tsFormulaDependencies;
+        if (dependencies == null) {
+            const view = this.formula.dependency();
+            const arr: Array<EntityProp> = [];
+            for (const field of view.mapper.fields) {
+                const prop = field.prop as EntityProp;
+                if (prop.calculationStrategy != null) {
+                    throw new StateError(`"${this.toString()}" cannot depends on calculation property "${prop.toString()}"`);
+                }
+                usedDependencies.add(prop);
+                arr.push(prop);
+                arr.push(...prop.tsFormulaDependencies)
+            }
+            dependencies = arr;
+            this._tsFormulaDependencies = dependencies;
+        }
+        return dependencies;
+    }
+}
+
+export class SqlFormulaProp extends AbstractFormulaProp {
+
+    constructor(
+        declaringEntity: Entity,
+        name: string,
+        readonly formula: SqlFormula<any>
+    ) {
+        super(declaringEntity, name);
     }
 }
 

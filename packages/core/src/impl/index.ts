@@ -36,3 +36,12 @@ export type {
     ParameterizedReferenceCalculationStragegy,
     ParameterizedCollectionCalculationStragegy
 } from "./calculation_strategy";
+export {
+    InverseFetchProp,
+    TypeNameProp,
+    TsFormulaProp,
+    SqlFormulaProp
+} from "./dto";
+export type {
+    FetchProp
+} from "./dto";
