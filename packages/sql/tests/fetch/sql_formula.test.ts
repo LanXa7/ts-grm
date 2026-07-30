@@ -57,7 +57,7 @@ describe.sequential("SqlFormulaTest", () => {
         const view = dto.view(BOOK_STORE, c => [
             c.name,
             c.$formula.sql({
-                alias: "bookCount",
+                alias: "avgPrice",
                 valueType: z.number(),
                 fn: store => dsl.subQuery(BOOK, (q, book) => {
                     q.where(book.storeId.eq(store.id));
@@ -90,8 +90,8 @@ describe.sequential("SqlFormulaTest", () => {
             }
         );
         expect(rows).toEqual([
-            {"name": "MANNING", "bookCount":69.99},
-            {"name": "O'REILLY", "bookCount":55.989999999999995}
+            {"name": "MANNING", "avgPrice":69.99},
+            {"name": "O'REILLY", "avgPrice":55.989999999999995}
         ]);
     });
 });
