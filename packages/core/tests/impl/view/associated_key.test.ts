@@ -1,7 +1,7 @@
 import { dto } from "@/index";
 import { describe, expect, it } from "vitest";
 import { BOOK, ORDER_ITEM, STUDENT } from "../../model/model";
-import { makeReader, mapperJson, shapeJson } from "./utils";
+import { makeReader, mapperJson } from "./utils";
 import { expectCode } from "../../utils";
 
 describe("AssociatedKeyTest", () => {

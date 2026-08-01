@@ -3,7 +3,7 @@ import { RootQuerySelection, spi } from "@ts-grm/core";
 import { DataRowReader } from "../data_row_reader";
 import { resolveAssociations } from "./association_resolver";
 import { resolveCalculators, resolveTsFormulas } from "./calculator_resolver";
-import { LambdaJoinFetchVisitor } from "./join_fetch_visitor";
+import { JoinFetchExecutor } from "./join_fetch_executor";
 
 export async function readColumn(
     sqlClient: SqlClientImplementor,
@@ -92,126 +92,17 @@ async function readDtos(
     const dtoRows: Array<spi.DtoRow> = [];
     const dtos: Array<any> = [];
     const dtoRowReader = mapper.dtoRowReader;
-    const jfMap = joinFetchMap(sqlClient, mapper);
-    const joinFetchExecutor = mapper.joinFetchFields.length !== 0
-        ? new JoinFetchExecutor(jfMap)
-        : undefined;
-    const joinFetchReader = dataRowReader.offset(mapper.span);
+    const joinFetchExecutor = JoinFetchExecutor.of(sqlClient, mapper);
     while (dataRowReader.next()) {
         const dtoRow = dtoRowReader.read(undefined, dataRowReader);
         dtoRows.push(dtoRow);
         dtos.push(dtoRow.dto);
-        joinFetchExecutor?.execute(dtoRow, joinFetchReader);
+        joinFetchExecutor?.execute(dtoRow, dataRowReader);
     }
     if (dtoRows.length !== 0) {
-        await resolveAssociations(sqlClient, mapper, jfMap, dtoRows, undefined);
+        await resolveAssociations(sqlClient, mapper, joinFetchExecutor?.joinFetchMap, dtoRows, undefined);
         resolveTsFormulas(mapper, dtoRows);
         await resolveCalculators(sqlClient, mapper, dtoRows);
     }
     return dtos;
-}
-
-function joinFetchMap(
-    sqlClient: SqlClientImplementor,
-    mapper: spi.DtoMapper
-): Map<spi.DtoMapperField, JoinFetchData> {
-    const joinFetchFields = new Map<spi.DtoMapperField, JoinFetchData>();
-    const joinFetchVisitor = new LambdaJoinFetchVisitor(sqlClient, {
-        enter: (field, depth) => {
-            joinFetchFields.set(field, { depth, dtoRows: []});
-            return undefined;
-        },
-        leave: (_field, _depth, _enterValue) => {}
-    });
-    joinFetchVisitor.visit(mapper);
-    return joinFetchFields;
-}
-
-class JoinFetchExecutor {
-
-    constructor(
-        private readonly _joinFetchMap: Map<spi.DtoMapperField, JoinFetchData>
-    ) {}
-
-    execute(parent: spi.DtoRow, dataRowReader: DataRowReader) {
-        if (parent.dto == null) {
-            return;
-        }
-        for (const [field, data] of this._joinFetchMap.entries()) {
-            if (data.depth === 0) {
-                this._execute(field, parent, dataRowReader);
-            }
-        }
-    }
-
-    private _execute(
-        field: spi.DtoMapperField, 
-        parent: spi.DtoRow,
-        dataRowReader: DataRowReader
-    ): DataRowReader {
-        if (this._isNull(field, dataRowReader)) {
-            return this._skip(field, dataRowReader);
-        }
-        const dtoRow = field.subMapper!.dtoRowReader.read(
-            [parent], 
-            dataRowReader
-        );
-        parent.reader.resolve(field.index, parent, dtoRow.dto);
-        const data = this._joinFetchMap.get(field)!;
-        data.dtoRows.push(dtoRow);
-        const nextDataRowReader = dataRowReader.offset(field.subMapper!.span);
-        let deeperDataRowReader = nextDataRowReader;
-        for (const subField of field.subMapper!.fields) {
-            if (!this._joinFetchMap.has(subField)) {    
-                continue;
-            }
-            deeperDataRowReader = this._execute(
-                subField, 
-                dtoRow, 
-                deeperDataRowReader
-            );
-        }
-        return nextDataRowReader;
-    }
-
-    private _skip(
-        field: spi.DtoMapperField, 
-        dataRowReader: DataRowReader
-    ): DataRowReader {
-        const nextDataRowReader = dataRowReader.offset(field.subMapper!.span);
-        let deeperDataRowReader = nextDataRowReader;
-        for (const subField of field.subMapper!.fields) {
-            if (!this._joinFetchMap.has(subField)) {    
-                continue;
-            }
-            deeperDataRowReader = this._skip(
-                subField, 
-                deeperDataRowReader
-            );
-        }
-        return nextDataRowReader;
-    }
-
-    private _isNull(
-        field: spi.DtoMapperField, 
-        dataRowReader: DataRowReader
-    ) {
-        const prop = field.prop.asEntityProp;
-        if (prop != null && prop.nullable) {
-            const firstNonNullField = field
-                .subMapper!
-                .fields
-                .find((sf: any) => sf.columnIndex != null && sf.prop.asEntityProp?.nullable === false);
-            const index = firstNonNullField!.columnIndex!;
-            return dataRowReader.get(index) == null;
-        }
-        return false;
-    }
-}
-
-export interface JoinFetchData {
-
-    readonly depth: number;
-
-    readonly dtoRows: Array<spi.DtoRow>;
 }

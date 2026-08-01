@@ -904,6 +904,47 @@ describe.sequential("QuerySqlTest", () => {
                 purpose: "loadAssociation(Book.authors)"
             }
         );
-        console.log(JSON.stringify(rows));
+        expect(rows).toEqual([
+            {
+                "name": "Effective TypeScript",
+                "store": {
+                    "name": "O'REILLY"
+                },
+                "authors": [
+                    {
+                        "name": {
+                            "firstName": "Dan",
+                            "lastName": "Vanderkam"
+                        }
+                    }
+                ]
+            },
+            {
+                "name": "YugabyteDB: The Definitive Guide",
+                "store": {
+                    "name": "O'REILLY"
+                },
+                "authors": [
+                    {
+                        "name": {
+                            "firstName": "Kannappan",
+                            "lastName": "Muthukkaruppan"
+                        }
+                    },
+                    {
+                        "name": {
+                            "firstName": "Karthik",
+                            "lastName": "Ranganathan"
+                        }
+                    },
+                    {
+                        "name": {
+                            "firstName": "Mikhail",
+                            "lastName": "Bautin"
+                        }
+                    }
+                ]
+            }
+        ]);
     });
 });

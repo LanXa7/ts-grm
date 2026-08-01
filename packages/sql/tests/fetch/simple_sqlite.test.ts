@@ -515,6 +515,60 @@ describe.sequential("SimpleSqliteFetchTest", () => {
             q.orderBy(student.name);
             return q.select(student.fetch(view));
         }).fetchList();
-        console.log(JSON.stringify(rows));
+        sqlRecord.assert(
+            {
+                sql: `
+                    select 
+                        tb_1_.NAME,
+                        tb_1_.ID
+                    from STUDENT tb_1_
+                    where 
+                        tb_1_.NAME like ?
+                    order by 
+                        tb_1_.NAME asc
+                `,
+                args: ["%i%"],
+                purpose: "query"
+            },
+            {
+                sql: `
+                    select 
+                        tb_1_.STUDENT_ID,
+                        tb_1_.COURSE_ID,
+                        tb_2_.NAME
+                    from LEARNING_LINK tb_1_
+                    inner join COURSE tb_2_ on 
+                        tb_1_.COURSE_ID = tb_2_.ID
+                    where 
+                        tb_1_.STUDENT_ID in(?, ?)
+                `,
+                args: [4, 1],
+                purpose: "loadAssociation(Student.learningLinks)"
+            }
+        );
+        expect(rows).toEqual([
+            {
+                "name": "Jim",
+                "courses": [
+                    {
+                        "name": "Psychology and Life"
+                    },
+                    {
+                        "name": "Introduction to Artificial Intelligence"
+                    }
+                ]
+            },
+            {
+                "name": "Tim",
+                "courses": [
+                    {
+                        "name": "Film Appreciation"
+                    },
+                    {
+                        "name": "Workplace Communication and Presentation"
+                    }
+                ]
+            }
+        ]);
     });
 });

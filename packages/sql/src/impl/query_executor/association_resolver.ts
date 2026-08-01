@@ -23,7 +23,7 @@ import { DataRowReader } from "../data_row_reader";
 import { buildStatement } from "./sql_gen";
 import { baseQuerySelectionMapArgs, capitalize, expressionsToAst, filterSourceRows, hashOf } from "./util";
 import { resolveCalculators, resolveTsFormulas } from "./calculator_resolver";
-import { JoinFetchData } from "./column_reader";
+import { JoinFetchData, JoinFetchExecutor } from "./join_fetch_executor";
 
 export async function resolveAssociations(
     sqlClient: SqlClientImplementor,
@@ -256,17 +256,19 @@ class AssociationResolver {
             };
             bindingMap.set(hash, binding);
         }
-        await this._resolve();
+        await this._resolve(JoinFetchExecutor.of(this._sqlClient, this._unresolvedField.subMapper));
     }
 
-    private async _resolve(): Promise<void> {
+    private async _resolve(
+        joinFetchExecutor: JoinFetchExecutor | undefined
+    ): Promise<void> {
         const dependencies: Array<any> = [];
         for (const binding of this._bindingMap.values()) {
             dependencies.push(binding.dependency);
         }
         const recursiveContexts: Array<RecursiveContext> = [];
         if (dependencies.length <= this._batchSize || this._recursiveContext != null) {
-            const recursiveContext = await this._resolveBatch(dependencies);
+            const recursiveContext = await this._resolveBatch(dependencies, joinFetchExecutor);
             if (recursiveContext != null) {
                 recursiveContexts.push(recursiveContext);
             }
@@ -275,7 +277,7 @@ class AssociationResolver {
             while (start < this._batchSize) {
                 const end = Math.min(dependencies.length, start + this._batchSize);
                 const batchDependencies = dependencies.slice(start, end);
-                const recursiveContext = await this._resolveBatch(batchDependencies);
+                const recursiveContext = await this._resolveBatch(batchDependencies, joinFetchExecutor);
                 if (recursiveContext != null) {
                     recursiveContexts.push(recursiveContext);
                 }
@@ -344,19 +346,20 @@ class AssociationResolver {
             this._sqlClient, 
             this._targetMapper, 
             targetRows, 
-            undefined, 
+            joinFetchExecutor?.joinFetchMap, 
             recursiveContext
         );
     }
 
     private async _resolveBatch(
-        dependencies: ReadonlyArray<any>
+        dependencies: ReadonlyArray<any>,
+        joinFetchExecutor: JoinFetchExecutor | undefined
     ): Promise<RecursiveContext | undefined> {
         if (dependencies.length == 0) {
             return undefined;
         }
         const [keyRowReader, valueRowReader, recursiveContext] = await this._createRowReaders(dependencies);
-        return this._readRows(keyRowReader, valueRowReader, recursiveContext);
+        return this._readRows(keyRowReader, valueRowReader, joinFetchExecutor, recursiveContext);
     }
 
     private async _createRowReaders(
@@ -407,6 +410,7 @@ class AssociationResolver {
     private _readRows(
         keyRowReader: DataRowReader,
         valueRowReader: DataRowReader,
+        joinFetchExecutor: JoinFetchExecutor | undefined,
         recursiveContext: RecursiveContext | undefined
     ): RecursiveContext | undefined {
         const sourceDtoRowReader = this._sourceDtoRowReader;
@@ -435,6 +439,7 @@ class AssociationResolver {
             } else {
                 binding.targetData.push(row);
             }
+            joinFetchExecutor?.execute(row, valueRowReader);
         }
         return recursiveContext;
     }

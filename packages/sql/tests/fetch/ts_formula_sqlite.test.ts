@@ -544,25 +544,16 @@ describe.sequential("TsFormulaTest", () => {
                 sql: `
                     select 
                         tb_1_.STUDENT_ID,
-                        tb_1_.COURSE_ID
+                        tb_1_.COURSE_ID,
+                        tb_2_.NAME
                     from LEARNING_LINK tb_1_
+                    inner join COURSE tb_2_ on 
+                        tb_1_.COURSE_ID = tb_2_.ID
                     where 
                         tb_1_.STUDENT_ID in(?, ?)
                 `,
                 args: [4, 1],
                 purpose: "loadAssociation(Student.learningLinks)"
-            },
-            {
-                sql: `
-                    select 
-                        tb_1_.ID,
-                        tb_1_.NAME
-                    from COURSE tb_1_
-                    where 
-                        tb_1_.ID in(?, ?, ?, ?)
-                `,
-                args: [1, 4, 2, 3],
-                purpose: "loadAssociation(LearningLink.course)"
             }
         );
         expect(rows).toEqual([
