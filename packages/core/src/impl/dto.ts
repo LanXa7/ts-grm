@@ -7,6 +7,7 @@ import { Predicate } from "@/dsl/expression";
 import { ReferenceFetchType } from "@/schema/dto/api";
 import { SqlFormula, TsFormula } from "@/schema/computed";
 import { StateError } from "@/error/common";
+import { DtoBody } from "./dto_mapping";
 
 export type Dto = {
 
@@ -44,7 +45,7 @@ export type DtoField = {
     readonly parameter: any;
 };
 
-export type FetchProp = EntityProp | InverseFetchProp | TypeNameProp | TsFormulaProp | SqlFormulaProp;
+export type FetchProp = EntityProp | InverseFetchProp | TypeNameProp | TsFormulaProp | SqlFormulaProp | AssociatedKeysFormulaProp;
 
 export class InverseFetchProp {
 
@@ -282,39 +283,33 @@ export class SqlFormulaProp extends AbstractFormulaProp {
     }
 }
 
-export function foldDto(dto: Dto, key: string): Dto {
-    return {
-        ...dto,
-        fields: dto.fields.map(field => foldDtoField(field, key))
-    };
-}
+export class AssociatedKeysFormulaProp extends AbstractFormulaProp {
 
-function foldDtoField(
-    dtoField: DtoField, 
-    key: string
-): DtoField {
-    let path = dtoField.path;
-    if (path == null) {
-        if (dtoField.dto == null) {
-            return dtoField;
-        }
-        return {
-            ...dtoField,
-            dto: foldDto(dtoField.dto, key)
-        };
+    constructor(
+        declaringEntity: Entity,
+        name: string,
+        readonly prop: EntityProp,
+        readonly targetIdBody: DtoBody | undefined
+    ) {
+        super(declaringEntity, name);
     }
-    if (typeof path === "string") {
-        path = [key, path];
-    } else {
-        const index = path.lastIndexOf("..");
-        if (index === -1) {
-            path = [key, ...path];
-        } else {
-            path = [...path.slice(0, index + 1), key, ...path.slice(index + 1, path.length)];
+
+    get path(): string {
+        return this.name;
+    }
+
+    get tsFormulaDependencies(): ReadonlyArray<EntityProp> {
+        return [this.prop];
+    }
+
+    override getOutputFn(
+        _nullAsUndefined: boolean
+    ): (data: any) => any {
+        const name = this.prop.name;
+        const targetKeyPropName = this.prop.targetKeyProp!?.name;
+        return data => {
+            const targets = data[name];
+            return targets.map((element: any) => element[targetKeyPropName]);
         }
     }
-    return {
-        ...dtoField,
-        path
-    };
 }

@@ -1,6 +1,6 @@
 import { dsl, dto } from "@/index";
 import { describe, it, expect } from "vitest";
-import { AUTHOR, BOOK, BOOK_STORE } from "../../model/model";
+import { AUTHOR, BOOK, BOOK_STORE, STUDENT } from "../../model/model";
 import { makeReader, mapperJson, shapeJson } from "./utils";
 import { expectCode } from "../../utils";
 import z from "zod";
@@ -646,6 +646,295 @@ describe("FormulaTest", () => {
                     };
                     return { reader: this, parents, dto, implicit: undefined, typeName: undefined };
                 }
+            }
+        `);
+    });
+
+    it("dtoLevelByCollection", () => {
+        const view = dto.view(BOOK, c => [
+            c.name,
+            c.edition,
+            c.$formula.ts({
+                alias: "authorNames",
+                valueType: z.array(z.string()),
+                dependency: c => [
+                    c.authors.with(c => [
+                        c.name
+                    ])
+                ],
+                fn: data => data.authors.map(a => `${a.name.firstName} ${a.name.lastName}`)
+            })
+        ]);
+        expect(mapperJson(view.mapper)).toEqual({
+            "entity": "Book",
+            "fields": [
+                {
+                    "prop": "Book.name",
+                    "paths": ["name"],
+                    "columnIndex": 0
+                },
+                {
+                    "prop": "Book.edition",
+                    "paths": ["edition"],
+                    "columnIndex": 1
+                },
+                {
+                    "prop": "Book.id",
+                    "paths": [],
+                    "isDependent": true,
+                    "columnIndex": 2
+                },
+                {
+                    "prop": "Book.authors",
+                    "paths": [
+                        ["<implicit:authorNames>", "authors"]
+                    ],
+                    "subMapper": {
+                        "entity": "Author",
+                        "associatedProp": "Book.authors",
+                        "fields": [
+                            {
+                                "prop": "Author.name.firstName",
+                                "paths": [
+                                    ["name", "firstName"]
+                                ],
+                                "columnIndex": 0
+                            },
+                            {
+                                "prop": "Author.name.lastName",
+                                "paths": [
+                                    ["name", "lastName"]
+                                ],
+                                "columnIndex": 1
+                            }
+                        ]
+                    },
+                    "dependencies": [2],
+                    "isDependent": true
+                },
+                {
+                    "prop": "Book.$formula(authorNames)",
+                    "paths": ["authorNames"],
+                    "dependencies": [3]
+                }
+            ]
+        });
+        expect(view.mapper.dtoRowReader.constructor.toString(), `
+            class ThisClass extends $baseClass {
+                read(parents, reader) {
+                    const dto = {
+                        name: reader.get(0), 
+                        edition: reader.get(1), 
+                        authorNames: null
+                    };
+                    const implicit = {
+                        _2: reader.get(2), 
+                        authorNames: null
+                    };
+                    return { reader: this, parents, dto, implicit, typeName: undefined };
+                }
+                _implicit_authorNames(implicit) {
+                    let o = implicit.authorNames;
+                    if (o == null) {
+                        implicit.authorNames = o = {
+                            authors: null
+                        };
+                    }
+                    return o;
+                }
+                dependency(unresolvedFieldIndex, row) {
+                    switch (unresolvedFieldIndex) {
+                        case 3:
+                            return row.implicit._2;
+                        case 4:
+                            return row.implicit.authorNames?.authors;
+                        default:
+                            throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                    }
+                }
+                dependencyNullable(unresolvedFieldIndex, dependency) {
+                    switch (unresolvedFieldIndex) {
+                        case 3:
+                            return dependency == null;
+                        case 4:
+                            return dependency == null;
+                        default:
+                            throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                    }
+                }
+                dependencyHash(unresolvedFieldIndex, dependency) {
+                    switch (unresolvedFieldIndex) {
+                        case 3:
+                            return dependency;
+                        case 4:
+                            return dependency;
+                        default:
+                            throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                    }
+                }
+                resolve(unresolvedFieldIndex, row, value) {
+                    switch (unresolvedFieldIndex) {
+                        case 3:
+                            this._implicit_authorNames(row.implicit).authors = value;
+                            break;
+                        case 4:
+                            row.dto.authorNames = value;
+                            break;
+                        default:
+                            throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                    }
+                }
+                resolveTsFormulas(row) {
+                    const authorNamesValue = ThisClass.__AUTHOR_NAMES__TS_FORMULA_FN(row.implicit.authorNames);
+                    row.dto.authorNames = authorNamesValue;
+                }
+                static __AUTHOR_NAMES__TS_FORMULA_FN = $dtoTsFormulaFunMap.get("authorNames");
+            }
+        `);
+    });
+
+    it("dtoLevelByJoinEntity", () => {
+        const view = dto.view(STUDENT, c => [
+            c.name,
+            c.$formula.ts({
+                alias: "courseNames",
+                valueType: z.array(z.string()),
+                dependency: c => [
+                    c.courses.with(c => [
+                        c.name
+                    ])
+                ],
+                fn: data => data.courses.map(course => course.name)
+            })
+        ]);
+        expect(mapperJson(view.mapper)).toEqual({
+            "entity": "Student",
+            "fields": [
+                {
+                    "prop": "Student.name",
+                    "paths": ["name"],
+                    "columnIndex": 0
+                },
+                {
+                    "prop": "Student.id",
+                    "paths": [],
+                    "isDependent": true,
+                    "columnIndex": 1
+                },
+                {
+                    "prop": "Student.learningLinks",
+                    "paths": [
+                        ["<implicit:courseNames>", "courses"]
+                    ],
+                    "subMapper": {
+                        "entity": "LearningLink",
+                        "associatedProp": "Student.learningLinks",
+                        "fields": [
+                            {
+                                "prop": "LearningLink.courseId",
+                                "paths": [],
+                                "isDependent": true,
+                                "columnIndex": 0
+                            },
+                            {
+                                "prop": "LearningLink.course",
+                                "paths": [],
+                                "subMapper": {
+                                    "entity": "Course",
+                                    "associatedProp": "LearningLink.course",
+                                    "fields": [
+                                        {
+                                            "prop": "Course.name",
+                                            "paths": [
+                                                ["..", "name"]
+                                            ],
+                                            "columnIndex": 0
+                                        }
+                                    ]
+                                },
+                                "dependencies": [0]
+                            }
+                        ]
+                    },
+                    "dependencies": [1],
+                    "isDependent": true
+                },
+                {
+                    "prop": "Student.$formula(courseNames)",
+                    "paths": ["courseNames"],
+                    "dependencies": [2]
+                }
+            ]
+        });
+        expectCode(view.mapper.dtoRowReader.constructor.toString(), `
+            class ThisClass extends $baseClass {
+                read(parents, reader) {
+                    const dto = {
+                        name: reader.get(0), 
+                        courseNames: null
+                    };
+                    const implicit = {
+                        _1: reader.get(1), 
+                        courseNames: null
+                    };
+                    return { reader: this, parents, dto, implicit, typeName: undefined };
+                }
+                _implicit_courseNames(implicit) {
+                    let o = implicit.courseNames;
+                    if (o == null) {
+                        implicit.courseNames = o = {
+                            courses: null
+                        };
+                    }
+                    return o;
+                }
+                dependency(unresolvedFieldIndex, row) {
+                    switch (unresolvedFieldIndex) {
+                        case 2:
+                            return row.implicit._1;
+                        case 3:
+                            return row.implicit.courseNames?.courses;
+                        default:
+                            throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                    }
+                }
+                dependencyNullable(unresolvedFieldIndex, dependency) {
+                    switch (unresolvedFieldIndex) {
+                        case 2:
+                            return dependency == null;
+                        case 3:
+                            return dependency == null;
+                        default:
+                            throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                    }
+                }
+                dependencyHash(unresolvedFieldIndex, dependency) {
+                    switch (unresolvedFieldIndex) {
+                        case 2:
+                            return dependency;
+                        case 3:
+                            return dependency;
+                        default:
+                            throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                    }
+                }
+                resolve(unresolvedFieldIndex, row, value) {
+                    switch (unresolvedFieldIndex) {
+                        case 2:
+                            this._implicit_courseNames(row.implicit).courses = value;
+                            break;
+                        case 3:
+                            row.dto.courseNames = value;
+                            break;
+                        default:
+                            throw new $argumentError("Illegal unresolved field index: " + unresolvedFieldIndex);
+                    }
+                }
+                resolveTsFormulas(row) {
+                    const courseNamesValue = ThisClass.__COURSE_NAMES__TS_FORMULA_FN(row.implicit.courseNames);
+                    row.dto.courseNames = courseNamesValue;
+                }
+                static __COURSE_NAMES__TS_FORMULA_FN = $dtoTsFormulaFunMap.get("courseNames");
             }
         `);
     });

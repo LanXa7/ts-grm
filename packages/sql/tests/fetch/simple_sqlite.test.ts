@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { useSqliteClientWithData } from "../data_utils";
-import { AUTHOR, BOOK, BOOK_STORE } from "../model/model";
+import { AUTHOR, BOOK, BOOK_STORE, STUDENT } from "../model/model";
 import { newSqlRecord } from "../utils";
 import { dto } from "@ts-grm/core";
 
@@ -501,5 +501,20 @@ describe.sequential("SimpleSqliteFetchTest", () => {
                 ]
             }
         ]);
+    });
+
+    it("m2mByJoinEntity", async() => {
+        const view = dto.view(STUDENT, c => [
+            c.name,
+            c.courses.with(c => [
+                c.name
+            ])
+        ]);
+        const rows = await sqlClient.createQuery(STUDENT, (q, student) => {
+            q.where(student.name.like("i"));
+            q.orderBy(student.name);
+            return q.select(student.fetch(view));
+        }).fetchList();
+        console.log(JSON.stringify(rows));
     });
 });

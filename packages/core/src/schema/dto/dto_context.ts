@@ -24,9 +24,21 @@ export type __DtoContext<
     __DirectContext<TModel, TDtoKind, TMembers>
     & __FoldContext<TModel, TDtoKind, TContextKind, TMembers>
     & __FlatContext<TModel, TDtoKind, TMembers>
-    & __ParameterizedContext<TModel, TDtoKind, TMembers>
-    & __InstanceOfContext<TModel, TDtoKind>
-    & __RecursiveContext<TModel, TDtoKind, TMembers>
+    & (
+        TContextKind extends "EMBEDDABLE"
+            ? object
+            : __ParameterizedContext<TModel, TDtoKind, TMembers>
+    )
+    & (
+        TContextKind extends "EMBEDDABLE"
+            ? object
+            : __InstanceOfContext<TModel, TDtoKind>
+    )
+    & (
+        TContextKind extends "EMBEDDABLE"
+            ? object
+            : __RecursiveContext<TModel, TDtoKind, TMembers>
+    )
     & (
         TContextKind extends "EMBEDDABLE"
             ? object

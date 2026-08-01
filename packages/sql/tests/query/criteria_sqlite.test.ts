@@ -68,7 +68,36 @@ describe("CriteriaSqliteTest", () => {
             args: ["%m%", "%m%"],
             purpose: "query"
         });
-        console.log(JSON.stringify(rows))
+        expect(rows).toEqual([
+            {
+                "id": 3,
+                "name": {
+                    "firstName": "Dan",
+                    "lastName": "Vanderkam"
+                }
+            },
+            {
+                "id": 5,
+                "name": {
+                    "firstName": "Kannappan",
+                    "lastName": "Muthukkaruppan"
+                }
+            },
+            {
+                "id": 6,
+                "name": {
+                    "firstName": "Mikhail",
+                    "lastName": "Bautin"
+                }
+            },
+            {
+                "id": 7,
+                "name": {
+                    "firstName": "Samer",
+                    "lastName": "Buna"
+                }
+            }
+        ]);
     });
 
     it("implicitAssociation", async() => {

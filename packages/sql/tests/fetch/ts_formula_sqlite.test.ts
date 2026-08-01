@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { AUTHOR, BOOK, BOOK_STORE } from "../model/model";
+import { AUTHOR, BOOK, BOOK_STORE, STUDENT } from "../model/model";
 import { dto } from "@ts-grm/core";
 import { newSqlRecord } from "../utils";
 import { useSqliteClientWithData } from "../data_utils";
@@ -417,6 +417,169 @@ describe.sequential("TsFormulaTest", () => {
             { "key": "GraphQL in Action(3)" },
             { "key": "GraphQL in Action(2)" },
             { "key": "GraphQL in Action(1)" }
+        ]);
+    });
+
+    it("dtoLevelComplex", async () => {
+        const view = dto.view(BOOK, c => [
+            c.name,
+            c.edition,
+            c.$formula.ts({
+                alias: "authorNames",
+                valueType: z.array(z.string()),
+                dependency: c => [
+                    c.authors.with(c => [
+                        c.name
+                    ])
+                ],
+                fn: data => data.authors.map(a => `${a.name.firstName} ${a.name.lastName}`)
+            })
+        ]);
+        const rows = await sqlClient.createQuery(BOOK, (q, book) => {
+            q.where(book.name.like("Yugabyte", "STARTS_WITH"));
+            q.orderBy(book.edition);
+            return q.select(book.fetch(view));
+        }).fetchList();
+        sqlRecord.assert(
+            {
+                sql: `
+                    select 
+                        tb_1_.NAME,
+                        tb_1_.EDITION,
+                        tb_1_.ID
+                    from BOOK tb_1_
+                    where 
+                        tb_1_.NAME like ?
+                    order by 
+                        tb_1_.EDITION asc
+                `,
+                args: ["Yugabyte%"],
+                purpose: "query"
+            },
+            {
+                sql: `
+                    select 
+                        tb_2_.book_id,
+                        tb_1_.FIRST_NAME,
+                        tb_1_.LAST_NAME
+                    from AUTHOR tb_1_
+                    inner join book_author_mapping tb_2_ on 
+                        tb_1_.ID = tb_2_.author_id
+                    where 
+                        tb_2_.book_id in(?, ?, ?)
+                    order by 
+                        tb_1_.FIRST_NAME asc,
+                        tb_1_.LAST_NAME asc
+                `,
+                args: [7, 8, 9],
+                purpose: "loadAssociation(Book.authors)"
+            }
+        );
+        expect(rows).toEqual([
+            {
+                "name": "YugabyteDB: The Definitive Guide",
+                "edition": 1,
+                "authorNames": [
+                    "Kannappan Muthukkaruppan",
+                    "Karthik Ranganathan",
+                    "Mikhail Bautin"
+                ]
+            },
+            {
+                "name": "YugabyteDB: The Definitive Guide",
+                "edition": 2,
+                "authorNames": [
+                    "Kannappan Muthukkaruppan",
+                    "Karthik Ranganathan",
+                    "Mikhail Bautin"
+                ]
+            },
+            {
+                "name": "YugabyteDB: The Definitive Guide",
+                "edition": 3,
+                "authorNames": [
+                    "Kannappan Muthukkaruppan",
+                    "Karthik Ranganathan",
+                    "Mikhail Bautin"
+                ]
+            }
+        ]);
+    });
+
+    it("dtoLevelByJoinEntity", async() => {
+        const view = dto.view(STUDENT, c => [
+            c.name,
+            c.$formula.ts({
+                alias: "courseNames",
+                valueType: z.array(z.string()),
+                dependency: c => [
+                    c.courses.with(c => [
+                        c.name
+                    ])
+                ],
+                fn: data => data.courses.map(course => course.name)
+            })
+        ]);
+        const rows = await sqlClient.createQuery(STUDENT, (q, student) => {
+            q.where(student.name.like("i"));
+            q.orderBy(student.name);
+            return q.select(student.fetch(view));
+        }).fetchList();
+        sqlRecord.assert(
+            {
+                sql: `
+                    select 
+                        tb_1_.NAME,
+                        tb_1_.ID
+                    from STUDENT tb_1_
+                    where 
+                        tb_1_.NAME like ?
+                    order by 
+                        tb_1_.NAME asc
+                `,
+                args: ["%i%"],
+                purpose: "query"
+            },
+            {
+                sql: `
+                    select 
+                        tb_1_.STUDENT_ID,
+                        tb_1_.COURSE_ID
+                    from LEARNING_LINK tb_1_
+                    where 
+                        tb_1_.STUDENT_ID in(?, ?)
+                `,
+                args: [4, 1],
+                purpose: "loadAssociation(Student.learningLinks)"
+            },
+            {
+                sql: `
+                    select 
+                        tb_1_.ID,
+                        tb_1_.NAME
+                    from COURSE tb_1_
+                    where 
+                        tb_1_.ID in(?, ?, ?, ?)
+                `,
+                args: [1, 4, 2, 3],
+                purpose: "loadAssociation(LearningLink.course)"
+            }
+        );
+        expect(rows).toEqual([
+            {
+                "name": "Jim",
+                "courseNames": [
+                    "Psychology and Life",
+                    "Introduction to Artificial Intelligence"
+                ]
+            },
+            {
+                "name": "Tim",
+                "courseNames": [
+                    "Film Appreciation",
+                    "Workplace Communication and Presentation"
+                ]
+            }
         ]);
     });
 });

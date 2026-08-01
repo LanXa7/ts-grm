@@ -5,10 +5,9 @@ import { AbstractEntityTable } from "./entity_table";
 import { Predicate } from "@/dsl/expression";
 import { StandardSchemaV1 } from "@standard-schema/spec";
 import { OrderNullsType } from "@/schema/order";
-import { AbstractFormulaProp, Dto, DtoField, FetchProp, InverseFetchProp } from "./dto";
+import { AssociatedKeysFormulaProp, Dto, DtoField, FetchProp, InverseFetchProp, SqlFormulaProp, TsFormulaProp } from "./dto";
 import { EntityPropOrder, toEntityPropOrders } from "./entity_prop_order";
 import { ReferenceFetchType } from "@/schema/dto/api";
-import { suppressUnused } from "@/index_internal";
 import { __TsFormulaMappingOptions } from "@/schema/dto/formula";
 import { AbstractDtoContext, createDto, finalPath, newDtoContext } from "./dto_context";
 import { acceptsNullOrUndefined } from "./util";
@@ -465,7 +464,9 @@ export class ScalarLikeMapping implements AbstractDtoMapping {
             nullable: 
                 this._prop instanceof EntityProp
                     ? this._prop.nullable
-                : this._prop instanceof AbstractFormulaProp
+                : this._prop instanceof TsFormulaProp
+                    ? acceptsNullOrUndefined(this._prop.formula.valueType)
+                : this._prop instanceof SqlFormulaProp
                     ? acceptsNullOrUndefined(this._prop.formula.valueType)
                 : false,
             parameter: this._parameter
@@ -808,16 +809,27 @@ export class AssociatedKeysMapping implements AbstractDtoMapping {
     ) {}
 
     with(body: DtoBody): AssociatedKeysMapping {
-        if (this._prop.props == null) {
-            throw new StateError(`Cannot set the body of "${this._prop.toString()}" which is not embedded property`)
+        if (this._prop.targetKeyProp!.props == null) {
+            throw new StateError(`Cannot set the body of "${this._prop.targetKeyProp!.toString()}" which is not embedded property`)
         }
         return new AssociatedKeysMapping(this._prop, this._alias, body);
     }
 
-    toFields(downcastTo: Entity | undefined): DtoField | ReadonlyArray<DtoField> {
-        suppressUnused(downcastTo);
-        suppressUnused(this._body);
-        throw new Error();
+    toFields(downcastTo: Entity | undefined): DtoField {
+        return {
+            path: finalPath(this._alias),
+            downcastTo,
+            prop: new AssociatedKeysFormulaProp(this._prop.declaringEntity, this._alias, this._prop, this._body),
+            bridgeProp: undefined,
+            dto: undefined,
+            fetchType: undefined,
+            predicateFn: undefined,
+            orders: undefined,
+            limit: undefined,
+            recursiveDepth: undefined,
+            nullable: this._prop.nullable,
+            parameter: undefined
+        };
     }
 }
 

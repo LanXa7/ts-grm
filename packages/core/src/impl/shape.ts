@@ -119,13 +119,11 @@ function handleExplictField(field: DtoMapperField) {
             }
             shapeScope = scope;
             try {
-                scope!.assign(
-                    path[max]!, 
-                    buildShapeMember(
-                        field, 
-                        isColumnIgnored(oldScope, scope)
-                    )
+                const member = buildShapeMember(
+                    field, 
+                    isColumnIgnored(oldScope, scope)
                 );
+                scope!.assign(path[max]!, member);
             } finally {
                 shapeScope = oldScope;
             }
@@ -238,12 +236,14 @@ function isColumnIgnored(
 function scalaProp(
     field: DtoMapperField
 ): EntityProp | SqlFormulaProp | undefined {
-    const prop = field.prop.asEntityProp;
-    return prop?.scalarType != null || prop?.sqlFormulaFn != null 
-        ? prop 
-        : field.prop instanceof SqlFormulaProp
-            ? field.prop
-            : undefined;
+    const prop = field.prop;
+    if (prop instanceof SqlFormulaProp) {
+        return prop;
+    }
+    if (prop instanceof EntityProp && (prop.scalarType != null || prop.sqlFormulaFn) != null) {
+        return prop;
+    } 
+    return undefined;
 }
 
 let shapeScope: ShapeScope | undefined = undefined;
@@ -283,11 +283,11 @@ class ShapeScope {
 
     private _reachable() {
         const parent = this.parent;
-        if (parent == null) {
+        if (parent == null || this.mapper.bridgeProp != null) {
             return;
         }
         parent._modelScope._reachable();
-        const name = this.mapper?.bridgeProp?.name ?? this.mapper.associatedProp!.name;
+        const name = this.mapper.associatedProp!.name;
         if (parent._modelScope.shape[name]?.targetShape !== this.shape) {
             parent._modelScope.assign(name, {
                 prop: undefined,

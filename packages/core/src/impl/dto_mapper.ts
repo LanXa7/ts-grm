@@ -1,5 +1,5 @@
 import { ArgumentError, StateError } from "@/error/common";
-import { Dto, DtoField, FetchProp, TsFormulaProp, TypeNameProp } from "./dto";
+import { AssociatedKeysFormulaProp, Dto, DtoField, FetchProp, TsFormulaProp, TypeNameProp } from "./dto";
 import { Entity } from "./entity";
 import { EntityProp} from "./entity_prop";
 import { createDtoRowReader, DtoRowReader } from "./row_reader";
@@ -7,8 +7,9 @@ import { makeErr } from "@/error/util";
 import { EntityPropOrder } from "./entity_prop_order";
 import { Predicate } from "@/dsl/expression";
 import { AbstractDtoContext, createDto, newDtoContext } from "./dto_context";
-import { ReferenceFetchType, View } from "@/schema/dto/api";
+import { dto, ReferenceFetchType, View } from "@/schema/dto/api";
 import { AbstractEntityTable } from "./entity_table";
+import { DtoBody } from "./dto_mapping";
 
 export function dtoMapper(dto: Dto, nullAsUndefined: boolean): DtoMapper {
     const mapper = new Mapper(
@@ -264,6 +265,13 @@ class Mapper {
         if (prop instanceof TsFormulaProp) {
             const formula = prop.formula;
             return formula.dependency();
+        }
+        if (prop instanceof AssociatedKeysFormulaProp) {
+            return dto.view(prop.declaringEntity.model, c => [
+                (c[prop.prop.name] as any).with((c: any) => [
+                    withBody(c[prop.prop.targetKeyProp!.name], prop.targetIdBody)
+                ])
+            ]);
         }
         return undefined;
     }
@@ -749,4 +757,11 @@ function dtoField(
         nullable: false,
         parameter: undefined
     };
+}
+
+function withBody(mapping: any, body: DtoBody | undefined) {
+    if (body == null) {
+        return mapping;
+    }
+    return mapping.with(body);
 }

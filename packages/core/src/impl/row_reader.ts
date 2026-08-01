@@ -2,7 +2,7 @@ import { Entity } from "./entity";
 import { EntityProp } from "./entity_prop";
 import { CodeWriter } from "./code_writer";
 import { DataReader } from "./data_reader";
-import { FetchProp, TsFormulaProp } from "./dto";
+import { AssociatedKeysFormulaProp, FetchProp, TsFormulaProp } from "./dto";
 import { DtoMapper,DtoMapperField } from "./dto_mapper";
 import { buildShape, isEmptyShape, Shape, ShapeMember } from "./shape";
 import { ArgumentError } from "@/error/common";
@@ -98,6 +98,9 @@ function createDtoRowReaderCreator(mapper: DtoMapper): DtoRowReaderCreator {
     for (const field of mapper.fields) {
         const prop = field.prop;
         if (prop instanceof TsFormulaProp) {
+            const fn = prop.getOutputFn(mapper.nullAsUndefined);
+            dtoTsFormulaFunMap.set(prop.path, fn);
+        } else if (prop instanceof AssociatedKeysFormulaProp) {
             const fn = prop.getOutputFn(mapper.nullAsUndefined);
             dtoTsFormulaFunMap.set(prop.path, fn);
         }
@@ -590,6 +593,9 @@ function isTsFormula(prop: FetchProp): boolean {
     if (prop instanceof TsFormulaProp) {
         return true;
     }
+    if (prop instanceof AssociatedKeysFormulaProp) {
+        return true;
+    }
     return prop.isEntityProp && (prop as EntityProp).tsFormulaDependencies.length !== 0;
 }
 
@@ -623,7 +629,8 @@ function writeResolveTsFormula(
     renderedProps.add(prop);
     
     for (const dependency of prop.tsFormulaDependencies) {
-        const dependencyField = mapper.fields.find(f => f.prop.isEntityProp && (f.prop as EntityProp).path === dependency.path)!;
+        const dependencyPath = (dependency.middleEntity?.joinThisProp.oppositeProp ?? dependency).path;
+        const dependencyField = mapper.fields.find(f => f.prop.isEntityProp && (f.prop as EntityProp).path === dependencyPath)!;
         writeResolveTsFormula(mapper, dependencyField, renderedProps, writer);
     }
     
@@ -724,7 +731,7 @@ function writeTsFormulaFn(
     nullAsUndefined: boolean,
     writer: CodeWriter
 ) {
-    const prop = field.prop as EntityProp | TsFormulaProp;
+    const prop = field.prop as EntityProp | TsFormulaProp | AssociatedKeysFormulaProp;
     writer
         .code("static ")
         .code(tsFormulaFnName(prop))
@@ -745,7 +752,7 @@ function outputFnName(prop: EntityProp | TsFormulaProp): string {
     return `__${toScreamingSnakeCase(prop.path)}__OUTPUT_FN`;
 }
 
-function tsFormulaFnName(prop: EntityProp | TsFormulaProp): string {
+function tsFormulaFnName(prop: EntityProp | TsFormulaProp | AssociatedKeysFormulaProp): string {
     return `__${toScreamingSnakeCase(prop.path)}__TS_FORMULA_FN`;
 }
 

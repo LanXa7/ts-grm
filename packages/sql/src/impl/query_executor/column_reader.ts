@@ -198,7 +198,10 @@ class JoinFetchExecutor {
     ) {
         const prop = field.prop.asEntityProp;
         if (prop != null && prop.nullable) {
-            const firstNonNullField = field.subMapper!.fields.find(sf => sf.columnIndex != null && sf.prop.asEntityProp?.nullable === false);
+            const firstNonNullField = field
+                .subMapper!
+                .fields
+                .find((sf: any) => sf.columnIndex != null && sf.prop.asEntityProp?.nullable === false);
             const index = firstNonNullField!.columnIndex!;
             return dataRowReader.get(index) == null;
         }
