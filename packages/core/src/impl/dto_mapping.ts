@@ -89,7 +89,8 @@ export class AllScalarsMapping implements AbstractDtoMapping {
             limit: undefined,
             recursiveDepth: undefined,
             nullable: prop.nullable,
-            parameter: undefined
+            parameter: undefined,
+            mapperFn: undefined
         };
     }
 
@@ -247,7 +248,8 @@ export class FlatMapping implements AbstractDtoMapping {
             limit: undefined,
             recursiveDepth: undefined,
             nullable: this._prop.nullable,
-            parameter: undefined
+            parameter: undefined,
+            mapperFn: undefined
         };
     }
 }
@@ -393,7 +395,8 @@ export class RecursiveMapping implements AbstractDtoMapping {
             limit: this._maxRows,
             recursiveDepth: this._depth,
             nullable: this.prop.nullable,
-            parameter: undefined
+            parameter: undefined,
+            mapperFn: undefined
         };
         return field;
     }
@@ -469,15 +472,18 @@ export class ScalarLikeMapping implements AbstractDtoMapping {
                 : this._prop instanceof SqlFormulaProp
                     ? acceptsNullOrUndefined(this._prop.formula.valueType)
                 : false,
-            parameter: this._parameter
+            parameter: this._parameter,
+            mapperFn: this._output?.fn
         };
     }
 }
 
 export interface ScalarLikeMapper {
     readonly schema: StandardSchemaV1;
-    readonly fn: (value: any) => any;
+    readonly fn: MapperFn;
 }
+
+export type MapperFn = (value: any) => any;
 
 export class EmbeddedMapping implements AbstractDtoMapping {
 
@@ -522,7 +528,8 @@ export class EmbeddedMapping implements AbstractDtoMapping {
             limit: undefined,
             recursiveDepth: undefined,
             nullable: this._prop.nullable,
-            parameter: undefined
+            parameter: undefined,
+            mapperFn: undefined
         };
     }
 }
@@ -648,7 +655,8 @@ export class ReferenceMapping extends AssociationMapping {
             limit: undefined,
             recursiveDepth: undefined,
             nullable: this._prop.nullable,
-            parameter: undefined
+            parameter: undefined,
+            mapperFn: undefined
         };
     }
 }
@@ -749,7 +757,8 @@ export class CollectionMapping extends AssociationMapping {
             limit: this._maxRows,
             recursiveDepth: undefined,
             nullable: this._prop.nullable,
-            parameter: undefined
+            parameter: undefined,
+            mapperFn: undefined
         };
     }
 }
@@ -794,7 +803,8 @@ export class ReferenceKeyMapping implements AbstractDtoMapping {
             limit: undefined,
             recursiveDepth: undefined,
             nullable: this._prop.nullable,
-            parameter: undefined
+            parameter: undefined,
+            mapperFn: undefined
         };
     }
 }
@@ -829,7 +839,8 @@ export class AssociatedKeysMapping implements AbstractDtoMapping {
             limit: undefined,
             recursiveDepth: undefined,
             nullable: this._prop.nullable,
-            parameter: undefined
+            parameter: undefined,
+            mapperFn: undefined
         };
     }
 }
@@ -905,7 +916,8 @@ export class CalculatedAssociationMapping implements AbstractDtoMapping {
             limit: undefined,
             recursiveDepth: undefined,
             nullable: this._prop.nullable,
-            parameter: this._parameter
+            parameter: this._parameter,
+            mapperFn: undefined
         };
         return field;
     }

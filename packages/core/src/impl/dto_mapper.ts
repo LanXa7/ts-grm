@@ -9,7 +9,7 @@ import { Predicate } from "@/dsl/expression";
 import { AbstractDtoContext, createDto, newDtoContext } from "./dto_context";
 import { dto, ReferenceFetchType, View } from "@/schema/dto/api";
 import { AbstractEntityTable } from "./entity_table";
-import { DtoBody } from "./dto_mapping";
+import { DtoBody, MapperFn } from "./dto_mapping";
 
 export function dtoMapper(dto: Dto, nullAsUndefined: boolean): DtoMapper {
     const mapper = new Mapper(
@@ -173,6 +173,8 @@ export type DtoMapperField = {
     readonly columnIndex: number | undefined;
 
     readonly optimizable: boolean;
+
+    readonly mapperFn: MapperFn | undefined;
 }
 
 export type Path = string | ReadonlyArray<string>;
@@ -326,7 +328,8 @@ class Mapper {
             limit: undefined,
             recursiveDepth: undefined,
             nullable: false,
-            parameter: undefined
+            parameter: undefined,
+            mapperFn: undefined
         };
         this._add(field, true);
     }
@@ -358,6 +361,7 @@ class Mapper {
             dtoField.orders,
             dtoField.limit,
             dtoField.parameter,
+            dtoField.mapperFn,
             dtoField.nullable,
             dtoField.bridgeProp,
             dtoField.recursiveDepth,
@@ -505,6 +509,7 @@ class MapperField {
         readonly orders: ReadonlyArray<EntityPropOrder> | undefined,
         readonly limit: number | undefined,
         readonly parameter: any,
+        readonly mapperFn: MapperFn | undefined,
         readonly nullable: boolean,
         readonly bridgeProp: EntityProp | undefined,
         readonly recursiveDepth: number | undefined,
@@ -560,7 +565,8 @@ class MapperField {
             columnIndex: this._hasColumn()
                 ? this.columnIndexAllocator()
                 : undefined,
-            optimizable: this.isOptimizable()
+            optimizable: this.isOptimizable(),
+            mapperFn: this.mapperFn
         };
     }
 
@@ -695,7 +701,8 @@ function toDtoFields(
         limit: field.limit,
         recursiveDepth: field.recursiveDepth,
         nullable: field.nullable,
-        parameter: field.parameter
+        parameter: field.parameter,
+        mapperFn: field.mapperFn
     };
     if (field.paths.length === 0 || !assignPath) {
         return [dtoField];
@@ -740,7 +747,8 @@ function dtoField(
             limit: undefined,
             recursiveDepth: undefined,
             nullable: prop.nullable,
-            parameter: undefined
+            parameter: undefined,
+            mapperFn: undefined
         };
     }
     return {
@@ -755,7 +763,8 @@ function dtoField(
         limit: undefined,
         recursiveDepth: undefined,
         nullable: false,
-        parameter: undefined
+        parameter: undefined,
+        mapperFn: undefined
     };
 }
 

@@ -6,6 +6,7 @@ import { AssociatedKeysFormulaProp, FetchProp, TsFormulaProp } from "./dto";
 import { DtoMapper,DtoMapperField } from "./dto_mapper";
 import { buildShape, isEmptyShape, Shape, ShapeMember } from "./shape";
 import { ArgumentError } from "@/error/common";
+import { MapperFn } from "./dto_mapping";
 
 export type DtoRow = {
 
@@ -76,11 +77,8 @@ function createDtoRowReaderCreator(mapper: DtoMapper): DtoRowReaderCreator {
                 writeFold("_implicit", shape.__implicit, mapper.nullAsUndefined, writer);
             }
             for (const field of mapper.fields) {
-                if (field.prop.isEntityProp) {
-                    const prop = field.prop as EntityProp;
-                    if (prop.getOutputFn(false) != null) {
-                        writeOutputFn(field, mapper.nullAsUndefined, writer);
-                    }
+                if (compositeMapperFn(field.prop.asEntityProp?.outputFn, field.mapperFn, false) != null) {
+                    writeOutputFn(field, writer);
                 }
             }
             if (mapper.unresolvedFields.length !== 0) {
@@ -94,20 +92,27 @@ function createDtoRowReaderCreator(mapper: DtoMapper): DtoRowReaderCreator {
                 }
             }
         });
-    const dtoTsFormulaFunMap = new Map<string, any>();
+    const outputFunMap = new Map<string, MapperFn>();
+    for (const field of mapper.fields) {
+        const fn = compositeMapperFn(field.prop.asEntityProp?.outputFn, field.mapperFn, mapper.nullAsUndefined);
+        if (fn != null) {
+            outputFunMap.set(field.prop.path, fn);
+        }
+    }
+    const tsFormulaFunMap = new Map<string, MapperFn>();
     for (const field of mapper.fields) {
         const prop = field.prop;
         if (prop instanceof TsFormulaProp) {
-            const fn = prop.getOutputFn(mapper.nullAsUndefined);
-            dtoTsFormulaFunMap.set(prop.path, fn);
+            const fn = prop.getTsFormulaFn(mapper.nullAsUndefined);
+            tsFormulaFunMap.set(prop.path, fn);
         } else if (prop instanceof AssociatedKeysFormulaProp) {
-            const fn = prop.getOutputFn(mapper.nullAsUndefined);
-            dtoTsFormulaFunMap.set(prop.path, fn);
+            const fn = prop.getTsFormulaFn(mapper.nullAsUndefined);
+            tsFormulaFunMap.set(prop.path, fn);
         }
     }
     return new Function(
-        "$baseClass", "$entity", "$dtoTsFormulaFunMap", "$argumentError", writer.toString()
-    )(DtoRowReader, mapper.entity, dtoTsFormulaFunMap, ArgumentError);
+        "$baseClass", "$entity", "$outputFunMap", "$tsFormulaFunMap", "$argumentError", writer.toString()
+    )(DtoRowReader, mapper.entity, outputFunMap, tsFormulaFunMap, ArgumentError);
 }
 
 function writeRead(
@@ -193,7 +198,7 @@ function writeDtoDeclaration(
             for (const key in shape) {
                 if (key !== "__implicit" && isExplicitMember(shape[key]!)) {
                     if (downcastTo == null || shape[key]!.downcastTo == null || shape[key]!.downcastTo!.isAssignableFrom(downcastTo)) {
-                        writeRootMember(key, shape[key], mapper, writer);
+                        writeRootMember(key, shape[key]!, mapper, writer);
                     }
                 }
             }
@@ -235,7 +240,7 @@ function writieImplicitDeclaration(
         .scope("CURLY_BRACKETS", () => {
             for (const key in implicit) {
                 if (downcastTo == null || implicit[key]!.downcastTo == null || implicit[key]!.downcastTo!.isAssignableFrom(downcastTo)) {
-                    writeRootMember(key, implicit[key], mapper, writer);
+                    writeRootMember(key, implicit[key]!, mapper, writer);
                 }
             }
         })
@@ -244,7 +249,7 @@ function writieImplicitDeclaration(
 
 function writeRootMember(
     key: string, 
-    member: any, 
+    member: ShapeMember, 
     mapper: DtoMapper,
     writer: CodeWriter
 ) {
@@ -257,8 +262,8 @@ function writeRootMember(
         writer.code(keyStr).code(": typeName");
     } else if (typeof member.columnIndex === "number") {
         writer.code(keyStr).code(": ");
-        if (member.prop.getOutputFn(false) != null) {
-            writer.code("ThisClass.").code(outputFnName(member.prop));
+        if (compositeMapperFn(member.prop?.asEntityProp?.outputFn, member.mapperFn, false) != null) {
+            writer.code("ThisClass.").code(outputFnName(member.prop as EntityProp));
             writer.code("(reader.get(").code(`${member.columnIndex}`).code("))");
         } else {
             writer.code("reader.get(").code(`${member.columnIndex}`).code(")");
@@ -290,6 +295,7 @@ function writeDepthAssignments(
                 0,
                 path,
                 field.prop.asEntityProp!,
+                compositeMapperFn(field.prop.asEntityProp!.outputFn, field.mapperFn, mapper.nullAsUndefined),
                 field.columnIndex,
                 writer
             );
@@ -301,13 +307,14 @@ function writeDepthAssignment(
     parentDepth: number,
     path: ReadonlyArray<string>,
     prop: EntityProp,
+    mapperFn: MapperFn | undefined,
     columnIndex: string | number,
     writer: CodeWriter
 ) {
     if (path[parentDepth] === "..") {
         if (parentDepth === 0) {
             writer.code(`const reader_${columnIndex} = `);
-            if (prop.getOutputFn(false) != null) {
+            if (mapperFn != null) {
                 writer.code("ThisClass.").code(outputFnName(prop));
                 writer.code("(reader.get(").code(`${columnIndex}`).code("))");
             } else {
@@ -317,7 +324,7 @@ function writeDepthAssignment(
         }
         writer.code(`for (const ${parentName(parentDepth)} of ${parentDepth > 0 ? `${parentName(parentDepth - 1)}.` : ""}parents) `);
         writer.scope("CURLY_BRACKETS", () => {
-            writeDepthAssignment(parentDepth + 1, path, prop, columnIndex, writer);
+            writeDepthAssignment(parentDepth + 1, path, prop, mapperFn, columnIndex, writer);
         }).newLine();
     } else {
         if (parentDepth > 0) {
@@ -326,7 +333,7 @@ function writeDepthAssignment(
         } else {
             writeAssignmentTarget("", false, path, writer);
             writer.code(" = ");
-            if (prop.getOutputFn(false) != null) {
+            if (mapperFn != null) {
                 writer.code("ThisClass.").code(outputFnName(prop));
                 writer.code("(reader.get(").code(`${columnIndex}`).code("))");
             } else {
@@ -698,20 +705,13 @@ function writeAssignments(
 
 function writeOutputFn(
     field: DtoMapperField,
-    nullAsUndefined: boolean,
     writer: CodeWriter
 ) {
     const prop = field.prop as EntityProp | TsFormulaProp;
     writer
         .code("static ")
         .code(outputFnName(prop))
-        .code(" = $entity");
-    
-    if (field.downcastTo != null) {
-        writer.code(`.findByTypeName('${field.downcastTo.name}')`);
-    }
-    writer
-        .code(`.expandedPropMap.get("${prop.path}").getOutputFn(${nullAsUndefined})`)
+        .code(` = $outputFunMap.get("${prop.path}")`)
         .newLine(";");
 }
 
@@ -743,7 +743,7 @@ function writeTsFormulaFn(
         }
         writer.code(`.expandedPropMap.get("${prop.path}").getTsFormulaFn(${nullAsUndefined})`);
     } else {
-        writer.code(`$dtoTsFormulaFunMap.get("${prop.path}")`);
+        writer.code(`$tsFormulaFunMap.get("${prop.path}")`);
     }
     writer.newLine(";");
 }
@@ -761,4 +761,80 @@ function toScreamingSnakeCase(text: string): string {
         .replace(/([a-z])([A-Z])/g, '$1_$2')
         .replace(/([A-Z]+)([A-Z][a-z])/g, '$1_$2');
     return replaced.toUpperCase();
+}
+
+function compositeMapperFn(
+    a: MapperFn | undefined,
+    b: MapperFn | undefined,
+    nullAsUndefined: boolean
+): MapperFn | undefined {
+    if (a != null && b != null) {
+        return nullAsUndefined
+            ? (v: any) => {
+                if (v != null) {
+                    const v1 = a(v);
+                    if (v1 != null) {
+                        const v2 = b(v1);
+                        if (v2 != null) {
+                            return v2;
+                        }
+                    }
+                }
+                return undefined;
+            }
+            : (v: any) => {
+                if (v != null) {
+                    const v1 = a(v);
+                    if (v1 != null) {
+                        const v2 = b(v1);
+                        if (v2 != null) {
+                            return v2;
+                        }
+                    }
+                }
+                return null;
+            };
+    }
+    if (a != null) {
+        return nullAsUndefined
+            ? (v: any) => {
+                if (v != null) {
+                    const v1 = a(v);
+                    if (v1 != null) {
+                        return v1;
+                    }
+                }
+                return undefined;
+            }
+            : (v: any) => {
+                if (v != null) {
+                    const v1 = a(v);
+                    if (v1 != null) {
+                        return v1;
+                    }
+                }
+                return null;
+            };
+    }
+    if (b != null) {
+        return nullAsUndefined
+            ? (v: any) => {
+                if (v != null) {
+                    const v1 = b(v);
+                    if (v1 != null) {
+                        return v1;
+                    }
+                }
+                return undefined;
+            }
+            : (v: any) => {
+                if (v != null) {
+                    const v1 = b(v);
+                    if (v1 != null) {
+                        return v1;
+                    }
+                }
+                return null;
+            };
+    }
 }

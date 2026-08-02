@@ -284,7 +284,7 @@ describe("AssociatedKeyTest", () => {
                     const authorIdsValue = ThisClass.__AUTHOR_IDS__TS_FORMULA_FN(row.implicit.authorIds);
                     row.dto.authorIds = authorIdsValue;
                 }
-                static __AUTHOR_IDS__TS_FORMULA_FN = $dtoTsFormulaFunMap.get("authorIds");
+                static __AUTHOR_IDS__TS_FORMULA_FN = $tsFormulaFunMap.get("authorIds");
             }
         `);
     });
@@ -423,7 +423,7 @@ describe("AssociatedKeyTest", () => {
                     const courceIdsValue = ThisClass.__COURCE_IDS__TS_FORMULA_FN(row.implicit.courceIds);
                     row.dto.courceIds = courceIdsValue;
                 }
-                static __COURCE_IDS__TS_FORMULA_FN = $dtoTsFormulaFunMap.get("courceIds");
+                static __COURCE_IDS__TS_FORMULA_FN = $tsFormulaFunMap.get("courceIds");
             }
         `);
     });

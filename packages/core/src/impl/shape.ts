@@ -5,6 +5,7 @@ import { EntityProp } from "./entity_prop";
 import { CalculationStrategyKind } from "./calculation_strategy";
 import { ScalarType } from "@/schema/scalar";
 import { Entity } from "./entity";
+import { MapperFn } from "./dto_mapping";
 
 export type Shape = {
     [key: string]: ShapeMember;
@@ -20,6 +21,7 @@ export type ShapeMember = {
     targetShape: Shape | undefined;
     targetKind: "REFERENCE" | "COLLECTION" | undefined;
     recursiveDepth: number | undefined;
+    mapperFn: MapperFn | undefined;
 }
 
 export function isEmptyShape(shape: Shape): boolean {
@@ -65,7 +67,8 @@ function fillShapeNode(
                     scalarType: field.prop.asEntityProp?.scalarType,
                     targetShape: undefined,
                     targetKind: undefined,
-                    recursiveDepth: undefined
+                    recursiveDepth: undefined,
+                    mapperFn: field.mapperFn
                 };
             }
         } else {
@@ -106,7 +109,8 @@ function handleExplictField(field: DtoMapperField) {
                             scalarType: field.prop.asEntityProp?.scalarType,
                             targetShape: foldShape,
                             targetKind: undefined,
-                            recursiveDepth: undefined
+                            recursiveDepth: undefined,
+                            mapperFn: field.mapperFn
                         };
                         if (implicitName != null) {
                             scope.implicit[implicitName] = newMember;
@@ -144,7 +148,8 @@ function buildShapeMember(
                 scalarType: field.prop.asEntityProp?.scalarType,
                 targetShape: buildShapeImpl(field.subMapper, field),
                 targetKind: "COLLECTION",
-                recursiveDepth: field.recursiveDepth
+                recursiveDepth: field.recursiveDepth,
+                mapperFn: field.mapperFn
             }
         } 
         if (isReference(field.prop)) {
@@ -155,7 +160,8 @@ function buildShapeMember(
                 scalarType: field.prop.asEntityProp?.scalarType,
                 targetShape: buildShapeImpl(field.subMapper, field),
                 targetKind: "REFERENCE",
-                recursiveDepth: field.recursiveDepth
+                recursiveDepth: field.recursiveDepth,
+                mapperFn: field.mapperFn
             };
         }
         return {
@@ -165,7 +171,8 @@ function buildShapeMember(
             scalarType: field.prop.asEntityProp?.scalarType,
             targetShape: buildShapeImpl(field.subMapper, field),
             targetKind: undefined,
-            recursiveDepth: undefined
+            recursiveDepth: undefined,
+            mapperFn: field.mapperFn
         }
     }
     let columnIndex: number | string | undefined;
@@ -183,7 +190,8 @@ function buildShapeMember(
         scalarType: field.prop.asEntityProp?.scalarType,
         targetShape: undefined,
         targetKind: undefined,
-        recursiveDepth: undefined
+        recursiveDepth: undefined,
+        mapperFn: field.mapperFn
     };
 }
 
@@ -296,7 +304,8 @@ class ShapeScope {
                 scalarType: undefined,
                 targetShape: this.shape,
                 targetKind: undefined,
-                recursiveDepth: undefined
+                recursiveDepth: undefined,
+                mapperFn: undefined
             });
         }
     }

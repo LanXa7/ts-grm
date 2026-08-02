@@ -499,7 +499,8 @@ export class DtoFactory {
             limit: undefined,
             recursiveDepth: undefined,
             nullable: false,
-            parameter: undefined
+            parameter: undefined,
+            mapperFn: undefined
         };
         this._fields.push(field);
     }

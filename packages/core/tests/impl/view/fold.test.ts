@@ -240,7 +240,7 @@ describe("FoldTest", () => {
                     }
                     return o;
                 }
-                static __GENDER__OUTPUT_FN = $entity.expandedPropMap.get("gender").getOutputFn(false);
+                static __GENDER__OUTPUT_FN = $outputFunMap.get("gender");
             }
         `);
         const authorRow = authorMapper.dtoRowReader.read(

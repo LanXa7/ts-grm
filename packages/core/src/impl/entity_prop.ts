@@ -15,6 +15,7 @@ import { acceptsNullOrUndefined } from "./util";
 import { ScalarProvider, ScalarType } from "@/schema/scalar";
 import { View } from "@/schema/dto/api";
 import { __JoinColumnData, __Prop, __PropData } from "@/schema/prop_internal_behavior";
+import { MapperFn } from "./dto_mapping";
 
 export class EntityProp {
 
@@ -87,12 +88,6 @@ export class EntityProp {
     private _sqlFormulaResolved = false;
 
     private _calculationStrategy: CalculationStrategy | undefined = undefined; 
-
-    private _outputWithNullFn: ((value: any) => any) | undefined = undefined;
-
-    private _outputWithUndefinedFn: ((value: any) => any) | undefined = undefined;
-
-    private _outputFnResolved = false;
 
     private static readonly _EMPTY_PROP_MAP: ReadonlyMap<string, EntityProp> = 
         new Map<string, EntityProp>();
@@ -1347,18 +1342,11 @@ export class EntityProp {
         }
     }
 
-    getOutputFn(nullAsUndefined: boolean): ((value: any) => any) | undefined {
-        if (!this._outputFnResolved) {
-            const fn = this._data.scalarProvider?.toValue;
-            if (fn != null) {
-                this._outputWithNullFn = v => v != null ? fn(v) : null;
-                this._outputWithUndefinedFn = v => v != null ? fn(v) : undefined;
-            }
-        }
-        return nullAsUndefined ? this._outputWithUndefinedFn : this._outputWithNullFn;
+    get outputFn(): MapperFn | undefined {
+        return this._data.scalarProvider?.toValue;
     }
 
-    get inputFn(): ((value: any) => any) | undefined {
+    get inputFn(): MapperFn | undefined {
         return this._data.scalarProvider?.toSql;
     }
 

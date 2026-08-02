@@ -7,7 +7,7 @@ import { Predicate } from "@/dsl/expression";
 import { ReferenceFetchType } from "@/schema/dto/api";
 import { SqlFormula, TsFormula } from "@/schema/computed";
 import { StateError } from "@/error/common";
-import { DtoBody } from "./dto_mapping";
+import { DtoBody, MapperFn } from "./dto_mapping";
 
 export type Dto = {
 
@@ -43,6 +43,8 @@ export type DtoField = {
     readonly nullable: boolean;
 
     readonly parameter: any;
+
+    readonly mapperFn: MapperFn | undefined;
 };
 
 export type FetchProp = EntityProp | InverseFetchProp | TypeNameProp | TsFormulaProp | SqlFormulaProp | AssociatedKeysFormulaProp;
@@ -59,6 +61,10 @@ export class InverseFetchProp {
 
     get name(): string {
         return `←${this.prop.declaringEntity.name}.${this.prop.name}`;
+    }
+
+    get path(): string {
+        return this.name;
     }
 
     get subPath(): string {
@@ -122,6 +128,10 @@ export class TypeNameProp {
         return "__typename";
     }
 
+    get path(): string {
+        return this.name;
+    }
+
     get subPath(): "" {
         return "";
     }
@@ -168,6 +178,10 @@ export class AbstractFormulaProp {
 
     }
 
+    get path(): string {
+        return this.name;
+    }
+
     get subPath(): "" {
         return "";
     }
@@ -200,9 +214,9 @@ export class AbstractFormulaProp {
         return undefined;
     }
 
-    getOutputFn(
+    getTsFormulaFn(
         _nullAsUndefined: boolean
-    ): ((data: any) => any) | undefined {
+    ): MapperFn | undefined {
         return undefined;
     }
 
@@ -227,17 +241,13 @@ export class TsFormulaProp extends AbstractFormulaProp {
         super(declaringEntity, name);
     }
 
-    get path(): string {
-        return this.name;
-    }
-
     get tsFormulaDependencies(): ReadonlyArray<EntityProp> {
         return this._getFormulaDependencies(new Set());
     }
 
-    override getOutputFn(
+    override getTsFormulaFn(
         nullAsUndefined: boolean
-    ): (data: any) => any {
+    ): MapperFn {
         const fn = this.formula.fn;
         return data => {
             const result = fn(data);
@@ -302,9 +312,9 @@ export class AssociatedKeysFormulaProp extends AbstractFormulaProp {
         return [this.prop];
     }
 
-    override getOutputFn(
+    override getTsFormulaFn(
         _nullAsUndefined: boolean
-    ): (data: any) => any {
+    ): MapperFn {
         const name = this.prop.name;
         const targetKeyPropName = this.prop.targetKeyProp!?.name;
         return data => {

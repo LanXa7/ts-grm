@@ -600,7 +600,7 @@ describe("FormulaTest", () => {
                     const keyValue = ThisClass.__KEY__TS_FORMULA_FN(row.implicit.key);
                     row.dto.key = keyValue;
                 }
-                static __KEY__TS_FORMULA_FN = $dtoTsFormulaFunMap.get("key");
+                static __KEY__TS_FORMULA_FN = $tsFormulaFunMap.get("key");
             }
         `);
         const row = view.mapper.dtoRowReader.read(undefined, makeReader("Yugabyute", 7));
@@ -788,7 +788,7 @@ describe("FormulaTest", () => {
                     const authorNamesValue = ThisClass.__AUTHOR_NAMES__TS_FORMULA_FN(row.implicit.authorNames);
                     row.dto.authorNames = authorNamesValue;
                 }
-                static __AUTHOR_NAMES__TS_FORMULA_FN = $dtoTsFormulaFunMap.get("authorNames");
+                static __AUTHOR_NAMES__TS_FORMULA_FN = $tsFormulaFunMap.get("authorNames");
             }
         `);
     });
@@ -934,7 +934,7 @@ describe("FormulaTest", () => {
                     const courseNamesValue = ThisClass.__COURSE_NAMES__TS_FORMULA_FN(row.implicit.courseNames);
                     row.dto.courseNames = courseNamesValue;
                 }
-                static __COURSE_NAMES__TS_FORMULA_FN = $dtoTsFormulaFunMap.get("courseNames");
+                static __COURSE_NAMES__TS_FORMULA_FN = $tsFormulaFunMap.get("courseNames");
             }
         `);
     });
