@@ -14,8 +14,13 @@ describe("ScalarSqliteTest", () => {
     it("oneOutputMapper", async() => {
         const view = dto.view(BOOK, c => [
             c.name.output(
-                z.string(), 
-                value => value.slice(0, 2) + '*'.repeat(value.length - 4) + value.slice(-2)
+                z.string(), value => `${
+                    value.slice(0, 2)
+                }${
+                    '*'.repeat(value.length - 4)
+                }${
+                    value.slice(-2)
+                }`
             ),
             c.edition
         ]);
@@ -24,6 +29,20 @@ describe("ScalarSqliteTest", () => {
             q.orderBy(book.name);
             return q.select(book.fetch(view));
         }).fetchList();
+        sqlRecord.assert({
+            sql: `
+                select 
+                    tb_1_.NAME,
+                    tb_1_.EDITION
+                from BOOK tb_1_
+                where 
+                    tb_1_.EDITION = ?
+                order by 
+                    tb_1_.NAME asc
+            `,
+            args: [3],
+            purpose: "query"
+        });
         expect(rows).toEqual([
             {
                 "name": "Ef****************pt",
@@ -118,6 +137,63 @@ describe("ScalarSqliteTest", () => {
                     "lastName": "Buna"
                 },
                 "gender": "Boy"
+            }
+        ]);
+    });
+
+    it("mapperOnTsFormula", async() => {
+        const view = dto.view(AUTHOR, c => [
+            c.id,
+            c.fullName.output(z.string(), value => value.toUpperCase())
+        ]);
+        const rows = await sqlClient.createQuery(AUTHOR, (q, author) => {
+            q.orderBy(author.name().firstName, author.name().lastName);
+            q.where(
+                author.some(
+                    "books", 
+                    book => book.name.like("Yugabyte", "STARTS_WITH")
+                )
+            )
+            return q.select(author.fetch(view));
+        }).fetchList();
+        sqlRecord.assert({
+            sql: `
+                select 
+                    tb_1_.ID,
+                    tb_1_.FIRST_NAME,
+                    tb_1_.LAST_NAME
+                from AUTHOR tb_1_
+                where 
+                    exists(
+                        select 
+                            1
+                        from BOOK tb_2_
+                        inner join book_author_mapping tb_3_ on 
+                            tb_2_.ID = tb_3_.book_id
+                        where 
+                                tb_3_.author_id = tb_1_.ID
+                            and
+                                tb_2_.NAME like ?
+                    )
+                order by 
+                    tb_1_.FIRST_NAME asc,
+                    tb_1_.LAST_NAME asc
+            `,
+            args: ["Yugabyte%"],
+            purpose: "query"
+        })
+        expect(rows).toEqual([
+            {
+                "id": 5,
+                "fullName": "KANNAPPAN MUTHUKKARUPPAN"
+            },
+            {
+                "id": 4,
+                "fullName": "KARTHIK RANGANATHAN"
+            },
+            {
+                "id": 6,
+                "fullName": "MIKHAIL BAUTIN"
             }
         ]);
     });

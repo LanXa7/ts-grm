@@ -493,7 +493,7 @@ describe("PolymorphismTest", () => {
                             row.dto.area = areaValue;
                     }
                 }
-                static __AREA__TS_FORMULA_FN = $entity.findByTypeName('PaperBook').expandedPropMap.get("area").getTsFormulaFn(false);
+                static __AREA__TS_FORMULA_FN = $tsFormulaFunMap.get("area");
             }
         `);
     });

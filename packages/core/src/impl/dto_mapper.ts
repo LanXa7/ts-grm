@@ -725,6 +725,8 @@ function fieldHash(field: DtoMapperField): string {
         field.subMapper != null ? `(${field.subMapper.hash})` : ""
     }|${
         field.recursiveDepth ?? ""
+    }|${
+        field.mapperFn != null
     }`;
 }
 

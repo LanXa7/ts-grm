@@ -413,7 +413,7 @@ describe("ComputedTest", () => {
                     const bookNamesValue = ThisClass.__BOOK_NAMES__TS_FORMULA_FN(row.implicit.bookNames);
                     row.dto.bookNames = bookNamesValue;
                 }
-                static __BOOK_NAMES__TS_FORMULA_FN = $entity.expandedPropMap.get("bookNames").getTsFormulaFn(false);
+                static __BOOK_NAMES__TS_FORMULA_FN = $tsFormulaFunMap.get("bookNames");
             }
         `);
     });
@@ -681,7 +681,7 @@ describe("ComputedTest", () => {
                         parent.dto.storeBookNames = bookNamesValue;
                     }
                 }
-                static __BOOK_NAMES__TS_FORMULA_FN = $entity.expandedPropMap.get("bookNames").getTsFormulaFn(false);
+                static __BOOK_NAMES__TS_FORMULA_FN = $tsFormulaFunMap.get("bookNames");
             }
         `);
     });
