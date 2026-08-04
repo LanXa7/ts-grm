@@ -42,7 +42,7 @@ export interface __OutputScalarLikeMapping<
         alias: TAlias
     ): __OutputScalarLikeMapping<TModel, TDtoKind, TAlias, TValue, TNullity>;
 
-    output<TOutputSchema extends StandardSchemaV1>(
+    mapOutput<TOutputSchema extends StandardSchemaV1>(
         schema: __RequiredSchema<TOutputSchema>,
         mapper: (
             value: TValue
@@ -65,7 +65,7 @@ export interface __InputScalarLikeMapping<
         alias: TAlias
     ): __InputScalarLikeMapping<TModel, TDtoKind, TAlias, TValue, TNullity>;
 
-    input<TInputSchema extends StandardSchemaV1>(
+    mapInput<TInputSchema extends StandardSchemaV1>(
         schema: __RequiredSchema<TInputSchema>,
         mapper: (
             value: StandardSchemaV1.InferOutput<TInputSchema>

@@ -67,7 +67,7 @@ describe("EmbeddedTest", () => {
         });
 
         expectCode(view.mapper.dtoRowReader.constructor.toString(), `
-            class ThisClass extends $baseClass {
+            class extends $baseClass {
                 read(parents, reader) {
                     const dto = {
                         order: null
@@ -130,7 +130,7 @@ describe("EmbeddedTest", () => {
 
         const orderMapper = view.mapper.fields.find(f => f.prop.name === "order")!.subMapper!;
         expectCode(orderMapper.dtoRowReader.constructor.toString(), `
-            class ThisClass extends $baseClass {
+            class extends $baseClass {
                 read(parents, reader) {
                     const dto = {
                         name: reader.get(0)
@@ -218,7 +218,7 @@ describe("EmbeddedTest", () => {
         });
 
         expectCode(view.mapper.dtoRowReader.constructor.toString(), `
-            class ThisClass extends $baseClass {
+            class extends $baseClass {
                 read(parents, reader) {
                     const dto = {
                         orderId: null, 
@@ -305,7 +305,7 @@ describe("EmbeddedTest", () => {
 
         const orderMapper = view.mapper.fields.find(f => f.prop.name === "order")!.subMapper!;
         expectCode(orderMapper.dtoRowReader.constructor.toString(), `
-            class ThisClass extends $baseClass {
+            class extends $baseClass {
                 read(parents, reader) {
                     const dto = {
                         name: reader.get(0)
@@ -393,7 +393,7 @@ describe("EmbeddedTest", () => {
         });
 
         expectCode(view.mapper.dtoRowReader.constructor.toString(), `
-            class ThisClass extends $baseClass {
+            class extends $baseClass {
                 read(parents, reader) {
                     const dto = {
                         orderId: null, 
@@ -483,7 +483,7 @@ describe("EmbeddedTest", () => {
 
         const orderMapper = view.mapper.fields.find(f => f.prop.name === "order")!.subMapper!;
         expectCode(orderMapper.dtoRowReader.constructor.toString(), `
-            class ThisClass extends $baseClass {
+            class extends $baseClass {
                 read(parents, reader) {
                     const dto = {
                         name: reader.get(0)

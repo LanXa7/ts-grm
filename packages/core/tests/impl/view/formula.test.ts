@@ -56,7 +56,11 @@ describe("FormulaTest", () => {
             }
         });
         expectCode(view.mapper.dtoRowReader.constructor.toString(), `
-            class ThisClass extends $baseClass {
+            class extends $baseClass {
+                constructor(outputFunMap, tsFormulaFunMap) {
+                    super();
+                    this.__full_name__TsFormulaFn = tsFormulaFunMap.get("fullName");
+                }
                 read(parents, reader) {
                     const dto = {
                         id: reader.get(0), 
@@ -125,10 +129,9 @@ describe("FormulaTest", () => {
                     }
                 }
                 resolveTsFormulas(row) {
-                    const fullNameValue = ThisClass.__FULL_NAME__TS_FORMULA_FN(row.implicit.fullName);
+                    const fullNameValue = this.__full_name__TsFormulaFn(row.implicit.fullName);
                     row.dto.fullName = fullNameValue;
                 }
-                static __FULL_NAME__TS_FORMULA_FN = $tsFormulaFunMap.get("fullName");
             }
         `);
         const row = view.mapper.dtoRowReader.read(
@@ -207,7 +210,11 @@ describe("FormulaTest", () => {
             "fullName": "fullName"
         });
         expectCode(view.mapper.dtoRowReader.constructor.toString(), `
-            class ThisClass extends $baseClass {
+            class extends $baseClass {
+                constructor(outputFunMap, tsFormulaFunMap) {
+                    super();
+                    this.__full_name__TsFormulaFn = tsFormulaFunMap.get("fullName");
+                }
                 read(parents, reader) {
                     const dto = {
                         id: reader.get(0), 
@@ -289,10 +296,9 @@ describe("FormulaTest", () => {
                     }
                 }
                 resolveTsFormulas(row) {
-                    const fullNameValue = ThisClass.__FULL_NAME__TS_FORMULA_FN(row.implicit.fullName);
+                    const fullNameValue = this.__full_name__TsFormulaFn(row.implicit.fullName);
                     row.dto.fullName = fullNameValue;
                 }
-                static __FULL_NAME__TS_FORMULA_FN = $tsFormulaFunMap.get("fullName");
             }
         `);
         const row = view.mapper.dtoRowReader.read(
@@ -372,7 +378,11 @@ describe("FormulaTest", () => {
             }
         });
         expectCode(view.mapper.dtoRowReader.constructor.toString(), `
-            class ThisClass extends $baseClass {
+            class extends $baseClass {
+                constructor(outputFunMap, tsFormulaFunMap) {
+                    super();
+                    this.__full_name__TsFormulaFn = tsFormulaFunMap.get("fullName");
+                }
                 read(parents, reader) {
                     const dto = {
                         id: reader.get(0), 
@@ -450,10 +460,9 @@ describe("FormulaTest", () => {
                     }
                 }
                 resolveTsFormulas(row) {
-                    const fullNameValue = ThisClass.__FULL_NAME__TS_FORMULA_FN(row.implicit.fullName);
+                    const fullNameValue = this.__full_name__TsFormulaFn(row.implicit.fullName);
                     this._formula(row.dto).fn = fullNameValue;
                 }
-                static __FULL_NAME__TS_FORMULA_FN = $tsFormulaFunMap.get("fullName");
             }
         `);
         const row = view.mapper.dtoRowReader.read(
@@ -477,7 +486,7 @@ describe("FormulaTest", () => {
     it("tsFormulaWithMapper", () => {
         const view = dto.view(AUTHOR, c => [
             c.id,
-            c.fullName.output(z.string(), value => value.toUpperCase())
+            c.fullName.mapOutput(z.string(), value => value.toUpperCase())
         ]);
         expect(mapperJson(view.mapper)).toEqual({
             "entity": "Author",
@@ -511,7 +520,12 @@ describe("FormulaTest", () => {
             ]
         });
         expectCode(view.mapper.dtoRowReader.constructor.toString(), `
-            class ThisClass extends $baseClass {
+            class extends $baseClass {
+                constructor(outputFunMap, tsFormulaFunMap) {
+                    super();
+                    this.__full_name__OutputFn = outputFunMap.get("fullName");
+                    this.__full_name__TsFormulaFn = tsFormulaFunMap.get("fullName");
+                }
                 read(parents, reader) {
                     const dto = {
                         id: reader.get(0), 
@@ -543,7 +557,6 @@ describe("FormulaTest", () => {
                     }
                     return o;
                 }
-                static __FULL_NAME__OUTPUT_FN = $outputFunMap.get("fullName");
                 dependency(unresolvedFieldIndex, row) {
                     switch (unresolvedFieldIndex) {
                         case 3:
@@ -581,10 +594,9 @@ describe("FormulaTest", () => {
                     }
                 }
                 resolveTsFormulas(row) {
-                    const fullNameValue = ThisClass.__FULL_NAME__OUTPUT_FN(ThisClass.__FULL_NAME__TS_FORMULA_FN(row.implicit.fullName));
+                    const fullNameValue = this.__full_name__OutputFn(this.__full_name__TsFormulaFn(row.implicit.fullName));
                     row.dto.fullName = fullNameValue;
                 }
-                static __FULL_NAME__TS_FORMULA_FN = $tsFormulaFunMap.get("fullName");
             }
         `);
         const row = view.mapper.dtoRowReader.read(undefined, makeReader(1, "Jim", "Green"));
@@ -659,7 +671,11 @@ describe("FormulaTest", () => {
             ]
         });
         expectCode(view.mapper.dtoRowReader.constructor.toString(), `
-            class ThisClass extends $baseClass {
+            class extends $baseClass {
+                constructor(outputFunMap, tsFormulaFunMap) {
+                    super();
+                    this.__key__TsFormulaFn = tsFormulaFunMap.get("key");
+                }
                 read(parents, reader) {
                     const dto = {
                         key: null
@@ -718,10 +734,9 @@ describe("FormulaTest", () => {
                     }
                 }
                 resolveTsFormulas(row) {
-                    const keyValue = ThisClass.__KEY__TS_FORMULA_FN(row.implicit.key);
+                    const keyValue = this.__key__TsFormulaFn(row.implicit.key);
                     row.dto.key = keyValue;
                 }
-                static __KEY__TS_FORMULA_FN = $tsFormulaFunMap.get("key");
             }
         `);
         const row = view.mapper.dtoRowReader.read(undefined, makeReader("Yugabyute", 7));
@@ -759,7 +774,7 @@ describe("FormulaTest", () => {
             ]
         });
         expectCode(view.mapper.dtoRowReader.constructor.toString(), `
-            class ThisClass extends $baseClass {
+            class extends $baseClass {
                 read(parents, reader) {
                     const dto = {
                         name: reader.get(0), 
@@ -840,8 +855,12 @@ describe("FormulaTest", () => {
                 }
             ]
         });
-        expect(view.mapper.dtoRowReader.constructor.toString(), `
-            class ThisClass extends $baseClass {
+        expectCode(view.mapper.dtoRowReader.constructor.toString(), `
+            class extends $baseClass {
+                constructor(outputFunMap, tsFormulaFunMap) {
+                    super();
+                    this.__author_names__TsFormulaFn = tsFormulaFunMap.get("authorNames");
+                }
                 read(parents, reader) {
                     const dto = {
                         name: reader.get(0), 
@@ -906,10 +925,9 @@ describe("FormulaTest", () => {
                     }
                 }
                 resolveTsFormulas(row) {
-                    const authorNamesValue = ThisClass.__AUTHOR_NAMES__TS_FORMULA_FN(row.implicit.authorNames);
+                    const authorNamesValue = this.__author_names__TsFormulaFn(row.implicit.authorNames);
                     row.dto.authorNames = authorNamesValue;
                 }
-                static __AUTHOR_NAMES__TS_FORMULA_FN = $tsFormulaFunMap.get("authorNames");
             }
         `);
     });
@@ -988,7 +1006,11 @@ describe("FormulaTest", () => {
             ]
         });
         expectCode(view.mapper.dtoRowReader.constructor.toString(), `
-            class ThisClass extends $baseClass {
+            class extends $baseClass {
+                constructor(outputFunMap, tsFormulaFunMap) {
+                    super();
+                    this.__course_names__TsFormulaFn = tsFormulaFunMap.get("courseNames");
+                }
                 read(parents, reader) {
                     const dto = {
                         name: reader.get(0), 
@@ -1052,10 +1074,9 @@ describe("FormulaTest", () => {
                     }
                 }
                 resolveTsFormulas(row) {
-                    const courseNamesValue = ThisClass.__COURSE_NAMES__TS_FORMULA_FN(row.implicit.courseNames);
+                    const courseNamesValue = this.__course_names__TsFormulaFn(row.implicit.courseNames);
                     row.dto.courseNames = courseNamesValue;
                 }
-                static __COURSE_NAMES__TS_FORMULA_FN = $tsFormulaFunMap.get("courseNames");
             }
         `);
     });

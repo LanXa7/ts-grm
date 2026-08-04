@@ -46,10 +46,16 @@ export abstract class DtoRowReader {
 
 export function createDtoRowReader(mapper: DtoMapper): DtoRowReader {
     const creator = getDtoRowReaderCreator(mapper);
-    return new creator();
+    return new creator(
+        outputFunMap(mapper),
+        tsFormulaFunMap(mapper)
+    );
 }
 
-type DtoRowReaderCreator = new () => DtoRowReader;
+type DtoRowReaderCreator = new (
+    outputFunMap: ReadonlyMap<string, MapperFn>, 
+    tsFormulaFunMap: ReadonlyMap<string, MapperFn>
+) => DtoRowReader;
 
 const DTO_ROW_READER_CREATOR_MAP = new Map<string, DtoRowReaderCreator>();
 
@@ -69,17 +75,13 @@ function createDtoRowReaderCreator(mapper: DtoMapper): DtoRowReaderCreator {
 
     const writer = new CodeWriter();
     writer
-        .code("return class ThisClass extends $baseClass ")
+        .code("return class extends $baseClass ")
         .scope("CURLY_BRACKETS", () => {
+            writeConstructor(mapper, writer);
             writeRead(shape, mapper, writer);
             writeFold("", shape, mapper.nullAsUndefined, writer);
             if (shape.__implicit != null) {
                 writeFold("_implicit", shape.__implicit, mapper.nullAsUndefined, writer);
-            }
-            for (const field of mapper.fields) {
-                if (hasMapperFn(field.prop.asEntityProp?.outputFn, field.mapperFn)) {
-                    writeOutputFn(field, writer);
-                }
             }
             if (mapper.unresolvedFields.length !== 0) {
                 writeDependency(mapper, writer);
@@ -88,36 +90,45 @@ function createDtoRowReaderCreator(mapper: DtoMapper): DtoRowReaderCreator {
                 writeResolve(mapper, writer);
                 if (mapper.unresolvedFields.find(f => isTsFormula(f.prop)) != null) {
                     writeResolveTsFormulas(mapper, writer);
-                    writeTsFormulaFns(mapper, writer);
                 }
             }
         });
-    const outputFunMap = new Map<string, MapperFn>();
-    for (const field of mapper.fields) {
-        const fn = mergedMapperFn(mapper.nullAsUndefined, field.prop.asEntityProp?.outputFn, field.mapperFn);
-        if (fn != null) {
-            outputFunMap.set(field.prop.path, fn);
-        }
+    return new Function(
+        "$baseClass", "$entity", "$argumentError", writer.toString()
+    )(DtoRowReader, mapper.entity, ArgumentError);
+}
+
+function writeConstructor(
+    mapper: DtoMapper,
+    writer: CodeWriter
+) {
+    if (mapper.fields.find(field => hasMapperFn(field.prop.asEntityProp?.outputFn, field.mapperFn)
+        || isTsFormula(field.prop)
+    ) == null) {
+        return;
     }
-    const tsFormulaFunMap = new Map<string, MapperFn>();
-    for (const field of mapper.fields) {
-        const prop = field.prop;
-        if (prop instanceof TsFormulaProp) {
-            const fn = prop.getTsFormulaFn(mapper.nullAsUndefined);
-            tsFormulaFunMap.set(prop.path, fn);
-        } else if (prop instanceof AssociatedKeysFormulaProp) {
-            const fn = prop.getTsFormulaFn(mapper.nullAsUndefined);
-            tsFormulaFunMap.set(prop.path, fn);
-        } else if (prop instanceof EntityProp) {
-            const fn = prop.getTsFormulaFn(mapper.nullAsUndefined);
-            if (fn != null) {
-                tsFormulaFunMap.set(prop.path, fn);
+    writer.code("constructor(outputFunMap, tsFormulaFunMap) ");
+    writer.scope("CURLY_BRACKETS", () => {
+        writer.code("super()").newLine(";");
+        for (const field of mapper.fields) {
+            if (hasMapperFn(field.prop.asEntityProp?.outputFn, field.mapperFn)) {
+                const prop = field.prop as EntityProp | TsFormulaProp;
+                writer
+                    .code("this.")
+                    .code(outputFnName(prop))
+                    .code(` = outputFunMap.get("${prop.path}")`)
+                    .newLine(";");
+            }
+            if (isTsFormula(field.prop)) {
+                const prop = field.prop as EntityProp | TsFormulaProp | AssociatedKeysFormulaProp;
+                writer
+                    .code("this.")
+                    .code(tsFormulaFnName(prop))
+                    .code(` = tsFormulaFunMap.get("${prop.path}")`)
+                    .newLine(";");
             }
         }
-    }
-    return new Function(
-        "$baseClass", "$entity", "$outputFunMap", "$tsFormulaFunMap", "$argumentError", writer.toString()
-    )(DtoRowReader, mapper.entity, outputFunMap, tsFormulaFunMap, ArgumentError);
+    }).newLine();
 }
 
 function writeRead(
@@ -268,7 +279,7 @@ function writeRootMember(
     } else if (typeof member.columnIndex === "number") {
         writer.code(keyStr).code(": ");
         if (hasMapperFn(member.prop?.asEntityProp?.outputFn, member.mapperFn)) {
-            writer.code("ThisClass.").code(outputFnName(member.prop as EntityProp));
+            writer.code("this.").code(outputFnName(member.prop as EntityProp));
             writer.code("(reader.get(").code(`${member.columnIndex}`).code("))");
         } else {
             writer.code("reader.get(").code(`${member.columnIndex}`).code(")");
@@ -320,7 +331,7 @@ function writeDepthAssignment(
         if (parentDepth === 0) {
             writer.code(`const reader_${columnIndex} = `);
             if (hasMapperFn) {
-                writer.code("ThisClass.").code(outputFnName(prop));
+                writer.code("this.").code(outputFnName(prop));
                 writer.code("(reader.get(").code(`${columnIndex}`).code("))");
             } else {
                 writer.code("reader.get(").code(`${columnIndex}`).code(")");
@@ -339,7 +350,7 @@ function writeDepthAssignment(
             writeAssignmentTarget("", false, path, writer);
             writer.code(" = ");
             if (hasMapperFn) {
-                writer.code("ThisClass.").code(outputFnName(prop));
+                writer.code("this.").code(outputFnName(prop));
                 writer.code("(reader.get(").code(`${columnIndex}`).code("))");
             } else {
                 writer.code("reader.get(").code(`${columnIndex}`).code(")");
@@ -673,16 +684,16 @@ function writeResolveTsFormulaImpl(
         .code(" = ");
     if (field.mapperFn != null) {
         writer
-            .code("ThisClass.")
+            .code("this.")
             .code(outputFnName(prop))
-            .code("(ThisClass.")
+            .code("(this.")
             .code(tsFormulaFnName(prop))
             .code("(row.implicit.")
             .code(prop.name)
             .code("))");
     } else {
         writer
-            .code("ThisClass.")
+            .code("this.")
             .code(tsFormulaFnName(prop))
             .code("(row.implicit.")
             .code(prop.name)
@@ -721,54 +732,19 @@ function writeAssignments(
     writer.code(" = ").code(valueName).newLine(";");
 }
 
-function writeOutputFn(
-    field: DtoMapperField,
-    writer: CodeWriter
-) {
-    const prop = field.prop as EntityProp | TsFormulaProp;
-    writer
-        .code("static ")
-        .code(outputFnName(prop))
-        .code(` = $outputFunMap.get("${prop.path}")`)
-        .newLine(";");
-}
-
-function writeTsFormulaFns(
-    mapper: DtoMapper, 
-    writer: CodeWriter
-) {
-    for (const field of mapper.fields) {
-        if (isTsFormula(field.prop)) {
-            writeTsFormulaFn(field, writer);
-        }
-    }
-}
-
-function writeTsFormulaFn(
-    field: DtoMapperField, 
-    writer: CodeWriter
-) {
-    const prop = field.prop as EntityProp | TsFormulaProp | AssociatedKeysFormulaProp;
-    writer
-        .code("static ")
-        .code(tsFormulaFnName(prop))
-        .code(` = $tsFormulaFunMap.get("${prop.path}")`)
-        .newLine(";");
-}
-
 function outputFnName(prop: EntityProp | TsFormulaProp): string {
-    return `__${toScreamingSnakeCase(prop.path)}__OUTPUT_FN`;
+    return `__${toScreamingSnakeCase(prop.path)}__OutputFn`;
 }
 
 function tsFormulaFnName(prop: EntityProp | TsFormulaProp | AssociatedKeysFormulaProp): string {
-    return `__${toScreamingSnakeCase(prop.path)}__TS_FORMULA_FN`;
+    return `__${toScreamingSnakeCase(prop.path)}__TsFormulaFn`;
 }
 
 function toScreamingSnakeCase(text: string): string {
-    const replaced = text
+    return text
         .replace(/([a-z])([A-Z])/g, '$1_$2')
-        .replace(/([A-Z]+)([A-Z][a-z])/g, '$1_$2');
-    return replaced.toUpperCase();
+        .replace(/([A-Z]+)([A-Z][a-z])/g, '$1_$2')
+        .toLowerCase();
 }
 
 function hasMapperFn(
@@ -780,6 +756,41 @@ function hasMapperFn(
         }
     }
     return false;
+}
+
+function outputFunMap(
+    mapper: DtoMapper
+): ReadonlyMap<string, MapperFn> {
+    const outputFunMap = new Map<string, MapperFn>();
+    for (const field of mapper.fields) {
+        const fn = mergedMapperFn(mapper.nullAsUndefined, field.prop.asEntityProp?.outputFn, field.mapperFn);
+        if (fn != null) {
+            outputFunMap.set(field.prop.path, fn);
+        }
+    }
+    return outputFunMap;
+}
+
+function tsFormulaFunMap(
+    mapper: DtoMapper
+): ReadonlyMap<string, MapperFn> {
+    const tsFormulaFunMap = new Map<string, MapperFn>();
+    for (const field of mapper.fields) {
+        const prop = field.prop;
+        if (prop instanceof TsFormulaProp) {
+            const fn = prop.getTsFormulaFn(mapper.nullAsUndefined);
+            tsFormulaFunMap.set(prop.path, fn);
+        } else if (prop instanceof AssociatedKeysFormulaProp) {
+            const fn = prop.getTsFormulaFn(mapper.nullAsUndefined);
+            tsFormulaFunMap.set(prop.path, fn);
+        } else if (prop instanceof EntityProp) {
+            const fn = prop.getTsFormulaFn(mapper.nullAsUndefined);
+            if (fn != null) {
+                tsFormulaFunMap.set(prop.path, fn);
+            }
+        }
+    }
+    return tsFormulaFunMap;
 }
 
 function mergedMapperFn(

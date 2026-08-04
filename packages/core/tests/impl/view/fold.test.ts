@@ -46,7 +46,7 @@ describe("FoldTest", () => {
             }
         });
         expectCode(view.mapper.dtoRowReader.constructor.toString(), `
-            class ThisClass extends $baseClass {
+            class extends $baseClass {
                 read(parents, reader) {
                     const dto = {
                         id: reader.get(0), 
@@ -156,7 +156,7 @@ describe("FoldTest", () => {
         });
 
         expectCode(view.mapper.dtoRowReader.constructor.toString(), `
-            class ThisClass extends $baseClass {
+            class extends $baseClass {
                 read(parents, reader) {
                     const dto = {
                         id: reader.get(0), 
@@ -219,12 +219,16 @@ describe("FoldTest", () => {
 
         const authorMapper = view.mapper.fields.find(f => f.prop.name === "authors")!.subMapper!;
         expectCode(authorMapper.dtoRowReader.constructor.toString(), `
-            class ThisClass extends $baseClass {
+            class extends $baseClass {
+                constructor(outputFunMap, tsFormulaFunMap) {
+                    super();
+                    this.__gender__OutputFn = outputFunMap.get("gender");
+                }
                 read(parents, reader) {
                     const dto = {
                         id: reader.get(0), 
                         name: null, 
-                        gender: ThisClass.__GENDER__OUTPUT_FN(reader.get(3))
+                        gender: this.__gender__OutputFn(reader.get(3))
                     };
                     this._name(dto).firstName = reader.get(1);
                     this._name(dto).lastName = reader.get(2);
@@ -240,7 +244,6 @@ describe("FoldTest", () => {
                     }
                     return o;
                 }
-                static __GENDER__OUTPUT_FN = $outputFunMap.get("gender");
             }
         `);
         const authorRow = authorMapper.dtoRowReader.read(
@@ -385,7 +388,7 @@ describe("FoldTest", () => {
             }
         });
         expectCode(view.mapper.dtoRowReader.constructor.toString(), `
-            class ThisClass extends $baseClass {
+            class extends $baseClass {
                 read(parents, reader) {
                     const dto = {
                         key: null, 
@@ -492,7 +495,7 @@ describe("FoldTest", () => {
 
         const storeMapper = view.mapper.fields.find(f => f.prop.name === "store")!.subMapper!;
         expectCode(storeMapper.dtoRowReader.constructor.toString(), `
-            class ThisClass extends $baseClass {
+            class extends $baseClass {
                 read(parents, reader) {
                     const dto = {
                     };

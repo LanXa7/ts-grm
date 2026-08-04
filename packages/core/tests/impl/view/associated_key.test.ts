@@ -33,7 +33,7 @@ describe("AssociatedKeyTest", () => {
             ]
         });
         expectCode(view.mapper.dtoRowReader.constructor.toString(), `
-            class ThisClass extends $baseClass {
+            class extends $baseClass {
                 read(parents, reader) {
                     const dto = {
                         id: reader.get(0), 
@@ -89,7 +89,7 @@ describe("AssociatedKeyTest", () => {
             ]
         });
         expectCode(view.mapper.dtoRowReader.constructor.toString(), `
-            class ThisClass extends $baseClass {
+            class extends $baseClass {
                 read(parents, reader) {
                     const dto = {
                         id: reader.get(0), 
@@ -218,7 +218,11 @@ describe("AssociatedKeyTest", () => {
             ]
         });
         expectCode(view.mapper.dtoRowReader.constructor.toString(), `
-            class ThisClass extends $baseClass {
+            class extends $baseClass {
+                constructor(outputFunMap, tsFormulaFunMap) {
+                    super();
+                    this.__author_ids__TsFormulaFn = tsFormulaFunMap.get("authorIds");
+                }
                 read(parents, reader) {
                     const dto = {
                         id: reader.get(0), 
@@ -281,10 +285,9 @@ describe("AssociatedKeyTest", () => {
                     }
                 }
                 resolveTsFormulas(row) {
-                    const authorIdsValue = ThisClass.__AUTHOR_IDS__TS_FORMULA_FN(row.implicit.authorIds);
+                    const authorIdsValue = this.__author_ids__TsFormulaFn(row.implicit.authorIds);
                     row.dto.authorIds = authorIdsValue;
                 }
-                static __AUTHOR_IDS__TS_FORMULA_FN = $tsFormulaFunMap.get("authorIds");
             }
         `);
     });
@@ -356,7 +359,11 @@ describe("AssociatedKeyTest", () => {
             ]
         });
         expectCode(view.mapper.dtoRowReader.constructor.toString(), `
-            class ThisClass extends $baseClass {
+            class extends $baseClass {
+                constructor(outputFunMap, tsFormulaFunMap) {
+                    super();
+                    this.__cource_ids__TsFormulaFn = tsFormulaFunMap.get("courceIds");
+                }
                 read(parents, reader) {
                     const dto = {
                         name: reader.get(0), 
@@ -420,10 +427,9 @@ describe("AssociatedKeyTest", () => {
                     }
                 }
                 resolveTsFormulas(row) {
-                    const courceIdsValue = ThisClass.__COURCE_IDS__TS_FORMULA_FN(row.implicit.courceIds);
+                    const courceIdsValue = this.__cource_ids__TsFormulaFn(row.implicit.courceIds);
                     row.dto.courceIds = courceIdsValue;
                 }
-                static __COURCE_IDS__TS_FORMULA_FN = $tsFormulaFunMap.get("courceIds");
             }
         `);
     });

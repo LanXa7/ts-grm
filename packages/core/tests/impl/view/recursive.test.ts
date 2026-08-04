@@ -72,7 +72,7 @@ describe("RecursiveTest", () => {
             }
         });
         expectCode(view.mapper.dtoRowReader.constructor.toString(), `
-            class ThisClass extends $baseClass {
+            class extends $baseClass {
                 read(parents, reader) {
                     const dto = {
                         name: reader.get(0), 
@@ -133,7 +133,7 @@ describe("RecursiveTest", () => {
 
         const parentMapper = view.mapper.fields.find(f => f.prop.name === "parentNode")!.subMapper!;
         expectCode(parentMapper.dtoRowReader.constructor.toString(), `
-            class ThisClass extends $baseClass {
+            class extends $baseClass {
                 read(parents, reader) {
                     const dto = {
                         name: reader.get(0), 
@@ -305,7 +305,7 @@ describe("RecursiveTest", () => {
         });
 
         expectCode(view.mapper.dtoRowReader.constructor.toString(), `
-            class ThisClass extends $baseClass {
+            class extends $baseClass {
                 read(parents, reader) {
                     const dto = {
                         name: reader.get(0), 
@@ -378,7 +378,7 @@ describe("RecursiveTest", () => {
 
         const parentMapper = view.mapper.fields.find(f => f.prop.name === "parentNode")!.subMapper!;
         expectCode(parentMapper.dtoRowReader.constructor.toString(), `
-            class ThisClass extends $baseClass {
+            class extends $baseClass {
                 read(parents, reader) {
                     const dto = {
                         name: reader.get(0), 
@@ -438,7 +438,7 @@ describe("RecursiveTest", () => {
 
         const childMapper = view.mapper.fields.find(f => f.prop.name === "childNodes")!.subMapper!;
         expectCode(childMapper.dtoRowReader.constructor.toString(), `
-            class ThisClass extends $baseClass {
+            class extends $baseClass {
                 read(parents, reader) {
                     const dto = {
                         name: reader.get(0), 
@@ -601,7 +601,7 @@ describe("RecursiveTest", () => {
         });
 
         expectCode(view.mapper.dtoRowReader.constructor.toString(), `
-            class ThisClass extends $baseClass {
+            class extends $baseClass {
                 read(parents, reader) {
                     const dto = {
                         name: reader.get(0), 
@@ -661,7 +661,7 @@ describe("RecursiveTest", () => {
 
         const dependencyMapper = view.mapper.fields.find(f => f.prop.name === "dependencies")!.subMapper!;
         expectCode(dependencyMapper.dtoRowReader.constructor.toString(), `
-            class ThisClass extends $baseClass {
+            class extends $baseClass {
                 read(parents, reader) {
                     const dto = {
                         name: reader.get(0), 
@@ -740,7 +740,7 @@ describe("RecursiveTest", () => {
             ]
         });
         expectCode(dependentMapper.dtoRowReader.constructor.toString(), `
-            class ThisClass extends $baseClass {
+            class extends $baseClass {
                 read(parents, reader) {
                     const dto = {
                         name: reader.get(0), 

@@ -85,7 +85,7 @@ describe("JoinEntityTest", () => {
         });
 
         expectCode(view.mapper.dtoRowReader.constructor.toString(), `
-            class ThisClass extends $baseClass {
+            class extends $baseClass {
                 read(parents, reader) {
                     const dto = {
                         id: reader.get(0), 
@@ -142,7 +142,7 @@ describe("JoinEntityTest", () => {
 
         const linkMapper = view.mapper.fields.find(f => f.prop.name === "learningLinks")!.subMapper!;
         expectCode(linkMapper.dtoRowReader.constructor.toString(), `
-            class ThisClass extends $baseClass {
+            class extends $baseClass {
                 read(parents, reader) {
                     const dto = {
                         id: null, 
@@ -199,7 +199,7 @@ describe("JoinEntityTest", () => {
 
         const courseMapper = linkMapper.fields.find(f => f.prop.name === "course")!.subMapper!;
         expectCode(courseMapper.dtoRowReader.constructor.toString(), `
-            class ThisClass extends $baseClass {
+            class extends $baseClass {
                 read(parents, reader) {
                     const dto = {
                     };
@@ -304,7 +304,7 @@ describe("JoinEntityTest", () => {
         });
 
         expectCode(view.mapper.dtoRowReader.constructor.toString(), `
-            class ThisClass extends $baseClass {
+            class extends $baseClass {
                 read(parents, reader) {
                     const dto = {
                         id: reader.get(0), 
@@ -361,7 +361,7 @@ describe("JoinEntityTest", () => {
 
         const linkMapper = view.mapper.fields.find(f => f.prop.name === "←LearningLink.course")!.subMapper!;
         expectCode(linkMapper.dtoRowReader.constructor.toString(), `
-            class ThisClass extends $baseClass {
+            class extends $baseClass {
                 read(parents, reader) {
                     const dto = {
                         id: null, 
@@ -418,7 +418,7 @@ describe("JoinEntityTest", () => {
 
         const studentMapper = linkMapper.fields.find(f => f.prop.name === "student")!.subMapper!;
         expectCode(studentMapper.dtoRowReader.constructor.toString(), `
-            class ThisClass extends $baseClass {
+            class extends $baseClass {
                 read(parents, reader) {
                     const dto = {
                     };

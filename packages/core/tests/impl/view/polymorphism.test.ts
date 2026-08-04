@@ -51,7 +51,7 @@ describe("PolymorphismTest", () => {
             ]
         });
         expectCode(view.mapper.dtoRowReader.constructor.toString(), `
-            class ThisClass extends $baseClass {
+            class extends $baseClass {
                 read(parents, reader) {
                     const typeName = $entity.findByDiscriminatorValue(reader.get(1)).name;
                     let dto;
@@ -186,7 +186,7 @@ describe("PolymorphismTest", () => {
         });
         const bookMapper = view.mapper.fields.find(f => f.prop.name === "books")!.subMapper!;
         expectCode(bookMapper.dtoRowReader.constructor.toString(), `
-            class ThisClass extends $baseClass {
+            class extends $baseClass {
                 read(parents, reader) {
                     const typeName = $entity.findByDiscriminatorValue(reader.get(1)).name;
                     let dto;
@@ -363,7 +363,11 @@ describe("PolymorphismTest", () => {
 
         const bookMapper = view.mapper.fields.find(f => f.prop.name === "books")!.subMapper!;
         expectCode(bookMapper.dtoRowReader.constructor.toString(), `
-            class ThisClass extends $baseClass {
+            class extends $baseClass {
+                constructor(outputFunMap, tsFormulaFunMap) {
+                    super();
+                    this.__area__TsFormulaFn = tsFormulaFunMap.get("area");
+                }
                 read(parents, reader) {
                     const typeName = $entity.findByDiscriminatorValue(reader.get(1)).name;
                     let dto;
@@ -489,11 +493,10 @@ describe("PolymorphismTest", () => {
                 resolveTsFormulas(row) {
                     switch (row.typeName){
                         case 'PaperBook':
-                            const areaValue = ThisClass.__AREA__TS_FORMULA_FN(row.implicit.area);
+                            const areaValue = this.__area__TsFormulaFn(row.implicit.area);
                             row.dto.area = areaValue;
                     }
                 }
-                static __AREA__TS_FORMULA_FN = $tsFormulaFunMap.get("area");
             }
         `);
     });

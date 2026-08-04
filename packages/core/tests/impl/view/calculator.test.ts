@@ -57,7 +57,7 @@ describe("ComputedTest", () => {
             }
         });
         expectCode(view.mapper.dtoRowReader.constructor.toString(), `
-            class ThisClass extends $baseClass {
+            class extends $baseClass {
                 read(parents, reader) {
                     const dto = {
                         newestBooks: null
@@ -198,7 +198,7 @@ describe("ComputedTest", () => {
             }
         });
         expectCode(view.mapper.dtoRowReader.constructor.toString(), `
-            class ThisClass extends $baseClass {
+            class extends $baseClass {
                 read(parents, reader) {
                     const dto = {
                         id: reader.get(0), 
@@ -257,7 +257,7 @@ describe("ComputedTest", () => {
             .find(f => f.prop.name === "specifiedBooks" && f.parameter.maxPrice != null)!
             .subMapper!;
         expectCode(cheapBooksMapper.dtoRowReader.constructor.toString(), `
-            class ThisClass extends $baseClass {
+            class extends $baseClass {
                 read(parents, reader) {
                     const dto = {
                         id: reader.get(0), 
@@ -275,7 +275,7 @@ describe("ComputedTest", () => {
             .find(f => f.prop.name === "specifiedBooks" && f.parameter.minPrice != null)!
             .subMapper!;
         expectCode(expensiveBooksMapper.dtoRowReader.constructor.toString(), `
-            class ThisClass extends $baseClass {
+            class extends $baseClass {
                 read(parents, reader) {
                     const dto = {
                         id: reader.get(0), 
@@ -347,7 +347,11 @@ describe("ComputedTest", () => {
             "bookNames": "bookNames"
         });
         expectCode(view.mapper.dtoRowReader.constructor.toString(), `
-            class ThisClass extends $baseClass {
+            class extends $baseClass {
+                constructor(outputFunMap, tsFormulaFunMap) {
+                    super();
+                    this.__book_names__TsFormulaFn = tsFormulaFunMap.get("bookNames");
+                }
                 read(parents, reader) {
                     const dto = {
                         id: reader.get(0), 
@@ -410,10 +414,9 @@ describe("ComputedTest", () => {
                     }
                 }
                 resolveTsFormulas(row) {
-                    const bookNamesValue = ThisClass.__BOOK_NAMES__TS_FORMULA_FN(row.implicit.bookNames);
+                    const bookNamesValue = this.__book_names__TsFormulaFn(row.implicit.bookNames);
                     row.dto.bookNames = bookNamesValue;
                 }
-                static __BOOK_NAMES__TS_FORMULA_FN = $tsFormulaFunMap.get("bookNames");
             }
         `);
     });
@@ -520,7 +523,7 @@ describe("ComputedTest", () => {
             ['name', 'edition', '__implicit', 'store', 'storeBookNames']
         );
         expectCode(view.mapper.dtoRowReader.constructor.toString(), `
-            class ThisClass extends $baseClass {
+            class extends $baseClass {
                 read(parents, reader) {
                     const dto = {
                         name: reader.get(0), 
@@ -612,7 +615,11 @@ describe("ComputedTest", () => {
             ]
         });
         expectCode(storeMapper.dtoRowReader.constructor.toString(), `
-            class ThisClass extends $baseClass {
+            class extends $baseClass {
+                constructor(outputFunMap, tsFormulaFunMap) {
+                    super();
+                    this.__book_names__TsFormulaFn = tsFormulaFunMap.get("bookNames");
+                }
                 read(parents, reader) {
                     const dto = {
                     };
@@ -676,12 +683,11 @@ describe("ComputedTest", () => {
                     }
                 }
                 resolveTsFormulas(row) {
-                    const bookNamesValue = ThisClass.__BOOK_NAMES__TS_FORMULA_FN(row.implicit.bookNames);
+                    const bookNamesValue = this.__book_names__TsFormulaFn(row.implicit.bookNames);
                     for (const parent of row.parents) {
                         parent.dto.storeBookNames = bookNamesValue;
                     }
                 }
-                static __BOOK_NAMES__TS_FORMULA_FN = $tsFormulaFunMap.get("bookNames");
             }
         `);
     });

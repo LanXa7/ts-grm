@@ -424,7 +424,7 @@ export class ScalarLikeMapping implements AbstractDtoMapping {
         );
     }
 
-    output(
+    mapOutput(
         schema: StandardSchemaV1, 
         fn: (value: any) => any
     ): ScalarLikeMapping {
@@ -437,7 +437,7 @@ export class ScalarLikeMapping implements AbstractDtoMapping {
         );
     }
 
-    input(
+    mapInput(
         schema: StandardSchemaV1, 
         fn: (value: any) => any
     ): ScalarLikeMapping {

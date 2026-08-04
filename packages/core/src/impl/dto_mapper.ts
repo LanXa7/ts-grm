@@ -1,5 +1,5 @@
 import { ArgumentError, StateError } from "@/error/common";
-import { AssociatedKeysFormulaProp, Dto, DtoField, FetchProp, TsFormulaProp, TypeNameProp } from "./dto";
+import { AssociatedKeysFormulaProp, Dto, DtoField, FetchProp, SqlFormulaProp, TsFormulaProp, TypeNameProp } from "./dto";
 import { Entity } from "./entity";
 import { EntityProp} from "./entity_prop";
 import { createDtoRowReader, DtoRowReader } from "./row_reader";
@@ -727,6 +727,12 @@ function fieldHash(field: DtoMapperField): string {
         field.recursiveDepth ?? ""
     }|${
         field.mapperFn != null
+    }|${
+        field.prop instanceof TsFormulaProp 
+            ? "1" 
+        : field.prop instanceof SqlFormulaProp
+            ? "2"
+        : ""
     }`;
 }
 

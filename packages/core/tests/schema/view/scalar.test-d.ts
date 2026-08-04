@@ -57,7 +57,7 @@ describe("ScalarTest", () => {
     it("output", () => {
         const view = dto.view(AUTHOR, c => [
             c.id,
-            c.gender.output(z.enum(["BOY", "GIRL"]), value => {
+            c.gender.mapOutput(z.enum(["BOY", "GIRL"]), value => {
                 return value === "MALE" ? "BOY" : "GIRL"
             })
         ]);
