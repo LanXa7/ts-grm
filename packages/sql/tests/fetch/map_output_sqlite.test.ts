@@ -5,7 +5,7 @@ import { dsl, dto } from "@ts-grm/core";
 import { AUTHOR, BOOK, BOOK_STORE } from "../model/model";
 import z from "zod";
 
-describe("MapOutputSqliteTest", () => {
+describe.sequential("MapOutputSqliteTest", () => {
 
     const sqlRecord = newSqlRecord();
 

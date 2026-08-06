@@ -9,14 +9,14 @@ import { SqlFormula, TsFormula } from "@/schema/computed";
 import { StateError } from "@/error/common";
 import { DtoBody, MapperFn } from "./dto_mapping";
 
-export type Dto = {
+export interface Dto {
 
     readonly entity: Entity | undefined;
     
     readonly fields: ReadonlyArray<DtoField>;
 };
 
-export type DtoField = {
+export interface DtoField {
 
     readonly path: string | ReadonlyArray<string> | undefined;
 
@@ -175,7 +175,6 @@ export class AbstractFormulaProp {
         readonly declaringEntity: Entity,
         readonly name: string
     ) {
-
     }
 
     get path(): string {

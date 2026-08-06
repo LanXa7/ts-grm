@@ -10,6 +10,7 @@ import { AbstractDtoContext, createDto, newDtoContext } from "./dto_context";
 import { dto, ReferenceFetchType, View } from "@/schema/dto/api";
 import { AbstractEntityTable } from "./entity_table";
 import { DtoBody, MapperFn } from "./dto_mapping";
+import { belongTo, fromDtoFields, Metadata, MetadataField } from "./metadata";
 
 export function dtoMapper(dto: Dto, nullAsUndefined: boolean): DtoMapper {
     const mapper = new Mapper(
@@ -179,15 +180,15 @@ export type DtoMapperField = {
 
 export type Path = string | ReadonlyArray<string>;
 
-class Mapper {
+class Mapper implements Metadata {
 
-    private fieldMap = new Map<string, MapperField>();
+    private readonly _fieldMap = new Map<string, MapperField | Array<MapperField>>();
 
-    private dependencyWriter: DepenencyWriter | undefined = undefined;
+    private _dependencyWriter: DepenencyWriter | undefined = undefined;
 
-    private dependencyReader: DependencyReader | undefined = undefined;
+    private _dependencyReader: DependencyReader | undefined = undefined;
 
-    private columnIndex = 0;
+    private _columnIndex = 0;
 
     constructor(
         readonly entity: Entity,
@@ -208,21 +209,21 @@ class Mapper {
 
         let dependencies: ReadonlyArray<number> | undefined = undefined;
 
-        this.dependencyWriter = { indices: [], parent: this.dependencyWriter };
+        this._dependencyWriter = { indices: [], parent: this._dependencyWriter };
         try {
             this._addImplicitFields(dtoField);
         } finally {
-            if (this.dependencyWriter.indices!.length !== 0) {
-                dependencies = this.dependencyWriter.indices;
+            if (this._dependencyWriter.indices!.length !== 0) {
+                dependencies = this._dependencyWriter.indices;
             }
-            this.dependencyWriter = this.dependencyWriter.parent;
+            this._dependencyWriter = this._dependencyWriter.parent;
         }
 
-        this.dependencyReader = { indices: dependencies, parent: this.dependencyReader };
+        this._dependencyReader = { indices: dependencies, parent: this._dependencyReader };
         try {
             this._addImpl(dtoField, mapPath);
         } finally {
-            this.dependencyReader = this.dependencyReader?.parent;
+            this._dependencyReader = this._dependencyReader?.parent;
         }
     }
 
@@ -285,15 +286,15 @@ class Mapper {
             if (mapPath) {
                 field.path(dtoField.path);
             }
-            if (this.dependencyWriter != null) {
-                this.dependencyWriter.indices.push(field.index);
+            if (this._dependencyWriter != null) {
+                this._dependencyWriter.indices.push(field.index);
                 field.setDependent();
             }
         }
         if (dtoField.dto != null) {
             if (field != null) { // Association
                 for (const subDtoField of dtoField.dto.fields) {
-                    field.subMapper!._add(subDtoField, mapPath);
+                    field.subMetadata!._add(subDtoField, mapPath);
                 }
             } else { // Embedded
                 for (const subDtoField of dtoField.dto.fields) {
@@ -307,9 +308,17 @@ class Mapper {
     }
 
     private _addTypeNameField() {
-        for (const field of this.fieldMap.values()) {
-            if (field.prop instanceof TypeNameProp) {
-                return;
+        for (const cachedValue of this._fieldMap.values()) {
+            if (Array.isArray(cachedValue)) {
+                for (const field of cachedValue) {
+                    if (field.prop instanceof TypeNameProp) {
+                        return;
+                    }
+                }
+            } else {
+                if (cachedValue.prop instanceof TypeNameProp) {
+                    return;
+                }
             }
         }
         const field: DtoField = {
@@ -334,27 +343,34 @@ class Mapper {
         this._add(field, true);
     }
 
-    private _field(dtoField: DtoField) {
+    private _field(dtoField: DtoField): MapperField {
         const key = dtoFieldKey(dtoField);
-        let field = this.fieldMap.get(key);
-        if (field != null) {
-            if (field.prop === dtoField.prop
-            && field.bridgeProp != dtoField.bridgeProp) {
-                throw new StateError(
-                    `The property "${
-                        (field.bridgeProp ?? field.prop).toString()
-                    }" and "${
-                        (dtoField.bridgeProp ?? field.prop).toString()
-                    }" cannot be fetched together`
-                );
+        let cachedValue = this._fieldMap.get(key);
+        if (cachedValue != null) {
+            const arr = Array.isArray(cachedValue)
+                ? cachedValue
+                : [cachedValue];
+            for (const field of arr) {
+                if (field.prop === dtoField.prop
+                    && field.bridgeProp != dtoField.bridgeProp) {
+                    throw new StateError(
+                        `The property "${
+                            (field.bridgeProp ?? field.prop).toString()
+                        }" and "${
+                            (dtoField.bridgeProp ?? field.prop).toString()
+                        }" cannot be fetched together`
+                    );
+                }
+                if (isMergeableField(field, dtoField)) {
+                    return field;
+                }
             }
-            return field;
         }
-        field = new MapperField(
+        const field = new MapperField(
             this.nullAsUndefined,
             dtoField.downcastTo,
-            this.fieldMap.size, 
-            () => this.columnIndex++,
+            this._fieldMap.size, 
+            () => this._columnIndex++,
             dtoField.prop, 
             dtoField.fetchType,
             dtoField.predicateFn,
@@ -365,14 +381,30 @@ class Mapper {
             dtoField.nullable,
             dtoField.bridgeProp,
             dtoField.recursiveDepth,
-            this.dependencyReader?.indices
+            this._dependencyReader?.indices
         );
-        this.fieldMap.set(key, field);
+        this._fieldMap.set(
+            key, 
+            cachedValue == null 
+                ? field
+                : Array.isArray(cachedValue)
+                    ? [...cachedValue, field]
+                    : [cachedValue, field]
+        );
         return field;
     }
 
     toDtoMapper(): DtoMapper {
-        const fields = Array.from(this.fieldMap.values()).map(f => f.toDtoMapperField());
+        const fields: Array<DtoMapperField> = [];
+        for (const cachedValue of this._fieldMap.values()) {
+            if (Array.isArray(cachedValue)) {
+                for (const mf of cachedValue) {
+                    fields.push(mf.toDtoMapperField());
+                }
+            } else {
+                fields.push(cachedValue.toDtoMapperField());
+            }
+        }
         this._handleRecursiveFields(fields);
         return new DtoMapper(
             this.entity,
@@ -466,35 +498,43 @@ class Mapper {
     }
 
     lessThan(props: ReadonlyArray<EntityProp>): boolean {
-        for (const field of this.fieldMap.values()) {
-            if (!field.prop.isEntityProp) {
-                return false;
-            }
-            const fieldPropPath = (field.prop as EntityProp).path;
-            let matched = false;
-            for (const prop of props) {
-                const scalarProps = prop.scalarProps;
-                if (scalarProps == null) {
-                    throw new ArgumentError(`The argument contains "${prop.toString()}" which is not scalar props`);
+        for (const cachedValue of this._fieldMap.values()) {
+            if (Array.isArray(cachedValue)) {
+                for (const field of cachedValue) {
+                    if (!shapeLessThan(props, field)) {
+                        return false;
+                    }
                 }
-                if (scalarProps.findIndex(p => p.path === fieldPropPath) !== -1) {
-                    matched = true;
-                    break;
-                }
-            }
-            if (!matched) {
+            } else if (!shapeLessThan(props, cachedValue)) {
                 return false;
             }
         }
         return true;
     }
+
+    get fields(): Iterable<MetadataField> {
+        const fieldMap = this._fieldMap;
+        return new class implements Iterable<MetadataField> {
+            *[Symbol.iterator](): Iterator<MetadataField> {
+                for (const cachedValue of fieldMap.values()) {
+                    if (Array.isArray(cachedValue)) {
+                        yield *cachedValue;
+                    } else {
+                        yield cachedValue;
+                    }
+                }
+            }
+        };
+    }
 };
 
-class MapperField {
+class MapperField implements MetadataField {
 
-    readonly subMapper : Mapper | undefined;
+    readonly subMetadata : Mapper | undefined;
 
-    private paths = new Set<string>();
+    private _paths: Array<Path> = [];
+
+    private _fullPaths = new Set<string>();
 
     private isDependent = false;
 
@@ -516,9 +556,9 @@ class MapperField {
         readonly dependencies: ReadonlyArray<number> | undefined
     ) {
         if (prop.targetEntity == null || recursiveDepth != null) {
-            this.subMapper = undefined;
+            this.subMetadata = undefined;
         } else {
-            this.subMapper = new Mapper(prop.targetEntity, nullAsUndefined, prop, bridgeProp);
+            this.subMetadata = new Mapper(prop.targetEntity, nullAsUndefined, prop, bridgeProp);
         }
     }
 
@@ -527,7 +567,10 @@ class MapperField {
             const str = typeof path === "string"
                 ? path
                 : path.join("/");
-            this.paths.add(str);
+            if (!this._fullPaths.has(str)) {
+                this._fullPaths.add(str);
+                this._paths.push(path);
+            }
         }
     }
 
@@ -536,13 +579,8 @@ class MapperField {
     }
 
     toDtoMapperField(): DtoMapperField {
-        const paths = Array.from(this.paths).map(path => {
-            const parts = path.split('/');
-            return parts.length === 1
-                ? parts[0]!
-                : parts;
-        });
-        const subMapper = this.subMapper?.toDtoMapper();
+        const paths = this._paths;
+        const subMapper = this.subMetadata?.toDtoMapper();
         if (subMapper != null) {
             this._validateFetchType(subMapper);
         }
@@ -571,7 +609,7 @@ class MapperField {
     }
 
     private isOptimizable(): boolean {
-        if (this.subMapper == null) {
+        if (this.subMetadata == null) {
             return false;
         }
         if (this.predicateFn != null) {
@@ -582,7 +620,7 @@ class MapperField {
         }
         if (this.bridgeProp != null) {
             const targetKeyProp = this.bridgeProp.targetKeyProp ?? this.bridgeProp.targetEntity!.idProp;
-            return this.subMapper.lessThan(targetKeyProp.scalarProps!);
+            return this.subMetadata.lessThan(targetKeyProp.scalarProps!);
         }
         if (!this.prop.isEntityProp) {
             return false;
@@ -595,7 +633,7 @@ class MapperField {
             return false;
         }
         const targetKeyProp = entityProp.targetKeyProp ?? entityProp.targetEntity!.idProp;
-        return this.subMapper.lessThan(targetKeyProp.scalarProps!);
+        return this.subMetadata.lessThan(targetKeyProp.scalarProps!);
     }
 
     private _hasColumn(): boolean {
@@ -637,15 +675,28 @@ class MapperField {
             }" so that at least one non-null and non-derived property is required in associated DTO`
         );
     }
+
+    get fullPaths(): ReadonlySet<string> {
+        return this._fullPaths;
+    }
 }
 
 function dtoFieldKey(field: DtoField): string {
     let key = field.prop.toString();
+    if (field.predicateFn != null) {
+        key += `\x1Ff:${field.predicateFn.toString()}`;
+    }
     if (field.orders != null && field.orders.length !== 0) {
         key += `\x1Fo:${JSON.stringify(field.orders)}`;
     }
+    if (field.limit != null) {
+        key += `\x1Fl:${field.limit}`
+    }
     if (field.parameter != null) {
         key += `\x1Fp:${JSON.stringify(field.parameter)}`;
+    }
+    if (field.mapperFn != null) {
+        key += `\x1Fm:${field.mapperFn.toString()}`;
     }
     return key;
 }
@@ -781,4 +832,94 @@ function withBody(mapping: any, body: DtoBody | undefined) {
         return mapping;
     }
     return mapping.with(body);
+}
+
+function shapeLessThan(
+    props: ReadonlyArray<EntityProp>, 
+    field: MapperField
+): boolean {
+    if (!field.prop.isEntityProp) {
+        return false;
+    }
+    const fieldPropPath = (field.prop as EntityProp).path;
+    let matched = false;
+    for (const prop of props) {
+        const scalarProps = prop.scalarProps;
+        if (scalarProps == null) {
+            throw new ArgumentError(`The argument contains "${prop.toString()}" which is not scalar props`);
+        }
+        if (scalarProps.findIndex(p => p.path === fieldPropPath) !== -1) {
+            matched = true;
+            break;
+        }
+    }
+    if (!matched) {
+        return false;
+    }
+    return true;
+}
+
+function isMergeableField(
+    oldField: MapperField,
+    newField: DtoField
+): boolean {
+    if (oldField.subMetadata == null) {
+        return true;
+    }
+    const oldLevel = pathLevelOf(oldField);
+    const newLevel = pathLevelOf(newField);
+    if (oldLevel === PathLevel.None || newLevel === PathLevel.None) {
+        return true;
+    }
+    if (oldLevel === PathLevel.Normal && newLevel === PathLevel.Normal) {
+        const newFields = fromDtoFields(newField.dto!.fields);
+        return belongTo(oldField.subMetadata.fields, newFields) 
+            && belongTo(newFields, oldField.subMetadata.fields);
+    }
+    if (oldLevel === PathLevel.Implicit) {
+        return belongTo(oldField.subMetadata.fields, fromDtoFields(newField.dto!.fields));
+    }
+    if (newLevel === PathLevel.Implicit) {
+        return belongTo(fromDtoFields(newField.dto!.fields), oldField.subMetadata.fields);
+    }
+    return false;
+}
+
+const enum PathLevel {
+    None = 0,
+    Implicit = 1,
+    Normal = 2
+};
+
+function pathLevelOf(
+    field: MapperField | DtoField
+): PathLevel {
+    if (field instanceof MapperField) {
+        let level = PathLevel.None;
+        for (const path of field.fullPaths) {
+            if (path.startsWith("<implicit:")) {
+                level = level > PathLevel.Implicit ? level : PathLevel.Implicit;
+            } else {
+                level = level > PathLevel.Normal ? level : PathLevel.Normal;
+            }
+        }
+        return level;
+    }
+    let level = PathLevel.None;
+    if (typeof field.path === "string") {
+        if (field.path.startsWith("<implicit:")) {
+            level = level > PathLevel.Implicit ? level : PathLevel.Implicit;
+        } else {
+            level = level > PathLevel.Normal ? level : PathLevel.Normal;
+        }
+    } else if (field.path != null) {
+        for (const path of field.path) {
+            if (path.startsWith("<implicit:")) {
+                level = level > PathLevel.Implicit ? level : PathLevel.Implicit;
+            } else {
+                level = level > PathLevel.Normal ? level : PathLevel.Normal;
+            }
+        }
+    }
+    return level;
 }

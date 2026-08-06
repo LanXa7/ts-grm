@@ -300,6 +300,7 @@ function writeDepthAssignments(
         if (field.columnIndex == null) {
             continue;
         }
+        let variableDeclared = false;
         for (const path of field.paths) {
             if (typeof path === "string") {
                 continue;
@@ -313,8 +314,10 @@ function writeDepthAssignments(
                 field.prop.asEntityProp!,
                 hasMapperFn(field.prop.asEntityProp!.outputFn, field.mapperFn),
                 field.columnIndex,
+                variableDeclared,
                 writer
             );
+            variableDeclared = true;
         }
     }
 }
@@ -325,10 +328,11 @@ function writeDepthAssignment(
     prop: EntityProp,
     hasMapperFn: boolean,
     columnIndex: string | number,
+    variableDeclared: boolean,
     writer: CodeWriter
 ) {
     if (path[parentDepth] === "..") {
-        if (parentDepth === 0) {
+        if (parentDepth === 0 && !variableDeclared) {
             writer.code(`const reader_${columnIndex} = `);
             if (hasMapperFn) {
                 writer.code("this.").code(outputFnName(prop));
@@ -340,7 +344,7 @@ function writeDepthAssignment(
         }
         writer.code(`for (const ${parentName(parentDepth)} of ${parentDepth > 0 ? `${parentName(parentDepth - 1)}.` : ""}parents) `);
         writer.scope("CURLY_BRACKETS", () => {
-            writeDepthAssignment(parentDepth + 1, path, prop, hasMapperFn, columnIndex, writer);
+            writeDepthAssignment(parentDepth + 1, path, prop, hasMapperFn, columnIndex, true, writer);
         }).newLine();
     } else {
         if (parentDepth > 0) {
