@@ -1,5 +1,4 @@
 import { err, spi } from "@ts-grm/core";
-import { Driver } from "./deriver";
 import { NodeRender, NodeRenderContext, SingleColumnInCollectionPred } from "./node_render";
 import { Precedence } from "@/sql/precedence";
 import { Scope, Value } from "@/sql/fragment";
@@ -7,8 +6,10 @@ import { ColumnDef } from "@/impl/schema_def";
 import { TransactionManager } from "@/transaction/transaction_manger";
 import { SqliteTransactionManager } from "@/transaction/sqlite_transaction_manager";
 import { Database } from "better-sqlite3";
+import { DriverImplementor } from "@/impl/driver_implementor";
+import { AbstractTransactionManager, AsyncCallback } from "@/transaction/abstract_transaction_manager";
 
-export class SqliteDriver implements Driver {
+export class SqliteDriver implements DriverImplementor {
 
     readonly nodeRender: NodeRender = nodeRender;
 
@@ -16,6 +17,10 @@ export class SqliteDriver implements Driver {
 
     constructor(readonly database: Database) {
         this.transactionManager = new SqliteTransactionManager(database);
+    }
+
+    initialize(callback: AsyncCallback): void {
+        (this.transactionManager as AbstractTransactionManager<any>).initialize(callback);
     }
 
     get name(): string {

@@ -5,6 +5,7 @@ import { ColumnDefImpl, ForeignKeyConstraintDef, TableDef, TableDefImpl } from "
 export async function createSchema(
     sqlClient: SqlClientImplementor
 ): Promise<ReadonlyArray<TableDef>> {
+    await sqlClient.validateEntities();
     const executor = new SchemaCreatorExecutor(sqlClient);
     await executor.executue();
     return Array.from(executor.tableMap.values());

@@ -54,6 +54,7 @@ import { createSchema } from "./schema_creator";
 import { Executor } from "@/transaction/executor";
 import { toExpressionOrders } from "./expression_orders";
 import { NoDataError, TooManyDataError } from "@/error/data_error";
+import { Validator } from "./validator";
 
 export class SqlClientImpl implements SqlClientImplementor {
 
@@ -67,6 +68,8 @@ export class SqlClientImpl implements SqlClientImplementor {
         new Map<spi.Entity, ReadonlyArray<AnyFilter>>();
 
     readonly strategy: spi.DatabaseStrategy;
+
+    private _validated = false;
 
     constructor(
         readonly driver: Driver,
@@ -340,6 +343,20 @@ export class SqlClientImpl implements SqlClientImplementor {
             }
             return q.select(table.fetch(view));
         }) as any;
+    }
+
+    async validateEntities(): Promise<void> {
+        if (this._validated) {
+            return;
+        }
+        if (this.options.entityManager != null) {
+            const entities = await this.options.entityManager!.entities();
+            const validator = new Validator(this.strategy);
+            for (const entity of entities) {
+                validator.validateEntity(entity);
+            }
+        }
+        this._validated = true;
     }
 }
 

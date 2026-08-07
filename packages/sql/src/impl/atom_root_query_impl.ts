@@ -4,6 +4,7 @@ import { AbstractRootQueryProjection } from "./query_projection";
 import { executeQuery } from "./query_executor/execute_query";
 import { exeuctePageQuery, finalRangeOptions } from "./query_executor/execute_page_query";
 import { NoDataError, TooManyDataError } from "@/error/data_error";
+import { SqlClientImpl } from "./sql_client_impl";
 
 export class AtomRootQueryImpl<TProjection extends RootQueryProjection<any>> 
 implements AtomRootQuery<TProjection>, spi.AtomQueryContract {

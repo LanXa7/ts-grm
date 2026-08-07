@@ -125,11 +125,13 @@ export const BOOK = model("Book", "id",
         store = prop.m2o(BOOK_STORE)
             .joinColumns({cascade: "DELETE"})
             .nullable()
-        authors = prop.m2m(AUTHOR).joinTable({
+        authors = prop.m2m(AUTHOR)
+        .joinTable({
             name: "book_author_mapping",
             joinThisColumns: ["book_id"],
             joinTargetColumns: ["author_id"]
-        }).orderBy("name.firstName", "name.lastName")
+        })
+        .orderBy("name.firstName", "name.lastName")
         authorCount = prop.formula.sql(BOOK_AUTHOR_COUNT_FORMULA)
     }, 
     ctx => {
