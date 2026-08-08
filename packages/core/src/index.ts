@@ -182,6 +182,7 @@ export type  {
     EnumSetExprContract,
     ExprTuple,
     RowTypeOf,
-    SelectionLike
+    SelectionLike,
+    TimeUnit
 } from "./dsl";
 

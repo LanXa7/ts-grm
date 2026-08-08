@@ -79,7 +79,8 @@ export type {
     NumExprContract,
     StrExprContract,
     DateExprContract,
-    EnumSetExprContract
+    EnumSetExprContract,
+    TimeUnit
 } from "./expression";
 
 export const dsl = {

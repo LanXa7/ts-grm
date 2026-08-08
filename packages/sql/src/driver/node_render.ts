@@ -71,6 +71,8 @@ export interface NodeRender {
 
 export interface NodeRenderContext {
 
+    readonly driverName: string;
+
     text(value: string): void;
 
     separator(): void;

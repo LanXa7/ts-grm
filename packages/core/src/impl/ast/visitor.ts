@@ -312,7 +312,6 @@ export abstract class AbstractVisitor implements Visitor {
 
     visitDtPlusExpr(expr: DtPlusExpr): void {
         expr.expr.accept(this);
-        expr.valueExpr.accept(this);
     }
 
     visitDtDiffExpr(expr: DtDiffExpr): void {

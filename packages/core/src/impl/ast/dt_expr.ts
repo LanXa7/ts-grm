@@ -9,24 +9,24 @@ import { Visitor } from "./visitor";
 export abstract class AbstractDtExpr extends AbstractCmpExpr<Date> {
 
     plus(
-        value: number | AbstractNumExpr<number>, 
+        value: number, 
         timeUnit: TimeUnit
     ): AbstractDtExpr {
         return new DtPlusExpr(
             this, 
-            typeof value === "number" ? getInternalFactory().createLiteral(value) : value,
+            value,
             timeUnit,
             false
         );
     }
 
     minus(
-        value: number | AbstractNumExpr<number>, 
+        value: number, 
         timeUnit: TimeUnit
     ): AbstractDtExpr {
         return new DtPlusExpr(
             this,
-            typeof value === "number" ? getInternalFactory().createLiteral(value) : value,
+            value,
             timeUnit,
             true
         );
@@ -64,7 +64,7 @@ export class DtPlusExpr extends AbstractDtExpr {
 
     constructor(
         readonly expr: AbstractDtExpr,
-        readonly valueExpr: AbstractNumExpr<number>,
+        readonly value: number,
         readonly unit: TimeUnit,
         readonly neg: boolean
     ) {

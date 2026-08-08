@@ -1,12 +1,12 @@
-import { err, spi } from "@ts-grm/core";
-import { NodeRender, NodeRenderContext, SingleColumnInCollectionPred } from "./node_render";
-import { Precedence } from "@/sql/precedence";
-import { Scope, Value } from "@/sql/fragment";
+import { err, spi, TimeUnit } from "@ts-grm/core";
+import { NodeRender, NodeRenderContext } from "./node_render";
 import { ColumnDef } from "@/impl/schema_def";
 import { TransactionManager } from "@/transaction/transaction_manger";
 import { SqliteTransactionManager } from "@/transaction/sqlite_transaction_manager";
 import { Database } from "better-sqlite3";
 import { Driver } from "./deriver";
+import { AbstractNodeRender } from "./abstract_node_render";
+import { Precedence } from "@/sql/precedence";
 
 export class SqliteDriver implements Driver {
 
@@ -54,184 +54,171 @@ export class SqliteDriver implements Driver {
     }
 
     quoteIdentifier(value: string): string {
-        if (KEYWORDS.has(value.toLowerCase())) {
+        if (keywords.has(value.toLowerCase())) {
             return `"${value}"`;
         }
         return value;
     }
 }
 
-const nodeRender = new class implements NodeRender {
+const nodeRender = new class extends AbstractNodeRender {
 
-    renderSingleColumnInCollectionPred(
-        pred: SingleColumnInCollectionPred,
-        ctx: NodeRenderContext
-    ): void {
-        using _ = ctx.withPrecedence(Precedence.COMPARISON);
-        ctx.render(pred.expr);
-        ctx.text(pred.neg ? " not in": " in");
-        using __ = ctx.withComposite(new Scope("VALUES", false));
-        for (const value of pred.values) {
-            ctx.separator();
-            ctx.render(value);
-        }
+    constructor() {
+        super("Sqlite");
     }
 
-    renderLikePred(pred: spi.LikePred, ctx: NodeRenderContext): void {
-        using _ = ctx.withPrecedence(Precedence.COMPARISON);
-        if (pred.insensitive) {
-            ctx.text("lower(");
-            ctx.render(pred.expr);
-            ctx.text(pred.neg ? ") not like ": ") like ");
-        } else {
-            ctx.render(pred.expr);
-            ctx.text(pred.neg ? " not like " : " like ");
-        }
-        ctx.render(pred.pattern);
+    override renderReverseExpr(_expr: spi.ReverseExpr, _ctx: NodeRenderContext): void {
+        this.unsupportedFun("reverse");
     }
 
-    renderEsOpPred(
-        pred: spi.EsOpPred,
-        ctx: NodeRenderContext
-    ): void {
-        const provider = pred.expr.scalarProvider!;
-        const flags = provider.toSql(pred.values) as any;
-        const value = new Value(flags, pred.values);
-        using _ = ctx.withPrecedence(Precedence.COMPARISON);
-        ctx.text("(");
-        ctx.render(pred.expr);
-        ctx.text(" & ");
-        ctx.render(value);
-        ctx.text(")");
-        switch (pred.op) {
-            case "CONTAINS_ANY":
-                ctx.text(" <> 0");
-                break;
-            case "NOT_CONTAINS_ANY":
-                ctx.text(" = 0");
-                break;
-            case "CONTAINS_ALL":
-                ctx.text(" = ");
-                ctx.render(value);
-                break;
-            case "NOT_CONTAINS_ALL":
-                ctx.text(" <> ");
-                ctx.render(value);
-                break;
-        }
+    override renderPadExpr(_expr: spi.PadExpr, _ctx: NodeRenderContext): void {
+        this.unsupportedFun("pad");
     }
 
-    renderReverseExpr(_expr: spi.ReverseExpr, _ctx: NodeRenderContext): void {
-        this._unsupported("reverse");
-    }
-
-    renderTrimExpr(
-        expr: spi.TrimExpr,
-        ctx: NodeRenderContext
-    ): void {
-        switch (expr.side) {
-            case "LEFT":
-                ctx.text("ltrim");
-                break;
-            case "RIGHT":
-                ctx.text("ltrim");
-                break;
-            default:
-                ctx.text("trim");
-                break;
-        }
-        ctx.text("(");
-        using _ = ctx.withPrecedence(Precedence.ROOT);
-        ctx.render(expr.expr);
-        ctx.text(")");
-    }
-
-    renderLengthExpr(expr: spi.LengthExpr, ctx: NodeRenderContext): void {
-        ctx.text("length(cast(");
-        using _ = ctx.withPrecedence(Precedence.ROOT);
-        ctx.render(expr.expr);
-        ctx.text(" as text))");
-    }
-
-    renderPadExpr(_expr: spi.PadExpr, _ctx: NodeRenderContext): void {
-        this._unsupported("pad");
-    }
-
-    renderLeftExpr(
-        expr: spi.LeftExpr,
-        ctx: NodeRenderContext
-    ): void {
-        using _ = ctx.withPrecedence(Precedence.ROOT);
-        ctx.text("substr(");
-        ctx.render(expr.expr);
-        ctx.text(", ");
-        ctx.render(expr.lenExpr);
-        ctx.text(")");
-    }
-
-    renderRightExpr(
-        expr: spi.RightExpr,
-        ctx: NodeRenderContext
-    ): void {
-        using _ = ctx.withPrecedence(Precedence.ROOT);
-        ctx.text("substr(");
-        ctx.render(expr.expr);
-        ctx.text(", -");
-        ctx.render(expr.lenExpr);
-        ctx.text(")");
-    }
-
-    renderPositionExpr(
-        expr: spi.PositionExpr,
-        ctx: NodeRenderContext
-    ): void {
+    override renderPositionExpr(expr: spi.PositionExpr, ctx: NodeRenderContext): void {
         if (expr.startExpr != null) {
             throw new err.StateError(`The sqlite does not support the argument "start" of function "position"`);
         }
-        using _ = ctx.withPrecedence(Precedence.ROOT);
-        ctx.text("instr(");
-        ctx.render(expr.expr);
-        ctx.text(", ");
-        ctx.render(expr.substrExpr);
-        ctx.text(")");
+        super.renderPositionExpr(expr, ctx);
     }
-    
-    renderSubstringExpr(
-        expr: spi.SubstringExpr,
+
+    override renderDtPlusExpr(
+        expr: spi.DtPlusExpr, 
         ctx: NodeRenderContext
     ): void {
-        using _ = ctx.withPrecedence(Precedence.ROOT);
-        ctx.text("substr(");
-        ctx.render(expr.expr);
-        ctx.text(", ");
-        ctx.render(expr.startExpr);
-        if (expr.lenExpr != null) {
-            ctx.text(", ");
-            ctx.render(expr.lenExpr);
+
+        let value = expr.neg ? -expr.value : expr.value;
+        const unit = expr.unit;
+        
+        let finalUnit = unitMap[unit];
+        let absValue = Math.abs(value);
+        
+        if (unit === "WEEKS") {
+            absValue = Math.abs(value * 7);
+            finalUnit = "days";
+        } else if (unit === "QUARTERS") {
+            absValue = Math.abs(value * 3);
+            finalUnit = "months";
+        } else if (unit === "DECADES") {
+            absValue = Math.abs(value * 10);
+            finalUnit = "years";
+        } else if (unit === "CENTURIES") {
+            absValue = Math.abs(value * 100);
+            finalUnit = "years";
+        } else if (unit === "NANOSECONDS") {
+            absValue = Math.abs(value / 1000000000);
+            finalUnit = "seconds";
+        } else if (unit === "MICROSECONDS") {
+            absValue = Math.abs(value / 1000000);
+            finalUnit = "seconds";
+        } else if (unit === "MILLISECONDS") {
+            absValue = Math.abs(value / 1000);
+            finalUnit = "seconds";
         }
+        
+        using _ = ctx.withPrecedence(Precedence.ROOT);
+        ctx.text("datetime(");
+        ctx.render(expr.expr);
+        ctx.text(", '");
+        ctx.text(value < 0 ? "-" : "+");
+        ctx.text(absValue.toString());
+        ctx.text(" ");
+        ctx.text(finalUnit);
+        ctx.text("')");
+    }
+
+    override renderDtDiffExpr(
+        expr: spi.DtDiffExpr, 
+        ctx: NodeRenderContext
+    ): void {
+
+        const unit = expr.unit;
+        let multiplier: number | undefined = undefined;
+        let divisor: number | undefined = undefined;
+        switch (unit) {
+            case "NANOSECONDS": 
+                multiplier = 86400000000000; 
+                break;
+            case "MICROSECONDS": 
+                multiplier = 86400000000; 
+                break;
+            case "MILLISECONDS": 
+                multiplier = 86400000; 
+                break;
+            case "SECONDS": 
+                multiplier = 86400; 
+                break;
+            case "MINUTES": 
+                multiplier = 1440; 
+                break;
+            case "HOURS": 
+                multiplier = 24; 
+                break;
+            case "WEEKS": 
+                divisor = 7.0; 
+                break;
+            case "MONTHS": 
+                divisor = 30.4375; 
+                break;
+            case "QUARTERS": 
+                divisor = 91.3125; 
+                break;
+            case "YEARS": 
+                divisor = 365.25; 
+                break;
+            case "DECADES": 
+                divisor = 3652.5; 
+                break;
+            case "CENTURIES": 
+                divisor = 36525; 
+                break;
+        }
+        if (multiplier != null) {
+            using _ = ctx.withPrecedence(Precedence.TIMES);
+            this._renderDtDiffExprImpl(expr, ctx);
+            ctx.text(" * ");
+            ctx.text(multiplier.toString());
+        } else if (divisor != null) {
+            using _ = ctx.withPrecedence(Precedence.TIMES);
+            this._renderDtDiffExprImpl(expr, ctx);
+            ctx.text(" / ");
+            ctx.text(divisor.toString());
+        } else {
+            this._renderDtDiffExprImpl(expr, ctx);
+        }
+    }
+
+    private _renderDtDiffExprImpl(
+        expr: spi.DtDiffExpr, 
+        ctx: NodeRenderContext
+    ): void {
+        using _ = ctx.withPrecedence(Precedence.PLUS);
+        using __ = ctx.withPrecedence(Precedence.ROOT);
+        ctx.text("JULIANDAY(");
+        ctx.render(expr.expr);
+        ctx.text(") - JULIANDAY(");
+        ctx.render(expr.valueExpr);
         ctx.text(")");
-    }
-
-    renderDtPlusExpr(
-        _expr: spi.DtPlusExpr,
-        _ctx: NodeRenderContext
-    ): void {
-        throw new Error("Unsupported Operation Exception");
-    }
-
-    renderDtDiffExpr(
-        _expr: spi.DtDiffExpr,
-        _ctx: NodeRenderContext
-    ): void {
-        throw new Error("Unsupported Operation Exception");
-    }
-
-    private _unsupported(funName: string): void {
-        throw new err.StateError(`The sqlite does not support the function "${funName}"`);
     }
 };
 
-const KEYWORDS = new Set<string>([
+const unitMap: Record<TimeUnit, string> = {
+    "NANOSECONDS": "seconds",
+    "MICROSECONDS": "seconds",
+    "MILLISECONDS": "seconds",
+    "SECONDS": "seconds",
+    "MINUTES": "minutes",
+    "HOURS": "hours",
+    "DAYS": "days",
+    "WEEKS": "days",
+    "MONTHS": "months",
+    "QUARTERS": "months",
+    "YEARS": "years",
+    "DECADES": "years",
+    "CENTURIES": "years"
+};
+
+const keywords = new Set<string>([
 
     "select", "from", "where", "group", "by", "having", "order", "limit", "offset",
     "insert", "update", "delete", "into", "values", "set", "create", "table", "drop",
