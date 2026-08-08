@@ -1,4 +1,4 @@
-import { spi, BaseQuery, BaseQueryMapOf, FetchOptions, FetchPageOptions, FetchRangeOptions, Page, RootQuery, RootQueryProjection, RowTypeOf, suppressUnused } from "@ts-grm/core";
+import { spi, BaseQuery, BaseQueryMapOf, FetchOptions, FetchPageOptions, FetchRangeOptions, Page, RootQuery, RootQueryProjection, RowTypeOf, err } from "@ts-grm/core";
 import { AbstractBaseQueryImpl } from "./abstract_base_query_impl";
 import { AbstractDtSubQueryImpl, AbstractExprSubQueryImpl, AbstractNumSubQueryImpl, AbstractStrSubQueryImpl, AbstractTupleSubQueryImpl } from "./abstract_sub_query_impl";
 import { SqlClientImplementor } from "@/sql_client";
@@ -11,6 +11,29 @@ export class MergedRootQueryImpl<
     TProjection extends RootQueryProjection<any>
 > implements RootQuery<TProjection>, spi.MergedQueryContract {
 
+    private readonly _sqlClient: SqlClientImplementor;
+
+    constructor(
+        readonly kind: spi.MergedQueryKind,
+        readonly queries: ReadonlyArray<spi.QueryContract>
+    ) {
+        if (queries.length < 2) {
+            throw new err.ArgumentError("The length of queries cannot be less than 2");
+        }
+        let sqlClient: SqlClientImplementor | undefined = undefined;
+        for (const query of queries) {
+            const sc = query instanceof AtomRootQueryImpl
+                ? query.mutableQuery.sqlClient
+                : (query as MergedRootQueryImpl<any>).sqlClient;
+            if (sqlClient == null) {
+                sqlClient = sc;
+            } else if (sqlClient !== sc) {
+                throw new err.ArgumentError("Cannot merge difference root queries created by different sqlClient");
+            }
+        }
+        this._sqlClient = sqlClient!;
+    }
+
     __type(): { rootQuery: TProjection | true; } {
         return { rootQuery: true };
     }
@@ -22,8 +45,10 @@ export class MergedRootQueryImpl<
     async fetchList<TNullAsUndefined extends boolean = false>(
         options?: FetchOptions<TNullAsUndefined>
     ): Promise<Array<RowTypeOf<TProjection, TNullAsUndefined>>> {
-        suppressUnused(options);
-        return await executeQuery(this, undefined) as Array<RowTypeOf<TProjection, TNullAsUndefined>>;
+        if (!this._sqlClient.isValidated) {
+            await this._sqlClient.validate();
+        }
+        return await executeQuery(this, options?.nullAsUndefined ?? false, undefined) as Array<RowTypeOf<TProjection, TNullAsUndefined>>;
     }
 
     async fetchRange<
@@ -31,7 +56,10 @@ export class MergedRootQueryImpl<
     >(
         options: FetchRangeOptions & FetchOptions<TNullAsUndefined>
     ): Promise<Array<RowTypeOf<TProjection, TNullAsUndefined>>> {
-        return await executeQuery(this, finalRangeOptions(options, undefined)) as Array<RowTypeOf<TProjection, TNullAsUndefined>>;
+        if (!this._sqlClient.isValidated) {
+            await this._sqlClient.validate();
+        }
+        return await executeQuery(this, options.nullAsUndefined ?? false, finalRangeOptions(options, undefined)) as Array<RowTypeOf<TProjection, TNullAsUndefined>>;
     }
 
     async fetchPage<
@@ -39,7 +67,10 @@ export class MergedRootQueryImpl<
     >(
         options: FetchPageOptions & FetchOptions<TNullAsUndefined>
     ): Promise<Page<RowTypeOf<TProjection, TNullAsUndefined>>> {
-        return exeuctePageQuery(this, options);
+        if (!this._sqlClient.isValidated) {
+            await this._sqlClient.validate();
+        }
+        return await exeuctePageQuery(this, options);
     }
 
     async fetchRequired<TNullAsUndefined extends boolean = false>(
@@ -80,14 +111,12 @@ export class MergedRootQueryImpl<
     }
 
     async fetchCount(): Promise<number> {
-        const rows = await executeQuery(this, "COUNT");
+        if (!this._sqlClient.isValidated) {
+            await this._sqlClient.validate();
+        }
+        const rows = await executeQuery(this, false, "COUNT");
         return rows[0];
     }
-
-    constructor(
-        readonly kind: spi.MergedQueryKind,
-        readonly queries: ReadonlyArray<spi.QueryContract>
-    ) {}
 
     get isRecursive(): boolean {
         return false;

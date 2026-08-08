@@ -1,10 +1,9 @@
-import { spi, ExpressionOrder, AtomRootQuery, RootQueryProjection, RowTypeOf, suppressUnused, FetchOptions, FetchRangeOptions, FetchPageOptions, Page } from "@ts-grm/core";
+import { spi, ExpressionOrder, AtomRootQuery, RootQueryProjection, RowTypeOf, FetchOptions, FetchRangeOptions, FetchPageOptions, Page } from "@ts-grm/core";
 import { MutableRootQueryImpl } from "./mutable_root_query_impl";
 import { AbstractRootQueryProjection } from "./query_projection";
 import { executeQuery } from "./query_executor/execute_query";
 import { exeuctePageQuery, finalRangeOptions } from "./query_executor/execute_page_query";
 import { NoDataError, TooManyDataError } from "@/error/data_error";
-import { SqlClientImpl } from "./sql_client_impl";
 
 export class AtomRootQueryImpl<TProjection extends RootQueryProjection<any>> 
 implements AtomRootQuery<TProjection>, spi.AtomQueryContract {
@@ -57,8 +56,11 @@ implements AtomRootQuery<TProjection>, spi.AtomQueryContract {
     async fetchList<TNullAsUndefined extends boolean = false>(
         options?: FetchOptions<TNullAsUndefined>
     ): Promise<Array<RowTypeOf<TProjection, TNullAsUndefined>>> {
-        suppressUnused(options);
-        return await executeQuery(this, undefined) as Array<RowTypeOf<TProjection, TNullAsUndefined>>;
+        const sqlClient = this.mutableQuery.sqlClient;
+        if (!sqlClient.isValidated) {
+            await sqlClient.validate();
+        }
+        return await executeQuery(this, options?.nullAsUndefined ?? false, undefined) as Array<RowTypeOf<TProjection, TNullAsUndefined>>;
     }
 
     async fetchRange<
@@ -66,15 +68,23 @@ implements AtomRootQuery<TProjection>, spi.AtomQueryContract {
     >(
         options: FetchRangeOptions & FetchOptions<TNullAsUndefined>
     ): Promise<Array<RowTypeOf<TProjection, TNullAsUndefined>>> {
-        return await executeQuery(this, finalRangeOptions(options, this.options)) as Array<RowTypeOf<TProjection, TNullAsUndefined>>;
+        const sqlClient = this.mutableQuery.sqlClient;
+        if (!sqlClient.isValidated) {
+            await sqlClient.validate();
+        }
+        return await executeQuery(this, options?.nullAsUndefined ?? false, finalRangeOptions(options, this.options)) as Array<RowTypeOf<TProjection, TNullAsUndefined>>;
     }
 
-    fetchPage<
+    async fetchPage<
         TNullAsUndefined extends boolean = false
     >(
         options: FetchPageOptions & FetchOptions<TNullAsUndefined>
     ): Promise<Page<RowTypeOf<TProjection, TNullAsUndefined>>> {
-        return exeuctePageQuery(this, options);
+        const sqlClient = this.mutableQuery.sqlClient;
+        if (!sqlClient.isValidated) {
+            await sqlClient.validate();
+        }
+        return await exeuctePageQuery(this, options);
     }
 
     async fetchRequired<TNullAsUndefined extends boolean = false>(
@@ -115,7 +125,11 @@ implements AtomRootQuery<TProjection>, spi.AtomQueryContract {
     }
 
     async fetchCount(): Promise<number> {
-        const rows = await executeQuery(this, "COUNT");
+        const sqlClient = this.mutableQuery.sqlClient;
+        if (!sqlClient.isValidated) {
+            await sqlClient.validate();
+        }
+        const rows = await executeQuery(this, false, "COUNT");
         return rows[0]!;
     }
 

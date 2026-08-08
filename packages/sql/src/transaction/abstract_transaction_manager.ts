@@ -7,8 +7,6 @@ import { Executor } from "./executor";
 export abstract class AbstractTransactionManager<TContext extends TransactionContext<TContext>> 
 implements TransactionManager {
 
-    private _validator: AsyncCallback | undefined = undefined;
-
     async execute<R>(
         options: TransactionOptions,
         fn: () => Promise<R>
@@ -76,10 +74,6 @@ implements TransactionManager {
         prevForSavepoint: TContext | undefined,
         fn: () => Promise<R>
     ): Promise<R> {
-        if (this._validator != null) {
-            await this._validator();
-            this._validator = undefined;
-        }
         const ctx = this.create(isolation, timeout, prevForSavepoint);
         if (prevForSavepoint) {
             return transactionStorage.run(ctx, async () => {
@@ -183,10 +177,6 @@ implements TransactionManager {
             throw new err.StateError(`Cannot get the default executor because there is no openning connection`);
         }
         return ctx.executor;
-    }
-
-    initialize(validator: AsyncCallback) {
-        this._validator = validator;
     }
 }
 

@@ -1,5 +1,5 @@
 import { Isolation, Propagation } from "@ts-grm/core";
-import { AbstractTransactionManager, AsyncCallback, TransactionContext } from "./abstract_transaction_manager";
+import { AbstractTransactionManager, TransactionContext } from "./abstract_transaction_manager";
 import { Database } from "better-sqlite3";
 import { Executor } from "./executor";
 import { Value } from "@/sql/fragment";

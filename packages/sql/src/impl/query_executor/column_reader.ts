@@ -8,6 +8,7 @@ import { JoinFetchExecutor } from "./join_fetch_executor";
 export async function readColumn(
     sqlClient: SqlClientImplementor,
     selection: RootQuerySelection<any>,
+    nullAsUndefined: boolean,
     dataRowReader: DataRowReader,
 ): Promise<ReadonlyArray<any>> {
     if (selection instanceof spi.FetchedViewImpl) {
@@ -15,7 +16,12 @@ export async function readColumn(
     }
     const values = [];
     while (dataRowReader.next()) {
-        values.push(dataRowReader.get(0));
+        const value = dataRowReader.get(0);
+        if (value != null) {
+            values.push(value);
+        } else {
+            values.push(nullAsUndefined ? undefined : null);
+        }
     }
     return values;
 }
@@ -23,13 +29,14 @@ export async function readColumn(
 export async function readColumnArray(
     sqlClient: SqlClientImplementor,
     selections: ReadonlyArray<RootQuerySelection<any>>,
+    nullAsUndefined: boolean,
     dataRowReader: DataRowReader
 ): Promise<ReadonlyArray<any>> {
     const columns: Array<ReadonlyArray<any>> = [];
     for (let i = 0; i < selections.length; i++) {
         dataRowReader.reset();
         const selection = selections[i]!;
-        const columnValues = await readColumn(sqlClient, selection, dataRowReader);
+        const columnValues = await readColumn(sqlClient, selection, nullAsUndefined, dataRowReader);
         if (columnValues.length === 0) {
             return [];
         }
@@ -55,13 +62,14 @@ export async function readColumnArray(
 export async function readColumnMap(
     sqlClient: SqlClientImplementor,
     selectionMap: { readonly [key: string]: RootQuerySelection<any> },
+    nullAsUndefined: boolean,
     dataRowReader: DataRowReader
 ): Promise<ReadonlyArray<any>> {
     const columns: {[key: string]: ReadonlyArray<any>} = {};
     for (const key in selectionMap) {
         dataRowReader.reset();
         const selection = selectionMap[key]!;
-        const columnValues = await readColumn(sqlClient, selection, dataRowReader);
+        const columnValues = await readColumn(sqlClient, selection, nullAsUndefined, dataRowReader);
         if (columnValues.length === 0) {
             return [];
         }

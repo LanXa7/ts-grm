@@ -5,7 +5,6 @@ import { SqlClientImpl } from "./impl/sql_client_impl";
 import { DeepPartial, merge } from "./utils";
 import { AnyFilter, FilterManager } from "./cfg/filter";
 import { Executor } from "./transaction/executor";
-import { DriverImplementor } from "./impl/driver_implementor";
 
 export function newSqlClient(
     data: Driver | SqlClient,
@@ -51,12 +50,7 @@ export function newSqlClient(
             );  
         }
     }
-    const sqlClient = new SqlClientImpl(driver, finalOptions);
-    if ((driver as any).initialize == null) {
-        throw new err.ArgumentError(`The driver must implement "DriverImplementor"`);
-    }
-    (driver as DriverImplementor).initialize(() => sqlClient.validateEntities());
-    return sqlClient;
+    return new SqlClientImpl(driver, finalOptions);
 }
 
 export interface SqlClientImplementor extends SqlClient {
@@ -81,7 +75,9 @@ export interface SqlClientImplementor extends SqlClient {
     
     readonly strategy: spi.DatabaseStrategy;
 
-    validateEntities(): Promise<void>;
+    readonly isValidated: boolean;
+
+    validate(): Promise<void>;
 }
 
 function createDefaultOptions(): SqlClientOptions {

@@ -6,10 +6,9 @@ import { ColumnDef } from "@/impl/schema_def";
 import { TransactionManager } from "@/transaction/transaction_manger";
 import { SqliteTransactionManager } from "@/transaction/sqlite_transaction_manager";
 import { Database } from "better-sqlite3";
-import { DriverImplementor } from "@/impl/driver_implementor";
-import { AbstractTransactionManager, AsyncCallback } from "@/transaction/abstract_transaction_manager";
+import { Driver } from "./deriver";
 
-export class SqliteDriver implements DriverImplementor {
+export class SqliteDriver implements Driver {
 
     readonly nodeRender: NodeRender = nodeRender;
 
@@ -17,10 +16,6 @@ export class SqliteDriver implements DriverImplementor {
 
     constructor(readonly database: Database) {
         this.transactionManager = new SqliteTransactionManager(database);
-    }
-
-    initialize(callback: AsyncCallback): void {
-        (this.transactionManager as AbstractTransactionManager<any>).initialize(callback);
     }
 
     get name(): string {

@@ -19,6 +19,7 @@ export function usingExplicitPurpose<R>(
 
 export async function executeQuery<TProjection extends RootQueryProjection<any>>(
     query: RootQuery<TProjection>,
+    nullAsUndefined: boolean,
     options: ExecuteQueryOptions | undefined
 ): Promise<ReadonlyArray<any>> {
     const contract = query as any as spi.QueryContract;
@@ -42,12 +43,18 @@ export async function executeQuery<TProjection extends RootQueryProjection<any>>
                     options === "COUNT"
                         ? dsl.count() as RootQuerySelection<any>
                         : contract.projection.selection, 
+                    nullAsUndefined,
                     dataRowReader
                 );
             case "ROOT_ARRAY":
-                return await readColumnArray(sqlClient, contract.projection.selections, dataRowReader);
+                return await readColumnArray(
+                    sqlClient, 
+                    contract.projection.selections, 
+                    nullAsUndefined,
+                    dataRowReader
+                );
             case "ROOT_MAP":
-                return await readColumnMap(sqlClient, contract.projection.selections, dataRowReader);
+                return await readColumnMap(sqlClient, contract.projection.selections, nullAsUndefined, dataRowReader);
             default:
                 throw new Error();
         }

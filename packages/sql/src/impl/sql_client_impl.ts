@@ -345,7 +345,11 @@ export class SqlClientImpl implements SqlClientImplementor {
         }) as any;
     }
 
-    async validateEntities(): Promise<void> {
+    get isValidated(): boolean {
+        return this._validated;
+    }
+
+    async validate(): Promise<void> {
         if (this._validated) {
             return;
         }
