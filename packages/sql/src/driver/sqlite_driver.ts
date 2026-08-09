@@ -7,6 +7,7 @@ import { Database } from "better-sqlite3";
 import { Driver } from "./deriver";
 import { AbstractNodeRender } from "./abstract_node_render";
 import { Precedence } from "@/sql/precedence";
+import { MetadataError } from "@/error/metadata_error";
 
 export class SqliteDriver implements Driver {
 
@@ -45,12 +46,16 @@ export class SqliteDriver implements Driver {
             case "BINARY":
                 return "blob";
             default:
-                throw new err.StateError(`Unsuported scalar type: ${columnDef.type.kind}`);
+                throw new MetadataError(`Unsuported scalar type: ${columnDef.type.kind}`);
         }
     }
 
     get requiresInlineConstraints(): boolean {
         return true;
+    }
+
+    get isTableCascadeDeletionSupported(): boolean {
+        return false;
     }
 
     quoteIdentifier(value: string): string {
@@ -237,4 +242,4 @@ const keywords = new Set<string>([
     "as", "distinct", "all", "exists", "cast", "with", "recursive",
 
     "virtual", "indexed", "by", "escape", "deferrable", "initially", "deferred", "immediate"
-])
+]);

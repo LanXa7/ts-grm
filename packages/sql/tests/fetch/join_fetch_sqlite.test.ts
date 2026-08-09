@@ -1,6 +1,6 @@
 import { dto } from "@ts-grm/core";
 import { describe, expect, it } from "vitest";
-import { BOOK, TREE_NODE } from "../model/model";
+import { BOOK, LEARNING_LINK, TREE_NODE } from "../model/model";
 import { newSqlRecord } from "../utils";
 import { useSqliteClientWithData } from "../data_utils";
 import { newSqlClient } from "@/sql_client";
@@ -186,6 +186,66 @@ describe.sequential("JoinFetchTest", () => {
             "parentGrandId": 2,
             "parentGrandName": "Food"
         });
+    });
+
+    it("twoJoinFetches", async () => {
+        const view = dto.view(LEARNING_LINK, c => [
+            c.id,
+            c.student.fetch("JOIN_UNPAGED_ONLY").with(c => [
+                c.name
+            ]),
+            c.course.fetch("JOIN_UNPAGED_ONLY").with(c => [
+                c.name
+            ])
+        ]);
+        const rows = await sqlClient.createQuery(LEARNING_LINK, (q, link) => {
+            q.where(link.id.in(1, 2));
+            q.orderBy(link.id);
+            return q.select(link.fetch(view));
+        }).fetchList();
+        sqlRecord.assert(
+            {
+                sql: `
+                    select 
+                        tb_1_.ID,
+                        tb_1_.STUDENT_ID,
+                        tb_1_.COURSE_ID,
+                        tb_2_.NAME,
+                        tb_3_.NAME
+                    from LEARNING_LINK tb_1_
+                    inner join STUDENT tb_2_ on 
+                        tb_1_.STUDENT_ID = tb_2_.ID
+                    inner join COURSE tb_3_ on 
+                        tb_1_.COURSE_ID = tb_3_.ID
+                    where 
+                        tb_1_.ID in(?, ?)
+                    order by 
+                        tb_1_.ID asc
+                `,
+                args: [1, 2],
+                purpose: "query"
+            }
+        );
+        expect(rows).toEqual([
+            {
+                "id": 1,
+                "student": {
+                    "name": "Tim"
+                },
+                "course": {
+                    "name": "Film Appreciation"
+                }
+            },
+            {
+                "id": 2,
+                "student": {
+                    "name": "Tim"
+                },
+                "course": {
+                    "name": "Workplace Communication and Presentation"
+                }
+            }
+        ]);
     });
 
     it("nullable", async () => {

@@ -17,5 +17,7 @@ export interface Driver extends spi.DatabaseKeywordStrategy {
 
     requiresInlineConstraints: boolean;
 
+    isTableCascadeDeletionSupported: boolean;
+
     readonly transactionManager: TransactionManager;
 }

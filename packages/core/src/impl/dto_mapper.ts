@@ -188,8 +188,6 @@ class Mapper implements Metadata {
 
     private _dependencyReader: DependencyReader | undefined = undefined;
 
-    private _columnIndex = 0;
-
     constructor(
         readonly entity: Entity,
         readonly nullAsUndefined: boolean,
@@ -207,19 +205,19 @@ class Mapper implements Metadata {
             this._addTypeNameField();
         }
 
-        let dependencies: ReadonlyArray<number> | undefined = undefined;
+        let dependencies: ReadonlyArray<MapperField> | undefined = undefined;
 
-        this._dependencyWriter = { indices: [], parent: this._dependencyWriter };
+        this._dependencyWriter = { refs: [], parent: this._dependencyWriter };
         try {
             this._addImplicitFields(dtoField);
         } finally {
-            if (this._dependencyWriter.indices!.length !== 0) {
-                dependencies = this._dependencyWriter.indices;
+            if (this._dependencyWriter.refs!.length !== 0) {
+                dependencies = this._dependencyWriter.refs;
             }
             this._dependencyWriter = this._dependencyWriter.parent;
         }
 
-        this._dependencyReader = { indices: dependencies, parent: this._dependencyReader };
+        this._dependencyReader = { refs: dependencies, parent: this._dependencyReader };
         try {
             this._addImpl(dtoField, mapPath);
         } finally {
@@ -287,7 +285,7 @@ class Mapper implements Metadata {
                 field.path(dtoField.path);
             }
             if (this._dependencyWriter != null) {
-                this._dependencyWriter.indices.push(field.index);
+                this._dependencyWriter.refs.push(field);
                 field.setDependent();
             }
         }
@@ -369,8 +367,6 @@ class Mapper implements Metadata {
         const field = new MapperField(
             this.nullAsUndefined,
             dtoField.downcastTo,
-            this._fieldMap.size, 
-            () => this._columnIndex++,
             dtoField.prop, 
             dtoField.fetchType,
             dtoField.predicateFn,
@@ -381,7 +377,7 @@ class Mapper implements Metadata {
             dtoField.nullable,
             dtoField.bridgeProp,
             dtoField.recursiveDepth,
-            this._dependencyReader?.indices
+            this._dependencyReader?.refs
         );
         this._fieldMap.set(
             key, 
@@ -395,16 +391,7 @@ class Mapper implements Metadata {
     }
 
     toDtoMapper(): DtoMapper {
-        const fields: Array<DtoMapperField> = [];
-        for (const cachedValue of this._fieldMap.values()) {
-            if (Array.isArray(cachedValue)) {
-                for (const mf of cachedValue) {
-                    fields.push(mf.toDtoMapperField());
-                }
-            } else {
-                fields.push(cachedValue.toDtoMapperField());
-            }
-        }
+        const fields = this._finalFields().map(f => f.toDtoMapperField());
         this._handleRecursiveFields(fields);
         return new DtoMapper(
             this.entity,
@@ -413,6 +400,27 @@ class Mapper implements Metadata {
             this.bridgeProp,
             fields
         );
+    }
+
+    private _finalFields(): ReadonlyArray<MapperField> {
+        const fields: Array<MapperField> = [];
+        const joinFetchFields: Array<MapperField> = [];
+        for (const cachedValue of this._fieldMap.values()) {
+            if (Array.isArray(cachedValue)) {
+                for (const mf of cachedValue) {
+                    (mf.fetchType === "JOIN_UNPAGED_ONLY" ? joinFetchFields : fields).push(mf);
+                }
+            } else {
+                (cachedValue.fetchType === "JOIN_UNPAGED_ONLY" ? joinFetchFields : fields).push(cachedValue);
+            }
+        }
+        fields.push(...joinFetchFields);
+        const fieldCount = fields.length;
+        let columnIndex = 0;
+        for (let i = 0; i < fieldCount; i++) {
+            columnIndex = fields[i]!.setColumns(i, columnIndex);
+        }
+        return fields;
     }
 
     private _handleRecursiveFields(
@@ -538,11 +546,13 @@ class MapperField implements MetadataField {
 
     private isDependent = false;
 
+    private _index: number = -1;
+
+    private _columnIndex: number | undefined = undefined;
+
     constructor(
         nullAsUndefined: boolean,
         readonly downcastTo: Entity | undefined,
-        readonly index: number,
-        readonly columnIndexAllocator: () => number,
         readonly prop: FetchProp,
         readonly fetchType: ReferenceFetchType | undefined,
         readonly predicateFn: ((table: AbstractEntityTable) => Predicate | null | undefined) | undefined,
@@ -553,7 +563,7 @@ class MapperField implements MetadataField {
         readonly nullable: boolean,
         readonly bridgeProp: EntityProp | undefined,
         readonly recursiveDepth: number | undefined,
-        readonly dependencies: ReadonlyArray<number> | undefined
+        readonly dependencies: ReadonlyArray<MapperField> | undefined
     ) {
         if (prop.targetEntity == null || recursiveDepth != null) {
             this.subMetadata = undefined;
@@ -578,6 +588,14 @@ class MapperField implements MetadataField {
         this.isDependent = true;
     }
 
+    setColumns(index: number, columnIndex: number): number {
+        this._index = index;
+        if (this._hasColumn()) {
+            this._columnIndex = columnIndex++;
+        }
+        return columnIndex;
+    }
+
     toDtoMapperField(): DtoMapperField {
         const paths = this._paths;
         const subMapper = this.subMetadata?.toDtoMapper();
@@ -585,7 +603,7 @@ class MapperField implements MetadataField {
             this._validateFetchType(subMapper);
         }
         return {
-            index: this.index,
+            index: this._index,
             downcastTo: this.downcastTo,
             prop: this.prop,
             parameter: this.parameter,
@@ -598,11 +616,9 @@ class MapperField implements MetadataField {
             orders: this.orders,
             limit: this.limit,
             recursiveDepth: this.recursiveDepth,
-            dependencies: this.dependencies,
+            dependencies: this.dependencies?.map(ref => ref._index),
             isDependent: this.isDependent,
-            columnIndex: this._hasColumn()
-                ? this.columnIndexAllocator()
-                : undefined,
+            columnIndex: this._columnIndex,
             optimizable: this.isOptimizable(),
             mapperFn: this.mapperFn
         };
@@ -714,12 +730,12 @@ function embeddedPath(
 }
 
 type DepenencyWriter = {
-    indices: Array<number>;
+    refs: Array<MapperField>;
     parent: DepenencyWriter | undefined;
 }
 
 type DependencyReader = {
-    indices: ReadonlyArray<number> | undefined;
+    refs: ReadonlyArray<MapperField> | undefined;
     parent: DependencyReader | undefined;
 }
 

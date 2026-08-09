@@ -1,7 +1,75 @@
 import { spi, TimeUnit } from "@ts-grm/core";
 import { AbstractNodeRender } from "./abstract_node_render";
-import { NodeRenderContext } from "./node_render";
+import { NodeRender, NodeRenderContext } from "./node_render";
 import { Precedence } from "@/sql/precedence";
+import { Driver } from "./deriver";
+import { Pool } from "pg";
+import { TransactionManager } from "@/transaction/transaction_manger";
+import { PostgresTransactionManager } from "@/transaction/postgres_transaction_manager";
+import { ColumnDef } from "@/impl/schema_def";
+import { MetadataError } from "@/error/metadata_error";
+
+export class PostgresDriver implements Driver {
+
+    readonly nodeRender: NodeRender = nodeRender;
+
+    readonly transactionManager: TransactionManager;
+
+    constructor(
+        protected readonly pool: Pool
+    ) {
+        this.transactionManager = new PostgresTransactionManager(this.pool);
+    }
+
+    get name(): string {
+        return "sqlite";
+    }
+
+    get nameParameterPrefix(): string | undefined {
+        return "$";
+    }
+
+    get isRecursiveKeywordRequired() {
+        return true;
+    }
+
+    typeName(columnDef: ColumnDef): string {
+        switch (columnDef.type.kind) {
+            case "BOOL":
+                return "boolean";
+            case "I8":
+            case "I16":
+                return "smallint";
+            case "I32":
+                return "integer";
+            case "I64":
+                return "bigint";
+            case "NUM":
+                return "real";
+            case "STR":
+                return "text";
+            case "BINARY":
+                return "bytea";
+            default:
+                throw new MetadataError(`Unsuported scalar type: ${columnDef.type.kind}`);
+        }
+    }
+
+    get requiresInlineConstraints(): boolean {
+        return false;
+    }
+
+    get isTableCascadeDeletionSupported(): boolean {
+        return true;
+    }
+
+    quoteIdentifier(value: string): string {
+        if (keywords.has(value.toLowerCase())) {
+            return `"${value}"`;
+        }
+        return value;
+    }
+}
 
 const nodeRender = new class extends AbstractNodeRender {
 
@@ -160,3 +228,19 @@ const unitMap: Record<TimeUnit, string> = {
     "DECADES": "years",
     "CENTURIES": "years"
 };
+
+const keywords = new Set<string>([
+
+    "select", "from", "where", "group", "by", "having", "order", "limit", "offset",
+    "insert", "update", "delete", "into", "values", "set", "create", "table", "drop",
+    "alter", "add", "column", "rename", "to", "view", "trigger",
+
+    "and", "or", "not", "in", "is", "null", "like", "glob", "match", "regexp",
+    "between", "exists", "case", "when", "then", "else", "end",
+
+    "join", "left", "outer", "inner", "cross", "natural", "on", "using",
+    "union", "all", "intersect", "except",
+
+    "primary", "key", "foreign", "references", "unique", "check", "default", 
+    "constraint", "collate", "on", "conflict", "do", "nothing", "nothing"
+]);

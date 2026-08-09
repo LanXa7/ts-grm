@@ -489,7 +489,9 @@ spi.setQueryFactory(queryFactory);
 
 class SchemaImpl implements Schema {
 
-    private _sqlArray: ReadonlyArray<string> | undefined = undefined;
+    private _creationSqlArray: ReadonlyArray<string> | undefined = undefined;
+
+    private _deletionSqlArray: ReadonlyArray<string> | undefined = undefined;
 
     private _str: string | undefined = undefined;
 
@@ -498,18 +500,36 @@ class SchemaImpl implements Schema {
         readonly tableDefs: ReadonlyArray<TableDef>
     ) {}
 
-    get sqlArray(): ReadonlyArray<string> {
-        let arr = this._sqlArray;
-        if (arr == null) {
-            this._sqlArray = arr = this._toSqlArray();
+    get creationSqlArray(): ReadonlyArray<string> {
+        let array = this._creationSqlArray;
+        if (array == null) {
+            this._creationSqlArray = array = this.getCreationSqlArray();
         }
-        return arr;
+        return array;
+    }
+
+    get deletionSqlArray(): ReadonlyArray<string> {
+        let array = this._deletionSqlArray;
+        if (array == null) {
+            this._deletionSqlArray = array = this.getDeletionSqlArray();
+        }
+        return array;
     }
     
-    private _toSqlArray(): ReadonlyArray<string> {
+    private getCreationSqlArray(): ReadonlyArray<string> {
         const arr: Array<string> = [];
         for (const tableDef of this.tableDefs) {
-            const sqlArr = tableDef.toStatements(this.sqlClient.driver);
+            const sqlArr = tableDef.toCreationStatements(this.sqlClient.driver);
+            arr.push(...sqlArr);
+        }
+        return arr;     
+    }
+
+    private getDeletionSqlArray(): ReadonlyArray<string> {
+        const arr: Array<string> = [];
+        const size = this.tableDefs.length;
+        for (let i = size - 1; i >= 0; --i) {
+            const sqlArr = this.tableDefs[i]!.toDeletionStatements(this.sqlClient.driver);
             arr.push(...sqlArr);
         }
         return arr;     
@@ -517,7 +537,10 @@ class SchemaImpl implements Schema {
 
     execute(): Promise<void> {
         return this.sqlClient.driver.transactionManager.executeReadonly(async () => {
-            for (const sql of this.sqlArray) {
+            for (const sql of this.deletionSqlArray) {
+                await this.sqlClient.executor.execute(sql);
+            }
+            for (const sql of this.creationSqlArray) {
                 await this.sqlClient.executor.execute(sql);
             }
         });
@@ -526,7 +549,7 @@ class SchemaImpl implements Schema {
     toString(): string {
         let str = this._str;
         if (str == null) {
-            const arr: Array<string> = [...this.sqlArray, ""];
+            const arr: Array<string> = [...this.deletionSqlArray, ...this.creationSqlArray, ""];
             this._str = str = arr.join(";\n\n");
         }
         return str;

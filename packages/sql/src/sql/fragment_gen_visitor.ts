@@ -69,7 +69,12 @@ export class FragmentGenGenVisitor extends spi.AbstractVisitor {
                 };
             }
         };
+        const driverName = this.sqlClient.driver.name;
         this._nodeRenderContext = new class implements NodeRenderContext {
+
+            get driverName(): string {
+                return driverName;
+            }
 
             text(value: string): void {
                 that._compositeStack.current.add(value);

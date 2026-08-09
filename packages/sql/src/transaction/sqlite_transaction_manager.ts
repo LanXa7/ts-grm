@@ -9,16 +9,16 @@ export class SqliteTransactionManager
 extends AbstractTransactionManager<SqliteTransactionContext> {
 
     constructor(
-        readonly database: Database
+        protected readonly database: Database
     ) {
         super();
     }
 
-    protected isPropagationSupported(propagation: Propagation): boolean {
+    protected override isPropagationSupported(propagation: Propagation): boolean {
         return propagation === "REQUIRED" || propagation === "MANDATORY" || propagation === "NESTED";
     }
 
-    protected create(
+    protected override create(
         isolation: Isolation | undefined, 
         timeout: number, 
         prevForSavepoint: SqliteTransactionContext | undefined
@@ -31,11 +31,11 @@ extends AbstractTransactionManager<SqliteTransactionContext> {
         );    
     }
 
-    protected async open(_: SqliteTransactionContext): Promise<void> {}
+    protected override async open(_: SqliteTransactionContext): Promise<void> {}
 
-    protected async close(_: SqliteTransactionContext): Promise<void> {}
+    protected override async close(_: SqliteTransactionContext): Promise<void> {}
 
-    protected async begin(ctx: SqliteTransactionContext): Promise<void> {
+    protected override async begin(ctx: SqliteTransactionContext): Promise<void> {
         if (ctx.savepointName != null) {
             this.database.exec(`savepoint ${ctx.savepointName}`);
         } else {
@@ -46,7 +46,7 @@ extends AbstractTransactionManager<SqliteTransactionContext> {
         }
     }
 
-    protected async commit(ctx: SqliteTransactionContext): Promise<void> {
+    protected override async commit(ctx: SqliteTransactionContext): Promise<void> {
         if (ctx.savepointName != null) {
             this.database.exec(`release savepoint ${ctx.savepointName}`);
         } else {
@@ -54,7 +54,7 @@ extends AbstractTransactionManager<SqliteTransactionContext> {
         }
     }
 
-    protected async rollback(ctx: SqliteTransactionContext): Promise<void> {
+    protected override async rollback(ctx: SqliteTransactionContext): Promise<void> {
         if (ctx.savepointName != null) {
             this.database.exec(`rollback to savepoint ${ctx.savepointName}`);
         } else {
@@ -63,7 +63,7 @@ extends AbstractTransactionManager<SqliteTransactionContext> {
     }
 }
 
-export class SqliteTransactionContext extends TransactionContext<SqliteTransactionContext> {
+class SqliteTransactionContext extends TransactionContext<SqliteTransactionContext> {
 
     private static _savepointIdSequence = 0;
 

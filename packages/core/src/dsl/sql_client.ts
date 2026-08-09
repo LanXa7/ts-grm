@@ -113,7 +113,9 @@ export type TransactionOptions =
 
 export interface Schema {
 
-    readonly sqlArray: ReadonlyArray<string>;
+    readonly creationSqlArray: ReadonlyArray<string>;
+
+    readonly deletionSqlArray: ReadonlyArray<string>;
 
     execute(): Promise<void>;
 

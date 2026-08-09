@@ -1,3 +1,4 @@
+import { PostgresDriver } from "@/driver/postgres_driver";
 import { SqliteDriver } from "@/driver/sqlite_driver";
 import { DataRows } from "@/impl/data_row_reader";
 import { Value } from "@/sql/fragment";
@@ -5,6 +6,7 @@ import { newSqlClient, SqlClientImplementor } from "@/sql_client";
 import { AbstractExecutorWrapper, Executor, Purpose } from "@/transaction/executor";
 import { EntityManager, SqlClient } from "@ts-grm/core";
 import Database from "better-sqlite3";
+import { Pool } from "pg";
 import { afterAll, afterEach, expect } from "vitest";
 
 export function useSqliteClient<TImplementor extends boolean = false>(
@@ -33,6 +35,33 @@ export function useSqliteClient<TImplementor extends boolean = false>(
         }
     })
     return sqlClient as SqlClientImplementor;
+}
+
+export function usePostgresClient(
+    sqlRecord?: SqlRecord
+): SqlClient {
+    const pool = new Pool({
+        host: '',
+        port: 5510,
+        database: 'postgres',
+        user: 'postgres',
+        password: '123456',
+        max: 20,
+        idleTimeoutMillis: 0,
+        connectionTimeoutMillis: 2000,
+    });
+    return newSqlClient(
+        new PostgresDriver(pool), {
+            entityManager: EntityManager.of(__dirname, "./model"),
+            sqlLogger: {
+                pretty: true
+            },
+            executorCreator: (executor: Executor) => 
+                sqlRecord != null
+                    ? new SqlRecordExecutor(executor, sqlRecord as SqlRecordImpl)
+                    : executor
+        }
+    );
 }
 
 export function expectCode(actual: string, expected: string) {

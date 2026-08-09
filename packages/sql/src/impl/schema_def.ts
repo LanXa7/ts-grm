@@ -13,7 +13,11 @@ export interface TableDef {
     
     readonly constraints: ReadonlyArray<ConstraintDef>;
 
-    toStatements(
+    toCreationStatements(
+        driver: Driver
+    ): ReadonlyArray<string>;
+
+    toDeletionStatements(
         driver: Driver
     ): ReadonlyArray<string>;
 }
@@ -134,7 +138,7 @@ export class TableDefImpl implements TableDef {
         throw new err.StateError(`There is no property "${prop.toString()}" in the table "${this.name}"`);
     }
 
-    toStatements(
+    toCreationStatements(
         driver: Driver
     ): ReadonlyArray<string> {
         const arr: Array<string> = [];
@@ -162,11 +166,11 @@ export class TableDefImpl implements TableDef {
                 let index = 0;
                 for (const constraint of this._simpleConstraints) {
                     writer.separator().newLine();
-                    writer.code(constraintToSql(constraint, ++index, this, true));
+                    writer.code(constraintCreationSql(constraint, ++index, this, true));
                 }
                 for (const constraint of this._foreignKeyConstraints) {
                     writer.separator().newLine();
-                    writer.code(constraintToSql(constraint, ++index, this, true));
+                    writer.code(constraintCreationSql(constraint, ++index, this, true));
                 }
             }
         });
@@ -174,12 +178,37 @@ export class TableDefImpl implements TableDef {
         if (!inline) {
             let index = 0;
             for (const constraint of this._simpleConstraints) {
-                arr.push(constraintToSql(constraint, ++index, this, false));
+                arr.push(constraintCreationSql(constraint, ++index, this, false));
             }
             for (const constraint of this._foreignKeyConstraints) {
-                arr.push(constraintToSql(constraint, ++index, this, false));
+                arr.push(constraintCreationSql(constraint, ++index, this, false));
             }
         }
+        return arr;
+    }
+
+    toDeletionStatements(
+        driver: Driver
+    ): ReadonlyArray<string> {
+        const arr: Array<string> = [];
+        //const inline = driver.requiresInlineConstraints;
+        const writer = new spi.CodeWriter();
+        if (this.entity != null) {
+            writer
+            .code("-- Entity table for \"")
+            .code(this.entity.name)
+            .code("\"")
+            .newLine();
+        }
+        if (this.prop != null) {
+            writer
+            .code("-- Middle table for \"")
+            .code(this.prop.toString())
+            .code("\"")
+            .newLine();
+        }
+        writer.code("drop table if exists ").code(this.name).codeIf(" cascade", driver.isTableCascadeDeletionSupported);
+        arr.push(writer.toString());
         return arr;
     }
 
@@ -267,7 +296,7 @@ function appendTo(
         .code(columnDef.nullable ? " null" : " not null");
 }
 
-function constraintToSql(
+function constraintCreationSql(
     constraint: ConstraintDef,
     order: number,
     declaringTable: TableDef,

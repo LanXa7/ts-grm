@@ -28,13 +28,14 @@ export class JoinFetchExecutor {
             : undefined;
     }
 
-    execute(parent: spi.DtoRow, dataRowReader: DataRowReader) {
-        if (parent.dto == null) {
-            return;
-        }
+    execute(
+        parent: spi.DtoRow, 
+        dataRowReader: DataRowReader
+    ) {
+        let joinFetchReader = this._getJoinFetchReader(dataRowReader);
         for (const [field, data] of this.joinFetchMap.entries()) {
             if (data.depth === 0) {
-                this._execute(field, parent, this._getJoinFetchReader(dataRowReader));
+                joinFetchReader = this._execute(field, parent, joinFetchReader);
             }
         }
     }
@@ -44,47 +45,45 @@ export class JoinFetchExecutor {
         parent: spi.DtoRow,
         joinFetchReader: DataRowReader
     ): DataRowReader {
-        if (this._isNull(field, joinFetchReader)) {
+        if (parent.dto == null || this._isNull(field, joinFetchReader)) {
             return this._skip(field, joinFetchReader);
         }
         const dtoRow = field.subMapper!.dtoRowReader.read(
             [parent], 
             joinFetchReader
         );
+        joinFetchReader = joinFetchReader.offset(field.subMapper!.span);
         parent.reader.resolve(field.index, parent, dtoRow.dto);
         const data = this.joinFetchMap.get(field)!;
         data.dtoRows.push(dtoRow);
-        const nextDataRowReader = joinFetchReader.offset(field.subMapper!.span);
-        let deeperDataRowReader = nextDataRowReader;
         for (const subField of field.subMapper!.fields) {
             if (!this.joinFetchMap.has(subField)) {    
                 continue;
             }
-            deeperDataRowReader = this._execute(
+            joinFetchReader = this._execute(
                 subField, 
                 dtoRow, 
-                deeperDataRowReader
+                joinFetchReader
             );
         }
-        return nextDataRowReader;
+        return joinFetchReader;
     }
 
     private _skip(
         field: spi.DtoMapperField, 
-        dataRowReader: DataRowReader
+        joinFetchReader: DataRowReader
     ): DataRowReader {
-        const nextDataRowReader = dataRowReader.offset(field.subMapper!.span);
-        let deeperDataRowReader = nextDataRowReader;
+        joinFetchReader = joinFetchReader.offset(field.subMapper!.span);
         for (const subField of field.subMapper!.fields) {
             if (!this.joinFetchMap.has(subField)) {    
                 continue;
             }
-            deeperDataRowReader = this._skip(
+            joinFetchReader = this._skip(
                 subField, 
-                deeperDataRowReader
+                joinFetchReader
             );
         }
-        return nextDataRowReader;
+        return joinFetchReader;
     }
 
     private _getJoinFetchReader(
