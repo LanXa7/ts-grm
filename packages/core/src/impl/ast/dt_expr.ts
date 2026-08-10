@@ -83,7 +83,7 @@ export class DtDiffExpr extends AbstractNumExpr<number> {
         readonly valueExpr: AbstractDtExpr,
         readonly unit: TimeUnit
     ) {
-        super();
+        super(false);
     }
 
     accept(visitor: Visitor): void {

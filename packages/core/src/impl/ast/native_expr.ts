@@ -66,8 +66,11 @@ export class NativeNumExpr<T extends string | number> extends AbstractNumExpr<T>
         visitor.visitNativeExpr(this);
     }
 
-    constructor(readonly parts: ReadonlyArray<NativePart>) {
-        super();
+    constructor(
+        readonly parts: ReadonlyArray<NativePart>,
+        isString: boolean
+    ) {
+        super(isString);
     }
 }
 

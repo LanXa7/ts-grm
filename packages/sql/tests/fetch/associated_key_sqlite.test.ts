@@ -40,22 +40,22 @@ describe.sequential("AssociatedKeySqliteTest", () => {
             {
                 "id": 6,
                 "name": "Effective TypeScript",
-                "storeId": 1
+                "storeId": "1"
             },
             {
                 "id": 12,
                 "name": "GraphQL in Action",
-                "storeId": 2
+                "storeId": "2"
             },
             {
                 "id": 3,
                 "name": "Learning GraphQL",
-                "storeId": 1
+                "storeId": "1"
             },
             {
                 "id": 9,
                 "name": "YugabyteDB: The Definitive Guide",
-                "storeId": 1
+                "storeId": "1"
             }
         ]);
     });

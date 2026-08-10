@@ -78,9 +78,10 @@ export class ShadowNumExpr<T extends number | string> extends AbstractNumExpr<T>
     private _shadow: TypedBaseTable | undefined = undefined;
 
     constructor(
-        readonly anchor: ShadowAnchor
+        readonly anchor: ShadowAnchor,
+        isString: boolean
     ) {
-        super();
+        super(isString);
     }
 
     get shadow(): TypedBaseTable | undefined {

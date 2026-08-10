@@ -6,6 +6,12 @@ import { Visitor } from "./visitor";
 
 export abstract class AbstractNumExpr<T extends string | number> extends AbstractCmpExpr<T> {
 
+    constructor(
+        readonly isString: boolean
+    ) {
+        super();
+    }
+
     unaryMinus(): AbstractNumExpr<T> {
         return new UnaryMinusExpr(this);
     }
@@ -99,7 +105,7 @@ export class UnaryMinusExpr<T extends number | string> extends AbstractNumExpr<T
     constructor(
         readonly expr: AbstractNumExpr<T>
     ) {
-        super();
+        super(expr.isString);
     }
 
     override unaryMinus(): AbstractNumExpr<T> {
@@ -118,7 +124,9 @@ export class BinaryNumExpr<T extends number | string> extends AbstractNumExpr<T>
         readonly leftExpr: AbstractNumExpr<any>,
         readonly rightExpr: AbstractNumExpr<any>
     ) {
-        super();
+        super(
+            leftExpr.isString || rightExpr.isString
+        );
     }
 
     accept(visitor: Visitor): void {

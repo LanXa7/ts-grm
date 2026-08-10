@@ -27,6 +27,8 @@ export class EntityProp {
 
     private _scalarType: ScalarType<any> | undefined = undefined;
 
+    private _isStringNumber = false;
+
     readonly associationType: __AssociationType | undefined = undefined;
 
     private _span: number | undefined = undefined;
@@ -102,6 +104,7 @@ export class EntityProp {
         this.nullable = _data.nullity !== "NONNULL";
         this.inputNonNull = _data.nullity != "NULLABLE";   
         this._scalarType = _data.scalarType; 
+        this._isStringNumber = _data.isStringNumber;
         this.associationType = _data.associationType;
         if (_data.props != null) {
             this._props = this._createProps(_data.props);
@@ -164,6 +167,13 @@ export class EntityProp {
 
     get scalarType(): ScalarType<any> | undefined {
         return this._scalarType;
+    }
+
+    get numericType(): "string" | "number" | undefined {
+        if (this._scalarType?.isNumeric ?? false) {
+            return this._isStringNumber ? "string" : "number";
+        }
+        return undefined;
     }
 
     get props(): ReadonlyMap<string, EntityProp> | undefined {
@@ -721,6 +731,7 @@ export class EntityProp {
             return;
         }
         this._scalarType = referenceProp.targetKeyProp!.scalarType;
+        this._isStringNumber = referenceProp.targetKeyProp!._isStringNumber;
         this._props = EntityProp._redirectSubPropMap(this, referenceProp.targetKeyProp!._props);
     }
 

@@ -468,8 +468,8 @@ describe.sequential("InheritanceBaseQuerySqlTest", () => {
             purpose: "query"
         });
         expect(rows).toEqual([
-            {"id":2, "name":"MANNING", "version":1},
-            {"id":1, "name":"O'REILLY", "version":1}
+            {"id":"2", "name":"MANNING", "version":1},
+            {"id":"1", "name":"O'REILLY", "version":1}
         ]);
     });
 
@@ -521,8 +521,8 @@ describe.sequential("InheritanceBaseQuerySqlTest", () => {
             purpose: "query"
         });
         expect(rows).toEqual([
-            {"id":2, "name":"MANNING", "version":1},
-            {"id":1, "name":"O'REILLY", "version":1}
+            {"id":"2", "name":"MANNING", "version":1},
+            {"id":"1", "name":"O'REILLY", "version":1}
         ]);
     });
 
@@ -582,7 +582,7 @@ describe.sequential("InheritanceBaseQuerySqlTest", () => {
         });
         expect(rows).toEqual([
             {
-                "id": 2,
+                "id": "2",
                 "name": "MANNING",
                 "version": 1,
                 "city": "Shelter Island",
@@ -651,8 +651,8 @@ describe.sequential("InheritanceBaseQuerySqlTest", () => {
             purpose: "query"
         });
         expect(rows).toEqual([
-            {"id":2, "name":"MANNING", "version":1},
-            {"id":1, "name":"O'REILLY", "version":1}
+            {"id":"2", "name":"MANNING", "version":1},
+            {"id":"1", "name":"O'REILLY", "version":1}
         ]);
     });
 
@@ -720,8 +720,8 @@ describe.sequential("InheritanceBaseQuerySqlTest", () => {
             purpose: "query"
         });
         expect(rows).toEqual([
-            {"id":2, "name":"MANNING", "version":1},
-            {"id":1, "name":"O'REILLY", "version":1}
+            {"id":"2", "name":"MANNING", "version":1},
+            {"id":"1", "name":"O'REILLY", "version":1}
         ]);
     });
 

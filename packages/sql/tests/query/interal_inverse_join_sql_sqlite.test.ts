@@ -142,7 +142,7 @@ describe.sequential("InternalInverseJoinSqlTest", () => {
             args: [1, 1, 2, 0],
             purpose: "query"
         });
-        expect(rows).toEqual([{"id":1,"name":"O'REILLY","version":1}]);
+        expect(rows).toEqual([{"id":"1","name":"O'REILLY","version":1}]);
     });
 
     it("inverseM2M1", async () => {

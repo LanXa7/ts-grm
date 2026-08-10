@@ -250,12 +250,12 @@ describe.sequential("AssociatedSqlTest", () => {
         });
         expect(rows).toEqual([
             {
-                "id": 1,
+                "id": "1",
                 "name": "O'REILLY",
                 "version": 1
             },
             {
-                "id": 2,
+                "id": "2",
                 "name": "MANNING",
                 "version": 1
             }
@@ -309,12 +309,12 @@ describe.sequential("AssociatedSqlTest", () => {
         });
         expect(rows).toEqual([
             {
-                "id": 1,
+                "id": "1",
                 "name": "O'REILLY",
                 "version": 1
             },
             {
-                "id": 2,
+                "id": "2",
                 "name": "MANNING",
                 "version": 1
             }

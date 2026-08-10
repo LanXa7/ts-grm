@@ -61,7 +61,7 @@ describe.sequential("PageSqliteTest", () => {
                     where 
                         tb_1_.ID in(?, ?)
                 `,
-                args: [1, 2],
+                args: ["1", "2"],
                 purpose: "loadAssociation(Book.store)"
             },
             {
@@ -195,7 +195,7 @@ describe.sequential("PageSqliteTest", () => {
                     where 
                         tb_1_.ID = ?
                 `,
-                args: [1],
+                args: ["1"],
                 purpose: "loadAssociation(Book.store)"
             },
             {
@@ -336,7 +336,7 @@ describe.sequential("PageSqliteTest", () => {
                     where 
                         tb_1_.ID in(?, ?)
                 `,
-                args: [2, 1],
+                args: ["2", "1"],
                 purpose: "loadAssociation(Book.store)"
             },
             {

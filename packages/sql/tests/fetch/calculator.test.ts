@@ -55,7 +55,7 @@ describe.sequential("CalculatorTest", async() => {
                                 tb_2_.NAME
                         )
                 `,
-                args: [1, 2],
+                args: ["1", "2"],
                 purpose: "loadCalculator(BookStore.newestBooks)"
             }
         );
@@ -143,7 +143,7 @@ describe.sequential("CalculatorTest", async() => {
                         tb_1_.NAME asc,
                         tb_1_.EDITION asc
                 `,
-                args: [1, 60],
+                args: ["1", 60],
                 purpose: 'loadCalculator(BookStore.specifiedBooks, {"minPrice":60})'
             },
             {
@@ -162,7 +162,7 @@ describe.sequential("CalculatorTest", async() => {
                         tb_1_.NAME asc,
                         tb_1_.EDITION asc
                 `,
-                args: [1, 60],
+                args: ["1", 60],
                 purpose: 'loadCalculator(BookStore.specifiedBooks, {"maxPriceExclusive":60})'
             }
         );

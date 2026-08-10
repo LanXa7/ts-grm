@@ -72,7 +72,11 @@ class PropNumExpr<T extends string | number> extends AbstractNumExpr<T> implemen
         readonly prop: EntityProp | AssociationProp,
         readonly isAssociation: boolean
     ) {
-        super();
+        super(
+            prop instanceof EntityProp
+                ? prop.numericType === "string"
+                : false
+        );
         if (prop instanceof EntityProp) {
             this._provider = prop.scalarProvider;
         } else {

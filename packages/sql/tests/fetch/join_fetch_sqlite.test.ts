@@ -49,7 +49,7 @@ describe.sequential("JoinFetchTest", () => {
                 "id": 6,
                 "name": "Effective TypeScript",
                 "store": {
-                    "id": 1,
+                    "id": "1",
                     "name": "O'REILLY"
                 }
             },
@@ -57,7 +57,7 @@ describe.sequential("JoinFetchTest", () => {
                 "id": 12,
                 "name": "GraphQL in Action",
                 "store": {
-                    "id": 2,
+                    "id": "2",
                     "name": "MANNING"
                 }
             },
@@ -65,7 +65,7 @@ describe.sequential("JoinFetchTest", () => {
                 "id": 3,
                 "name": "Learning GraphQL",
                 "store": {
-                    "id": 1,
+                    "id": "1",
                     "name": "O'REILLY"
                 }
             },
@@ -73,7 +73,7 @@ describe.sequential("JoinFetchTest", () => {
                 "id": 9,
                 "name": "YugabyteDB: The Definitive Guide",
                 "store": {
-                    "id": 1,
+                    "id": "1",
                     "name": "O'REILLY"
                 }
             }
@@ -117,25 +117,25 @@ describe.sequential("JoinFetchTest", () => {
             {
                 "id": 6,
                 "name": "Effective TypeScript",
-                "storeId": 1,
+                "storeId": "1",
                 "storeName": "O'REILLY"
             },
             {
                 "id": 12,
                 "name": "GraphQL in Action",
-                "storeId": 2,
+                "storeId": "2",
                 "storeName": "MANNING"
             },
             {
                 "id": 3,
                 "name": "Learning GraphQL",
-                "storeId": 1,
+                "storeId": "1",
                 "storeName": "O'REILLY"
             },
             {
                 "id": 9,
                 "name": "YugabyteDB: The Definitive Guide",
-                "storeId": 1,
+                "storeId": "1",
                 "storeName": "O'REILLY"
             }
         ]);

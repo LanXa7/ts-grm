@@ -109,7 +109,7 @@ export class __I64Prop<
     }
 
     asString(): __I64Prop<string, TNullity> {
-        return new __I64Prop({...this.__data});
+        return new __I64Prop({...this.__data, isStringNumber: true});
     }
 }
 
@@ -947,6 +947,7 @@ export type __CombinedNullity<
 export type __PropData = {
     readonly nullity: __NullityType;
     readonly scalarType: ScalarType<any> | undefined;
+    readonly isStringNumber: boolean;
     readonly scalarProvider: ScalarProvider<any, any> | undefined;
     readonly props: Record<string, __PropContract<any, any>> | undefined;
     readonly targetModel: __ModelRef<AnyModel> | undefined;
@@ -1009,6 +1010,7 @@ export type __CalculatorData = {
 export const __EMPTY_PROP_DEFINITION_DATA: __PropData = {
     nullity: "NONNULL",
     scalarType: undefined,
+    isStringNumber: false,
     scalarProvider: undefined,
     props: undefined,
     targetModel: undefined,

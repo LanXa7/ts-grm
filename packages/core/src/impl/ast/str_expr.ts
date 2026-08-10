@@ -283,7 +283,7 @@ export class TrimExpr extends AbstractStrExpr {
 export class LengthExpr extends AbstractNumExpr<number> {
 
     constructor(readonly expr: AbstractStrExpr) {
-        super();
+        super(false);
     }
 
     accept(visitor: Visitor): void {

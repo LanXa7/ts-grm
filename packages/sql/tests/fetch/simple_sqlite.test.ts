@@ -87,7 +87,7 @@ describe.sequential("SimpleSqliteFetchTest", () => {
                     where 
                         tb_1_.ID in(?, ?)
                 `,
-                args: [2, 1],
+                args: ["2", "1"],
                 purpose: "loadAssociation(Book.store)"
             }
         );
@@ -97,42 +97,42 @@ describe.sequential("SimpleSqliteFetchTest", () => {
                 name: 'GraphQL in Action',
                 edition: 3,
                 price: 79.99,
-                store: { id: 2, name: 'MANNING', version: 1 }
+                store: { id: "2", name: 'MANNING', version: 1 }
             },
             {
                 id: 11,
                 name: 'GraphQL in Action',
                 edition: 2,
                 price: 69.99,
-                store: { id: 2, name: 'MANNING', version: 1 }
+                store: { id: "2", name: 'MANNING', version: 1 }
             },
             {
                 id: 10,
                 name: 'GraphQL in Action',
                 edition: 1,
                 price: 59.99,
-                store: { id: 2, name: 'MANNING', version: 1 }
+                store: { id: "2", name: 'MANNING', version: 1 }
             },
             {
                 id: 3,
                 name: 'Learning GraphQL',
                 edition: 3,
                 price: 33.99,
-                store: { id: 1, name: "O'REILLY", version: 1 }
+                store: { id: "1", name: "O'REILLY", version: 1 }
             },
             {
                 id: 2,
                 name: 'Learning GraphQL',
                 edition: 2,
                 price: 33.99,
-                store: { id: 1, name: "O'REILLY", version: 1 }
+                store: { id: "1", name: "O'REILLY", version: 1 }
             },
             {
                 id: 1,
                 name: 'Learning GraphQL',
                 edition: 1,
                 price: 33.99,
-                store: { id: 1, name: "O'REILLY", version: 1 }
+                store: { id: "1", name: "O'REILLY", version: 1 }
             }
         ]);
     });
@@ -180,13 +180,13 @@ describe.sequential("SimpleSqliteFetchTest", () => {
                         tb_1_.NAME asc,
                         tb_1_.EDITION desc
                 `,
-                args: [2, 1],
+                args: ["2", "1"],
                 purpose: "loadAssociation(BookStore.books)"
             }
         );
         expect(rows).toEqual([
             {
-                "id": 2,
+                "id": "2",
                 "name": "MANNING",
                 "version": 1,
                 "books": [
@@ -208,7 +208,7 @@ describe.sequential("SimpleSqliteFetchTest", () => {
                 ]
             },
             {
-                "id": 1,
+                "id": "1",
                 "name": "O'REILLY",
                 "version": 1,
                 "books": [

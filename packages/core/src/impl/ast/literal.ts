@@ -16,12 +16,12 @@ export function createLiteral(
     switch (typeof value) {
         case "string":
             return as === "AS_NUMBER"
-                    ? new LiteralNumExpr(value)
+                    ? new LiteralNumExpr(value, true)
                 : as === "AS_ENUM_SET"
                     ? new LiteralEsExpr(value)
                 : new LiteralStrExpr(value);
         case "number":
-            return new LiteralNumExpr(value);
+            return new LiteralNumExpr(value, false);
         default:
             if (value instanceof Date) {
                 return new LiteralDtExpr(value);
@@ -56,8 +56,8 @@ class LiteralExpr<T> extends AbstractExpr<T> implements ValueExprContract {
 
 class LiteralNumExpr<T extends number | string> extends AbstractNumExpr<T> implements ValueExprContract {
 
-    constructor(readonly value: T) {
-        super();
+    constructor(readonly value: T, isString: boolean) {
+        super(isString);
     }
 
     get isConstant(): false {

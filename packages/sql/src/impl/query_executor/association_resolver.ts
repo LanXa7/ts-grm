@@ -19,11 +19,12 @@ import {
 } from "@ts-grm/core";
 import { RecursiveContext } from "./recursive_context";
 import { AssociationBinding } from "./data";
-import { DataRowReader } from "../data_row_reader";
+import { DataRowReader, TypeMask } from "../data_row_reader";
 import { buildStatement } from "./sql_gen";
 import { baseQuerySelectionMapArgs, capitalize, expressionsToAst, filterSourceRows, hashOf } from "./util";
 import { resolveCalculators, resolveTsFormulas } from "./calculator_resolver";
 import { JoinFetchData, JoinFetchExecutor } from "./join_fetch_executor";
+import { MaskProvider } from "../mask_provider";
 
 export async function resolveAssociations(
     sqlClient: SqlClientImplementor,
@@ -161,6 +162,30 @@ class AssociationResolver {
         }
         const entityTable = targetTable as any as spi.AbstractEntityTable;
         return keyProps.map(p => entityTable.__expression(p)) as any;
+    }
+
+    private get _keyMasks(): ReadonlyArray<TypeMask> | undefined {
+        let keyProps: ReadonlyArray<spi.EntityProp>;
+        if (this._unresolvedField.prop.referenceKeyProp != null) {
+            keyProps = this._unresolvedField.prop.referenceKeyProp.scalarProps!;
+        } else {
+            keyProps = (
+                this._unresolvedField.prop.targetKeyProp 
+                ?? this._unresolvedField.prop.targetEntity!.idProp
+            ).scalarProps!;
+        }
+        let masks: Array<TypeMask> | undefined = undefined;
+        let size = keyProps.length;
+        for (let i = 0; i < size; i++) {
+            const numericType = keyProps[i]!.numericType;
+            if (numericType != null) {
+                if (masks == null) {
+                    masks = Array.from({length: size}, () => TypeMask.NONE);
+                }
+                masks[i] = numericType === "string" ? TypeMask.STR : TypeMask.NONE;
+            }
+        }
+        return masks;
     }
 
     private get _keySpan(): number {
@@ -391,6 +416,7 @@ class AssociationResolver {
                     this._keySpan, 
                     this._byTargetKey ? this._targetKeySpan : view.mapper.span, 
                     this._byTargetKey ? this._orderSpan : 0,
+                    (query as any as MaskProvider).masks,
                     this._byTargetKey 
                         ? { 
                             getter: async(ids: ReadonlyArray<any>) => this._targetRowMap(ids, view), 
@@ -401,7 +427,8 @@ class AssociationResolver {
                     0
                 );
             }
-            keyRowReader = recursiveContext?.toKeyRowReader() ?? DataRowReader.of(dataRows);
+            keyRowReader = recursiveContext?.toKeyRowReader() 
+                ?? DataRowReader.of(dataRows, (query as any as MaskProvider).masks);
         }
         const valueRowReader = keyRowReader.offset(this._keySpan);
         return [keyRowReader, valueRowReader, recursiveContext];
@@ -453,7 +480,8 @@ class AssociationResolver {
             const keyRowReader = DataRowReader.of(
                 this._keySpan > 1
                     ? dependencies
-                    : dependencies.map(v => [v])
+                    : dependencies.map(v => [v]),
+                this._keyMasks
             );
             return [
                 keyRowReader, 
@@ -487,7 +515,7 @@ class AssociationResolver {
             kind: "LOAD_ASSOCIATION",
             prop: this._unresolvedField.prop as spi.EntityProp
         });
-        const keyRowReader = DataRowReader.of(dataRows);
+        const keyRowReader = DataRowReader.of(dataRows, (query as any as MaskProvider).masks);
         return [
             keyRowReader, 
             keyRowReader.offset(this._keySpan), 
@@ -697,7 +725,7 @@ class AssociationResolver {
             prop: this._unresolvedField.prop as spi.EntityProp
         });
         const keySpan = this._keySpan;
-        const keyReader = DataRowReader.of(dataRows);
+        const keyReader = DataRowReader.of(dataRows, (query as any as MaskProvider).masks);
         const valueReader = keyReader.offset(keySpan);
         const dtoReader = this._targetDtoRowReader;
         while (keyReader.next()) {

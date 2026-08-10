@@ -63,7 +63,7 @@ describe.sequential("TsFormulaTest", () => {
                         tb_1_.NAME asc,
                         tb_1_.EDITION desc
                 `,
-                args: [1, 2],
+                args: ["1", "2"],
                 purpose: "loadAssociation(BookStore.books)"
             }
         );
@@ -200,7 +200,7 @@ describe.sequential("TsFormulaTest", () => {
                     where 
                         tb_1_.ID = ?
                 `,
-                args: [1],
+                args: ["1"],
                 purpose: "loadAssociation(Book.store)"
             },
             {
@@ -216,7 +216,7 @@ describe.sequential("TsFormulaTest", () => {
                         tb_1_.NAME asc,
                         tb_1_.EDITION desc
                 `,
-                args: [1],
+                args: ["1"],
                 purpose: "loadAssociation(BookStore.books)"
             }
         );
@@ -310,7 +310,7 @@ describe.sequential("TsFormulaTest", () => {
                     where 
                         tb_1_.ID = ?
                 `,
-                args: [1],
+                args: ["1"],
                 purpose: "loadAssociation(Book.store)"
             },
             {
@@ -326,7 +326,7 @@ describe.sequential("TsFormulaTest", () => {
                         tb_1_.NAME asc,
                         tb_1_.EDITION desc
                 `,
-                args: [1],
+                args: ["1"],
                 purpose: "loadAssociation(BookStore.books)"
             }
         );

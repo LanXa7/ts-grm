@@ -53,7 +53,9 @@ export class CoalesceNumExpr<T extends number | string> extends AbstractNumExpr<
         readonly expr: AbstractNumExpr<T>,
         readonly defaultExprs: ReadonlyArray<AbstractNumExpr<T>>
     ) {
-        super();
+        super(
+            expr.isString || defaultExprs.find(e => e.isString) != null
+        );
     }
 
     override get scalarProvider(): ScalarProvider<any, any> | undefined {

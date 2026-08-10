@@ -174,7 +174,7 @@ describe("MergeJoinSqliteTest", () => {
             purpose: "query"
         });
         expect(rows).toEqual([
-            {"id":2, "name":"MANNING", "version":1}
+            {"id":"2", "name":"MANNING", "version":1}
         ]);
     });
 
@@ -223,8 +223,8 @@ describe("MergeJoinSqliteTest", () => {
             purpose: "query"
         });
         expect(rows).toEqual([
-            {"id":1, "name":"O'REILLY", "version":1},
-            {"id":2, "name":"MANNING", "version":1}
+            {"id":"1", "name":"O'REILLY", "version":1},
+            {"id":"2", "name":"MANNING", "version":1}
         ]);
     });
 

@@ -7,6 +7,7 @@ import { MergedRootQueryImpl } from "../merged_query";
 import { buildStatement } from "./sql_gen";
 import { readColumn, readColumnArray, readColumnMap } from "./column_reader";
 import { IllegalPaginationError } from "@/error/illegal_pagination";
+import { MaskProvider } from "../mask_provider";
 
 const explicitPurposeStorage = new AsyncLocalStorage<Purpose>();
 
@@ -35,7 +36,7 @@ export async function executeQuery<TProjection extends RootQueryProjection<any>>
             args, 
             explicitPurposeStorage.getStore() ?? { kind: "QUERY" }
         );
-        const dataRowReader = DataRowReader.of(dataRows);
+        const dataRowReader = DataRowReader.of(dataRows, (query as any as MaskProvider).masks);
         switch (contract.projection.kind) {
             case "ROOT_SINGLE":
                 return await readColumn(

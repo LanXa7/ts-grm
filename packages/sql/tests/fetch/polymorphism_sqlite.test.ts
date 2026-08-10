@@ -113,7 +113,7 @@ describe.sequential("PolymorphismSqliteTest", () => {
                         tb_1_.NAME asc,
                         tb_1_.EDITION desc
                 `,
-                args: [1, 2],
+                args: ["1", "2"],
                 purpose: "loadAssociation(BookStore.books)"
             },
         );
@@ -250,7 +250,7 @@ describe.sequential("PolymorphismSqliteTest", () => {
                         tb_1_.NAME asc,
                         tb_1_.EDITION desc
                 `,
-                args: [1, 2],
+                args: ["1", "2"],
                 purpose: "loadAssociation(BookStore.books)"
             },
         );

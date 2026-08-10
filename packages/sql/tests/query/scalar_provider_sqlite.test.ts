@@ -253,7 +253,7 @@ describe.sequential("ScalarProviderTest", () => {
         );
         expect(rows).toEqual([
             {
-                "id": 2,
+                "id": "2",
                 "name": "MANNING",
                 "version": 1,
                 "city": "Shelter Island",

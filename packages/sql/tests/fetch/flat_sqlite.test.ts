@@ -108,7 +108,7 @@ describe.sequential("FlatTest", () => {
                     where 
                         tb_1_.ID in(?, ?)
                 `,
-                args: [1, 2],
+                args: ["1", "2"],
                 purpose: "loadAssociation(Book.store)"
             }
         );
@@ -118,7 +118,7 @@ describe.sequential("FlatTest", () => {
                 name: 'YugabyteDB: The Definitive Guide',
                 edition: 3,
                 price: 89.99,
-                storeId: 1,
+                storeId: "1",
                 storeName: "O'REILLY"
             },
             {
@@ -126,7 +126,7 @@ describe.sequential("FlatTest", () => {
                 name: 'GraphQL in Action',
                 edition: 3,
                 price: 79.99,
-                storeId: 2,
+                storeId: "2",
                 storeName: 'MANNING'
             }
         ]);

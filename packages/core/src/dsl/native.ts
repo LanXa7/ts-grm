@@ -28,7 +28,8 @@ function num(
     ...values: ReadonlyArray<NativeValueType>
 ) {
     return new NativeNumExpr<number>(
-        collectNativeParts(strings, ...values)
+        collectNativeParts(strings, ...values),
+        false
     ) as any as NumExpression<number>;
 }
 
@@ -37,7 +38,8 @@ function numAsString(
     ...values: ReadonlyArray<NativeValueType>
 ) {
     return new NativeNumExpr<string>(
-        collectNativeParts(strings, ...values)
+        collectNativeParts(strings, ...values),
+        true
     ) as any as NumExpression<string>;
 }
 

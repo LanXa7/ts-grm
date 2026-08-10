@@ -11,6 +11,7 @@ import { __Mutable } from "@/auxiliary_types";
 import { AssociationEntity } from "./association_entity";
 import { DatabaseStrategy } from "./strategy";
 import { __Ctor, __TableOptions } from "@/schema/model_internal_types";
+import { __PropData } from "@/index_internal";
 
 export class Entity {
 
@@ -292,6 +293,7 @@ export class Entity {
                         : "NULLABLE"
                     : "NONNULL",
                 scalarType: undefined,
+                isStringNumber: false,
                 scalarProvider: undefined,
                 props: undefined,
                 targetModel: undefined,

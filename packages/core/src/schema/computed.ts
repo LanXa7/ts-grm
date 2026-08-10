@@ -6,6 +6,8 @@ import { View } from "./dto/api";
 import { StandardSchemaV1 } from "@standard-schema/spec";
 import { __MemberType } from "./dto/all_scalars";
 import { AnyModel } from "./model";
+import { Entity } from "@/impl";
+import { AbstractNumExpr } from "@/spi";
 
 export class TsFormula<TValue> {
 
@@ -42,11 +44,33 @@ export type TsFormulaFn<
 
 export class SqlFormula<TValue> {
 
+    private _numericType: "string" | "number" | "none" | undefined = undefined;
+
     private constructor(
         readonly valueType: StandardSchemaV1,
         readonly sourceModel: () => AnyModel,
         readonly fn: SqlFormulaFn<AnyModel, TValue>
     ) {
+    }
+
+    get numericType(): "string" | "number" | undefined {
+        let numbericType = this._numericType;
+        if (numbericType == null) {
+            const entity = Entity.of(this.sourceModel());
+            const table = entity.table(undefined);
+            const expr = this.fn(table as any);
+            if (expr instanceof AbstractNumExpr) {
+                if (expr.isString) {
+                    numbericType = "string";
+                } else {
+                    numbericType = "number";
+                }
+            } else {
+                numbericType = "none";
+            }
+            this._numericType = numbericType;
+        }
+        return numbericType !== "none" ? numbericType : undefined;
     }
 
     static of<

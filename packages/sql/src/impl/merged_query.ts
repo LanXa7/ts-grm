@@ -6,12 +6,16 @@ import { AtomRootQueryImpl } from "./atom_root_query_impl";
 import { executeQuery } from "./query_executor/execute_query";
 import { exeuctePageQuery, finalRangeOptions } from "./query_executor/execute_page_query";
 import { NoDataError, TooManyDataError } from "@/error/data_error";
+import { TypeMask } from "./data_row_reader";
+import { MaskProvider } from "./mask_provider";
 
 export class MergedRootQueryImpl<
     TProjection extends RootQueryProjection<any>
-> implements RootQuery<TProjection>, spi.MergedQueryContract {
+> implements RootQuery<TProjection>, spi.MergedQueryContract, MaskProvider {
 
     private readonly _sqlClient: SqlClientImplementor;
+
+    private readonly _masks: ReadonlyArray<TypeMask> | undefined;
 
     constructor(
         readonly kind: spi.MergedQueryKind,
@@ -31,6 +35,7 @@ export class MergedRootQueryImpl<
                 throw new err.ArgumentError("Cannot merge difference root queries created by different sqlClient");
             }
         }
+        this._masks = (queries[0] as any as MaskProvider).masks;
         this._sqlClient = sqlClient!;
     }
 
@@ -137,6 +142,10 @@ export class MergedRootQueryImpl<
         }
         return (q as MergedRootQueryImpl<any>).sqlClient;
     }
+
+    get masks(): ReadonlyArray<TypeMask> | undefined {
+        return this._masks;
+    }
 }
 
 export class MergedBaseQueryImpl<TProjection>
@@ -225,7 +234,13 @@ implements spi.MergedQueryContract {
         readonly kind: spi.MergedQueryKind,
         readonly queries: ReadonlyArray<spi.QueryContract>
     ) {
-        super();
+        super(
+            queries.find(query => 
+                query instanceof spi.AbstractNumExpr
+                    ? (query as spi.AbstractNumExpr<any>).isString
+                    : false
+            ) != null
+        );
     }
 
     get projection(): spi.ProjectionContract {

@@ -341,6 +341,18 @@ describe("EntityTest", () => {
         });
     });
 
+    it("numericType", () => {
+        const storeIdProp = Entity.of(BOOK_STORE).declaredPropMap.get("id")!;
+        const storeIdRefProp = Entity.of(BOOK).declaredPropMap.get("storeId")!;
+        expect(storeIdProp.numericType).toEqual("string");
+        expect(storeIdRefProp.numericType).toEqual("string");
+
+        const treeNodeIdProp = Entity.of(BOOK).declaredPropMap.get("id")!;
+        const treeNodeIdRefProp = Entity.of(TREE_NODE).declaredPropMap.get("parentNodeId")!;
+        expect(treeNodeIdProp.numericType).toEqual("number");
+        expect(treeNodeIdRefProp.numericType).toEqual("number");
+    });
+
     it("inheritance", () => {
 
         const strategy: DatabaseStrategy = {

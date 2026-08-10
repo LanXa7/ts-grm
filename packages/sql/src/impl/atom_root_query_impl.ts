@@ -1,14 +1,20 @@
-import { spi, ExpressionOrder, AtomRootQuery, RootQueryProjection, RowTypeOf, FetchOptions, FetchRangeOptions, FetchPageOptions, Page } from "@ts-grm/core";
+import { spi, ExpressionOrder, AtomRootQuery, RootQueryProjection, RowTypeOf, FetchOptions, FetchRangeOptions, FetchPageOptions, Page, RootQuerySelection } from "@ts-grm/core";
 import { MutableRootQueryImpl } from "./mutable_root_query_impl";
 import { AbstractRootQueryProjection } from "./query_projection";
 import { executeQuery } from "./query_executor/execute_query";
 import { exeuctePageQuery, finalRangeOptions } from "./query_executor/execute_page_query";
 import { NoDataError, TooManyDataError } from "@/error/data_error";
+import { TypeMask } from "./data_row_reader";
+import { MaskProvider } from "./mask_provider";
+import { LambdaJoinFetchVisitor } from "./query_executor/join_fetch_visitor";
+import { SqlClientImplementor } from "@/sql_client";
 
 export class AtomRootQueryImpl<TProjection extends RootQueryProjection<any>> 
-implements AtomRootQuery<TProjection>, spi.AtomQueryContract {
+implements AtomRootQuery<TProjection>, spi.AtomQueryContract, MaskProvider {
 
     readonly options: spi.AtomQueryOptions;
+
+    private _masks: ReadonlyArray<TypeMask> | undefined = undefined;
 
     constructor(
         readonly mutableQuery: MutableRootQueryImpl,
@@ -207,5 +213,90 @@ implements AtomRootQuery<TProjection>, spi.AtomQueryContract {
             this._projection,
             { ...this.options, countMode: true }
         );
+    }
+
+    get masks(): ReadonlyArray<TypeMask> | undefined {
+        let masks = this._masks;
+        if (masks == null) {
+            const projection = this.projection;
+            const maskCreator = new MaskCreator(this.mutableQuery.sqlClient);
+            switch (projection.kind) {
+                case "ROOT_SINGLE":
+                    maskCreator.add(projection.selection);
+                    break;
+                case "ROOT_ARRAY":
+                    for (const selection of projection.selections) {
+                        maskCreator.add(selection);
+                    }
+                    break;
+                case "ROOT_MAP":
+                    for (const key in projection.selections) {
+                        maskCreator.add(projection.selections[key]!);
+                    }
+                    break;
+                default:
+                    throw new Error("Internal bug");
+            }
+            this._masks = masks = maskCreator.create();
+        }
+        return masks.length === 0 ? undefined : masks;
+    }
+}
+
+class MaskCreator {
+
+    private _masks: Array<TypeMask> | undefined = undefined;
+
+    private _index = 0;
+
+    constructor(
+        private readonly _sqlClient: SqlClientImplementor
+    ) {}
+
+    add(selection: RootQuerySelection<any>): void {
+        if (selection instanceof spi.FetchedViewImpl) {
+            this._addFetchedView(selection);
+        } else {
+            if (selection instanceof spi.AbstractNumExpr) {
+                this._addTypeMask(selection.isString ? "string" : "number");
+            }
+            this._index++;
+        }
+    }
+
+    private _addFetchedView(
+        fetchedView: spi.FetchedViewImpl<any, any>
+    ): void {
+        const joinFetchVisitor = new LambdaJoinFetchVisitor(this._sqlClient, {
+            visitField: field => {
+                if (field.columnIndex == null) {
+                    return;
+                }
+                if (field.prop instanceof spi.EntityProp) {
+                    this._addTypeMask(field.prop.numericType);
+                } else if (field.prop instanceof spi.SqlFormulaProp) {
+                    this._addTypeMask(field.prop.formula.numericType)
+                }
+                this._index++;
+            }
+        });
+        joinFetchVisitor.visit(fetchedView.view.mapper);
+    }
+
+    private _addTypeMask(
+        numericType: "string" | "number" | undefined
+    ): void {
+        if (numericType == null) {
+            return;
+        }
+        let masks = this._masks;
+        if (masks == null) {
+            this._masks = masks = Array.from({length: this._index}, () => TypeMask.NONE);
+        }
+        masks[this._index] = numericType === "string" ? TypeMask.STR : TypeMask.NUM;
+    }
+
+    create(): ReadonlyArray<TypeMask> {
+        return this._masks ?? [];
     }
 }

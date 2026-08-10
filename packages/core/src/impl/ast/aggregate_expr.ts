@@ -9,7 +9,11 @@ export class AggregateExpr<T extends number | string> extends AbstractNumExpr<T>
         readonly op: AggregatieOp,
         readonly expr: AbstractExpr<T> | undefined
     ) {
-        super();
+        super(
+            expr instanceof AbstractNumExpr
+                ? (expr as AbstractNumExpr<any>).isString
+                : false
+        );
     }
 
     accept(visitor: Visitor): void {

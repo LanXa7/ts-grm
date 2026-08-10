@@ -59,8 +59,7 @@ describe.sequential("PostgresTest", () => {
                         tb_1_.FIRST_NAME asc,
                         tb_1_.LAST_NAME asc
                 `,
-                // args: [6, 12, 3, 9], // TODO: should be number
-                args: ["6", "12", "3", "9"],
+                args: [6, 12, 3, 9],
                 purpose: "loadAssociation(Book.authors)",
             }
         )

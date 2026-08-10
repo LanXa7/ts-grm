@@ -62,7 +62,7 @@ describe.sequential("FoldSqliteTest", () => {
                     where 
                         tb_1_.ID = ?
                 `,
-                args: [1],
+                args: ["1"],
                 purpose: "loadAssociation(Book.store)"
             },
             {
@@ -91,7 +91,7 @@ describe.sequential("FoldSqliteTest", () => {
             },
             "associations": {
                 "store": {
-                    "id": 1,
+                    "id": "1",
                     "key": {
                         "name": "O'REILLY",
                         "version": 1
@@ -173,7 +173,7 @@ describe.sequential("FoldSqliteTest", () => {
                     where 
                         tb_1_.ID = ?
                 `,
-                args: [1],
+                args: ["1"],
                 purpose: "loadAssociation(Book.store)"
             },
             {
@@ -201,7 +201,7 @@ describe.sequential("FoldSqliteTest", () => {
                 "edition": 3
             },
             "associations": {
-                "storeId": 1,
+                "storeId": "1",
                 "storeKey": {
                     "name": "O'REILLY",
                     "version": 1

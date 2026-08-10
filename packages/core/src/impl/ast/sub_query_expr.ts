@@ -36,7 +36,11 @@ class NumSubQueryExpr extends AbstractNumExpr<any> implements SubQueryExprContra
         readonly op: SubQueryExprOp,
         readonly subQuery: QueryContract
     ) {
-        super();
+        super(
+            subQuery.projection.kind === "SUB_SINGLE"
+                ? (subQuery.projection.selection as AbstractNumExpr<any>).isString
+                : false
+        );
     }
 
     accept(visitor: Visitor): void {

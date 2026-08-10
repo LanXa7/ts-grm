@@ -296,7 +296,7 @@ describe.sequential("InheritanceSqlTest", () => {
             args: ["%room%"],
             purpose: "query"
         });
-        expect(rows).toEqual([{"id":2,"name":"MANNING","version":1}]);
+        expect(rows).toEqual([{"id": "2", "name": "MANNING","version": 1}]);
     });
 
     it("asFunctionOfSingleTable", async () => {
@@ -326,7 +326,7 @@ describe.sequential("InheritanceSqlTest", () => {
             args: ["%ing%", "Shelter Island"],
             purpose: "query"
         });
-        expect(rows).toEqual([{"id":2,"name":"MANNING","version":1}]);
+        expect(rows).toEqual([{"id":"2", "name": "MANNING", "version": 1}]);
     });
 
     it("superPropsOfSingleTables", async () => {
@@ -361,7 +361,7 @@ describe.sequential("InheritanceSqlTest", () => {
         });
         expect(rows).toEqual([
             {
-                "id": 2,
+                "id": "2",
                 "name": "MANNING",
                 "version": 1,
                 "city": "Shelter Island",
@@ -410,8 +410,8 @@ describe.sequential("InheritanceSqlTest", () => {
             purpose: "query"
         });
         expect(rows).toEqual([
-            {"id":1, "name":"O'REILLY", "version":1},
-            {"id":2, "name":"MANNING", "version":1}
+            {"id":"1", "name":"O'REILLY", "version":1},
+            {"id":"2", "name":"MANNING", "version":1}
         ]);
     });
 });

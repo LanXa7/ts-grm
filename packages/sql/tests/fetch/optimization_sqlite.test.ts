@@ -43,7 +43,7 @@ describe.sequential("OptimizationTest", () => {
                 "edition": 1,
                 "price": 59.99,
                 "store": {
-                    "id": 2
+                    "id": "2"
                 }
             },
             {
@@ -52,7 +52,7 @@ describe.sequential("OptimizationTest", () => {
                 "edition": 2,
                 "price": 69.99,
                 "store": {
-                    "id": 2
+                    "id": "2"
                 }
             },
             {
@@ -61,7 +61,7 @@ describe.sequential("OptimizationTest", () => {
                 "edition": 3,
                 "price": 79.99,
                 "store": {
-                    "id": 2
+                    "id": "2"
                 }
             }
         ]);

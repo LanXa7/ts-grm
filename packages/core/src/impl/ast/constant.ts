@@ -7,7 +7,7 @@ export class ConstantExpr extends AbstractNumExpr<number> implements ValueExprCo
     constructor(
         readonly value: number
     ) {
-        super();
+        super(false);
     }
 
     get isConstant(): true {

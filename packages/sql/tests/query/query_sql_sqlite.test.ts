@@ -517,7 +517,7 @@ describe.sequential("QuerySqlTest", () => {
                     "edition": 3
                 },
                 {
-                    "id": 1,
+                    "id": "1",
                     "name": "O'REILLY",
                     "version": 1
                 }
@@ -529,7 +529,7 @@ describe.sequential("QuerySqlTest", () => {
                     "edition": 2
                 },
                 {
-                    "id": 2,
+                    "id": "2",
                     "name": "MANNING",
                     "version": 1
                 }
@@ -602,7 +602,14 @@ describe.sequential("QuerySqlTest", () => {
             args: [3, 3],
             purpose: "query"
         });
-        expect(rows).toEqual([[6,1],[6,2],[12,1],[12,2],[3,1],[3,2]]);
+        expect(rows).toEqual([
+            [6, "1"],
+            [6, "2"],
+            [12, "1"],
+            [12, "2"],
+            [3, "1"],
+            [3, "2"]
+        ]);
     });
 
     it("cteTableJoinEntityTable", async () => {
@@ -657,8 +664,8 @@ describe.sequential("QuerySqlTest", () => {
         });
         expect(rows).toEqual([
             [
-                {"id":3, "name":"Learning GraphQL", "edition":3}, 
-                {"id":1, "name":"O'REILLY", "version":1}
+                {"id": 3, "name": "Learning GraphQL", "edition":3}, 
+                {"id": "1", "name":"O'REILLY", "version":1}
             ]
         ]);
     });
@@ -716,7 +723,7 @@ describe.sequential("QuerySqlTest", () => {
         expect(rows).toEqual([
             [
                 {"id":3, "name":"Learning GraphQL", "edition":3},
-                {"id":1, "name":"O'REILLY", "version":1}
+                {"id":"1", "name":"O'REILLY", "version":1}
             ]
         ]);
     });
@@ -771,7 +778,7 @@ describe.sequential("QuerySqlTest", () => {
         expect(rows).toEqual([
             [
                 {"id":3, "name":"Learning GraphQL", "edition":3},
-                {"id":1, "name":"O'REILLY", "version":1}
+                {"id":"1", "name":"O'REILLY", "version":1}
             ]
         ]);
     });
@@ -830,7 +837,7 @@ describe.sequential("QuerySqlTest", () => {
         expect(rows).toEqual([
             [
                 {"id":3, "name":"Learning GraphQL", "edition":3},
-                {"id":1, "name":"O'REILLY","version":1}
+                {"id":"1", "name":"O'REILLY","version":1}
             ]
         ]);
     });
@@ -882,7 +889,7 @@ describe.sequential("QuerySqlTest", () => {
                     where 
                         tb_1_.ID = ?
                 `,
-                args: [1],
+                args: ["1"],
                 purpose: "loadAssociation(Book.store)"
             },
             {

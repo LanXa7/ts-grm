@@ -15,6 +15,8 @@ export class ScalarType<T> {
 
     readonly _dummy: T | undefined = undefined;
 
+    private _isNumeric: boolean | undefined = undefined;
+
     private constructor(
         readonly kind: ScalarKind,
         readonly length: number | undefined
@@ -58,6 +60,27 @@ export class ScalarType<T> {
 
     static image(): ScalarType<Uint8Array> {
         return new ScalarType<Uint8Array>("BINARY", undefined);
+    }
+
+    get isNumeric(): boolean {
+        let isNumeric = this._isNumeric;
+        if (isNumeric == null) {
+            switch (this.kind) {
+                case "I8":
+                case "I16":
+                case "I32":
+                case "I64":
+                case "F32":
+                case "F64":
+                case "NUM":
+                    isNumeric = true;
+                    break;
+                default: 
+                    isNumeric = false;
+            }
+            this._isNumeric = isNumeric;
+        }
+        return isNumeric;
     }
 
     toString(): string {

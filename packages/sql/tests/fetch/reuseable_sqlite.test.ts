@@ -51,7 +51,7 @@ describe.sequential("ReuseableTest", () => {
                     where 
                         tb_1_.ID in(?, ?)
                 `,
-                args: [1, 2],
+                args: ["1", "2"],
                 purpose: "loadAssociation(Book.store)"
             }
         );
@@ -126,7 +126,7 @@ describe.sequential("ReuseableTest", () => {
                     where 
                         tb_1_.ID in(?, ?)
                 `,
-                args: [1, 2],
+                args: ["1", "2"],
                 purpose: "loadAssociation(Book.store)"
             }
         );

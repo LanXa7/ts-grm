@@ -62,7 +62,7 @@ describe.sequential("ActionSqliteTest", () => {
                         tb_1_.NAME asc,
                         tb_1_.EDITION desc
                 `,
-                args: [2],
+                args: ["2"],
                 purpose: "loadAssociation(BookStore.books)"
             },
             {
@@ -87,7 +87,7 @@ describe.sequential("ActionSqliteTest", () => {
         );
         expect(rows).toEqual([
             {
-                "bookStoreId": 2,
+                "bookStoreId": "2",
                 "bookStoreName": "MANNING",
                 "bookStoreVersion": 1,
                 "bookStoreBooks": [
@@ -179,7 +179,7 @@ describe.sequential("ActionSqliteTest", () => {
                         tb_1_.NAME asc,
                         tb_1_.EDITION desc
                 `,
-                args: [1, 2, 3],
+                args: ["1", "2", 3],
                 purpose: "loadAssociation(BookStore.books)"
             }
         );
@@ -347,7 +347,7 @@ describe.sequential("ActionSqliteTest", () => {
                     order by 
                         tb_1_.PRICE desc
                 `,
-                args: [2],
+                args: ["2"],
                 purpose: "loadAssociation(BookStore.books)"
             }
         );
@@ -596,7 +596,7 @@ describe.sequential("ActionSqliteTest", () => {
                         tb_1_.c3 asc,
                         tb_1_.c4 desc
                 `,
-                args: [1, 2, 4],
+                args: ["1", "2", 4],
                 purpose: "loadAssociation(BookStore.books)"
             }
         );
