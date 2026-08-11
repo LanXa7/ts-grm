@@ -6,16 +6,15 @@ import { AtomRootQueryImpl } from "./atom_root_query_impl";
 import { executeQuery } from "./query_executor/execute_query";
 import { exeuctePageQuery, finalRangeOptions } from "./query_executor/execute_page_query";
 import { NoDataError, TooManyDataError } from "@/error/data_error";
-import { TypeMask } from "./data_row_reader";
-import { MaskProvider } from "./mask_provider";
+import { NumericTypeArrayProvider } from "./numeric_type_array_provider";
 
 export class MergedRootQueryImpl<
     TProjection extends RootQueryProjection<any>
-> implements RootQuery<TProjection>, spi.MergedQueryContract, MaskProvider {
+> implements RootQuery<TProjection>, spi.MergedQueryContract, NumericTypeArrayProvider {
 
     private readonly _sqlClient: SqlClientImplementor;
 
-    private readonly _masks: ReadonlyArray<TypeMask> | undefined;
+    private readonly _numericTypes: ReadonlyArray<spi.NumericType> | undefined;
 
     constructor(
         readonly kind: spi.MergedQueryKind,
@@ -35,7 +34,7 @@ export class MergedRootQueryImpl<
                 throw new err.ArgumentError("Cannot merge difference root queries created by different sqlClient");
             }
         }
-        this._masks = (queries[0] as any as MaskProvider).masks;
+        this._numericTypes = (queries[0] as any as NumericTypeArrayProvider).numericTypes;
         this._sqlClient = sqlClient!;
     }
 
@@ -143,8 +142,8 @@ export class MergedRootQueryImpl<
         return (q as MergedRootQueryImpl<any>).sqlClient;
     }
 
-    get masks(): ReadonlyArray<TypeMask> | undefined {
-        return this._masks;
+    get numericTypes(): ReadonlyArray<spi.NumericType> | undefined {
+        return this._numericTypes;
     }
 }
 
@@ -230,25 +229,35 @@ export class MergedNumSubQueryImpl
 extends AbstractNumSubQueryImpl
 implements spi.MergedQueryContract {
     
+    private readonly _numericType: spi.NumericType;
+
     constructor(
         readonly kind: spi.MergedQueryKind,
         readonly queries: ReadonlyArray<spi.QueryContract>
     ) {
-        super(
-            queries.find(query => 
-                query instanceof spi.AbstractNumExpr
-                    ? (query as spi.AbstractNumExpr<any>).isString
-                    : false
-            ) != null
-        );
+        super();
+        this._numericType = queries.reduce(
+            (max: spi.NumericType, query: spi.QueryContract) => 
+                spi.mergeNumericType(
+                    max, 
+                    query.projection.kind === "SUB_SINGLE"
+                        ? (query.projection.selection as spi.AbstractExpr<any>).numericType
+                        : spi.NumericType.NONE
+                ),
+            spi.NumericType.NONE
+        )
     }
 
     get projection(): spi.ProjectionContract {
         return this.queries[0]!.projection;
     }
 
-    accept(visitor: spi.Visitor): void {
+    override accept(visitor: spi.Visitor): void {
         visitor.visitMergedQuery(this);
+    }
+
+    override get numericType(): spi.NumericType {
+        return this._numericType;
     }
 }
 

@@ -7,6 +7,7 @@ import { Visitor } from "./visitor";
 import { Node } from "./node";
 import { TypedBaseTable } from "../base_table";
 import { StateError } from "@/error/common";
+import { NumericType } from "../numeric";
 
 export interface ShadowExprContract extends Node {
 
@@ -79,9 +80,9 @@ export class ShadowNumExpr<T extends number | string> extends AbstractNumExpr<T>
 
     constructor(
         readonly anchor: ShadowAnchor,
-        isString: boolean
+        private readonly _numericType: NumericType
     ) {
-        super(isString);
+        super();
     }
 
     get shadow(): TypedBaseTable | undefined {
@@ -97,8 +98,12 @@ export class ShadowNumExpr<T extends number | string> extends AbstractNumExpr<T>
         return cloned;
     }
 
-    accept(visitor: Visitor): void {
+    override accept(visitor: Visitor): void {
         visitor.visitShadowExpr(this);
+    }
+
+    override get numericType(): NumericType {
+        return this._numericType;
     }
 }
 

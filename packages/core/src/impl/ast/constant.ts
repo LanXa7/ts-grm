@@ -1,3 +1,4 @@
+import { NumericType } from "../numeric";
 import { ValueExprContract } from "./literal";
 import { AbstractNumExpr } from "./num_expr";
 import { Visitor } from "./visitor";
@@ -7,7 +8,7 @@ export class ConstantExpr extends AbstractNumExpr<number> implements ValueExprCo
     constructor(
         readonly value: number
     ) {
-        super(false);
+        super();
     }
 
     get isConstant(): true {
@@ -20,5 +21,9 @@ export class ConstantExpr extends AbstractNumExpr<number> implements ValueExprCo
 
     accept(visitor: Visitor): void {
         visitor.visitConstant(this.value);
+    }
+
+    get numericType(): NumericType {
+        return NumericType.INTEGER;
     }
 }

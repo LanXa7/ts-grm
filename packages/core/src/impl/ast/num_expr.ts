@@ -3,14 +3,9 @@ import { AbstractCmpExpr } from "./expr";
 import { getInternalFactory } from "./internal_factory";
 import type { CoalesceNumExpr } from "./coalesce_expr";
 import { Visitor } from "./visitor";
+import { mergeNumericType, NumericType } from "../numeric";
 
 export abstract class AbstractNumExpr<T extends string | number> extends AbstractCmpExpr<T> {
-
-    constructor(
-        readonly isString: boolean
-    ) {
-        super();
-    }
 
     unaryMinus(): AbstractNumExpr<T> {
         return new UnaryMinusExpr(this);
@@ -98,6 +93,8 @@ export abstract class AbstractNumExpr<T extends string | number> extends Abstrac
         });
         return getInternalFactory().createCoalesceNumExpr(this, arr);
     }
+
+    abstract override get numericType(): NumericType;
 }
 
 export class UnaryMinusExpr<T extends number | string> extends AbstractNumExpr<T> {
@@ -105,7 +102,7 @@ export class UnaryMinusExpr<T extends number | string> extends AbstractNumExpr<T
     constructor(
         readonly expr: AbstractNumExpr<T>
     ) {
-        super(expr.isString);
+        super();
     }
 
     override unaryMinus(): AbstractNumExpr<T> {
@@ -115,22 +112,31 @@ export class UnaryMinusExpr<T extends number | string> extends AbstractNumExpr<T
     accept(visitor: Visitor): void {
         visitor.visitUnaryMinusExpr(this);
     }
+
+    override get numericType(): NumericType {
+        return this.expr.numericType;
+    }
 }
 
 export class BinaryNumExpr<T extends number | string> extends AbstractNumExpr<T> {
+
+    private readonly _numericType: NumericType;
 
     constructor(
         readonly op: BinaryNumOp,
         readonly leftExpr: AbstractNumExpr<any>,
         readonly rightExpr: AbstractNumExpr<any>
     ) {
-        super(
-            leftExpr.isString || rightExpr.isString
-        );
+        super();
+        this._numericType = mergeNumericType(leftExpr.numericType, rightExpr.numericType);
     }
 
-    accept(visitor: Visitor): void {
+    override accept(visitor: Visitor): void {
         visitor.visitBinaryNumExpr(this);
+    }
+
+    override get numericType(): NumericType {
+        return this._numericType;
     }
 }
 

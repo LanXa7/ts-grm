@@ -1,9 +1,11 @@
 import { SqlClientImplementor } from "@/sql_client";
-import { RootQuery } from "@ts-grm/core";
+import { RootQuery, spi } from "@ts-grm/core";
 import { SqlBuilder } from "@/sql/sql_builder";
-import { Composite, Scope, Value } from "@/sql/fragment";
+import { Composite, Scope } from "@/sql/fragment";
 import { AtomRootQueryImpl } from "../atom_root_query_impl";
 import { ExecuteQueryOptions } from "./execute_query";
+import { ApplyPaginationOptions } from "@/driver/deriver";
+import { NumericTypeArrayProvider } from "../numeric_type_array_provider";
 
 export function buildStatement(
     sqlClient: SqlClientImplementor,
@@ -42,29 +44,24 @@ function buildAst(
         return composite;
     }
     if (options != null) {
-        if (query instanceof AtomRootQueryImpl) {
-            const composite = new Composite();
-            composite.add(Composite.of(query, sqlClient, undefined));
-            composite.add("\nlimit ").add(new Value(options.limit));
-            if (options.offset != null) {
-                composite.add("\noffset ").add(new Value(options.offset));
-            }
-            return composite;
-        }
-        const composite = new Composite();
-        composite.add("select ");
-        composite.add(new Scope("INDENT").add("*"));
-        composite.add("from ");
-        composite.add(
-            new Scope("SUB_QUERY").add(
-                Composite.of(query, sqlClient, undefined)
-            )
+        const applyPaginationOptions: ApplyPaginationOptions = {
+            ...options,
+            wrapper: !(query instanceof AtomRootQueryImpl)
+        };
+        return sqlClient.driver.applyPagination(
+            Composite.of(query, sqlClient, undefined), 
+            applyPaginationOptions
         );
-        composite.add("\nlimit ").add(new Value(options.limit));
-        if (options.offset != null) {
-            composite.add("\noffset ").add(new Value(options.offset));
-        }
-        return composite;
     }
     return Composite.of(query, sqlClient, undefined);
+}
+
+export function numericTypesOf(
+    query: RootQuery<any>, 
+    countMode: boolean
+) : ReadonlyArray<spi.NumericType> | undefined {
+    if (countMode) {
+        return [spi.NumericType.INTEGER];
+    }
+    return (query as any as NumericTypeArrayProvider).numericTypes;
 }

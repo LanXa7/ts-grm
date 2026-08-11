@@ -1,6 +1,7 @@
 import { collectNativeParts, NativeDtExpr, NativeNumExpr, NativeStrExpr } from "@/impl/ast/native_expr";
 import { DateExpression, ExpressionLike, NumExpression, StrExpression } from "./expression";
 import { ExpressionOrder } from "./utils";
+import { NumericType } from "@/impl/numeric";
 
 export type NativeValueType = 
     ExpressionLike 
@@ -29,7 +30,7 @@ function num(
 ) {
     return new NativeNumExpr<number>(
         collectNativeParts(strings, ...values),
-        false
+        NumericType.INTEGER
     ) as any as NumExpression<number>;
 }
 
@@ -39,7 +40,7 @@ function numAsString(
 ) {
     return new NativeNumExpr<string>(
         collectNativeParts(strings, ...values),
-        true
+        NumericType.STRING
     ) as any as NumExpression<string>;
 }
 

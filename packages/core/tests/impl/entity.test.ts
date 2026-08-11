@@ -5,6 +5,9 @@ import { makeErr } from "@/error/util";
 import { EMPTY_KEYWORD_STRATEGY, expectStorage } from "./utils";
 import { DatabaseStrategy, UPPER_SNAKE_CASE_DATABASE_NAMING_STRATEGY } from "@/impl/strategy";
 import { Column } from "@/impl/storage";
+import { NumericType } from "@/impl/numeric";
+import { AssociationEntity } from "@/impl";
+import { associationModel } from "@/dsl/association";
 
 describe("EntityTest", () => {
 
@@ -344,13 +347,19 @@ describe("EntityTest", () => {
     it("numericType", () => {
         const storeIdProp = Entity.of(BOOK_STORE).declaredPropMap.get("id")!;
         const storeIdRefProp = Entity.of(BOOK).declaredPropMap.get("storeId")!;
-        expect(storeIdProp.numericType).toEqual("string");
-        expect(storeIdRefProp.numericType).toEqual("string");
+        expect(storeIdProp.numericType).toEqual(NumericType.STRING);
+        expect(storeIdRefProp.numericType).toEqual(NumericType.STRING);
 
         const treeNodeIdProp = Entity.of(BOOK).declaredPropMap.get("id")!;
         const treeNodeIdRefProp = Entity.of(TREE_NODE).declaredPropMap.get("parentNodeId")!;
-        expect(treeNodeIdProp.numericType).toEqual("number");
-        expect(treeNodeIdRefProp.numericType).toEqual("number");
+        expect(treeNodeIdProp.numericType).toEqual(NumericType.INTEGER);
+        expect(treeNodeIdRefProp.numericType).toEqual(NumericType.INTEGER);
+
+        const middleEntity = AssociationEntity.of(associationModel(BOOK, "authors"));
+        const bookIdRefProp = middleEntity.sourceKeyProp;
+        const authorIdRefProp = middleEntity.targetKeyProp;
+        expect(bookIdRefProp.numericType).toEqual(NumericType.INTEGER);
+        expect(authorIdRefProp.numericType).toEqual(NumericType.INTEGER);
     });
 
     it("inheritance", () => {

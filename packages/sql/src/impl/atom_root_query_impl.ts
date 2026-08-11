@@ -4,17 +4,16 @@ import { AbstractRootQueryProjection } from "./query_projection";
 import { executeQuery } from "./query_executor/execute_query";
 import { exeuctePageQuery, finalRangeOptions } from "./query_executor/execute_page_query";
 import { NoDataError, TooManyDataError } from "@/error/data_error";
-import { TypeMask } from "./data_row_reader";
-import { MaskProvider } from "./mask_provider";
 import { LambdaJoinFetchVisitor } from "./query_executor/join_fetch_visitor";
 import { SqlClientImplementor } from "@/sql_client";
+import { NumericTypeArrayProvider } from "./numeric_type_array_provider";
 
 export class AtomRootQueryImpl<TProjection extends RootQueryProjection<any>> 
-implements AtomRootQuery<TProjection>, spi.AtomQueryContract, MaskProvider {
+implements AtomRootQuery<TProjection>, spi.AtomQueryContract, NumericTypeArrayProvider {
 
     readonly options: spi.AtomQueryOptions;
 
-    private _masks: ReadonlyArray<TypeMask> | undefined = undefined;
+    private _numericTypes: ReadonlyArray<spi.NumericType> | undefined = undefined;
 
     constructor(
         readonly mutableQuery: MutableRootQueryImpl,
@@ -215,37 +214,37 @@ implements AtomRootQuery<TProjection>, spi.AtomQueryContract, MaskProvider {
         );
     }
 
-    get masks(): ReadonlyArray<TypeMask> | undefined {
-        let masks = this._masks;
-        if (masks == null) {
+    get numericTypes(): ReadonlyArray<spi.NumericType> | undefined {
+        let numericTypes = this._numericTypes;
+        if (numericTypes == null) {
             const projection = this.projection;
-            const maskCreator = new MaskCreator(this.mutableQuery.sqlClient);
+            const numericTypeArrayCreator = new NumericTypeArrayCreator(this.mutableQuery.sqlClient);
             switch (projection.kind) {
                 case "ROOT_SINGLE":
-                    maskCreator.add(projection.selection);
+                    numericTypeArrayCreator.add(projection.selection);
                     break;
                 case "ROOT_ARRAY":
                     for (const selection of projection.selections) {
-                        maskCreator.add(selection);
+                        numericTypeArrayCreator.add(selection);
                     }
                     break;
                 case "ROOT_MAP":
                     for (const key in projection.selections) {
-                        maskCreator.add(projection.selections[key]!);
+                        numericTypeArrayCreator.add(projection.selections[key]!);
                     }
                     break;
                 default:
                     throw new Error("Internal bug");
             }
-            this._masks = masks = maskCreator.create();
+            this._numericTypes = numericTypes = numericTypeArrayCreator.create();
         }
-        return masks.length === 0 ? undefined : masks;
+        return numericTypes.length === 0 ? undefined : numericTypes;
     }
 }
 
-class MaskCreator {
+class NumericTypeArrayCreator {
 
-    private _masks: Array<TypeMask> | undefined = undefined;
+    private _numericTypes: Array<spi.NumericType> | undefined = undefined;
 
     private _index = 0;
 
@@ -258,7 +257,7 @@ class MaskCreator {
             this._addFetchedView(selection);
         } else {
             if (selection instanceof spi.AbstractNumExpr) {
-                this._addTypeMask(selection.isString ? "string" : "number");
+                this._addNumericType(selection.numericType);
             }
             this._index++;
         }
@@ -273,9 +272,9 @@ class MaskCreator {
                     return;
                 }
                 if (field.prop instanceof spi.EntityProp) {
-                    this._addTypeMask(field.prop.numericType);
+                    this._addNumericType(field.prop.numericType);
                 } else if (field.prop instanceof spi.SqlFormulaProp) {
-                    this._addTypeMask(field.prop.formula.numericType)
+                    this._addNumericType(field.prop.formula.numericType)
                 }
                 this._index++;
             }
@@ -283,20 +282,20 @@ class MaskCreator {
         joinFetchVisitor.visit(fetchedView.view.mapper);
     }
 
-    private _addTypeMask(
-        numericType: "string" | "number" | undefined
+    private _addNumericType(
+        numericType: spi.NumericType
     ): void {
         if (numericType == null) {
             return;
         }
-        let masks = this._masks;
-        if (masks == null) {
-            this._masks = masks = Array.from({length: this._index}, () => TypeMask.NONE);
+        let numericTypes = this._numericTypes;
+        if (numericTypes == null) {
+            this._numericTypes = numericTypes = Array.from({length: this._index}, () => spi.NumericType.NONE);
         }
-        masks[this._index] = numericType === "string" ? TypeMask.STR : TypeMask.NUM;
+        numericTypes[this._index] = numericType;
     }
 
-    create(): ReadonlyArray<TypeMask> {
-        return this._masks ?? [];
+    create(): ReadonlyArray<spi.NumericType> {
+        return this._numericTypes ?? [];
     }
 }

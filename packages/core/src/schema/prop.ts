@@ -3,6 +3,7 @@ import { StandardSchemaV1 } from "@standard-schema/spec";
 import { scalars, ScalarType } from "./scalar";
 import { __calculatedCreator, __EmbeddedProp, __EMPTY_PROP_DEFINITION_DATA, __enumCreator, __enumSetCreator, __formulaCreator, __I64Prop, __m2mCreator, __m2oCreator, __o2mCreator, __o2oCreator, __ScalarProp, __scalarPropCreator, __StrProp } from "./prop_internal_behavior";
 import { __EmbeddedMember } from "./prop_internal_types";
+import { NumericType } from "@/impl/numeric";
 
 export const prop = {
 
@@ -11,31 +12,59 @@ export const prop = {
     },
 
     i8(): __ScalarProp<number> {
-        return new __ScalarProp({...__EMPTY_PROP_DEFINITION_DATA, scalarType: ScalarType.I8});
+        return new __ScalarProp({
+            ...__EMPTY_PROP_DEFINITION_DATA, 
+            scalarType: ScalarType.I8, 
+            numericType: NumericType.INTEGER
+        });
     },
 
     i16(): __ScalarProp<number> {
-        return new __ScalarProp({...__EMPTY_PROP_DEFINITION_DATA, scalarType: ScalarType.I16});
+        return new __ScalarProp({
+            ...__EMPTY_PROP_DEFINITION_DATA, 
+            scalarType: ScalarType.I16,
+            numericType: NumericType.INTEGER
+        });
     },
 
     i32(): __ScalarProp<number> {
-        return new __ScalarProp({...__EMPTY_PROP_DEFINITION_DATA, scalarType: ScalarType.I32});
+        return new __ScalarProp({
+            ...__EMPTY_PROP_DEFINITION_DATA, 
+            scalarType: ScalarType.I32,
+            numericType: NumericType.INTEGER
+        });
     },
 
     i64(): __I64Prop<number> {
-        return new __I64Prop({...__EMPTY_PROP_DEFINITION_DATA, scalarType: ScalarType.I64});
+        return new __I64Prop({
+            ...__EMPTY_PROP_DEFINITION_DATA, 
+            scalarType: ScalarType.I64,
+            numericType: NumericType.INTEGER
+        });
     },
 
     f32(): __ScalarProp<number> {
-        return new __ScalarProp({...__EMPTY_PROP_DEFINITION_DATA, scalarType: ScalarType.F32});
+        return new __ScalarProp({
+            ...__EMPTY_PROP_DEFINITION_DATA, 
+            scalarType: ScalarType.F32,
+            numericType: NumericType.FLOAT
+        });
     },
 
     f64(): __ScalarProp<number> {
-        return new __ScalarProp({...__EMPTY_PROP_DEFINITION_DATA, scalarType: ScalarType.F64});
+        return new __ScalarProp({
+            ...__EMPTY_PROP_DEFINITION_DATA, 
+            scalarType: ScalarType.F64,
+            numericType: NumericType.FLOAT
+        });
     },
 
     num(): __ScalarProp<number> {
-        return new __ScalarProp({...__EMPTY_PROP_DEFINITION_DATA, scalarType: ScalarType.NUM});
+        return new __ScalarProp({
+            ...__EMPTY_PROP_DEFINITION_DATA, 
+            scalarType: ScalarType.NUM,
+            numericType: NumericType.FLOAT
+        });
     },
 
     date(): __ScalarProp<Date> {

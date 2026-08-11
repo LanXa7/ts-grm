@@ -42,6 +42,5 @@ export {
     TsFormulaProp,
     SqlFormulaProp
 } from "./dto";
-export type {
-    FetchProp
-} from "./dto";
+export type { FetchProp } from "./dto";
+export { NumericType, mergeNumericType } from "./numeric";

@@ -8,6 +8,7 @@ import { Visitor } from "./visitor";
 import { ScalarProvider } from "@/schema/scalar";
 import { ExpressionOrder } from "@/dsl/utils";
 import { ExpressionSubQuery } from "@/dsl/sub_query";
+import { NumericType } from "../numeric";
 
 export abstract class AbstractExpr<T> extends AbstractSelection implements Node {
 
@@ -213,6 +214,10 @@ export abstract class AbstractExpr<T> extends AbstractSelection implements Node 
 
     get scalarProvider(): ScalarProvider<any, any> | undefined {
         return undefined;
+    }
+
+    get numericType(): NumericType {
+        return NumericType.NONE;
     }
 }
 

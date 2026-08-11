@@ -9,6 +9,7 @@ import { Visitor } from "./visitor";
 import { AssociationProp } from "../association_entity";
 import { AbstractAssociationTable } from "../association_table";
 import { EnumSetProvider, ScalarProvider } from "@/schema/scalar";
+import { NumericType } from "../numeric";
 
 export interface PropExprContract {
     readonly table: AbstractEntityTable | AbstractAssociationTable;
@@ -67,20 +68,20 @@ class PropNumExpr<T extends string | number> extends AbstractNumExpr<T> implemen
 
     private readonly _provider: ScalarProvider<any, any> | undefined;
 
+    private readonly _numericType: NumericType;
+
     constructor(
         readonly table: AbstractEntityTable | AbstractAssociationTable,
         readonly prop: EntityProp | AssociationProp,
         readonly isAssociation: boolean
     ) {
-        super(
-            prop instanceof EntityProp
-                ? prop.numericType === "string"
-                : false
-        );
+        super();
         if (prop instanceof EntityProp) {
             this._provider = prop.scalarProvider;
+            this._numericType = prop.numericType;
         } else {
             this._provider = undefined;
+            this._numericType = prop.numericType;
         }
     }
 
@@ -88,8 +89,12 @@ class PropNumExpr<T extends string | number> extends AbstractNumExpr<T> implemen
         return this._provider;
     }
 
-    accept(visitor: Visitor): void {
+    override accept(visitor: Visitor): void {
         visitor.visitPropExpr(this);
+    }
+
+    get numericType(): NumericType {
+        return this._numericType;
     }
 }
 

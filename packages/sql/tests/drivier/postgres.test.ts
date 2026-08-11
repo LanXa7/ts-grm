@@ -140,4 +140,79 @@ describe.sequential("PostgresTest", () => {
             }
         ]);
     });
+
+    it("pageOnAtomQuery", async () => {
+        const view = dto.view(BOOK, c => [
+            c.name,
+            c.store.with(c => [
+                c.name
+            ]),
+            c.authors.with(c => [
+                c.name
+            ])
+        ]);
+        const page = await sqlClient.createQuery(BOOK, (q, book) => {
+            q.where(book.edition.eq(3));
+            q.orderBy(book.name);
+            return q.select(book.fetch(view));
+        }).fetchPage({
+            pageNo: 2,
+            pageSize: 2
+        });
+        expect(page).toEqual({
+            "totalRowCount": 4,
+            "totalPageCount": 2,
+            "pageNo": 2,
+            "isFirstPage": false,
+            "isLastPage": true,
+            "rows": [
+                {
+                    "name": "Learning GraphQL",
+                    "store": {
+                        "name": "O'REILLY"
+                    },
+                    "authors": [
+                        {
+                            "name": {
+                                "firstName": "Alex",
+                                "lastName": "Banks"
+                            }
+                        },
+                        {
+                            "name": {
+                                "firstName": "Eve",
+                                "lastName": "Procello"
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "YugabyteDB: The Definitive Guide",
+                    "store": {
+                        "name": "O'REILLY"
+                    },
+                    "authors": [
+                        {
+                            "name": {
+                                "firstName": "Kannappan",
+                                "lastName": "Muthukkaruppan"
+                            }
+                        },
+                        {
+                            "name": {
+                                "firstName": "Karthik",
+                                "lastName": "Ranganathan"
+                            }
+                        },
+                        {
+                            "name": {
+                                "firstName": "Mikhail",
+                                "lastName": "Bautin"
+                            }
+                        }
+                    ]
+                }
+            ]
+        });
+    });
 });

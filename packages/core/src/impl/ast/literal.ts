@@ -5,6 +5,7 @@ import { AbstractStrExpr } from "./str_expr";
 import { AbstractEsExpr } from "./es_expr";
 import { AbstractDtExpr } from "./dt_expr";
 import { Visitor } from "./visitor";
+import { NumericType } from "../numeric";
 
 export function createLiteral(
     value: any,
@@ -16,12 +17,12 @@ export function createLiteral(
     switch (typeof value) {
         case "string":
             return as === "AS_NUMBER"
-                    ? new LiteralNumExpr(value, true)
+                    ? new LiteralNumExpr(value, NumericType.STRING)
                 : as === "AS_ENUM_SET"
                     ? new LiteralEsExpr(value)
                 : new LiteralStrExpr(value);
         case "number":
-            return new LiteralNumExpr(value, false);
+            return new LiteralNumExpr(value, NumericType.INTEGER);
         default:
             if (value instanceof Date) {
                 return new LiteralDtExpr(value);
@@ -56,8 +57,11 @@ class LiteralExpr<T> extends AbstractExpr<T> implements ValueExprContract {
 
 class LiteralNumExpr<T extends number | string> extends AbstractNumExpr<T> implements ValueExprContract {
 
-    constructor(readonly value: T, isString: boolean) {
-        super(isString);
+    constructor(
+        readonly value: T, 
+        private readonly _numericType: NumericType
+    ) {
+        super();
     }
 
     get isConstant(): false {
@@ -68,8 +72,12 @@ class LiteralNumExpr<T extends number | string> extends AbstractNumExpr<T> imple
         return true;
     }
 
-    accept(visitor: Visitor): void {
+    override accept(visitor: Visitor): void {
         visitor.visitLiteral(this.value);
+    }
+
+    override get numericType(): NumericType {
+        return this._numericType;
     }
 }
 

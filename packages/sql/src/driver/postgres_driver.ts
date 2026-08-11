@@ -2,23 +2,24 @@ import { spi, TimeUnit } from "@ts-grm/core";
 import { AbstractNodeRender } from "./abstract_node_render";
 import { NodeRender, NodeRenderContext } from "./node_render";
 import { Precedence } from "@/sql/precedence";
-import { Driver } from "./deriver";
 import { Pool } from "pg";
 import { TransactionManager } from "@/transaction/transaction_manger";
 import { PostgresTransactionManager } from "@/transaction/postgres_transaction_manager";
 import { ColumnDef } from "@/impl/schema_def";
 import { MetadataError } from "@/error/metadata_error";
+import { AbstractDriver } from "./abstract_drivier";
 
-export class PostgresDriver implements Driver {
+export class PostgresDriver extends AbstractDriver {
 
     readonly nodeRender: NodeRender = nodeRender;
 
     readonly transactionManager: TransactionManager;
 
     constructor(
-        protected readonly pool: Pool
+        pool: Pool
     ) {
-        this.transactionManager = new PostgresTransactionManager(this.pool);
+        super();
+        this.transactionManager = new PostgresTransactionManager(pool);
     }
 
     get name(): string {
@@ -53,10 +54,6 @@ export class PostgresDriver implements Driver {
             default:
                 throw new MetadataError(`Unsuported scalar type: ${columnDef.type.kind}`);
         }
-    }
-
-    get requiresInlineConstraints(): boolean {
-        return false;
     }
 
     get isTableCascadeDeletionSupported(): boolean {

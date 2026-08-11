@@ -4,18 +4,19 @@ import { ColumnDef } from "@/impl/schema_def";
 import { TransactionManager } from "@/transaction/transaction_manger";
 import { SqliteTransactionManager } from "@/transaction/sqlite_transaction_manager";
 import { Database } from "better-sqlite3";
-import { Driver } from "./deriver";
 import { AbstractNodeRender } from "./abstract_node_render";
 import { Precedence } from "@/sql/precedence";
 import { MetadataError } from "@/error/metadata_error";
+import { AbstractDriver } from "./abstract_drivier";
 
-export class SqliteDriver implements Driver {
+export class SqliteDriver extends AbstractDriver {
 
     readonly nodeRender: NodeRender = nodeRender;
 
     readonly transactionManager: TransactionManager;
 
     constructor(readonly database: Database) {
+        super();
         this.transactionManager = new SqliteTransactionManager(database);
     }
 
@@ -52,10 +53,6 @@ export class SqliteDriver implements Driver {
 
     get requiresInlineConstraints(): boolean {
         return true;
-    }
-
-    get isTableCascadeDeletionSupported(): boolean {
-        return false;
     }
 
     quoteIdentifier(value: string): string {

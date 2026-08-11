@@ -19,12 +19,12 @@ import {
 } from "@ts-grm/core";
 import { RecursiveContext } from "./recursive_context";
 import { AssociationBinding } from "./data";
-import { DataRowReader, TypeMask } from "../data_row_reader";
-import { buildStatement } from "./sql_gen";
+import { DataRowReader } from "../data_row_reader";
+import { buildStatement, numericTypesOf } from "./sql_gen";
 import { baseQuerySelectionMapArgs, capitalize, expressionsToAst, filterSourceRows, hashOf } from "./util";
 import { resolveCalculators, resolveTsFormulas } from "./calculator_resolver";
 import { JoinFetchData, JoinFetchExecutor } from "./join_fetch_executor";
-import { MaskProvider } from "../mask_provider";
+import { NumericTypeArrayProvider } from "../numeric_type_array_provider";
 
 export async function resolveAssociations(
     sqlClient: SqlClientImplementor,
@@ -164,7 +164,7 @@ class AssociationResolver {
         return keyProps.map(p => entityTable.__expression(p)) as any;
     }
 
-    private get _keyMasks(): ReadonlyArray<TypeMask> | undefined {
+    private get _keyNumericTypes(): ReadonlyArray<spi.NumericType> | undefined {
         let keyProps: ReadonlyArray<spi.EntityProp>;
         if (this._unresolvedField.prop.referenceKeyProp != null) {
             keyProps = this._unresolvedField.prop.referenceKeyProp.scalarProps!;
@@ -174,18 +174,18 @@ class AssociationResolver {
                 ?? this._unresolvedField.prop.targetEntity!.idProp
             ).scalarProps!;
         }
-        let masks: Array<TypeMask> | undefined = undefined;
+        let numericTypes: Array<spi.NumericType> | undefined = undefined;
         let size = keyProps.length;
         for (let i = 0; i < size; i++) {
             const numericType = keyProps[i]!.numericType;
             if (numericType != null) {
-                if (masks == null) {
-                    masks = Array.from({length: size}, () => TypeMask.NONE);
+                if (numericTypes == null) {
+                    numericTypes = Array.from({length: size}, () => spi.NumericType.NONE);
                 }
-                masks[i] = numericType === "string" ? TypeMask.STR : TypeMask.NONE;
+                numericTypes[i] = numericType;
             }
         }
-        return masks;
+        return numericTypes;
     }
 
     private get _keySpan(): number {
@@ -416,7 +416,7 @@ class AssociationResolver {
                     this._keySpan, 
                     this._byTargetKey ? this._targetKeySpan : view.mapper.span, 
                     this._byTargetKey ? this._orderSpan : 0,
-                    (query as any as MaskProvider).masks,
+                    (query as any as NumericTypeArrayProvider).numericTypes,
                     this._byTargetKey 
                         ? { 
                             getter: async(ids: ReadonlyArray<any>) => this._targetRowMap(ids, view), 
@@ -428,7 +428,10 @@ class AssociationResolver {
                 );
             }
             keyRowReader = recursiveContext?.toKeyRowReader() 
-                ?? DataRowReader.of(dataRows, (query as any as MaskProvider).masks);
+                ?? DataRowReader.of(
+                    dataRows, 
+                    (query as any as NumericTypeArrayProvider).numericTypes
+                );
         }
         const valueRowReader = keyRowReader.offset(this._keySpan);
         return [keyRowReader, valueRowReader, recursiveContext];
@@ -481,7 +484,7 @@ class AssociationResolver {
                 this._keySpan > 1
                     ? dependencies
                     : dependencies.map(v => [v]),
-                this._keyMasks
+                this._keyNumericTypes
             );
             return [
                 keyRowReader, 
@@ -515,7 +518,7 @@ class AssociationResolver {
             kind: "LOAD_ASSOCIATION",
             prop: this._unresolvedField.prop as spi.EntityProp
         });
-        const keyRowReader = DataRowReader.of(dataRows, (query as any as MaskProvider).masks);
+        const keyRowReader = DataRowReader.of(dataRows, numericTypesOf(query, false));
         return [
             keyRowReader, 
             keyRowReader.offset(this._keySpan), 
@@ -725,7 +728,7 @@ class AssociationResolver {
             prop: this._unresolvedField.prop as spi.EntityProp
         });
         const keySpan = this._keySpan;
-        const keyReader = DataRowReader.of(dataRows, (query as any as MaskProvider).masks);
+        const keyReader = DataRowReader.of(dataRows, numericTypesOf(query, false));
         const valueReader = keyReader.offset(keySpan);
         const dtoReader = this._targetDtoRowReader;
         while (keyReader.next()) {

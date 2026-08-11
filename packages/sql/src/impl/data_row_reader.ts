@@ -6,11 +6,11 @@ export class DataRowReader implements spi.DataReader {
 
     private readonly _rowIndex: RowIndex;
 
-    protected readonly _masks: ReadonlyArray<TypeMask> | undefined
+    protected readonly _numericTypes: ReadonlyArray<spi.NumericType> | undefined
 
     protected constructor(
         data: DataRowReader | DataRows,
-        masks: ReadonlyArray<TypeMask> | undefined
+        numericTypes: ReadonlyArray<spi.NumericType> | undefined
     ) {
         if (data instanceof DataRowReader) {
             this._rows = data._rows;
@@ -19,15 +19,15 @@ export class DataRowReader implements spi.DataReader {
             this._rows = data;
             this._rowIndex = new RowIndex();
         }
-        if (masks != null && masks.length !== 0) {
-            this._masks = masks;
+        if (numericTypes != null && numericTypes.length !== 0) {
+            this._numericTypes = numericTypes;
         } else {
-            this._masks = undefined;
+            this._numericTypes = undefined;
         }
     }
 
-    static of(rows: DataRows, masks: ReadonlyArray<TypeMask> | undefined): DataRowReader {
-        return new DataRowReader(rows, masks);
+    static of(rows: DataRows, numericTypes: ReadonlyArray<spi.NumericType> | undefined): DataRowReader {
+        return new DataRowReader(rows, numericTypes);
     }
 
     next(): boolean {
@@ -55,31 +55,36 @@ export class DataRowReader implements spi.DataReader {
         if (colIndex < 0 || colIndex + span > row.length) {
             throw new err.ArgumentError("Illegal width");
         }
-        const masks = this._masks;
+        const numericTypes = this._numericTypes;
         if (span === 1) {
-            const mask = masks != null 
-                ? masks[colIndex]
+            const numericType = numericTypes != null 
+                ? numericTypes[colIndex]
                 : undefined;
             const value = row[colIndex];
-            if (mask === TypeMask.NUM && typeof value === "string") {
+            if (numericType === spi.NumericType.INTEGER && typeof value === "string") {
                 return parseInt(value);
             }
-            if (mask === TypeMask.STR && typeof value === "number") {
+            if (numericType === spi.NumericType.FLOAT && typeof value === "string") {
+                return parseFloat(value);
+            }
+            if (numericType === spi.NumericType.STRING && typeof value === "number") {
                 return value.toString();
             }
             return value;
         }
-        if (masks == null) {
+        if (numericTypes == null) {
             return row.slice(colIndex, colIndex + span);
         }
         const values: Array<any> = [];
         const max = colIndex + span;
         for (let i = colIndex; i < max; i++) {
-            const mask = masks[i];
+            const numericType = numericTypes[i];
             const value = row[i];
-            if (mask === TypeMask.NUM && typeof value === "string") {
+            if (numericType === spi.NumericType.INTEGER && typeof value === "string") {
                 values.push(parseInt(value));
-            } else if (mask === TypeMask.STR && typeof value === "number") {
+            } else if (numericType === spi.NumericType.FLOAT && typeof value === "string") {
+                values.push(parseFloat(value));
+            } else if (numericType === spi.NumericType.STRING && typeof value === "number") {
                 values.push(value.toString());
             } else {
                 values.push(value);
@@ -92,14 +97,14 @@ export class DataRowReader implements spi.DataReader {
         if (offset === 0) {
             return this;
         }
-        return new OffsetDataReader(this, this._masks, offset);
+        return new OffsetDataReader(this, this._numericTypes, offset);
     }
 
     mapColIndices(indices: ReadonlyArray<number> | undefined): DataRowReader {
         if (indices == null) {
             return this;
         }
-        return new ColIndexMappedDataReader(this, this._masks, indices);
+        return new ColIndexMappedDataReader(this, this._numericTypes, indices);
     }
 
     get rowIndex(): number {
@@ -115,20 +120,14 @@ export class DataRowReader implements spi.DataReader {
     }
 }
 
-export enum TypeMask {
-    NONE = 0,
-    NUM = 1,
-    STR = 2
-};
-
 class OffsetDataReader extends DataRowReader {
 
     constructor(
         parent: DataRowReader,
-        masks: ReadonlyArray<TypeMask> | undefined,
+        numericTypes: ReadonlyArray<spi.NumericType> | undefined,
         private readonly _offset: number
     ) {
-        super(parent, masks);
+        super(parent, numericTypes);
     }
 
     protected override translateCol(col: number): number {
@@ -139,7 +138,7 @@ class OffsetDataReader extends DataRowReader {
         if (offset == 0) {
             return this;
         }
-        return new OffsetDataReader(this, this._masks, this._offset + offset);
+        return new OffsetDataReader(this, this._numericTypes, this._offset + offset);
     }
 }
 
@@ -147,10 +146,10 @@ class ColIndexMappedDataReader extends DataRowReader {
 
     constructor(
         parent: DataRowReader,
-        masks: ReadonlyArray<TypeMask> | undefined,
+        numericTypes: ReadonlyArray<spi.NumericType> | undefined,
         private readonly _indices: ReadonlyArray<number>
     ) {
-        super(parent, masks);
+        super(parent, numericTypes);
     }
 
     protected override translateCol(col: number): number {
@@ -168,7 +167,7 @@ class ColIndexMappedDataReader extends DataRowReader {
             return this;
         }
         const newIndicies = indices.map(i => this.translateCol(i));
-        return new ColIndexMappedDataReader(this, this._masks, newIndicies);
+        return new ColIndexMappedDataReader(this, this._numericTypes, newIndicies);
     }
 }
 

@@ -5,6 +5,7 @@ import { AbstractCmpExpr, AbstractExpr } from "./expr";
 import { AbstractNumExpr } from "./num_expr";
 import { AbstractStrExpr } from "./str_expr";
 import { Visitor } from "./visitor";
+import { mergeNumericType, NumericType } from "../numeric";
 
 export interface CoalesceExprContract {
     readonly expr: AbstractExpr<any>,
@@ -49,12 +50,18 @@ export class CoalesceCmpExpr<T> extends AbstractCmpExpr<T> implements CoalesceEx
 
 export class CoalesceNumExpr<T extends number | string> extends AbstractNumExpr<T> implements CoalesceExprContract {
 
+    private readonly _numericType: NumericType;
+
     constructor(
         readonly expr: AbstractNumExpr<T>,
         readonly defaultExprs: ReadonlyArray<AbstractNumExpr<T>>
     ) {
-        super(
-            expr.isString || defaultExprs.find(e => e.isString) != null
+        super();
+        this._numericType = mergeNumericType(
+            expr.numericType,
+            defaultExprs.reduce((max: NumericType, item: AbstractNumExpr<any>) => {
+                return item.numericType > max ? item.numericType : max;
+            }, NumericType.NONE)
         );
     }
 
@@ -62,8 +69,12 @@ export class CoalesceNumExpr<T extends number | string> extends AbstractNumExpr<
         return this.expr.scalarProvider;
     }
 
-    accept(visitor: Visitor): void {
+    override accept(visitor: Visitor): void {
         visitor.visitCoalesceExpr(this);
+    }
+
+    override get numericType(): NumericType {
+        return this._numericType;
     }
 }
 

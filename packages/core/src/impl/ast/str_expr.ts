@@ -6,6 +6,7 @@ import { ArgumentError } from "@/error/common";
 import { getInternalFactory } from "./internal_factory";
 import type { CoalesceStrExpr } from "./coalesce_expr";
 import { Visitor } from "./visitor";
+import { NumericType } from "../numeric";
 
 export abstract class AbstractStrExpr extends AbstractCmpExpr<string> {
 
@@ -283,11 +284,15 @@ export class TrimExpr extends AbstractStrExpr {
 export class LengthExpr extends AbstractNumExpr<number> {
 
     constructor(readonly expr: AbstractStrExpr) {
-        super(false);
+        super();
     }
 
     accept(visitor: Visitor): void {
         visitor.visitLengthExpr(this);
+    }
+
+    get numericType(): NumericType {
+        return NumericType.INTEGER;
     }
 }
 

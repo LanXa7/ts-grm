@@ -7,7 +7,8 @@ import { StandardSchemaV1 } from "@standard-schema/spec";
 import { __MemberType } from "./dto/all_scalars";
 import { AnyModel } from "./model";
 import { Entity } from "@/impl";
-import { AbstractNumExpr } from "@/spi";
+import { AbstractExpr } from "@/spi";
+import { NumericType } from "@/impl/numeric";
 
 export class TsFormula<TValue> {
 
@@ -44,7 +45,7 @@ export type TsFormulaFn<
 
 export class SqlFormula<TValue> {
 
-    private _numericType: "string" | "number" | "none" | undefined = undefined;
+    private _numericType: NumericType | undefined = undefined;
 
     private constructor(
         readonly valueType: StandardSchemaV1,
@@ -53,24 +54,15 @@ export class SqlFormula<TValue> {
     ) {
     }
 
-    get numericType(): "string" | "number" | undefined {
+    get numericType(): NumericType {
         let numbericType = this._numericType;
         if (numbericType == null) {
             const entity = Entity.of(this.sourceModel());
             const table = entity.table(undefined);
             const expr = this.fn(table as any);
-            if (expr instanceof AbstractNumExpr) {
-                if (expr.isString) {
-                    numbericType = "string";
-                } else {
-                    numbericType = "number";
-                }
-            } else {
-                numbericType = "none";
-            }
-            this._numericType = numbericType;
+            this._numericType = numbericType = (expr as AbstractExpr<any>).numericType;
         }
-        return numbericType !== "none" ? numbericType : undefined;
+        return numbericType;
     }
 
     static of<

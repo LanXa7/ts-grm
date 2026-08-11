@@ -16,7 +16,7 @@ export async function exeuctePageQuery(
     if (count === 0) {
         return {...EMPTY_PAGE, pageNo};
     }
-    const pageCount = Math.round((count + pageSize - 1) / pageSize);
+    const pageCount = Math.ceil(count / pageSize);
     const actualPageNo = pageNo < pageCount ? pageNo : pageCount;
     const rangeOptions: FetchRangeOptions & FetchOptions<boolean> = {
         limit: pageSize,

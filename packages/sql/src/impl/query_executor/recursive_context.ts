@@ -1,5 +1,5 @@
 import { err, spi } from "@ts-grm/core";
-import { DataRow, DataRowReader, DataRows, TypeMask } from "../data_row_reader";
+import { DataRow, DataRowReader, DataRows } from "../data_row_reader";
 import { TargetRowMapData } from "./data";
 
 export class RecursiveContext {
@@ -9,7 +9,7 @@ export class RecursiveContext {
         private readonly _keySpan: number,
         private readonly _valueSpan: number,
         private readonly _orderSpan: number,
-        private readonly _masks: ReadonlyArray<TypeMask> | undefined,
+        private readonly _numericTypes: ReadonlyArray<spi.NumericType> | undefined,
         private readonly _targetRowMapData: TargetRowMapData | undefined,
         private readonly _maxDepth: number,
         private readonly _depth: number,
@@ -19,7 +19,7 @@ export class RecursiveContext {
         const depth = this._depth;
         const dci = this._keySpan + this._valueSpan + this._orderSpan;
         const rows = this._allDataRows.filter(row => row[dci] === depth);
-        return DataRowReader.of(rows, this._masks);
+        return DataRowReader.of(rows, this._numericTypes);
     }
 
     toDeeperContext() {
@@ -28,7 +28,7 @@ export class RecursiveContext {
             this._keySpan,
             this._valueSpan,
             this._orderSpan,
-            this._masks,
+            this._numericTypes,
             this._targetRowMapData,
             this._maxDepth,
             this._depth + 1
@@ -77,7 +77,7 @@ export class RecursiveContext {
             firstContext._keySpan,
             firstContext._valueSpan,
             firstContext._orderSpan,
-            firstContext._masks,
+            firstContext._numericTypes,
             firstContext._targetRowMapData,
             firstContext._maxDepth,
             firstContext._depth
