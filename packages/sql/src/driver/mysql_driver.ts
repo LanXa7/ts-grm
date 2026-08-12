@@ -1,8 +1,78 @@
 import { spi, TimeUnit } from "@ts-grm/core";
 import { AbstractNodeRender } from "./abstract_node_render";
-import { NodeRenderContext } from "./node_render";
+import { NodeRender, NodeRenderContext } from "./node_render";
 import { Precedence } from "@/sql/precedence";
 import { UnsupportedFeatureError } from "@/error/unsupported_feature_error";
+import { AbstractDriver } from "./abstract_drivier";
+import { TransactionManager } from "@/transaction/transaction_manger";
+import { Pool } from "mysql2/promise";
+import { MySqlTransactionManager } from "@/transaction/mysql_transaction_manager";
+import { ColumnDef } from "@/impl/schema_def";
+import { KEYWORDS } from "./keywords";
+import { MetadataError } from "@/error/metadata_error";
+
+export class MySqlDriver extends AbstractDriver {
+
+    readonly nodeRender: NodeRender = nodeRender;
+    
+    readonly transactionManager: TransactionManager;
+
+    protected readonly options: MySqlServerOptions;
+    
+    constructor(
+        pool: Pool,
+        options?: Partial<MySqlServerOptions>
+    ) {
+        super();
+        this.transactionManager = new MySqlTransactionManager(pool);
+        this.options = {
+            defaultStringLength: options?.defaultStringLength ?? 255
+        };
+    }
+
+    override get name(): string {
+        return "MySql";
+    }
+
+    quoteIdentifier(value: string): string {
+        if (KEYWORDS.has(value.toLowerCase())) {
+            return "`" + value + "`";
+        }
+        return value;
+    }
+
+    typeName(columnDef: ColumnDef): string {
+        switch (columnDef.type.kind) {
+            case "BOOL":
+                return "tinyint(1)";
+            case "I8":
+                return "tinyint";
+            case "I16":
+                return "smallint";
+            case "I32":
+                return "int";
+            case "I64":
+                return "bigint";
+            case "F32":
+                return "flat";
+            case "F64":
+                return "double";
+            case "NUM":
+                return "float";
+            case "STR":
+                return `varchar(${columnDef.length ?? this.options.defaultStringLength})`;
+            case "BINARY":
+                return "blob";
+            default:
+                throw new MetadataError(`Unsupported scalar type: ${columnDef.type.kind}`);
+        }
+    }
+}
+
+export interface MySqlServerOptions {
+    
+    readonly defaultStringLength: number;
+}
 
 const nodeRender = new class extends AbstractNodeRender {
 

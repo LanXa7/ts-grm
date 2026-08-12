@@ -1,14 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { usePostgresClientWithData } from "../data_utils";
 import { newSqlRecord } from "../utils";
+import { useMySqlClientWithData } from "../data_utils";
 import { dto } from "@ts-grm/core";
-import { BOOK, ORDER } from "../model/model";
+import { BOOK } from "../model/model";
 
-describe.sequential("PostgresTest", () => {
+describe("MySqlTest", () => {
 
     const sqlRecord = newSqlRecord();
 
-    const sqlClient = usePostgresClientWithData(sqlRecord);
+    const sqlClient = useMySqlClientWithData(sqlRecord);
 
     it("simple", async() => {
         const view = dto.view(BOOK, c => [
@@ -37,7 +37,7 @@ describe.sequential("PostgresTest", () => {
                     left join BOOK_STORE tb_2_ on 
                         tb_1_.STORE_ID = tb_2_.ID
                     where 
-                        tb_1_.EDITION = $1
+                        tb_1_.EDITION = ?
                     order by 
                         tb_1_.NAME asc
                 `,
@@ -54,12 +54,12 @@ describe.sequential("PostgresTest", () => {
                     inner join book_author_mapping tb_2_ on 
                         tb_1_.ID = tb_2_.author_id
                     where 
-                        tb_2_.book_id = any($1)
+                        tb_2_.book_id in(?, ?, ?, ?)
                     order by 
                         tb_1_.FIRST_NAME asc,
                         tb_1_.LAST_NAME asc
                 `,
-                args: [[6, 12, 3, 9]],
+                args: [6, 12, 3, 9],
                 purpose: "loadAssociation(Book.authors)",
             }
         )
@@ -141,71 +141,6 @@ describe.sequential("PostgresTest", () => {
         ]);
     });
 
-    it("tupleIn", async() => {
-        const view = dto.view(ORDER, c => [
-            c.name,
-            c.items.with(c => [
-                c.productName
-            ])
-        ]);
-        const rows = await sqlClient.createQuery(ORDER, (q, order) => {
-            q.orderBy(order.name);
-            return q.select(order.fetch(view));
-        }).limit(2).fetchList();
-        sqlRecord.assert(
-            {
-                sql: `
-                    select 
-                        tb_1_.NAME,
-                        tb_1_.X,
-                        tb_1_.A,
-                        tb_1_.B
-                    from "ORDER" tb_1_
-                    order by 
-                        tb_1_.NAME asc
-                    limit $1
-                `,
-                args: [2],
-                purpose: "query"
-            },
-            {
-                sql: `
-                    select 
-                        tb_1_.order_x,
-                        tb_1_.order_y_a,
-                        tb_1_.order_y_b,
-                        tb_1_.PRODUCT_NAME
-                    from ORDER_ITEM tb_1_
-                    where 
-                        (tb_1_.order_x, tb_1_.order_y_a, tb_1_.order_y_b) in (
-                            select 
-                                unnest($1::integer[]),
-                                unnest($2::smallint[]),
-                                unnest($3::smallint[])
-                        )
-                `,
-                args: [[1, 1], [1, 1], [1, 2]],
-                purpose: "loadAssociation(Order.items)"
-            }
-        );
-        expect(rows).toEqual([
-            {
-                "name": "order-1",
-                "items": [
-                    { "productName": "Pen" },
-                    { "productName": "Pencil" }
-                ]
-            },
-            {
-                "name": "order-2",
-                "items": [
-                    { "productName": "Panio" },
-                    { "productName": "Bike" }
-                ]
-            }
-        ]);
-    });
-
     it("pageOnAtomQuery", async () => {
         const view = dto.view(BOOK, c => [
             c.name,
@@ -232,7 +167,7 @@ describe.sequential("PostgresTest", () => {
                         count(1)
                     from BOOK tb_1_
                     where 
-                        tb_1_.EDITION = $1
+                        tb_1_.EDITION = ?
                 `,
                 args: [3],
                 purpose: "query"
@@ -246,11 +181,11 @@ describe.sequential("PostgresTest", () => {
                         tb_1_.ID
                     from BOOK tb_1_
                     where 
-                        tb_1_.EDITION = $1
+                        tb_1_.EDITION = ?
                     order by 
                         tb_1_.NAME asc
-                    limit $2
-                    offset $3
+                    limit ?
+                    offset ?
                 `,
                 args: [3, 2, 2],
                 purpose: "query"
@@ -262,7 +197,7 @@ describe.sequential("PostgresTest", () => {
                         tb_1_.NAME
                     from BOOK_STORE tb_1_
                     where 
-                        tb_1_.ID = $1
+                        tb_1_.ID = ?
                 `,
                 args: ["1"],
                 purpose: "loadAssociation(Book.store)"
@@ -277,12 +212,12 @@ describe.sequential("PostgresTest", () => {
                     inner join book_author_mapping tb_2_ on 
                         tb_1_.ID = tb_2_.author_id
                     where 
-                        tb_2_.book_id = any($1)
+                        tb_2_.book_id in(?, ?)
                     order by 
                         tb_1_.FIRST_NAME asc,
                         tb_1_.LAST_NAME asc
                 `,
-                args: [[3, 9]],
+                args: [3, 9],
                 purpose: "loadAssociation(Book.authors)"
             }
         )

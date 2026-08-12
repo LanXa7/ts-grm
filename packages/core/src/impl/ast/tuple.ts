@@ -8,6 +8,7 @@ import { AbstractExpr } from "./expr";
 import { Visitor } from "./visitor";
 import { getInternalFactory } from "./internal_factory";
 import { QueryContract } from "./query";
+import { ScalarProvider } from "@/schema/scalar";
 
 export class ExprTupleImpl<
     TExpressions extends AtLeastTwo<ExpressionLike>
@@ -113,6 +114,8 @@ export class TupleCmpPred extends AbstractPred {
 
 export class TupleInCollectionPred extends AbstractPred {
 
+    private _providers: ReadonlyArray<ScalarProvider<any, any> | undefined> | undefined = undefined;
+
     constructor(
         readonly tuple: TupleContract,
         readonly tuples: ReadonlyArray<TupleContract>,
@@ -131,6 +134,23 @@ export class TupleInCollectionPred extends AbstractPred {
 
     accept(visitor: Visitor): void {
         visitor.visitTupleInCollectionPred(this);
+    }
+
+    get providers(): ReadonlyArray<ScalarProvider<any, any> | undefined> {
+        let providers = this._providers;
+        if (providers == null) {
+            const span = this.tuple.exprs.length;
+            const providerArr: Array<ScalarProvider<any, any> | undefined> = [];
+            for (let i = 0; i < span; i++) {
+                const expr = this.tuple.exprs[i]!;
+                const provider = expr.scalarProvider;
+                if (provider) {
+                    providerArr[i] = provider;
+                }
+            }
+            this._providers = providers = providerArr;
+        }
+        return providers;
     }
 }
 

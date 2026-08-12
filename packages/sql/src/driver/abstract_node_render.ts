@@ -1,7 +1,7 @@
 import { Precedence } from "@/sql/precedence";
-import { NodeRender, NodeRenderContext, SingleColumnInCollectionPred } from "./node_render";
+import { NodeRender, NodeRenderContext } from "./node_render";
 import { Scope, Value } from "@/sql/fragment";
-import { err, spi } from "@ts-grm/core";
+import { err, ScalarProvider, spi } from "@ts-grm/core";
 
 export abstract class AbstractNodeRender implements NodeRender {
 
@@ -9,17 +9,78 @@ export abstract class AbstractNodeRender implements NodeRender {
         readonly driverName: string
     ) {}
 
-    renderSingleColumnInCollectionPred(
-        pred: SingleColumnInCollectionPred,
+    renderInCollectinPred(
+        pred: spi.InCollectionPred<any>, 
+        ctx: NodeRenderContext
+    ): void {
+        const provider = pred.expr.scalarProvider;
+        if (provider == null) {
+            this._renderInCollection(pred.neg, pred.expr, pred.values, ctx);
+            return;
+        }
+        const values: Array<spi.AbstractExpr<any> | Value | string> = [];
+        for (const value of pred.values) {
+            if (value.isValueExpr) {
+                values.push(valueOf(value, provider));
+            } else {
+                values.push(value);
+            }
+        }
+        this._renderInCollection(pred.neg, pred.expr, values, ctx);
+    }
+
+    private _renderInCollection(
+        neg: boolean,
+        expr: spi.AbstractExpr<any>,
+        values: ReadonlyArray<spi.AbstractExpr<any> | Value | string>,
         ctx: NodeRenderContext
     ): void {
         using _ = ctx.withPrecedence(Precedence.COMPARISON);
-        ctx.render(pred.expr);
-        ctx.text(pred.neg ? " not in": " in");
+        ctx.render(expr);
+        ctx.text(neg ? " not in": " in");
         using __ = ctx.withComposite(new Scope("VALUES", false));
-        for (const value of pred.values) {
+        for (const value of values) {
             ctx.separator();
             ctx.render(value);
+        }
+    }
+
+    renderTupleInCollectionPred(
+        pred: spi.TupleInCollectionPred,
+        ctx: NodeRenderContext
+    ): void {
+        
+        const providers = pred.providers;
+
+        using _ = ctx.withPrecedence(Precedence.COMPARISON);
+
+        ctx.render(pred.tuple)
+        ctx.text(pred.neg ? " not in" : " in");
+
+        using __ = ctx.withPrecedence(Precedence.ROOT);
+        using ___ = ctx.withComposite(new Scope("VALUES"));
+        for (const tuple of pred.tuples) {
+            ctx.separator();
+            this._visitTuple(tuple, providers, ctx);
+        }
+    }
+
+    private _visitTuple(
+        tuple: spi.TupleContract, 
+        providers: ReadonlyArray<ScalarProvider<any, any> | undefined>,
+        ctx: NodeRenderContext
+    ): void {
+        using _ = ctx.withPrecedence(Precedence.ROOT);
+        using __ = ctx.withComposite(new Scope("VALUES", false));
+        const span = tuple.exprs.length;
+        for (let i = 0; i < span; i++) {
+            const expr = tuple.exprs[i]!;
+            ctx.separator();
+            if (providers[i] != null && expr.isValueExpr) {
+                ctx.render(valueOf(expr, providers[i]!));
+            } else {
+                ctx.render(expr);
+            }
         }
     }
 
@@ -187,3 +248,16 @@ export abstract class AbstractNodeRender implements NodeRender {
         throw new err.StateError(`The driver "${this.driverName}" does not support the function "${funName}"`);
     }
 };
+
+function valueOf(
+    expr: spi.AbstractExpr<any>,
+    provider: ScalarProvider<any, any>
+): Value | string {
+    const valueContract = expr as any as spi.ValueExprContract;
+    const originalValue = valueContract.value;
+    const value = provider.toSql(originalValue);
+    if (valueContract.isConstant) {
+        return typeof value === "string" ? value : `${value}`;
+    }
+    return new Value(value, originalValue);
+}

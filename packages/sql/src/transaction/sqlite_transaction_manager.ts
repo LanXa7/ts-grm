@@ -65,10 +65,6 @@ extends AbstractTransactionManager<SqliteTransactionContext> {
 
 class SqliteTransactionContext extends TransactionContext<SqliteTransactionContext> {
 
-    private static _savepointIdSequence = 0;
-
-    readonly savepointName: string | undefined;
-
     constructor(
         private readonly _database: Database,
         isolation: Isolation | undefined,
@@ -76,9 +72,6 @@ class SqliteTransactionContext extends TransactionContext<SqliteTransactionConte
         prevForSavepoint: SqliteTransactionContext | undefined
     ) {
         super(isolation, timeout, prevForSavepoint);
-        this.savepointName = prevForSavepoint != null
-            ? `savepoint_${++SqliteTransactionContext._savepointIdSequence}`
-            : undefined
     }
 
     protected createExecutor(): Executor {

@@ -19,7 +19,7 @@ export interface PropExprContract {
 export function createTableProp(
     table: AbstractEntityTable | AbstractAssociationTable, 
     prop: EntityProp | AssociationProp
-) {
+): PropExprContract {
     if (prop.scalarType == null) {
         throw new ArgumentError(
             `Cannot create table prop for "${
@@ -89,12 +89,16 @@ class PropNumExpr<T extends string | number> extends AbstractNumExpr<T> implemen
         return this._provider;
     }
 
-    override accept(visitor: Visitor): void {
-        visitor.visitPropExpr(this);
+    override get numericType(): NumericType {
+        return this._numericType;
     }
 
-    get numericType(): NumericType {
-        return this._numericType;
+    override get isPropExpr(): boolean {
+        return true;
+    }
+
+    override accept(visitor: Visitor): void {
+        visitor.visitPropExpr(this);
     }
 }
 
@@ -117,6 +121,10 @@ class PropStrExpr extends AbstractStrExpr implements PropExprContract {
 
     override get scalarProvider(): ScalarProvider<any, any> | undefined {
         return this._provider;
+    }
+
+    override get isPropExpr(): boolean {
+        return true;
     }
 
     accept(visitor: Visitor): void {
@@ -145,6 +153,10 @@ class PropEsExpr<T extends string> extends AbstractEsExpr<T> implements PropExpr
         return this._provider;
     }
 
+    override get isPropExpr(): boolean {
+        return true;
+    }
+
     accept(visitor: Visitor): void {
         visitor.visitPropExpr(this);
     }
@@ -169,6 +181,10 @@ class PropDtExpr extends AbstractDtExpr implements PropExprContract {
 
     override get scalarProvider(): ScalarProvider<any, any> | undefined {
         return this._provider;
+    }
+
+    override get isPropExpr(): boolean {
+        return true;
     }
 
     accept(visitor: Visitor): void {

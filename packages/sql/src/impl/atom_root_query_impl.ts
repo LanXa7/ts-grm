@@ -65,7 +65,7 @@ implements AtomRootQuery<TProjection>, spi.AtomQueryContract, NumericTypeArrayPr
         if (!sqlClient.isValidated) {
             await sqlClient.validate();
         }
-        return await executeQuery(this, options?.nullAsUndefined ?? false, undefined) as Array<RowTypeOf<TProjection, TNullAsUndefined>>;
+        return await executeQuery(this, options?.nullAsUndefined ?? false, finalRangeOptions(undefined, this.options)) as Array<RowTypeOf<TProjection, TNullAsUndefined>>;
     }
 
     async fetchRange<

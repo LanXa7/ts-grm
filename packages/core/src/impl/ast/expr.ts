@@ -210,6 +210,10 @@ export abstract class AbstractExpr<T> extends AbstractSelection implements Node 
         return false;
     }
 
+    get isPropExpr(): boolean {
+        return false;
+    }
+
     abstract accept(visitor: Visitor): void;
 
     get scalarProvider(): ScalarProvider<any, any> | undefined {

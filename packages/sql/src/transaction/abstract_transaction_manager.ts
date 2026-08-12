@@ -184,11 +184,18 @@ export abstract class TransactionContext<TContext extends TransactionContext<TCo
     
     private _executor: Executor | undefined = undefined;
 
+    readonly savepointName: string | undefined;
+
+    private static _savepointIdSequence = 0;
+
     constructor(
         readonly isolation: Isolation | undefined, // Undefined means no transaction
         readonly timeout: number,
         readonly prevForSavepoint: TContext | undefined
     ) {
+        this.savepointName = prevForSavepoint != null
+            ? `savepoint_${++TransactionContext._savepointIdSequence}`
+            : undefined
     }
 
     get executor(): Executor {

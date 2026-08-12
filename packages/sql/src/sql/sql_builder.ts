@@ -102,6 +102,9 @@ export class SqlBuilder {
     }
 
     value(value: Value): this {
+        if (value.constant) {
+            this._sql(value.value)
+        }
         this._values.set(this._length, value);
         let str: string;
         if (this.nameParameterPrefix != null) {

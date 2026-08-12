@@ -39,7 +39,7 @@ insert into PDF_ELECTRONIC_BOOK(PEB_ID, PDF_VERSION) values
     (11, '2.0'),
     (12, '2.0');
 
-insert into author(id, first_name, last_name, GENDER) values
+insert into AUTHOR(id, first_name, last_name, GENDER) values
     (1, 'Eve', 'Procello', 'F'),
     (2, 'Alex', 'Banks', 'M'),
     (3, 'Dan', 'Vanderkam', 'M'),

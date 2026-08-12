@@ -3,8 +3,13 @@ import { spi } from "@ts-grm/core";
 
 export interface NodeRender {
 
-    renderSingleColumnInCollectionPred(
-        pred: SingleColumnInCollectionPred,
+    renderInCollectinPred(
+        pred: spi.InCollectionPred<any>,
+        ctx: NodeRenderContext
+    ): void;
+
+    renderTupleInCollectionPred(
+        pred: spi.TupleInCollectionPred,
         ctx: NodeRenderContext
     ): void;
 
@@ -83,12 +88,3 @@ export interface NodeRenderContext {
 
     render(node: spi.Node | Value | string): void;
 }
-
-export type SingleColumnInCollectionPred = {
-
-    readonly neg: boolean;
-
-    readonly expr: spi.AbstractExpr<any>;
-
-    readonly values: ReadonlyArray<spi.AbstractExpr<any> | Value | string>;
-};

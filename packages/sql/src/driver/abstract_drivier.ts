@@ -3,6 +3,7 @@ import { ApplyPaginationOptions, Driver } from "./deriver";
 import { ColumnDef } from "@/impl/schema_def";
 import { NodeRender } from "./node_render";
 import { TransactionManager } from "@/transaction/transaction_manger";
+import { KEYWORDS } from "./keywords";
 
 export abstract class AbstractDriver implements Driver {
 
@@ -12,11 +13,11 @@ export abstract class AbstractDriver implements Driver {
 
     abstract transactionManager: TransactionManager;
 
-    abstract nameParameterPrefix: string | undefined;
-
-    abstract isRecursiveKeywordRequired: boolean;
-
     abstract typeName(columnDef: ColumnDef): string;
+
+    get nameParameterPrefix(): string | undefined {
+        return undefined;
+    }
 
     get requiresInlineConstraints(): boolean {
         return false;
@@ -26,7 +27,16 @@ export abstract class AbstractDriver implements Driver {
         return false;
     }
 
-    abstract quoteIdentifier(value: string): string;
+    get isRecursiveKeywordRequired(): boolean {
+        return true;
+    }
+
+    quoteIdentifier(value: string): string {
+        if (KEYWORDS.has(value.toLowerCase())) {
+            return `"${value}"`;
+        }
+        return value;
+    }
 
     applyPagination(
         original: Composite, 

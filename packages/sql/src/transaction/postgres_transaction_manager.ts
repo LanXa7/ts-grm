@@ -44,10 +44,6 @@ export class PostgresTransactionManager extends AbstractTransactionManager<Postg
 
 class PostgresTransactionContext extends TransactionContext<PostgresTransactionContext> {
 
-    private static _savepointIdSequence = 0;
-
-    readonly savepointName: string | undefined;
-
     con: PoolClient | undefined = undefined;
 
     constructor(
@@ -56,9 +52,6 @@ class PostgresTransactionContext extends TransactionContext<PostgresTransactionC
         prevForSavepoint: PostgresTransactionContext | undefined
     ) {
         super(isolation, timeout, prevForSavepoint);
-        this.savepointName = prevForSavepoint != null
-            ? `savepoint_${++PostgresTransactionContext._savepointIdSequence}`
-            : undefined
     }
 
     protected createExecutor(): Executor {
@@ -93,6 +86,6 @@ class PostgresExecutor implements Executor {
         _sql: string, 
         _binds: ReadonlyArray<ReadonlyArray<Value>>
     ): Promise<ReadonlyArray<DataRows>> {
-        throw new Error();
+        throw new Error("Unsupported Operation");
     }
 }

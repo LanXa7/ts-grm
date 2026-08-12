@@ -1,4 +1,4 @@
-import { spi, TimeUnit } from "@ts-grm/core";
+import { ScalarType, spi, TimeUnit } from "@ts-grm/core";
 import { AbstractNodeRender } from "./abstract_node_render";
 import { NodeRender, NodeRenderContext } from "./node_render";
 import { Precedence } from "@/sql/precedence";
@@ -8,6 +8,7 @@ import { PostgresTransactionManager } from "@/transaction/postgres_transaction_m
 import { ColumnDef } from "@/impl/schema_def";
 import { MetadataError } from "@/error/metadata_error";
 import { AbstractDriver } from "./abstract_drivier";
+import { Scope, Value, valueOf } from "@/sql/fragment";
 
 export class PostgresDriver extends AbstractDriver {
 
@@ -30,41 +31,16 @@ export class PostgresDriver extends AbstractDriver {
         return "$";
     }
 
-    get isRecursiveKeywordRequired() {
-        return true;
-    }
-
     typeName(columnDef: ColumnDef): string {
-        switch (columnDef.type.kind) {
-            case "BOOL":
-                return "boolean";
-            case "I8":
-            case "I16":
-                return "smallint";
-            case "I32":
-                return "integer";
-            case "I64":
-                return "bigint";
-            case "NUM":
-                return "real";
-            case "STR":
-                return "text";
-            case "BINARY":
-                return "bytea";
-            default:
-                throw new MetadataError(`Unsuported scalar type: ${columnDef.type.kind}`);
+        const tn = typeName(columnDef.type) 
+        if (tn == null) {
+            throw new MetadataError(`Unsuported scalar type: ${columnDef.type.kind}`);
         }
+        return tn;
     }
 
     get isTableCascadeDeletionSupported(): boolean {
         return true;
-    }
-
-    quoteIdentifier(value: string): string {
-        if (keywords.has(value.toLowerCase())) {
-            return `"${value}"`;
-        }
-        return value;
     }
 }
 
@@ -72,6 +48,74 @@ const nodeRender = new class extends AbstractNodeRender {
 
     constructor() {
         super("Postgres");
+    }
+
+    renderInCollectinPred(
+        pred: spi.InCollectionPred<any>, 
+        ctx: NodeRenderContext
+    ): void {
+        if (pred.values.find(e => !e.isValueExpr) != null) {
+            super.renderInCollectinPred(pred, ctx);
+            return;
+        }
+        const provider = pred.expr.scalarProvider;
+        const values = pred.values.map(e => valueOf(e, provider).value);
+        if (pred.neg) {
+            using _ = ctx.withPrecedence(Precedence.ROOT);
+            ctx.render("not (")
+            ctx.render(pred.expr);
+            ctx.text(" = any(");
+            ctx.render(new Value(values));
+            ctx.text("))");
+        } else {
+            using _ = ctx.withPrecedence(Precedence.COMPARISON);
+            ctx.render(pred.expr);
+            ctx.text(" = any(");
+            ctx.render(new Value(values));
+            ctx.text(")");
+        }
+    }
+
+    renderTupleInCollectionPred(
+        pred: spi.TupleInCollectionPred, 
+        ctx: NodeRenderContext
+    ): void {
+        const typeNames: Array<string> = [];
+        for (const expr of pred.tuple.exprs) {
+            const tn = expr.isPropExpr
+                ? typeName((expr as any as spi.PropExprContract).prop.scalarType!)
+                : undefined;
+            if (tn == null) {
+                super.renderTupleInCollectionPred(pred, ctx);
+                return;
+            }
+            typeNames.push(tn);
+        }
+        if (pred.tuples.find(
+            tuple => tuple.exprs.find(e => !e.isValueExpr || e.scalarProvider) != null
+        ) != null) {
+            super.renderTupleInCollectionPred(pred, ctx);
+            return;
+        }
+        const providers = pred.providers;
+        const columns: Array<ReadonlyArray<any>> = [];
+        for (let i = 0; i < typeNames.length; i++) {
+            columns[i] = pred.tuples.map(tuple => valueOf(tuple.exprs[i]!, providers[i]).value);
+        }
+        using _ = ctx.withPrecedence(Precedence.COMPARISON);
+        ctx.render(pred.tuple);
+        ctx.text(pred.neg ? " not in " : " in ");
+        using __ = ctx.withComposite(new Scope("SUB_QUERY"));
+        ctx.text("select ");
+        {
+            using _ = ctx.withComposite(new Scope("COMMA"));
+            for (let i = 0; i < columns.length; i++) {
+                ctx.separator();
+                ctx.text("unnest(");
+                ctx.render(new Value(columns[i]));
+                ctx.text(`::${typeNames[i]}[])`)
+            }
+        }
     }
 
     override renderDtPlusExpr(
@@ -241,3 +285,29 @@ const keywords = new Set<string>([
     "primary", "key", "foreign", "references", "unique", "check", "default", 
     "constraint", "collate", "on", "conflict", "do", "nothing", "nothing"
 ]);
+
+function typeName(tp: ScalarType<any>): string | undefined {
+    switch (tp.kind) {
+        case "BOOL":
+            return "boolean";
+        case "I8":
+        case "I16":
+            return "smallint";
+        case "I32":
+            return "integer";
+        case "I64":
+            return "bigint";
+        case "F32":
+            return "real";
+        case "F64":
+            return "double precision";
+        case "NUM":
+            return "real";
+        case "STR":
+            return "text";
+        case "BINARY":
+            return "bytea";
+        default:
+            return undefined;
+    }
+}

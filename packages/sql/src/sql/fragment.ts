@@ -1,4 +1,4 @@
-import { err, spi, SqlClient } from "@ts-grm/core";
+import { err, ScalarProvider, spi, SqlClient } from "@ts-grm/core";
 import { RealTable } from "./real_table";
 import { SqlBuilder } from "./sql_builder";
 import { FragmentGenGenVisitor } from "./fragment_gen_visitor";
@@ -284,11 +284,27 @@ export class ShadowExpr extends Fragment {
 
 export class Value extends Fragment {
 
+    readonly value: any;
+
+    readonly constant: boolean;
+
     constructor(
-        readonly value: any,
-        readonly originalValue?: any
+        value: any,
+        readonly originalValue?: any,
+        constant?: boolean
     ) {
         super();
+        this.constant = constant ?? false;
+        if (this.constant) {
+            if (value == null) {
+                throw new err.ArgumentError("Constant value cannot be null");
+            }
+            this.value = typeof value === "string"
+                ? `'${value.replace("'", "''")}'`
+                : value.toString();
+        } else {
+            this.value = value;
+        }
     }
 
     into(builder: SqlBuilder): void {
@@ -398,3 +414,18 @@ export class Source extends Composite {
     }
 }
 
+export function valueOf(
+    expr: spi.AbstractExpr<any>,
+    provider: ScalarProvider<any, any> | undefined
+): Value {
+    if (!expr.isValueExpr) {
+        throw new err.ArgumentError("The expr must be value expression");
+    }
+    const valueContract = expr as any as spi.ValueExprContract;
+    const originalValue = valueContract.value;
+    if (provider == null) {
+        return new Value(originalValue);
+    }
+    const value = provider.toSql(originalValue);
+    return new Value(value, originalValue);
+}

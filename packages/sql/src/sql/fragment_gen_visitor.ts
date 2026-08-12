@@ -1,5 +1,5 @@
 import { AnyModel, dsl, EntityTable, err, ExpressionOrder, Predicate, ScalarProvider, spi } from "@ts-grm/core";
-import { Alias, Column, Composite, Query, Scope, ShadowExpr, Source, Value } from "./fragment";
+import { Alias, Column, Composite, Query, Scope, ShadowExpr, Source, Value, valueOf } from "./fragment";
 import { Stack } from "./stack";
 import { Precedence } from "./precedence";
 import { NodeRender, NodeRenderContext } from "@/driver/node_render";
@@ -278,28 +278,7 @@ export class FragmentGenGenVisitor extends spi.AbstractVisitor {
     }
 
     visitTupleInCollectionPred(pred: spi.TupleInCollectionPred): void {
-
-        const span = pred.tuple.exprs.length;
-        const providers: Array<ScalarProvider<any, any> | undefined> = [];
-        for (let i = 0; i < span; i++) {
-            const expr = pred.tuple.exprs[i]!;
-            const provider = expr.scalarProvider;
-            if (provider) {
-                providers[i] = provider;
-            }
-        }
-        
-        using _ = this._precedenceStack.with(Precedence.COMPARISON);
-
-        pred.tuple.accept(this);
-        this._compositeStack.current.add(pred.neg ? " not in" : " in");
-
-        using __ = this._precedenceStack.with(Precedence.ROOT);
-        using ___ = this._compositeStack.with(new Scope("VALUES"));
-                for (const tuple of pred.tuples) {
-            this._compositeStack.current.separator();
-            this._visitTuple(tuple, providers);
-        }
+        this._nodeRender.renderTupleInCollectionPred(pred, this._nodeRenderContext);
     }
 
     visitTupleInSubQueryPred(pred: spi.TupleInSubQueryPred): void {
@@ -344,23 +323,7 @@ export class FragmentGenGenVisitor extends spi.AbstractVisitor {
     }
 
     visitInCollectionPred(pred: spi.InCollectionPred<any>): void {
-        const provider = pred.expr.scalarProvider;
-        if (provider != null) {
-            const values: Array<spi.AbstractExpr<any> | Value | string> = [];
-            for (const value of pred.values) {
-                if (value.isValueExpr) {
-                    values.push(valueOf(value, provider));
-                } else {
-                    values.push(value);
-                }
-            }
-            this._nodeRender.renderSingleColumnInCollectionPred(
-                {neg: pred.neg, expr: pred.expr, values}, 
-                this._nodeRenderContext
-            );
-            return;
-        }
-        this._nodeRender.renderSingleColumnInCollectionPred(pred, this._nodeRenderContext);
+        this._nodeRender.renderInCollectinPred(pred, this._nodeRenderContext);
     }
 
     visitInSubQueryPred(pred: spi.InSubQueryPred): void {
@@ -758,15 +721,3 @@ export class FragmentGenGenVisitor extends spi.AbstractVisitor {
     }
 }
 
-function valueOf(
-    expr: spi.AbstractExpr<any>,
-    provider: ScalarProvider<any, any>
-): Value | string {
-    const valueContract = expr as any as spi.ValueExprContract;
-    const originalValue = valueContract.value;
-    const value = provider.toSql(originalValue);
-    if (valueContract.isConstant) {
-        return typeof value === "string" ? value : `${value}`;
-    }
-    return new Value(value, originalValue);
-}

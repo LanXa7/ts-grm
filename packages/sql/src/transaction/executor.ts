@@ -8,7 +8,7 @@ export interface Executor {
 
     executeStatement(
         sql: string, 
-        values: ReadonlyArray<Value>,
+        args: ReadonlyArray<Value>,
         purpose: Purpose
     ): Promise<DataRows>;
 

@@ -6,8 +6,10 @@ import { newSqlClient, SqlClientImplementor } from "@/sql_client";
 import { AbstractExecutorWrapper, Executor, Purpose } from "@/transaction/executor";
 import { EntityManager, SqlClient } from "@ts-grm/core";
 import Database from "better-sqlite3";
-import { Pool } from "pg";
+import { Pool as PgPool } from "pg";
+import { createPool as createMySqlPool } from "mysql2/promise";
 import { afterAll, afterEach, expect } from "vitest";
+import { MySqlDriver } from "@/driver/mysql_driver";
 
 export function useSqliteClient<TImplementor extends boolean = false>(
     _?: TImplementor,
@@ -33,14 +35,14 @@ export function useSqliteClient<TImplementor extends boolean = false>(
         if (sqlRecord != null) {
             (sqlRecord as SqlRecordImpl).clear();
         }
-    })
+    });
     return sqlClient as SqlClientImplementor;
 }
 
 export function usePostgresClient(
     sqlRecord?: SqlRecord
 ): SqlClient {
-    const pool = new Pool({
+    const pool = new PgPool({
         host: '',
         port: 5510,
         database: 'postgres',
@@ -50,8 +52,42 @@ export function usePostgresClient(
         idleTimeoutMillis: 0,
         connectionTimeoutMillis: 2000,
     });
+    afterEach(() => {
+        if (sqlRecord != null) {
+            (sqlRecord as SqlRecordImpl).clear();
+        }
+    });
     return newSqlClient(
         new PostgresDriver(pool), {
+            entityManager: EntityManager.of(__dirname, "./model"),
+            sqlLogger: {
+                pretty: true
+            },
+            executorCreator: (executor: Executor) => 
+                sqlRecord != null
+                    ? new SqlRecordExecutor(executor, sqlRecord as SqlRecordImpl)
+                    : executor
+        }
+    );
+}
+
+export function useMySqlClient(
+    sqlRecord?: SqlRecord
+): SqlClient {
+    const pool = createMySqlPool({
+        host: '',         
+        port: 5511,        
+        database: 'ts_grm',      
+        user: 'root',       
+        password: '123456'
+    });
+    afterEach(() => {
+        if (sqlRecord != null) {
+            (sqlRecord as SqlRecordImpl).clear();
+        }
+    });
+    return newSqlClient(
+        new MySqlDriver(pool), {
             entityManager: EntityManager.of(__dirname, "./model"),
             sqlLogger: {
                 pretty: true
